@@ -110,12 +110,20 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
         super.unregisterAlarmLimitInstance(holder);
     }
     
+    private static final String alarmLimitKey(final ice.GlobalAlarmLimitObjective alarmLimit) {
+        return alarmLimit.metric_id + "-" + alarmLimit.limit_type;
+    }
+    
+    private static final String alarmLimitKey(final String metric_id, final ice.LimitType limitType) {
+        return metric_id + "-" + limitType;
+    }    
+    
     @Override
     public void setAlarmLimit(GlobalAlarmLimitObjective obj) {
         super.setAlarmLimit(obj);
         localAlarmLimit.put(obj.metric_id+"_"+obj.limit_type,
                 alarmLimitObjectiveSample(localAlarmLimit.get(obj.metric_id), obj.value, obj.unit_identifier, obj.metric_id, obj.limit_type));
-        alarmLimit.put(obj.metric_id+"_"+obj.limit_type,
+        alarmLimit.put(alarmLimitKey(obj),
                 alarmLimitSample(alarmLimit.get(obj.metric_id), obj.unit_identifier, obj.value, obj.metric_id, obj.limit_type));
         // TODO really should also check alarm violation on threshold change here but it will be tricky to get the right
         // sample of Numeric
@@ -125,42 +133,27 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
         super.numericSample(holder, newValue, time);
         String identifier = holder.data.metric_id + "-" + holder.data.instance_id;
-//        InstanceHolder<ice.AlarmSettings> alarmSettings = this.alarmSettings.get(holder.data.metric_id);
-        InstanceHolder<ice.AlarmLimit> alarmLimit = this.alarmLimit.get(holder.data.metric_id);//need other keys?
-        if(null != alarmLimit) {
-            
-            //There are threshold settings for this numeric value, let's emit an alarm!
-        	//LOW LIMIT
-        	if(ice.LimitType.low_limit==alarmLimit.data.limit_type){
-        		if(Float.compare(alarmLimit.data.value, newValue) >0){
-	        		//TODO WRONG? what about the Units_ID? Is it enough comparing values or do we need to 
-	        		// make sure we compare values that have the same units?
-	        		log.debug("For " + identifier + " lower limit is exceeded " + newValue + " < " + alarmLimit.data.value);
-        		}else{
-        			log.debug("For " + identifier + " lower limit is in range " + newValue + " > " + alarmLimit.data.value);
-        		}
-        	}
-        	
-        	//HIGH LIMIT
-        	if(ice.LimitType.high_limit==alarmLimit.data.limit_type){
-        		if(Float.compare(alarmLimit.data.value, newValue) < 0)//TODO compare between units
-        			log.debug("For " + identifier + " upper limit is exceeded " + newValue + " < " + alarmLimit.data.value);
-        		else
-        			log.debug("For " + identifier + " upper limit is in range " + newValue + " > " + alarmLimit.data.value);
-        	}
-        	
-//            if(Float.compare(alarmSettings.data.lower, newValue)>0) {
-//                log.debug("For " + identifier + " lower bound is exceeded " + newValue + " < " + alarmSettings.data.lower);
-//                writePatientAlert(identifier, "LOW");
-//            } else if(Float.compare(alarmSettings.data.upper, newValue)<0) {
-//                log.debug("For " + identifier + " upper bound is exceeded " + newValue + " > " + alarmSettings.data.upper);
-//                writePatientAlert(identifier, "HIGH");
-//            } else {
-//                log.trace("For " + identifier + " is in range " + newValue + " in [" + alarmSettings.data.lower+"-"+alarmSettings.data.upper);
-//                writePatientAlert(identifier, "NORMAL");
-//            }
+        InstanceHolder<ice.AlarmLimit> lowAlarmLimit = this.alarmLimit.get(alarmLimitKey(holder.data.metric_id, ice.LimitType.low_limit));
+        InstanceHolder<ice.AlarmLimit> highAlarmLimit = this.alarmLimit.get(alarmLimitKey(holder.data.metric_id, ice.LimitType.high_limit));
+        
+        if(lowAlarmLimit == null && highAlarmLimit == null) {
+            // This is so imperfect, what if limits had previously existed?
+            return;
+        }
+        
+        // I'm trusting here that we cannot simultaneously violate the upper and lower bound although this might not be true forever.
+        //LOW LIMIT
+        if(null != lowAlarmLimit && Float.compare(lowAlarmLimit.data.value, newValue) > 0) {
+            // TODO ought the units be checked?
+            log.debug("For " + identifier + " lower limit is exceeded " + newValue + " < " + lowAlarmLimit.data.value);
+            writePatientAlert(identifier, "LOW");
+            //HIGH LIMIT
+        } else if(null != highAlarmLimit && Float.compare(highAlarmLimit.data.value, newValue) < 0) {
+            log.debug("For " + identifier + " upper limit is exceeded " + newValue + " < " + highAlarmLimit.data.value);
+            writePatientAlert(identifier, "HIGH");
         } else {
-            log.trace("For " + identifier + " no alarm settings");
+            log.trace("For " + identifier + " is in range " + newValue + " in [" + (null==lowAlarmLimit?"?":""+lowAlarmLimit.data.value)+"-"+(null==highAlarmLimit?"?":highAlarmLimit.data.value));
+            writePatientAlert(identifier, "NORMAL");
         }
     }
     
