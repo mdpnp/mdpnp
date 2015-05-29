@@ -1,5 +1,6 @@
 package org.mdpnp.devices;
 
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -17,31 +18,38 @@ import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import com.google.common.base.Splitter;
 
 public class DomainParticipantFactory implements FactoryBean<DomainParticipant>, DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(DomainParticipantFactory.class);
 
     // if not set (empty), default from ice_library.xml are used.
-    private final List<String> discoveryAddress=new ArrayList<>();
+    private final List<String> discoveryPeers=new ArrayList<>();
     private final int  domain;
 
     private DomainParticipant instance;
 
-    static final String TOKENIZER_REGEX = "[\\s,;]+";
+    private static final String TOKENIZER_REGEX = "[\\s,;]+";
 
     public DomainParticipantFactory(int domain) {
         this(domain, null);
     }
 
-    public DomainParticipantFactory(int domain, String discoveryAddress) {
+    public DomainParticipantFactory(int domain, String discoveryPeers) {
         this.domain = domain;
-        if(discoveryAddress != null) {
-            String [] arr = discoveryAddress.split(TOKENIZER_REGEX);
+        if(discoveryPeers != null) {
+            String [] arr = split(discoveryPeers);
             for(String s:arr) {
-                this.discoveryAddress.add(s.trim());
+                this.discoveryPeers.add(s.trim());
             }
         }
+    }
+
+    static String []split(String s) {
+        Iterable<String> ss = Splitter.onPattern(TOKENIZER_REGEX).trimResults().omitEmptyStrings().split(s);
+        String[] strings = Iterables.toArray(ss, String.class);
+        return strings;
     }
 
     private static int nextParticipantId = 0;
@@ -66,17 +74,33 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
             if(dpQos.discovery.multicast_receive_addresses.size() != 0)
                 log.warn(dpQos.discovery.multicast_receive_addresses.size() + " " + dpQos.discovery.multicast_receive_addresses.get(0).toString());
 
-            if(!discoveryAddress.isEmpty()) {
+            if(!discoveryPeers.isEmpty()) {
                 dpQos.discovery.multicast_receive_addresses.clear();
                 dpQos.discovery.initial_peers.clear();
 
-                for(int i=0; i<discoveryAddress.size(); i++) {
-                    String addr = discoveryAddress.get(i);
+                // mimic logic described here:
+                // http://community.rti.com/rti-doc/510/ndds/doc/html/api_java/classcom_1_1rti_1_1dds_1_1infrastructure_1_1DiscoveryQosPolicy.html
+                //
+                // If NDDS_DISCOVERY_PEERS does not contain a multicast address, then the string
+                // sequence com.rti.dds.infrastructure.DiscoveryQosPolicy.multicast_receive_addresses
+                // is cleared and the RTI discovery process will not listen for discovery messages via
+                // multicast.
+                //
+                // If NDDS_DISCOVERY_PEERS contains one or more multicast addresses, the addresses will
+                // be stored in com.rti.dds.infrastructure.DiscoveryQosPolicy.multicast_receive_addresses,
+                // starting at element 0. They will be stored in the order they appear NDDS_DISCOVERY_PEERS.
+                //
+                // Note: Currently, RTI Connext will only listen for discovery traffic on the first multicast
+                // address (element 0) in com.rti.dds.infrastructure.DiscoveryQosPolicy.multicast_receive_addresses.
+                //
+
+                for(int i=0; i<discoveryPeers.size(); i++) {
+                    String addr = discoveryPeers.get(i);
                     String s = "udpv4://" + addr;
                     log.warn("Overriding default discovery settings to use " + s);
                     InetAddress ip = InetAddress.getByName(addr);
                     dpQos.discovery.initial_peers.add(s);
-                    if (i == 0 && ip.isMulticastAddress()) {
+                    if (ip.isMulticastAddress() && dpQos.discovery.multicast_receive_addresses.isEmpty()) {
                         dpQos.discovery.multicast_receive_addresses.add(s);
                     }
                 }

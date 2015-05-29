@@ -16,7 +16,7 @@ do
   echo Shipping ${PARCEL} bundle to $TARGET
   ssh debian@$TARGET mkdir -p /home/debian/OpenICE
   scp ${LOCATION}/$PARCEL.zip debian@$TARGET:/home/debian/OpenICE/ > $TARGET.scp.out &
-  done
+done
 echo Awaiting shipment completion
 wait
 
