@@ -16,25 +16,32 @@ public class DomainParticipantFactoryTest {
 
     @Test
     public void testRegexSplit() throws Exception {
-        String a[];
+        List<String> a;
 
-        a=DomainParticipantFactory.split("127.10.0.1 127.10.0.2");
-        Assert.assertEquals(a.length, 2);
+        a=DomainParticipantFactory.parse("127.10.0.1 127.10.0.2");
+        Assert.assertEquals(a.size(), 2);
 
-        a=DomainParticipantFactory.split("127.10.0.1;127.10.0.2");
-        Assert.assertEquals(a.length, 2);
+        a=DomainParticipantFactory.parse("127.10.0.1;127.10.0.2");
+        Assert.assertEquals(a.size(), 2);
 
-        a=DomainParticipantFactory.split("127.10.0.1     127.10.0.2");
-        Assert.assertEquals(a.length, 2);
+        a=DomainParticipantFactory.parse("127.10.0.1     127.10.0.2");
+        Assert.assertEquals(a.size(), 2);
 
-        a=DomainParticipantFactory.split("127.10.0.1;127.10.0.2 127.10.0.3");
-        Assert.assertEquals(a.length, 3);
+        a=DomainParticipantFactory.parse("127.10.0.1;127.10.0.2 127.10.0.3");
+        Assert.assertEquals(a.size(), 3);
 
-        a=DomainParticipantFactory.split("");
-        Assert.assertEquals(a.length, 0);
+        // empty string should resolve to empty lists
+        a=DomainParticipantFactory.parse("");
+        Assert.assertEquals(a.size(), 0);
 
-        a=DomainParticipantFactory.split("   ");
-        Assert.assertEquals(a.length, 0);
+        a=DomainParticipantFactory.parse("   ");
+        Assert.assertEquals(a.size(), 0);
+
+        // make sure that spaces are trimmed appropriately
+        a=DomainParticipantFactory.parse("  127.10.0.1  127.10.0.2  ");
+        Assert.assertEquals(a.size(), 2);
+        Assert.assertEquals(a.get(0), "127.10.0.1");
+        Assert.assertEquals(a.get(1), "127.10.0.2");
     }
 
     private ConfigurableApplicationContext createContext(String discoveryPeers) throws Exception {
@@ -43,10 +50,7 @@ public class DomainParticipantFactoryTest {
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
         Properties props = new Properties();
         props.load(getClass().getResourceAsStream("/RtConfig.properties"));
-        if(discoveryPeers == null)
-            props.remove("dds.discovery.peers");
-        else
-            props.setProperty("dds.discovery.peers", discoveryPeers);
+        props.setProperty("dds.discovery.peers", discoveryPeers);
         ppc.setProperties(props);
         ppc.setOrder(0);
 
@@ -58,7 +62,7 @@ public class DomainParticipantFactoryTest {
     @Test
     public void testDefaultDiscoverySetting() throws Exception {
 
-        ConfigurableApplicationContext ctx = createContext(null);
+        ConfigurableApplicationContext ctx = createContext("");
         try {
             DomainParticipant dp = ctx.getBean(DomainParticipant.class);
             DomainParticipantQos qos = new DomainParticipantQos();

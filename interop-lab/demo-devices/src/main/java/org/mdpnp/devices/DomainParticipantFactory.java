@@ -17,6 +17,8 @@ import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import com.google.common.base.Splitter;
 
@@ -39,17 +41,16 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
     public DomainParticipantFactory(int domain, String discoveryPeers) {
         this.domain = domain;
         if(discoveryPeers != null) {
-            String [] arr = split(discoveryPeers);
-            for(String s:arr) {
-                this.discoveryPeers.add(s.trim());
-            }
+            List<String>l = parse(discoveryPeers);
+            this.discoveryPeers.addAll(l);
         }
     }
 
-    static String []split(String s) {
+    static List<String> parse(String s) {
         Iterable<String> ss = Splitter.onPattern(TOKENIZER_REGEX).trimResults().omitEmptyStrings().split(s);
         String[] strings = Iterables.toArray(ss, String.class);
-        return strings;
+        List<String> l = Arrays.asList(strings);
+        return l;
     }
 
     private static int nextParticipantId = 0;
