@@ -16,11 +16,12 @@ abstract class TimeSyncHandler {
 
 	private final Logger log = LoggerFactory.getLogger(TimeSyncHandler.class);
 
-	enum HandlerType { Chatty, SupervisorAware };
+	enum HandlerType { Chatty, SupervisorAware }
 
 	private static final class TimeSyncHolder {
-		public final TimeSync timeSync;
-		public final InstanceHandle_t handle;
+		final TimeSync timeSync;
+		final InstanceHandle_t handle;
+		long  lastSync = 0;
 
 		public TimeSyncHolder(final TimeSync timeSync, final InstanceHandle_t handle) {
 			this.timeSync = timeSync;
@@ -30,15 +31,18 @@ abstract class TimeSyncHandler {
 
 	private final ice.TimeSyncDataWriter tsWriter;
 	private final String uniqueDeviceIdentifier;
-	private final Map<String,TimeSyncHolder> sync = new HashMap<String, TimeSyncHolder>();
+	private final Map<String,TimeSyncHolder> sync = new HashMap<>();
 
 	private TimeSyncHandler(String uniqueDeviceIdentifier, ice.TimeSyncDataWriter tsWriter) {
+		if(tsWriter == null)
+			throw new IllegalArgumentException("Writer cannot be null");
+
 		this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
 		this.tsWriter  = tsWriter;
 	}
 
 	void processNotAliveHeartbeat(final String unique_device_identifier) {
-		TimeSyncHolder holder = sync.get(unique_device_identifier);
+		TimeSyncHolder holder = sync.remove(unique_device_identifier);
 		if (null != holder) {
 			tsWriter.unregister_instance(holder.timeSync, holder.handle);
 		}
@@ -46,31 +50,38 @@ abstract class TimeSyncHandler {
 
 	void handleTimeSync(SampleInfo sampleInfo, HeartBeat heartbeat) {
 
-		boolean b = shouldRespondTo(sampleInfo, heartbeat);
-		if(log.isDebugEnabled())
-			log.debug(uniqueDeviceIdentifier +  " will " + ((b)?"":"not ") + "respond to ping from " + heartbeat.unique_device_identifier);
-
-		if(!b)
+		if(!sampleInfo.valid_data)
 			return;
 
 		TimeSyncHolder holder = sync.get(heartbeat.unique_device_identifier);
-		if(sampleInfo.valid_data) {
-			if(holder == null) {
-				TimeSync ts = new TimeSync();
-				ts.heartbeat_source = heartbeat.unique_device_identifier;
-				ts.heartbeat_recipient = this.uniqueDeviceIdentifier;
-				holder = new TimeSyncHolder(ts, tsWriter.register_instance(ts));
-				sync.put(heartbeat.unique_device_identifier, holder);
-			}
-			holder.timeSync.source_source_timestamp.sec = sampleInfo.source_timestamp.sec;
-			holder.timeSync.source_source_timestamp.nanosec = sampleInfo.source_timestamp.nanosec;
-			holder.timeSync.recipient_receipt_timestamp.sec = sampleInfo.reception_timestamp.sec;
-			holder.timeSync.recipient_receipt_timestamp.nanosec = sampleInfo.reception_timestamp.nanosec;
+		if(holder == null) {
+			TimeSync ts = new TimeSync();
+			ts.heartbeat_source = heartbeat.unique_device_identifier;
+			ts.heartbeat_recipient = this.uniqueDeviceIdentifier;
+			holder = new TimeSyncHolder(ts, tsWriter.register_instance(ts));
+			sync.put(heartbeat.unique_device_identifier, holder);
+		}
+
+		boolean b = shouldRespondTo(holder, heartbeat);
+		if(log.isDebugEnabled())
+			log.debug(uniqueDeviceIdentifier + " will " + ((b) ? "" : "not ") +
+					  "respond to ping from " + heartbeat.unique_device_identifier);
+
+		if(b) {
+			fill(sampleInfo, holder);
+
 			tsWriter.write(holder.timeSync, holder.handle);
 		}
 	}
 
-	abstract boolean shouldRespondTo(SampleInfo sampleInfo, HeartBeat heartbeat);
+	void fill(SampleInfo sampleInfo, TimeSyncHolder holder) {
+		holder.timeSync.source_source_timestamp.sec = sampleInfo.source_timestamp.sec;
+		holder.timeSync.source_source_timestamp.nanosec = sampleInfo.source_timestamp.nanosec;
+		holder.timeSync.recipient_receipt_timestamp.sec = sampleInfo.reception_timestamp.sec;
+		holder.timeSync.recipient_receipt_timestamp.nanosec = sampleInfo.reception_timestamp.nanosec;
+	}
+
+	abstract boolean shouldRespondTo(TimeSyncHolder holder, HeartBeat heartbeat);
 
 	ice.TimeSyncDataWriter shutdown() {
 		for(TimeSyncHolder holder : sync.values()) {
@@ -83,7 +94,7 @@ abstract class TimeSyncHandler {
 	static TimeSyncHandler makeTimeSyncHandler(HandlerType t, String uniqueDeviceIdentifier, TimeSyncDataWriter tsWriter) {
 		switch(t) {
 			case SupervisorAware:
-				return new SupervisorAware(uniqueDeviceIdentifier, tsWriter);
+				return new TypeAware("Supervisor", uniqueDeviceIdentifier, tsWriter);
 			case Chatty:
 			default:
 				return new Chatty(uniqueDeviceIdentifier, tsWriter);
@@ -97,21 +108,44 @@ abstract class TimeSyncHandler {
 			super(uniqueDeviceIdentifier, tsWriter);
 		}
 
-		boolean shouldRespondTo(SampleInfo sampleInfo, HeartBeat heartbeat) {
+		boolean shouldRespondTo(TimeSyncHolder holder, HeartBeat heartbeat) {
 			return true;
 		}
 	}
 
-	private static class SupervisorAware extends TimeSyncHandler {
+	private static class TypeAware extends TimeSyncHandler {
 
-		private static final String TARGET_TYPE="Supervisor";
+		private final String targetType;
 
-		public SupervisorAware(String uniqueDeviceIdentifier, TimeSyncDataWriter tsWriter) {
+		public TypeAware(String targetType, String uniqueDeviceIdentifier, TimeSyncDataWriter tsWriter) {
 			super(uniqueDeviceIdentifier, tsWriter);
+			this.targetType  = targetType;
 		}
 
-		boolean shouldRespondTo(SampleInfo sampleInfo, HeartBeat heartbeat) {
-			return TARGET_TYPE.equalsIgnoreCase(heartbeat.type);
+		boolean shouldRespondTo(TimeSyncHolder holder, HeartBeat heartbeat) {
+			return targetType.equalsIgnoreCase(heartbeat.type);
 		}
 	}
+
+
+	private static class Infrequent extends TimeSyncHandler {
+
+		private final long deltaMs;
+
+		public Infrequent(long deltaMs, String uniqueDeviceIdentifier, TimeSyncDataWriter tsWriter) {
+			super(uniqueDeviceIdentifier, tsWriter);
+			this.deltaMs = deltaMs;
+		}
+
+		boolean shouldRespondTo(TimeSyncHolder holder, HeartBeat heartbeat) {
+			long now = System.currentTimeMillis();
+			return (now-holder.lastSync)>deltaMs;
+		}
+
+		void fill(SampleInfo sampleInfo, TimeSyncHolder holder) {
+			super.fill(sampleInfo, holder);
+			holder.lastSync = System.currentTimeMillis();
+		}
+	}
+
 }
