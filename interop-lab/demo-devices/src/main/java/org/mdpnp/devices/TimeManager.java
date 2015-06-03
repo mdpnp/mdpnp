@@ -148,7 +148,7 @@ public class TimeManager {
                 tsReader = (TimeSyncDataReader) subscriber.create_datareader_with_profile(cfTsTopic, QosProfiles.ice_library, QosProfiles.timesync, null, StatusKind.STATUS_MASK_NONE);
 
 				ice.TimeSyncDataWriter tsWriter = (TimeSyncDataWriter) publisher.create_datawriter_with_profile(tsTopic, QosProfiles.ice_library, QosProfiles.timesync, null, StatusKind.STATUS_MASK_NONE);
-				timeSyncHandler = TimeSyncHandler.makeTimeSyncHandler(TimeSyncHandler.HandlerType.Chatty,
+				timeSyncHandler = TimeSyncHandler.makeTimeSyncHandler(TimeSyncHandler.HandlerType.SupervisorAware,
 						                                              uniqueDeviceIdentifier,
 						                                              tsWriter);
 

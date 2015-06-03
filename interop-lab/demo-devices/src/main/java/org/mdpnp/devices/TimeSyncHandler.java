@@ -5,12 +5,16 @@ import com.rti.dds.subscription.SampleInfo;
 import ice.HeartBeat;
 import ice.TimeSync;
 import ice.TimeSyncDataWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
 abstract class TimeSyncHandler {
+
+	private final Logger log = LoggerFactory.getLogger(TimeSyncHandler.class);
 
 	enum HandlerType { Chatty, SupervisorAware };
 
@@ -43,6 +47,9 @@ abstract class TimeSyncHandler {
 	void handleTimeSync(SampleInfo sampleInfo, HeartBeat heartbeat) {
 
 		boolean b = shouldRespondTo(sampleInfo, heartbeat);
+		if(log.isDebugEnabled())
+			log.debug(uniqueDeviceIdentifier +  " will " + ((b)?"":"not ") + "respond to ping from " + heartbeat.unique_device_identifier);
+
 		if(!b)
 			return;
 
