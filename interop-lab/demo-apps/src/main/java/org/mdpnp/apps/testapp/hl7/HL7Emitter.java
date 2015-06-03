@@ -309,7 +309,7 @@ public class HL7Emitter implements MDSListener, Runnable {
     
     public IdDt getDeviceResource(String udi) {
         IdDt resourceId = deviceUDItoResourceId.get(udi);
-        if(null == resourceId) {
+        if(null == resourceId && fhirClient != null) {
             Device device = new Device();
             device.setIdentifier(Arrays.asList(new IdentifierDt[] {new IdentifierDt(PTID_SYSTEM, udi)}));
             MethodOutcome outcome = fhirClient.update()
@@ -401,31 +401,34 @@ public class HL7Emitter implements MDSListener, Runnable {
     
     Observation fhirObservation(Validation validation) {
         NumericFx data = validation.getNumeric();
+        
+        Observation obs = new Observation();
         final String mrn = deviceUdiToPatientMRN.get(data.getUnique_device_identifier());
         if(null == mrn) {
             log.debug("No known mrn for udi="+data.getUnique_device_identifier());
-            return null;
         }
         
-        IdDt resourceId = getPatientResource(mrn);
+        
+        
+        IdDt resourceId = null == mrn ? null : getPatientResource(mrn);
         if(null == resourceId) {
             log.debug("No known patient resource id for mrn="+mrn);
-            return null;
+        } else {
+            obs.setSubject(new ResourceReferenceDt(resourceId));
         }
         
         IdDt deviceResourceId = getDeviceResource(data.getUnique_device_identifier());
         if(null == deviceResourceId) {
             log.debug("No known device resource id for udi="+data.getUnique_device_identifier());
-            return null;
+        } else {
+            obs.setDevice(new ResourceReferenceDt(deviceResourceId));
         }
         
-        Observation obs = new Observation();
         obs.setValue(new QuantityDt(data.getValue()).setUnits(data.getUnit_id()).setCode(data.getMetric_id()).setSystem("OpenICE"));
 //        obs.addIdentifier().setSystem("urn:info.openice").setValue(uuidFromSequence(sampleInfo.publication_sequence_number).toString());
         obs.setApplies(new DateTimeDt(data.getPresentation_time(), TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
-        obs.setSubject(new ResourceReferenceDt(resourceId));
         obs.setStatus(validation.isValidated()?ObservationStatusEnum.FINAL:ObservationStatusEnum.PRELIMINARY);
-        obs.setDevice(new ResourceReferenceDt(deviceResourceId));
+
         
         return obs;
     }
@@ -437,13 +440,14 @@ public class HL7Emitter implements MDSListener, Runnable {
     public void sendFHIR() throws InterruptedException {
         List<IResource> bundle = new ArrayList<IResource>();
         List<String> jsonStrings = new ArrayList<String>();
-        
         synchronized(recentUpdates) {
             recentUpdates.forEach((x) -> {
                 Observation obs = fhirObservation(x);
-                bundle.add(obs);
-                String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
-                jsonStrings.add(jsonEncoded + "\n");
+                if(null != obs) {
+                    bundle.add(obs);
+                    String jsonEncoded = fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(obs);
+                    jsonStrings.add(jsonEncoded + "\n");
+                }
             });
             log.debug("flushing {} FHIR observations", recentUpdates.size());
             recentUpdates.clear();
@@ -501,6 +505,9 @@ public class HL7Emitter implements MDSListener, Runnable {
             send();
         } catch (InterruptedException e) {
             log.error("Sending", e);
+        } catch (Throwable t) {
+            log.error("Error sending FHIR data", t);
+            stop();
         }
         
     }
