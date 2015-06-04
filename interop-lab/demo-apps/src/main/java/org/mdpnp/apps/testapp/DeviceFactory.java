@@ -468,15 +468,16 @@ public class DeviceFactory {
         }
     }
     
-    public static class GESerialProvider implements DeviceDriverProvider {
+    public static class GESerialProvider extends SpringLoadedDriver {
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Serial, "GE", "Dash", "GESerial");
+            return new DeviceType(ice.ConnectionType.Serial, "GE", "Dash", "GESerial", 1);
         }
 
-        public AbstractDevice create(ApplicationContext context) throws Exception {
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
             EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
-            int domainId = (Integer)context.getBean("domainId");
-            return new DemoGESerial(domainId, eventLoop);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new DemoGESerial(subscriber, publisher, eventLoop);
 
         }        
     }

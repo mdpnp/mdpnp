@@ -34,6 +34,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -42,8 +45,8 @@ public class DemoGESerial extends AbstractDelegatingSerialDevice<GESerial> {
 
     private static final Logger log = LoggerFactory.getLogger(DemoGESerial.class);
 
-    public DemoGESerial(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, GESerial.class);
+    public DemoGESerial(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
+        super(subscriber, publisher,  eventLoop, 1, GESerial.class);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "GE";
         deviceIdentity.model = "Serial Device";
