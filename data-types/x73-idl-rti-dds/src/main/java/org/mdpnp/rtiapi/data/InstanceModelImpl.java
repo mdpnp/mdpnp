@@ -2,12 +2,8 @@ package org.mdpnp.rtiapi.data;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.swing.AbstractListModel;
 
 import org.mdpnp.rtiapi.data.ListenerList.Dispatcher;
 import org.slf4j.Logger;
@@ -18,12 +14,13 @@ import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.Copyable;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.RETCODE_PRECONDITION_NOT_MET;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.DataWriter;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
-import com.rti.dds.subscription.DataReaderImpl;
+import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
@@ -35,16 +32,15 @@ import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.subscription.builtin.SubscriptionBuiltinTopicDataTypeSupport;
 import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 import com.rti.dds.topic.TypeSupport;
 import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 import com.rti.dds.util.Sequence;
 
-@SuppressWarnings("serial")
-public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> extends AbstractListModel<D> implements InstanceModel<D,R> {
+public class InstanceModelImpl<D extends Copyable, R extends DataReader, W extends DataWriter> 
+    implements ReaderInstanceModel<D,R>,
+               WriterInstanceModel<D,W> {
     private final ListenerList<InstanceModelListener<D, R>> listeners = new ListenerList<InstanceModelListener<D,R>>(InstanceModelListener.class);
     private final List<InstanceHandle_t> instances = new java.util.concurrent.CopyOnWriteArrayList<InstanceHandle_t>();
-//            .synchronizedList(new ArrayList<InstanceHandle_t>());
     
     @Override
     public void addListener(InstanceModelListener<D, R> listener) {
@@ -146,9 +142,11 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     
     
     private R reader;
+    private W writer;
     private ReadCondition condition;
 
     private Subscriber subscriber;
+    private Publisher publisher;
     private EventLoop eventLoop;
     private ContentFilteredTopic filteredTopic;
     
@@ -160,6 +158,11 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     @Override
     public R getReader() {
         return reader;
+    }
+    
+    @Override
+    public W getWriter() {
+        return writer;
     }
     
     protected final ThreadLocal<Sequence> sa_seq = new ThreadLocal<Sequence>() {
@@ -229,7 +232,7 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
                             instances.remove(idx);
-                            fireIntervalRemoved(InstanceModelImpl.this, idx, idx);
+                            // TODO Fire removal of element at idx
                         } else {
                             log.warn("Unable to find instance for removal:"+sampleInfo.instance_handle);
                         }
@@ -240,10 +243,10 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
                         fireInstanceSample(d, sampleInfo);
                         int idx = instances.indexOf(sampleInfo.instance_handle);
                         if(idx>=0) {
-                            fireContentsChanged(InstanceModelImpl.this, idx, idx);
+                            // TODO fire element update of element at idx
                         } else {
                             instances.add(new InstanceHandle_t(sampleInfo.instance_handle));
-                            fireIntervalAdded(InstanceModelImpl.this, instances.size()-1, instances.size()-1);
+                            // TODO fire element inserted at instances.size()-1
                         }
                     }
                     lastHandle = sampleInfo.instance_handle;
@@ -264,90 +267,94 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         }
     };
 
-    protected final String topic;
+    protected final String topicName;
+    protected Topic readerTopic, writerTopic;
     protected final Class<D> dataClass;
     protected final Class<? extends TypeSupport> typeSupportClass;
     protected final Class<? extends Sequence> sequenceClass;
     
-    protected final Method getKeyValue, returnLoan, readWCondition, readInstance;
+    protected final Method getKeyValue, returnLoan, readWCondition, readInstance, write;
     
-    public InstanceModelImpl(final String topic, Class<D> dataClass, Class<R> readerClass, Class<? extends TypeSupport> typeSupportClass, Class<? extends Sequence> sequenceClass) {
-        this.topic = topic;
+    private final LogEntityStatus logEntityStatus;
+    
+    public InstanceModelImpl(final String topicName, Class<D> dataClass, Class<R> readerClass, Class<W> writerClass, Class<? extends TypeSupport> typeSupportClass, Class<? extends Sequence> sequenceClass) {
+        this.topicName = topicName;
         this.dataClass = dataClass;
         this.typeSupportClass = typeSupportClass;
         this.sequenceClass = sequenceClass;
+        this.logEntityStatus = new LogEntityStatus(log, topicName);
         try {
             getKeyValue = readerClass.getMethod("get_key_value", dataClass, InstanceHandle_t.class);
             returnLoan = readerClass.getMethod("return_loan", sequenceClass, SampleInfoSeq.class);
             readWCondition = readerClass.getMethod("read_w_condition", sequenceClass, SampleInfoSeq.class, int.class, ReadCondition.class);
             readInstance = readerClass.getMethod("read_instance", sequenceClass, SampleInfoSeq.class, int.class, InstanceHandle_t.class, int.class, int.class, int.class);
+            write = writerClass.getMethod("write", dataClass, InstanceHandle_t.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop) {
-        start(subscriber, eventLoop, null, null, null, null);
+    public void startReader(Subscriber subscriber, EventLoop eventLoop) {
+        startReader(subscriber, eventLoop, null, null, null, null);
     }
 
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile) {
-        start(subscriber, eventLoop, null, null, qosLibrary, qosProfile);
+    public void startReader(Subscriber subscriber, EventLoop eventLoop, String qosLibrary, String qosProfile) {
+        startReader(subscriber, eventLoop, null, null, qosLibrary, qosProfile);
     }
     
     @SuppressWarnings("unchecked")
     @Override
-    public void start(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile) {
+    public void startReader(Subscriber subscriber, EventLoop eventLoop, String expression, StringSeq params, String qosLibrary, String qosProfile) {
         this.subscriber = subscriber;
         this.eventLoop = eventLoop;
 
-        if(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        if(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);
-        } else if(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        } else if(ParticipantBuiltinTopicDataTypeSupport.PARTICIPANT_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);
-        } else if(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        } else if(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);            
-        } else if(TopicBuiltinTopicDataTypeSupport.TOPIC_TOPIC_NAME.equals(topic)) {
-            reader = (R) subscriber.lookup_datareader(topic);
+        } else if(TopicBuiltinTopicDataTypeSupport.TOPIC_TOPIC_NAME.equals(topicName)) {
+            reader = (R) subscriber.lookup_datareader(topicName);
             condition = reader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE,
                     InstanceStateKind.ANY_INSTANCE_STATE);
             eventLoop.addHandler(condition, handler);
         } else {
-        
-            TopicDescription saTopic = TopicUtil.lookupOrCreateTopic(subscriber.get_participant(), topic,
-                    typeSupportClass);
-            if(null != expression) {
-                log.info(getClass()+" Filtered Expression:"+expression+" Filter values:"+params);
-                // TODO time since epoch is a klugey way to get some likelihood of uniqueness
-                filteredTopic = subscriber.get_participant().create_contentfilteredtopic("Filtered"+topic+System.currentTimeMillis(), (Topic) saTopic, expression, params);
-                if(null == filteredTopic) {
-                    log.debug("Unable to create filtered topic " + getClass());
+            if(null == this.readerTopic) {
+                this.readerTopic = TopicUtil.findOrCreateTopic(subscriber.get_participant(), topicName, typeSupportClass);
+                if(null != expression) {
+                    log.info(getClass()+" Filtered Expression:"+expression+" Filter values:"+params);
+                    // TODO time since epoch is a klugey way to get some likelihood of uniqueness
+                    filteredTopic = subscriber.get_participant().create_contentfilteredtopic("Filtered"+topicName+System.currentTimeMillis(), readerTopic, expression, params);
+                    if(null == filteredTopic) {
+                        log.debug("Unable to create filtered topic " + getClass());
+                    }
                 }
             }
             SubscriberQos sQos = new SubscriberQos();
             subscriber.get_qos(sQos);
             sQos.entity_factory.autoenable_created_entities = false;
             subscriber.set_qos(sQos);
-            
-    
-            
+
             if(null == qosProfile || null == qosLibrary) {
-                reader = (R) subscriber.create_datareader(null==filteredTopic?saTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
+                reader = (R) subscriber.create_datareader(null==filteredTopic?readerTopic:filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, 
                         null, StatusKind.STATUS_MASK_NONE);
             } else {
-                reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?saTopic:filteredTopic, qosLibrary,
+                reader = (R) subscriber.create_datareader_with_profile(null==filteredTopic?readerTopic:filteredTopic, qosLibrary,
                         qosProfile, null, StatusKind.STATUS_MASK_NONE);
             }
+            reader.set_listener(logEntityStatus, StatusKind.STATUS_MASK_ALL ^ StatusKind.DATA_AVAILABLE_STATUS);
             sQos.entity_factory.autoenable_created_entities = true;
             subscriber.set_qos(sQos);
     
@@ -361,8 +368,8 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
     }
 
     @Override
-    public void stop() {
-        if(null != eventLoop) {
+    public void stopReader() {
+        if(null != eventLoop && condition != null) {
             eventLoop.removeHandler(condition);
             eventLoop = null;
         }
@@ -372,59 +379,101 @@ public class InstanceModelImpl<D extends Copyable, R extends DataReaderImpl> ext
         }
         if(subscriber != null) {
             if(reader != null) {
-                reader.delete_contained_entities();
-                try {
-                    subscriber.delete_datareader(reader);
-                } catch (RETCODE_PRECONDITION_NOT_MET preCondition) {
-                    // TODO nail this down an awful lot tighter
-                    log.warn("Ignoring an error in delete_datareader", preCondition);
-                }
+                subscriber.delete_datareader(reader);
                 reader = null;
             }
             if(null != filteredTopic) {
                 subscriber.get_participant().delete_contentfilteredtopic(filteredTopic);
                 filteredTopic = null;
             }
+            if(null != readerTopic) {
+                subscriber.get_participant().delete_topic(readerTopic);
+                readerTopic = null;
+            }
             subscriber = null;
         }
     }
 
-    @Override
-    public int getSize() {
+    // TODO eventually this should @Override from a collection API
+    public int size() {
         return instances.size();
     }
 
+    // TODO provide 'get' as part of a collection API
+//    public D getElementAt(int index) {
+//        InstanceHandle_t handle;
+//        // Doesn't seem likely but I've seen it happen
+//        synchronized(instances) {
+//            if(index < instances.size()) {
+//                handle = instances.get(index);
+//            } else {
+//                return null;
+//            }
+//        }
+//        
+//        Sequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
+//        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
+//        R reader = this.reader;
+//        try {
+//            readInstance.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+//            D d = dataClass.newInstance();
+//            d.copy_from(sa_seq.get(sa_seq.size()-1));
+//            return d;
+//        } catch (Exception e) {
+//            if(!(e.getCause() instanceof RETCODE_NO_DATA)) {
+//                log.error("read_instance", e);
+//            }
+//        } finally {
+//            try {
+//                returnLoan.invoke(reader, sa_seq, info_seq);
+//            } catch (Exception e) {
+//                log.error("return_loan", e);
+//            }
+//        }
+//        return null;
+//    }
+    @SuppressWarnings("unchecked")
     @Override
-    public D getElementAt(int index) {
-        InstanceHandle_t handle;
-        // Doesn't seem likely but I've seen it happen
-        synchronized(instances) {
-            if(index < instances.size()) {
-                handle = instances.get(index);
-            } else {
-                return null;
-            }
+    public void startWriter(Publisher publisher, String qosLibrary, String qosProfile) {
+        this.publisher = publisher;
+        
+        if(null == writerTopic) {
+            writerTopic = TopicUtil.findOrCreateTopic(publisher.get_participant(), this.topicName, typeSupportClass);
         }
         
-        Sequence sa_seq = InstanceModelImpl.this.sa_seq1.get();
-        SampleInfoSeq info_seq = InstanceModelImpl.this.info_seq1.get();
-        R reader = this.reader;
-        try {
-            readInstance.invoke(reader, sa_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, handle, SampleStateKind.ANY_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
-            D d = dataClass.newInstance();
-            d.copy_from(sa_seq.get(sa_seq.size()-1));
-            return d;
-        } catch (Exception e) {
-            if(!(e.getCause() instanceof RETCODE_NO_DATA)) {
-                log.error("read_instance", e);
-            }
-        } finally {
-            try {
-                returnLoan.invoke(reader, sa_seq, info_seq);
-            } catch (Exception e) {
-                log.error("return_loan", e);
-            }
+        if(null == qosProfile || null == qosLibrary) {
+            writer = (W) publisher.create_datawriter(writerTopic, Publisher.DATAWRITER_QOS_DEFAULT, 
+                    null, StatusKind.STATUS_MASK_NONE);
+        } else {
+            writer = (W) publisher.create_datawriter_with_profile(writerTopic, qosLibrary,
+                    qosProfile, null, StatusKind.STATUS_MASK_NONE);
         }
-        return null;
+        writer.set_listener(logEntityStatus, StatusKind.STATUS_MASK_ALL);
+    }
+
+    @Override
+    public void startWriter(Publisher publisher) {
+        startWriter(publisher, null, null);
+    }
+
+    @Override
+    public void stopWriter() {
+        if(null != writer) {
+            publisher.delete_datawriter(writer);
+            writer = null;
+        }
+        if(null != writerTopic) {
+            publisher.get_participant().delete_topic(writerTopic);
+            writerTopic = null;
+        }
+    }
+
+    @Override
+    public void write(D data) {
+        try {
+            write.invoke(writer, data, InstanceHandle_t.HANDLE_NIL);
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            log.error("write error", e);
+        }
     }
 }

@@ -19,8 +19,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
+import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.rtiapi.data.EventLoop;
+
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -28,8 +32,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
  */
 public class DemoSerialIntellivue extends AbstractDemoIntellivue {
 
-    public DemoSerialIntellivue(int domainId, EventLoop eventLoop) throws IOException {
-        super(domainId, eventLoop);
+    public DemoSerialIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws IOException {
+        super(subscriber, publisher, eventLoop);
         deviceConnectivity.valid_targets.userData.addAll(SerialProviderFactory.getDefaultProvider().getPortNames());
     }
 
@@ -68,11 +72,11 @@ public class DemoSerialIntellivue extends AbstractDemoIntellivue {
             InetSocketAddress serialSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[0]);
             InetSocketAddress networkSide = new InetSocketAddress(InetAddress.getLoopbackAddress(), ports[1]);
             state(ConnectionState.Connecting, "initializing RS-232 to UDP adapter");
-            adapter = new RS232Adapter(str, serialSide, networkSide, threadGroup, networkLoop);
+            adapter = new RS232Adapter(str, serialSide, networkSide, AbstractDevice.threadGroup, networkLoop);
             connect(serialSide, networkSide);
             return true;
         } catch (IOException e) {
-            state(ConnectionState.Disconnected, "error initializing RS-232 to UDP " + e.getMessage());
+            state(ConnectionState.Terminal, "error initializing RS-232 to UDP " + e.getMessage());
             log.error("error initializing RS-232 to UDP", e);
             return false;
         }

@@ -5,6 +5,9 @@ import javafx.scene.shape.Rectangle;
 
 import org.mdpnp.guis.waveform.WaveformCanvas;
 
+import com.sun.javafx.tk.FontMetrics;
+import com.sun.javafx.tk.Toolkit;
+
 public class JavaFXWaveformCanvas implements WaveformCanvas {
     protected GraphicsContext currentContext;
     protected JavaFXWaveformPane pane;
@@ -62,7 +65,8 @@ public class JavaFXWaveformCanvas implements WaveformCanvas {
     @Override
     public void drawString(String str, double x, double y) {
         double height = extent.getMaxY() - extent.getMinY();
-        currentContext.strokeText(str, x, height-y);
+        FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(currentContext.getFont());
+        currentContext.strokeText(str, x, height-y-fm.getLineHeight());
     }
 
     @Override

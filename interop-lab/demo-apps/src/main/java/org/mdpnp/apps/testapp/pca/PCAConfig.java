@@ -26,7 +26,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -45,14 +44,13 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.fxbeans.InfusionStatusFx;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.MyInfusionStatus;
-import org.mdpnp.apps.testapp.MyInfusionStatusItems;
-import org.mdpnp.apps.testapp.MyInfusionStatusListCell;
+import org.mdpnp.apps.testapp.InfusionStatusFxListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModel.State;
-import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +62,7 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
  */
 public class PCAConfig implements ListChangeListener<Vital> {
 
-    @FXML protected ListView<MyInfusionStatus> pumpList;
+    @FXML protected ListView<InfusionStatusFx> pumpList;
     @FXML protected TextArea warningStatus, infusionStatus;
     @FXML protected ComboBox<Integer> warningsToAlarm;
     @FXML protected ComboBox<VitalSign> vitalSigns;
@@ -76,14 +74,15 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
     
     
-    public PCAConfig set(ScheduledExecutorService executor, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
+    public PCAConfig set(final ScheduledExecutorService executor, final ice.InfusionObjectiveDataWriter objectiveWriter, 
+            final DeviceListModel deviceListModel, final InfusionStatusFxList infusionStatusList) {
         controls.visibleProperty().bind(configure.selectedProperty());
         this.objectiveWriter = objectiveWriter;
-        pumpList.setCellFactory(new Callback<ListView<MyInfusionStatus>, ListCell<MyInfusionStatus>>() {
+        pumpList.setCellFactory(new Callback<ListView<InfusionStatusFx>, ListCell<InfusionStatusFx>>() {
 
             @Override
-            public ListCell<MyInfusionStatus> call(ListView<MyInfusionStatus> param) {
-                return new MyInfusionStatusListCell(deviceListModel);
+            public ListCell<InfusionStatusFx> call(ListView<InfusionStatusFx> param) {
+                return new InfusionStatusFxListCell(deviceListModel);
             }
             
         });
@@ -94,10 +93,11 @@ public class PCAConfig implements ListChangeListener<Vital> {
         warningsToAlarm.setItems(FXCollections.observableList(values));
         vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
         
-        pumpList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MyInfusionStatus>() {
+        
+        pumpList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<InfusionStatusFx>() {
 
             @Override
-            public void changed(ObservableValue<? extends MyInfusionStatus> observable, MyInfusionStatus oldValue, MyInfusionStatus newValue) {
+            public void changed(ObservableValue<? extends InfusionStatusFx> observable, InfusionStatusFx oldValue, InfusionStatusFx newValue) {
                 infusionStatus.textProperty().unbind();
                 if(null != newValue) {
                     infusionStatus.textProperty().bind(Bindings.when(newValue.infusionActiveProperty()).then("ACTIVE").otherwise("INACTIVE"));
@@ -107,7 +107,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
             }
             
         });
-        
+        pumpList.setItems(infusionStatusList);
         return this;
     }
     
@@ -128,7 +128,6 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
 
     private VitalModel model;
-    private InfusionStatusInstanceModel pumpModel;
     @FXML Button add;
     @FXML FlowPane controls;
     @FXML CheckBox configure;
@@ -179,30 +178,8 @@ public class PCAConfig implements ListChangeListener<Vital> {
             }
         }
     }
-
-    public void setModel(VitalModel model, InfusionStatusInstanceModel pumpModel) {
-        this.pumpModel = pumpModel;
-        String selectedUdi = null;
-        MyInfusionStatus selected = pumpList.getSelectionModel().getSelectedItem();
-        if (null != selected) {
-            selectedUdi = selected.getUnique_device_identifier();
-        }
-        ObservableList<MyInfusionStatus> items;
-        if(pumpModel == null) {
-            items = FXCollections.observableArrayList();
-        } else {
-            items = new MyInfusionStatusItems().setModel(pumpModel).getItems();
-        }
-        pumpList.setItems(items);
-        if (null != selectedUdi) {
-            for (int i = 0; i < pumpList.getItems().size(); i++) {
-                MyInfusionStatus status = pumpList.getItems().get(i);
-                if (selectedUdi.equals(status.getUnique_device_identifier())) {
-                    pumpList.getSelectionModel().select(status);
-                }
-            }
-        }
-
+    
+    public void setModel(VitalModel model) {
         if (this.model != null) {
             this.model.removeListener(this);
         }
@@ -221,7 +198,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                    MyInfusionStatus p = pumpList.getSelectionModel().getSelectedItem();
+                    InfusionStatusFx p = pumpList.getSelectionModel().getSelectedItem();
                     if(null != p) {
                         setStop(p, newValue);
                     }
@@ -258,7 +235,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
         
     }
 
-    public void setStop(MyInfusionStatus status, boolean stop) {
+    public void setStop(InfusionStatusFx status, boolean stop) {
         ice.InfusionObjective obj = new ice.InfusionObjective();
         obj.requestor = "ME";
         obj.unique_device_identifier = status.getUnique_device_identifier();

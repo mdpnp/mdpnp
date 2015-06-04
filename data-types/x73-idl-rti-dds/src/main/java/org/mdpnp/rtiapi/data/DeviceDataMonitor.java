@@ -39,9 +39,9 @@ public class DeviceDataMonitor {
         return udi;
     }
 
-    public void startAndWait(InstanceModel<?, ?> instanceModel, Subscriber subscriber, EventLoop eventLoop, String identity_exp, StringSeq identity, Duration_t waitTime, String profile) {
+    public void startAndWait(ReaderInstanceModel<?, ?> instanceModel, Subscriber subscriber, EventLoop eventLoop, String identity_exp, StringSeq identity, Duration_t waitTime, String profile) {
         try {
-            instanceModel.start(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, profile);
+            instanceModel.startReader(subscriber, eventLoop, identity_exp, identity, QosProfiles.ice_library, profile);
 //            instanceModel.getReader().wait_for_historical_data(waitTime);
         } catch(RETCODE_TIMEOUT timeout) {
             log.warn("Non-fatal timed out waiting " + waitTime.sec + " seconds and " + waitTime.nanosec + " nanoseconds for historical " + instanceModel.getReader().get_topicdescription().get_name());
@@ -73,11 +73,11 @@ public class DeviceDataMonitor {
 
     
     public void stop() {
-        idModel.stop();
-        connModel.stop();
-        numModel.stop();
-        saModel.stop();
-        isModel.stop();
+        idModel.stopReader();
+        connModel.stopReader();
+        numModel.stopReader();
+        saModel.stopReader();
+        isModel.stopReader();
     }
     
     public DeviceConnectivityInstanceModel getDeviceConnectivityModel() {

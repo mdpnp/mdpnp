@@ -1,34 +1,70 @@
 package org.mdpnp.devices;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
-public class TimeManagerFactory implements FactoryBean<TimeManager> {
+public class TimeManagerFactory implements FactoryBean<TimeManager>, DisposableBean {
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(TimeManagerFactory.class);
 
     private TimeManager instance;
 
-    private final EventLoop eventLoop;
-    private final Subscriber subscriber;
-    private final Publisher publisher;
-    private final String uniqueDeviceIdentifier;
-    private final String type;
+    private ScheduledExecutorService executor;
+    private EventLoop eventLoop;
+    private Subscriber subscriber;
+    private Publisher publisher;
+    private String uniqueDeviceIdentifier;
+    private String type;
 
+    public EventLoop getEventLoop() {
+        return eventLoop;
+    }
+    public void setEventLoop(EventLoop eventLoop) {
+        this.eventLoop = eventLoop;
+    }
+    public ScheduledExecutorService getExecutor() {
+        return executor;
+    }
+    public void setExecutor(ScheduledExecutorService executor) {
+        this.executor = executor;
+    }
+    public Publisher getPublisher() {
+        return publisher;
+    }
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
+    }
+    public Subscriber getSubscriber() {
+        return subscriber;
+    }
+    public void setSubscriber(Subscriber subscriber) {
+        this.subscriber = subscriber;
+    }
+    public String getType() {
+        return type;
+    }
+    public void setType(String type) {
+        this.type = type;
+    }
+    public void setUniqueDeviceIdentifier(String uniqueDeviceIdentifier) {
+        this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
+    }
+    public String getUniqueDeviceIdentifier() {
+        return uniqueDeviceIdentifier;
+    }
+    
     @Override
     public TimeManager getObject() throws Exception {
         if(instance == null) {
-            instance = new TimeManager(publisher, subscriber, uniqueDeviceIdentifier, type);
-            eventLoop.doLater(new Runnable() {
-                @Override
-                public void run() {
-                    instance.start();
-                }
-            });
+            instance = new TimeManager(executor, eventLoop, publisher, subscriber, uniqueDeviceIdentifier, type);
         }
         return instance;
     }
@@ -42,20 +78,22 @@ public class TimeManagerFactory implements FactoryBean<TimeManager> {
     public boolean isSingleton() {
         return true;
     }
+    
+    public TimeManagerFactory() {
+    }
 
-    public TimeManagerFactory(final EventLoop eventLoop, final Publisher publisher, 
-            final Subscriber subscriber, final String uniqueDeviceIdentifier, 
-            final String type) {
+    public TimeManagerFactory(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier,
+            String type) {
+        this.executor = executor;
         this.eventLoop = eventLoop;
         this.publisher = publisher;
         this.subscriber = subscriber;
         this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
         this.type = type;
     }
-
-    public void stop() {
+    @Override
+    public void destroy() throws Exception {
         if(instance != null) {
-            log.info("Shutting down the TimeManager");
             instance.stop();
         }
     }

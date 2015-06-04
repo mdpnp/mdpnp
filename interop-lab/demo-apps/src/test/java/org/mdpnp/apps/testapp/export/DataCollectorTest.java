@@ -1,13 +1,10 @@
 package org.mdpnp.apps.testapp.export;
 
 
-import com.rti.dds.subscription.SampleInfo;
-import ice.Numeric;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.junit.Test;
 
 public class DataCollectorTest {
 
@@ -17,8 +14,7 @@ public class DataCollectorTest {
         SimpleDateFormat dateFormat = DataCollector.dateFormats.get();
         Date d0 = dateFormat.parse("20150203.235809.985-0500");
 
-        SampleInfo si = new SampleInfo();
-        Value v = DataCollector.toValue(si, "D0", "M0", 0, d0.getTime(),  13.31);
+        Value v = DataCollector.toValue("D0", "M0", 0, d0.getTime(),  13.31);
 //        Assert.assertEquals("Invalid values for sec",      v.getNumeric().device_time.sec,     1423025889);
 //        Assert.assertEquals("Invalid values for nanonsec", v.getNumeric().device_time.nanosec, 985000000);
 

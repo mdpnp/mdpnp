@@ -1,0 +1,59 @@
+.label {
+  /* -fx-font-size: 20pt; */
+}
+
+.composite {
+    /*-fx-background-color: black;*/
+    /*-fx-text-fill:#EEEEEE;*/
+}
+
+.parameter {
+    -fx-font-size: 20pt;
+}
+
+.pulse-oximeter-panel {
+  -fx-background-color: black;
+}
+.electro-cardiogram-panel {
+  -fx-background-color: black;
+}
+.ventilator-panel {
+  -fx-background-color: black;
+}
+.multi-pulse-oximeter-panel {
+  -fx-background-color: black;
+}
+.invasive-blood-pressure-panel {
+  -fx-background-color: black;
+}
+.blood-pressure-panel {
+  -fx-background-color: black;
+}
+
+.temperature-probe-panel {
+  -fx-background-color: black;
+}
+
+
+.pulse-oximeter-panel .label {
+  -fx-text-fill: cyan;
+}
+.electro-cardiogram-panel .label {
+  -fx-text-fill:green;
+}
+.ventilator-panel .label {
+  -fx-text-fill:white;
+}
+.multi-pulse-oximeter-panel .label {
+  -fx-text-fill: cyan;
+}
+.invasive-blood-pressure-panel .label {
+  -fx-text-fill: red;
+}
+.blood-pressure-panel .label {
+  -fx-text-fill: magenta;
+}
+
+.temperature-probe-panel .label {
+  -fx-text-fill: yellow;
+}

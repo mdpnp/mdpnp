@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,8 +31,11 @@ import org.slf4j.LoggerFactory;
 public class SerialProviderFactory {
 
     private static SerialProvider defaultProvider;
-    private static final String[] DEFAULT_PROVIDERS = new String[] { "org.mdpnp.data.serial.PureJavaCommSerialProvider",
-            "org.mdpnp.devices.serial.TCPSerialProvider" };
+
+    private static final String[] DEFAULT_PROVIDERS = new String[] {
+            "org.mdpnp.data.serial.PureJavaCommSerialProvider",
+            "org.mdpnp.devices.serial.TCPSerialProvider"
+    };
     private static final String SYSTEM_PROPERTY = "org.mdpnp.data.serial.SerialProviderFactory.defaultProvider";
 
     public static final void setDefaultProvider(SerialProvider serialProvider) {
@@ -55,38 +59,56 @@ public class SerialProviderFactory {
         }
     }
 
-    public static final SerialProvider getDefaultProvider() {
+    public static SerialProvider getDefaultProvider() {
         if (null == defaultProvider) {
-            List<String> candidates = new ArrayList<String>();
+            defaultProvider = locateDefaultProvider();
+        }
+        return defaultProvider;
+    }
 
-            String sysProp = System.getProperty(SYSTEM_PROPERTY);
+    static SerialProvider locateDefaultProvider() {
 
-            if (sysProp != null) {
-                candidates.add(sysProp);
+      List<String> candidates = new ArrayList<>();
+
+      String sysProp = System.getProperty(SYSTEM_PROPERTY);
+
+      if (sysProp != null) {
+        candidates.add(sysProp);
+      }
+
+      addCandidates(candidates, SerialProviderFactory.class.getResourceAsStream("serial-providers"));
+      addCandidates(candidates, SerialProviderFactory.class.getClassLoader().getResourceAsStream("serial-providers"));
+
+      candidates.addAll(Arrays.asList(DEFAULT_PROVIDERS));
+
+      return locateDefaultProvider(candidates);
+    }
+
+  static SerialProvider locateDefaultProvider(List<String> orig) {
+
+        SerialProvider sp=null;
+        ArrayList<String> candidates = new ArrayList<>(orig);
+        while (null == sp) {
+            if (candidates.isEmpty()) {
+                throw new IllegalStateException("No valid defaultProvider available");
             }
-
-            addCandidates(candidates, SerialProviderFactory.class.getResourceAsStream("serial-providers"));
-            addCandidates(candidates, SerialProviderFactory.class.getClassLoader().getResourceAsStream("serial-providers"));
-
-            candidates.addAll(Arrays.asList(DEFAULT_PROVIDERS));
-
-            while (null == defaultProvider) {
+            String candidate = null;
+            try {
+                candidate = candidates.remove(0);
+                log.warn("Attempt to load " + candidate);
+                Class clazz = Class.forName(candidate);
+                Constructor<?> constructor = clazz.getConstructor(new Class<?>[0]);
+                sp = (SerialProvider) constructor.newInstance(new Object[0]);
+            } catch (Exception e) {
                 if (candidates.isEmpty()) {
-                    throw new IllegalStateException("No valid defaultProvider available");
-                }
-                String candidate = null;
-                try {
-                    candidate = candidates.remove(0);
-                    defaultProvider = (SerialProvider) Class.forName(candidate).getConstructor(new Class<?>[0]).newInstance(new Object[0]);
-                } catch (Exception e) {
-                    if (candidates.isEmpty()) {
-                        throw new RuntimeException(e);
-                    } else {
-                        log.warn("cannot load candidate SerialProvider " + candidate + "; trying another", e);
-                    }
+                    throw new RuntimeException(e);
+                } else {
+                    log.warn("cannot load candidate SerialProvider " + candidate + "; trying another", e);
                 }
             }
         }
-        return defaultProvider;
+
+        log.warn("Setting defaultProvider to " + sp==null?"null":sp.getClass().getName());
+        return sp;
     }
 }

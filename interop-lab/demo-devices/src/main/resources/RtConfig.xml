@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+    
+    <bean id="domainId" class="java.lang.Integer">
+      <constructor-arg value="${mdpnp.domain}" />
+    </bean>
+
+    <bean id="domainParticipantFactory" class="org.mdpnp.devices.DomainParticipantFactoryFactory">
+    </bean>
+    
+    <bean id="iceQoS" class="org.mdpnp.rtiapi.qos.IceQos" factory-method="loadAndSetIceQos">
+    </bean>
+
+    <!-- dds.discovery.address is optional; pass down null if not specified. -->
+    <bean id="domainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
+        <constructor-arg ref="domainId" />
+        <constructor-arg value="${dds.discovery.peers}" />
+    </bean>
+
+    <bean id="eventLoop" class="org.mdpnp.rtiapi.data.EventLoop">
+    </bean>
+
+    <bean id="eventLoopHandler" class="org.mdpnp.devices.EventLoopHandler" destroy-method="shutdown">
+        <constructor-arg ref="eventLoop"></constructor-arg>
+    </bean>
+
+    <bean id="subscriber" class="org.mdpnp.devices.SubscriberFactory">
+        <constructor-arg ref="domainParticipant"></constructor-arg>
+    </bean>
+
+    <bean id="publisher" class="org.mdpnp.devices.PublisherFactory">
+        <constructor-arg ref="domainParticipant"></constructor-arg>
+    </bean>
+    
+</beans>

@@ -222,13 +222,6 @@ public final class VitalView implements ListChangeListener<Value> {
     @Override
     public void onChanged(javafx.collections.ListChangeListener.Change<? extends Value> c) {
         while(c.next()) {
-            if(c.wasPermutated()) {
-                // what does this mean? indices changed?
-            }
-            if(c.wasUpdated()) {
-                // TODO Rely on property bindings or should the list emit updates?
-                // maybe this represents a "set" operation?
-            }
             for(Value v : c.getRemoved()) {
                 for(Iterator<Node> itr = vitalValues.getChildren().iterator(); itr.hasNext(); ) {
                     if(v.equals(itr.next().getUserData())) {

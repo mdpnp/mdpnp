@@ -1,10 +1,14 @@
 package org.mdpnp.apps.testapp.patient;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Parent;
 
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -20,6 +24,8 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+
 
 /**
  *
@@ -29,7 +35,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
     private static final Logger log = LoggerFactory.getLogger(PatientApplicationFactory.class);
 
     private final AppType appType =
-            new AppType("Patient ID", "NODOA",  PatientApplicationFactory.class.getResource("patient.jpg"), 0.75);
+            new AppType("Patient ID", "NODOA",  PatientApplicationFactory.class.getResource("patient.png"), 0.75, true);
 
     @Override
     public AppType getAppType() {
@@ -58,7 +64,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
                 public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
                     // only care to trap parent close events to kill the child context
                     if(parentContext == contextClosedEvent.getApplicationContext()) {
-                        log.info("PatientApplication handle context shutdown event ");
+                        log.info("Handle parent context shutdown event");
                         ctx.close();
                     }
                 }
@@ -66,6 +72,8 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
             ui = ctx.getBean(Parent.class);
             controller =  ctx.getBean(PatientInfoController.class);
+            ctx.getBean("wildcardDeviceListModel", DeviceListModel.class);
+            ctx.getBean("wildcardTimeManager", TimeManager.class).start();
         }
 
         @Override
@@ -78,8 +86,24 @@ public class PatientApplicationFactory implements IceApplicationProvider {
             return ui;
         }
 
-        public void addDeviceAssociation(Device d , PatientInfo p)  {
+        void addDeviceAssociation(Device d , PatientInfo p)  {
             controller.addDeviceAssociation(d, p);
+        }
+
+        void handleDeviceLifecycleEvent(Device d, boolean p) {
+            controller.handleDeviceLifecycleEvent(d, p);
+        }
+
+        void setConnectHandler(EventHandler<ActionEvent> a) {
+            controller.setConnectHandler(a);
+        }
+
+        PatientInfo getSelectedPatient() {
+            return controller.getSelectedPatient();
+        }
+
+        Device getSelectedDevice() {
+            return controller.getSelectedDevice();
         }
 
         @Override
@@ -99,9 +123,19 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
     }
 
+    public interface EMRFacade {
+        List<PatientInfo> getPatients();
+        boolean createPatient(PatientInfo p);
+
+        void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
+        DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
+    }
+
+
     @SuppressWarnings("serial")
     static class EmbeddedDB extends JDBCDataSource {
         private String schemaDef;
+        private String dataDef;
 
         public EmbeddedDB() {
             super.setUrl("jdbc:hsqldb:mem:test");
@@ -112,15 +146,29 @@ public class PatientApplicationFactory implements IceApplicationProvider {
         public String getSchemaDef() {
             return schemaDef;
         }
-
         public void setSchemaDef(String schemaDef) {
             this.schemaDef = schemaDef;
         }
 
+        public String getDataDef() {
+            return dataDef;
+        }
+        public void setDataDef(String dataDef) {
+            this.dataDef = dataDef;
+        }
+
         public void init() throws Exception
         {
-            if(schemaDef != null) {
-                InputStream is = getClass().getResourceAsStream(schemaDef);
+            load(schemaDef);
+            load(dataDef);
+
+        }
+        void load(String file) throws Exception
+        {
+            if(file != null) {
+                InputStream is = getClass().getResourceAsStream(file);
+                if(is == null)
+                    throw new IllegalArgumentException("Cannot locate on classpath: " + file);
                 Connection conn = getConnection();
                 try {
                     applySchemaFile(conn, is);

@@ -1,0 +1,48 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:        device-adapter
+# Required-Start:
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short Description: OpenICE device adapter
+# Description:       OpenICE device adapter
+### END INIT INFO
+
+export HOME=/home/debian
+export NAME=device-adapter
+export DEVICE_SETTINGS="`cat $HOME/device.this`"
+if [ -e "$HOME/device.id" ]
+then
+  export DEVICE_ID="`cat $HOME/device.id`"
+fi
+
+export ADAPTER_OPTS="-app ICE_Device_Interface $DEVICE_SETTINGS"
+export ADAPTER_SCR=/home/debian/OpenICE/OpenICE.current/bin/OpenICE
+export PIDFILE=/var/run/$NAME.pid
+export OPEN_ICE_OPTS="-Dlog4j.configuration=file:$HOME/log4j.properties -DrandomUDI=$DEVICE_ID"
+
+case "$1" in
+    start)
+  echo -n "Starting $NAME: $ADAPTER_SCR $ADAPTER_OPTS"
+  start-stop-daemon --background --make-pidfile --chuid debian --chdir $HOME --exec $ADAPTER_SCR  --start --pidfile $PIDFILE -- $ADAPTER_OPTS
+  echo "."
+  ;;
+    stop)
+  echo -n "Stopping $NAME: pid at $PIDFILE"
+  start-stop-daemon --stop --chdir $HOME --chuid debian --signal 2 --oknodo --pidfile $PIDFILE
+  echo "."
+  ;;
+    restart)
+  $0 stop
+  $0 start
+  ;;
+    *)
+  echo "Usage: /etc/init.d/device-adapter {start|stop|restart}"
+  exit 1
+  ;;
+esac
+
+exit 0
+
+

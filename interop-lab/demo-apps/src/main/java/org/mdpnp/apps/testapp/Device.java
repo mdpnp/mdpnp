@@ -17,8 +17,6 @@ import ice.DeviceIdentity;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
@@ -31,12 +29,12 @@ import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 
+import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
+import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-import com.rti.dds.infrastructure.Locator_t;
-import com.rti.dds.infrastructure.Property_t;
 
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
@@ -54,6 +52,7 @@ public class Device {
 
     public final static int SHORT_UDI_LENGTH = 20;
 
+    @SuppressWarnings("unused")
     private final static Logger log = LoggerFactory.getLogger(Device.class);
 
     private ObjectProperty<Image> image;
@@ -73,6 +72,44 @@ public class Device {
         this.image.set(image);
     }
 
+    
+    private StringProperty manufacturer;
+    
+    public StringProperty manufacturerProperty() {
+        if(null == manufacturer) {
+            manufacturer = new SimpleStringProperty(this, "manufacturer", "");
+        }
+        return this.manufacturer;
+    }
+
+    public java.lang.String getManufacturer() {
+        return this.manufacturerProperty().get();
+    }
+
+    public void setManufacturer(final java.lang.String manufacturer) {
+        this.manufacturerProperty().set(manufacturer);
+    }
+    
+    private StringProperty model;
+
+    public StringProperty modelProperty() {
+        if(null == model) {
+            model = new SimpleStringProperty(this, "model", "");
+        }
+        return this.model;
+    }
+
+    public java.lang.String getModel() {
+        return this.modelProperty().get();
+    }
+
+    public void setModel(final java.lang.String model) {
+        this.modelProperty().set(model);
+    }
+
+    
+    
+    
     private StringProperty makeAndModel;
 
     public StringProperty makeAndModelProperty() {
@@ -178,16 +215,18 @@ public class Device {
     public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
         if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
+            manufacturerProperty().set(deviceIdentity.manufacturer);
+            modelProperty().set(deviceIdentity.model);
             if (null == deviceIdentity.manufacturer || deviceIdentity.manufacturer.equals(deviceIdentity.model)
                     || "".equals(deviceIdentity.manufacturer)) {
                 makeAndModelProperty().set(deviceIdentity.model);
             } else {
                 makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
-            hostnameProperty().set(getHostname(participantData));
+            hostnameProperty().set(TimeManager.getHostname(participantData));
             operating_systemProperty().set(deviceIdentity.operating_system);
             buildProperty().set(deviceIdentity.build);
-            serial_numberProperty().set(deviceIdentity.build);
+            serial_numberProperty().set(deviceIdentity.serial_number);
             
             Task<Image> task = new Task<Image>() {
                 @Override
@@ -219,42 +258,9 @@ public class Device {
 
     public void setDeviceConnectivity(DeviceConnectivity deviceConnectivity) {
         changeUdi(deviceConnectivity.unique_device_identifier);
+        connectivityStateProperty().set(deviceConnectivity.state);
+        connectivityInfoProperty().set(deviceConnectivity.info);
         connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
-    }
-
-    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < participantData.property.value.size(); i++) {
-            Property_t prop = (Property_t) participantData.property.value.get(i);
-            if ("dds.sys_info.hostname".equals(prop.name)) {
-                sb.append(prop.value).append(" ");
-            }
-        }
-
-        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
-            Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
-            try {
-                InetAddress addr = null;
-                switch (locator.kind) {
-                case Locator_t.KIND_TCPV4_LAN:
-                case Locator_t.KIND_TCPV4_WAN:
-                case Locator_t.KIND_TLSV4_LAN:
-                case Locator_t.KIND_TLSV4_WAN:
-                case Locator_t.KIND_UDPv4:
-                    addr = InetAddress
-                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
-                    break;
-                case Locator_t.KIND_UDPv6:
-                default:
-                    addr = InetAddress.getByAddress(locator.address);
-                    break;
-                }
-                sb.append(addr.getHostAddress()).append(" ");
-            } catch (UnknownHostException e) {
-                 log.error("getting locator address", e);
-            }
-        }
-        return sb.toString();
     }
 
     @Override
@@ -317,4 +323,53 @@ public class Device {
         }
     }
 
+    private ObjectProperty<ice.ConnectionState> connectivityState;
+    private StringProperty connectivityInfo;
+
+    public ObjectProperty<ice.ConnectionState> connectivityStateProperty() {
+        if(null == connectivityState) {
+            connectivityState = new SimpleObjectProperty<ice.ConnectionState>(this, "connectivityState");
+        }
+        return this.connectivityState;
+    }
+
+    public ice.ConnectionState getConnectivityState() {
+        return this.connectivityStateProperty().get();
+    }
+
+    public void setConnectivityState(final ice.ConnectionState connectivityState) {
+        this.connectivityStateProperty().set(connectivityState);
+    }
+
+    public StringProperty connectivityInfoProperty() {
+        if(null == connectivityInfo) {
+            connectivityInfo = new SimpleStringProperty(this, "connectivityInfo", "");
+        }
+        return this.connectivityInfo;
+    }
+
+    public java.lang.String getConnectivityInfo() {
+        return this.connectivityInfoProperty().get();
+    }
+
+    public void setConnectivityInfo(final java.lang.String connectivityInfo) {
+        this.connectivityInfoProperty().set(connectivityInfo);
+    }
+    
+    private ObjectProperty<HeadlessAdapter> headlessAdapter;
+    
+    public ObjectProperty<HeadlessAdapter> headlessAdapterProperty() {
+        if(null == headlessAdapter) {
+            headlessAdapter = new SimpleObjectProperty<>(this, "headlessAdapter", null);
+        }
+        return this.headlessAdapter;
+    }
+    
+    public HeadlessAdapter getHeadlessAdapter() {
+        return this.headlessAdapterProperty().get();
+    }
+    
+    public void setHeadlessAdapter(HeadlessAdapter headlessAdapter) {
+        this.headlessAdapterProperty().set(headlessAdapter);
+    }
 }

@@ -2,70 +2,85 @@ package org.mdpnp.apps.testapp.diag;
 
 import javafx.collections.ObservableList;
 
-import org.mdpnp.apps.testapp.MyAlert;
-import org.mdpnp.apps.testapp.MyAlertItems;
-import org.mdpnp.apps.testapp.MyNumeric;
-import org.mdpnp.apps.testapp.MyNumericItems;
-import org.mdpnp.apps.testapp.MySampleArray;
-import org.mdpnp.apps.testapp.MySampleArrayItems;
-import org.mdpnp.rtiapi.data.AlertInstanceModel;
-import org.mdpnp.rtiapi.data.AlertInstanceModelImpl;
-import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
-import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
-
-import com.rti.dds.subscription.Subscriber;
+import org.mdpnp.apps.fxbeans.AlarmLimitFx;
+import org.mdpnp.apps.fxbeans.AlarmLimitFxList;
+import org.mdpnp.apps.fxbeans.AlertFx;
+import org.mdpnp.apps.fxbeans.AlertFxList;
+import org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFx;
+import org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFxList;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFx;
+import org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFxList;
+import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.testapp.validate.ValidationOracle;
 
 public class Diagnostic {
-    private final Subscriber subscriber;
-    private final EventLoop eventLoop;
-    private final NumericInstanceModel numericModel;
-    private final MyNumericItems numericItems;
-    private final AlertInstanceModel patientAlertModel, technicalAlertModel;
-    private final MyAlertItems patientAlertItems, technicalAlertItems;
-    private final SampleArrayInstanceModel sampleArrayModel;
-    private final MySampleArrayItems sampleArrayItems;
+    private final NumericFxList numerics;
+    private final AlertFxList patientAlerts, technicalAlerts;
+    private final SampleArrayFxList sampleArrays;
+    private final ValidationOracle validationOracle;
+    private final InfusionStatusFxList infusionStatusList;
+    private final AlarmLimitFxList alarmLimits;
+    private final LocalAlarmLimitObjectiveFxList localAlarmLimitObjectives;
+    private final GlobalAlarmLimitObjectiveFxList globalAlarmLimitObjectives;
     
-    public Diagnostic(Subscriber subscriber, EventLoop eventLoop, NumericInstanceModel model) {
-        this.subscriber = subscriber;
-        this.eventLoop = eventLoop;
-        numericModel = model;
-        numericItems = new MyNumericItems().setModel(numericModel);
-        patientAlertModel = new AlertInstanceModelImpl(ice.PatientAlertTopic.VALUE);
-        patientAlertItems = new MyAlertItems().setModel(patientAlertModel);
-        technicalAlertModel = new AlertInstanceModelImpl(ice.TechnicalAlertTopic.VALUE);
-        technicalAlertItems = new MyAlertItems().setModel(technicalAlertModel);
-        sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
-        sampleArrayItems = new MySampleArrayItems().setModel(sampleArrayModel);
+    public Diagnostic(AlertFxList patientAlerts, 
+            AlertFxList technicalAlerts, 
+            NumericFxList numerics, 
+            SampleArrayFxList sampleArrayList, 
+            ValidationOracle validationOracle, 
+            InfusionStatusFxList infusionStatusList,
+            AlarmLimitFxList alarmLimits,
+            LocalAlarmLimitObjectiveFxList localAlarmLimitObjectives,
+            GlobalAlarmLimitObjectiveFxList globalAlarmLimitObjectives) {
+        this.numerics = numerics;
+        this.sampleArrays = sampleArrayList;
+        this.patientAlerts = patientAlerts;
+        this.technicalAlerts = technicalAlerts;
+        this.validationOracle = validationOracle;
+        this.infusionStatusList = infusionStatusList;
+        this.alarmLimits = alarmLimits;
+        this.localAlarmLimitObjectives = localAlarmLimitObjectives;
+        this.globalAlarmLimitObjectives = globalAlarmLimitObjectives;
     }
     
-    public ObservableList<MyNumeric> getNumericModel() {
-        return numericItems.getItems();
+    public ObservableList<NumericFx> getNumericModel() {
+        return numerics;
     }
     
-    public ObservableList<MyAlert> getPatientAlertModel() {
-        return patientAlertItems.getItems();
+    public ObservableList<AlertFx> getPatientAlertModel() {
+        return patientAlerts;
     }
     
-    public ObservableList<MyAlert> getTechnicalAlertModel() {
-        return technicalAlertItems.getItems();
+    public ObservableList<AlertFx> getTechnicalAlertModel() {
+        return technicalAlerts;
     }
     
-    public ObservableList<MySampleArray> getSampleArrayModel() {
-        return sampleArrayItems.getItems();
+    public ObservableList<SampleArrayFx> getSampleArrayModel() {
+        return sampleArrays;
     }
     
-    public void start() {
-        patientAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-        technicalAlertModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
-        sampleArrayModel.start(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.waveform_data);
+    public ValidationOracle getValidationOracle() {
+        return validationOracle;
     }
     
-    public void stop() {
-        patientAlertModel.stop();
-        technicalAlertModel.stop();
-        sampleArrayModel.stop();
+    public InfusionStatusFxList getInfusionStatusList() {
+        return infusionStatusList;
     }
+    
+    public ObservableList<AlarmLimitFx> getAlarmLimitModel() {
+        return alarmLimits;
+    }
+    
+    public ObservableList<GlobalAlarmLimitObjectiveFx> getGlobalAlarmLimitObjectiveModel() {
+        return globalAlarmLimitObjectives;
+    }
+    
+    public ObservableList<LocalAlarmLimitObjectiveFx> getLocalAlarmLimitObjectiveModel() {
+        return localAlarmLimitObjectives;
+    }
+    
 }

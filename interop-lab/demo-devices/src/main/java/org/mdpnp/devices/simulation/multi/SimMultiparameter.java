@@ -15,15 +15,19 @@ package org.mdpnp.devices.simulation.multi;
 import ice.GlobalSimulationObjective;
 
 import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DeviceClock.Reading;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.devices.simulation.co2.SimulatedCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimulatedElectroCardioGram;
+import org.mdpnp.devices.simulation.ibp.SimulatedInvasiveBloodPressure;
 import org.mdpnp.devices.simulation.pulseox.SimulatedPulseOximeter;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -33,8 +37,8 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     
     private static final Logger log = LoggerFactory.getLogger(SimMultiparameter.class);
 
-    protected final InstanceHolder<ice.Numeric> pulse, SpO2, respiratoryRate, etCO2, ecgRespiratoryRate, heartRate;
-    protected InstanceHolder<ice.SampleArray> pleth, co2, i, ii, iii;
+    protected final InstanceHolder<ice.Numeric> pulse, SpO2, respiratoryRate, etCO2, ecgRespiratoryRate, heartRate, systolic, diastolic;
+    protected InstanceHolder<ice.SampleArray> pleth, co2, i, ii, iii, pressure;
 
     private class SimulatedPulseOximeterExt extends SimulatedPulseOximeter {
 
@@ -50,6 +54,21 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
             pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
+    }
+    
+    private class SimulatedInvasiveBloodPressureExt extends SimulatedInvasiveBloodPressure {
+        public SimulatedInvasiveBloodPressureExt(DeviceClock referenceClock) {  
+            super(referenceClock);
+        }
+        
+        @Override
+        protected void receivePressure(Reading sampleTime, int systolic, int diastolic, Number[] waveValues, int frequency) {
+            numericSample(SimMultiparameter.this.systolic, systolic, sampleTime);
+            numericSample(SimMultiparameter.this.diastolic, diastolic, sampleTime);
+            pressure = sampleArraySample(pressure, waveValues, rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, "", 0,
+                    rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
+        }
+        
     }
     
     private class SimulatedCapnometerExt extends SimulatedCapnometer {
@@ -77,7 +96,7 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receiveECG(DeviceClock.Reading sampleTime, Number[] iValues, Number[] iiValues, Number[] iiiValues,
-                                  double heartRateValue, double respiratoryRateValue, int frequency) {
+                                  int heartRateValue, int respiratoryRateValue, int frequency) {
 
             try {
                 // TODO get better numbers in actual millivolts
@@ -99,12 +118,14 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     private final SimulatedElectroCardioGram ecg;
     private final SimulatedPulseOximeter pulseox;
     private final SimulatedCapnometer capnometer;
+    private final SimulatedInvasiveBloodPressure ibp;
 
     @Override
     public boolean connect(String str) {
         pulseox.connect(executor);
         capnometer.connect(executor);
         ecg.connect(executor);
+        ibp.connect(executor);
         return super.connect(str);
     }
 
@@ -113,17 +134,19 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         pulseox.disconnect();
         capnometer.disconnect();
         ecg.disconnect();
+        ibp.disconnect();
         super.disconnect();
     }
 
-    public SimMultiparameter(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimMultiparameter(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         DeviceClock referenceClock = getClockProvider();
 
         ecg = new SimulatedElectroCardioGramExt(referenceClock);
         pulseox = new SimulatedPulseOximeterExt(referenceClock);
         capnometer = new SimulatedCapnometerExt(referenceClock);
+        ibp = new SimulatedInvasiveBloodPressureExt(referenceClock);
 
         pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "");
         SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "");
@@ -133,6 +156,9 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
 
         ecgRespiratoryRate = createNumericInstance(rosetta.MDC_TTHOR_RESP_RATE.VALUE, "");
         heartRate = createNumericInstance(rosetta.MDC_ECG_HEART_RATE.VALUE, "");
+        
+        systolic = createNumericInstance(rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, "");
+        diastolic = createNumericInstance(rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, "");
 
         deviceIdentity.model = "Multiparameter (Simulated)";
         writeDeviceIdentity();
@@ -148,18 +174,32 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
         // Currently the super ctor registers for this callback; so pulseox might not yet be initialized
-        if (obj != null && pulseox != null) {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
-                pulseox.setTargetHeartRate((double) obj.value);
+        if (obj != null && pulseox != null && capnometer != null && ecg != null && pressure != null) {
+            Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+            if(rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id)) {
+                ecg.setTargetHeartRate(value);
+                pulseox.setTargetHeartRate(value);
+            } else if(rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
+                ecg.setTargetRespiratoryRate(value);
+                capnometer.setRespirationRate(value);
+            } else if(rosetta.MDC_PRESS_BLD_SYS.VALUE.equals(obj.metric_id)) {
+                ibp.setSystolic(value);
+            } else if(rosetta.MDC_PRESS_BLD_DIA.VALUE.equals(obj.metric_id)) {
+                ibp.setDiastolic(value);
+            } else if(rosetta.MDC_PRESS_BLD_MEAN.VALUE.equals(obj.metric_id)) {
+                // for the future
+            } else if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(obj.metric_id)) {
+                pulseox.setTargetHeartRate(value);
             } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(obj.metric_id)) {
-                pulseox.setTargetSpO2((double) obj.value);
+                pulseox.setTargetSpO2(value);
             } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(obj.metric_id)) {
-                capnometer.setRespirationRate((int) obj.value);
-                ecg.setTargetRespiratoryRate((double) obj.value);
+                capnometer.setRespirationRate(value);
             } else if (rosetta.MDC_AWAY_CO2_ET.VALUE.equals(obj.metric_id)) {
-                capnometer.setEndTidalCO2((int) obj.value);
+                capnometer.setEndTidalCO2(value);
             } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-                ecg.setTargetHeartRate((double) obj.value);
+                ecg.setTargetHeartRate(value);
+            } else if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id)) {
+                ecg.setTargetRespiratoryRate(value);
             }
         }
     }

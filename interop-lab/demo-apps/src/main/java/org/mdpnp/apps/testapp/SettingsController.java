@@ -1,6 +1,12 @@
 package org.mdpnp.apps.testapp;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import ice.ConnectionType;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -13,15 +19,19 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -39,12 +49,14 @@ public class SettingsController {
     @FXML
     ComboBox<DeviceDriverProvider> deviceType;
     @FXML
-    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel;
+    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel, fhirServerLabel;
     @FXML
     GridPane gridPane;
+    @FXML
+    TextField fhirServer;
 
     @FXML
-    ComboBox<String> serialPorts;
+    VBox serialPortsContainer;
 
     @FXML
     TextField addressField;
@@ -57,6 +69,10 @@ public class SettingsController {
     private final ObjectProperty<DeviceDriverProvider> selectedDevice = new SimpleObjectProperty<>(this, "selectedDevice", null);
     private final StringProperty address = new SimpleStringProperty(this, "address", "");
     private final StringProperty domain = new SimpleStringProperty(this, "domain", "");
+    private final StringProperty fhirServerName = new SimpleStringProperty(this, "fhirServerName", "");
+    @FXML ComboBox<ice.ConnectionType> deviceCategory;
+    
+    
     
     public boolean isReady() {
         return ready.get();
@@ -93,8 +109,12 @@ public class SettingsController {
     protected void set(Application app, DeviceDriverProvider dt) {
         switch (app) {
         case ICE_Device_Interface:
+            gridPane.getChildren().remove(fhirServer);
+            gridPane.getChildren().remove(fhirServerLabel);
             if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
+            if(!gridPane.getChildren().contains(deviceCategory)) { gridPane.getChildren().add(deviceCategory); }
             if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
+            if(!gridPane.getChildren().contains(deviceCategoryLabel)) { gridPane.getChildren().add(deviceCategoryLabel); }
 
             ice.ConnectionType selected = null;
             if (dt != null) {
@@ -109,34 +129,37 @@ public class SettingsController {
                     if(!gridPane.getChildren().contains(addressLabel)) { gridPane.getChildren().add(addressLabel); }
                     if(!gridPane.getChildren().contains(addressField)) { gridPane.getChildren().add(addressField); }
                     gridPane.getChildren().remove(serialPortsLabel);
-                    gridPane.getChildren().remove(serialPorts);
+                    gridPane.getChildren().remove(serialPortsContainer);
                 } else {
                     gridPane.getChildren().remove(addressLabel);
                     gridPane.getChildren().remove(addressField);
                     if(!gridPane.getChildren().contains(serialPortsLabel)) { gridPane.getChildren().add(serialPortsLabel); }
-                    if(!gridPane.getChildren().contains(serialPorts)) { gridPane.getChildren().add(serialPorts); }
+                    if(!gridPane.getChildren().contains(serialPortsContainer)) { gridPane.getChildren().add(serialPortsContainer); }
                 }
 
             } else if (ice.ConnectionType.Network.equals(selected)) {
                 if(!gridPane.getChildren().contains(addressLabel)) { gridPane.getChildren().add(addressLabel); }
                 if(!gridPane.getChildren().contains(addressField)) { gridPane.getChildren().add(addressField); }
                 gridPane.getChildren().remove(serialPortsLabel);
-                gridPane.getChildren().remove(serialPorts);
+                gridPane.getChildren().remove(serialPortsContainer);
             } else {
                 gridPane.getChildren().remove(addressLabel);
                 gridPane.getChildren().remove(addressField);
                 gridPane.getChildren().remove(serialPortsLabel);
-                gridPane.getChildren().remove(serialPorts);
+                gridPane.getChildren().remove(serialPortsContainer);
             }
             break;
         case ICE_Supervisor:
-        case ICE_ParticipantOnly:
+            gridPane.getChildren().remove(deviceCategory);
+            gridPane.getChildren().remove(deviceCategoryLabel);
             gridPane.getChildren().remove(deviceType);
             gridPane.getChildren().remove(deviceTypeLabel);
             gridPane.getChildren().remove(addressLabel);
             gridPane.getChildren().remove(addressField);
             gridPane.getChildren().remove(serialPortsLabel);
-            gridPane.getChildren().remove(serialPorts);
+            gridPane.getChildren().remove(serialPortsContainer);
+            if(!gridPane.getChildren().contains(fhirServerLabel)) { gridPane.getChildren().add(fhirServerLabel); }
+            if(!gridPane.getChildren().contains(fhirServer)) { gridPane.getChildren().add(fhirServer); }
             ready.set(true);
             start.set("Start " + app);
             break;
@@ -144,6 +167,10 @@ public class SettingsController {
         currentStage.sizeToScene();
     }
     
+    private Map<ice.ConnectionType, ObservableList<DeviceDriverProvider>> deviceTypesByCategory = new HashMap<>();
+    @FXML Label deviceCategoryLabel;
+    
+    @SuppressWarnings("unchecked")
     public void set(Configuration conf, boolean showAppsOption, Stage currentStage) {
         
         this.currentStage = currentStage;
@@ -157,10 +184,36 @@ public class SettingsController {
             }
 
         });
+        
+        ObservableList<ice.ConnectionType> categories = FXCollections.observableArrayList();
+        for(int ordinal : ice.ConnectionType.getOrdinals()) {
+            categories.add(ice.ConnectionType.from_int(ordinal));
+        }
 
-        deviceType.setItems(FXCollections.observableArrayList(DeviceFactory.getAvailableDevices()));
+        deviceCategory.setItems(categories);
+       
+        
+        for(DeviceDriverProvider ddp : DeviceFactory.getAvailableDevices()) {
+            ObservableList<DeviceDriverProvider> list = deviceTypesByCategory.get(ddp.getDeviceType().getConnectionType());
+            if(null==list) {
+                list = FXCollections.observableArrayList();
+                deviceTypesByCategory.put(ddp.getDeviceType().getConnectionType(), list);
+            }
+            list.add(ddp);
+        }
+        
+        deviceCategory.valueProperty().addListener(new ChangeListener<ConnectionType>() {
+
+            @Override
+            public void changed(ObservableValue<? extends ConnectionType> observable, ConnectionType oldValue, ConnectionType newValue) {
+                if(null != newValue) {
+                    deviceType.setItems(deviceTypesByCategory.get(newValue));
+                }
+            }
+        });
+        
+        deviceCategory.setValue(ice.ConnectionType.Simulated);
         applications.setItems(FXCollections.observableArrayList(Application.values()));
-        serialPorts.setItems(FXCollections.observableList(SerialProviderFactory.getDefaultProvider().getPortNames()));
 
         if (null != conf) {
             if (null != conf.getApplication()) {
@@ -184,7 +237,13 @@ public class SettingsController {
                         if (ice.ConnectionType.Network.equals(connType)) {
                             this.addressField.setText(conf.getAddress());
                         } else if (ice.ConnectionType.Serial.equals(connType)) {
-                            this.serialPorts.getSelectionModel().select(conf.getAddress());
+                            ObservableList<Node> children = serialPortsContainer.getChildren();
+                            String[] addressElements = conf.getAddress().split(",");
+                            for(int i = 0; i < addressElements.length; i++) {
+                                if(i<children.size() && children.get(i) instanceof ComboBox) {
+                                    ((ComboBox<String>)children.get(i)).getSelectionModel().select(addressElements[i]);
+                                }
+                            }
                             this.addressField.setText(conf.getAddress());
                         }
                     }
@@ -212,6 +271,7 @@ public class SettingsController {
         selectedDevice.bind(deviceType.getSelectionModel().selectedItemProperty());
         domain.bind(domainId.textProperty());
         address.bind(addressField.textProperty());
+        fhirServerName.bind(fhirServer.textProperty());
 
         selectedDevice.addListener(new ChangeListener<DeviceDriverProvider>() {
 
@@ -220,13 +280,25 @@ public class SettingsController {
                     DeviceDriverProvider newValue) {
                 if(null != newValue && ConnectionType.Serial.equals(newValue.getDeviceType().getConnectionType())) {
                     address.unbind();
-                    address.bind(serialPorts.getSelectionModel().selectedItemProperty());
+                    serialPortsContainer.getChildren().clear();
+                    ComboBox<?> serialPorts[] = new ComboBox[newValue.getDeviceType().getConnectionCount()];
+                    List<Object> elements = new ArrayList<Object>(newValue.getDeviceType().getConnectionCount());
+                    
+                    ObservableList<String> portNames = FXCollections.observableList(SerialProviderFactory.getDefaultProvider().getPortNames());
+                    for(int i = 0; i < serialPorts.length; i++) {
+                        serialPorts[i] = new ComboBox<String>(portNames);
+                        serialPortsContainer.getChildren().add(serialPorts[i]);
+                        if(i > 0) {
+                            elements.add(",");
+                        }
+                        elements.add(serialPorts[i].valueProperty());
+                    }
+                    address.bind(Bindings.concat(elements.toArray(new Object[0])));
                 } else {
                     address.unbind();
                     address.bind(addressField.textProperty());
                 }
             }
-            
         });
 
         if(!showAppsOption) {
@@ -241,6 +313,18 @@ public class SettingsController {
         
         set((Application) applications.getSelectionModel().getSelectedItem(), deviceType.getSelectionModel().getSelectedItem());
         
+    }
+
+    public StringProperty fhirServerNameProperty() {
+        return this.fhirServerName;
+    }
+
+    public String getFhirServerName() {
+        return this.fhirServerNameProperty().get();
+    }
+
+    public void setFhirServerName(final String fhirServerName) {
+        this.fhirServerNameProperty().set(fhirServerName);
     }
 
     

@@ -24,6 +24,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -34,19 +39,26 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import org.mdpnp.apps.device.DeviceDataMonitor;
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
+import org.mdpnp.apps.testapp.comboboxfix.SingleSelectionModel;
 import org.mdpnp.apps.testapp.device.DeviceView;
+import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.BuildInfo;
-import org.mdpnp.rtiapi.data.DeviceDataMonitor;
-import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.sun.glass.ui.Screen;
 
 /**
  * Container responsible for discovery and hosting of ICE applications. Its main
@@ -77,8 +89,8 @@ public class IceAppsContainer extends IceApplication {
     private static final Logger log = LoggerFactory.getLogger(IceAppsContainer.class);
 
     @SuppressWarnings("unused")
-    private static IceApplicationProvider.AppType Main = new IceApplicationProvider.AppType("Main Menu", null, (URL) null, 0);
-    private static IceApplicationProvider.AppType Device = new IceApplicationProvider.AppType("Device Info", null, (URL) null, 0);
+    private static IceApplicationProvider.AppType Main = new IceApplicationProvider.AppType("Main Menu", null, (URL) null, 0, false);
+    private static IceApplicationProvider.AppType Device = new IceApplicationProvider.AppType("Device Info", null, (URL) null, 0, false);
 
     DeviceApp driverWrapper = new DeviceApp();
 
@@ -106,12 +118,19 @@ public class IceAppsContainer extends IceApplication {
         Runnable goBackAction = new Runnable() {
             public void run() {
                 try {
+                    panelController.appTitle.setText("");
                     app.stop();
+                    panelController.patients.setVisible(true);
+                    panelController.patientsLabel.setVisible(true);
                 } catch (Exception ex) {
                     log.error("Failed to stop " + appName, ex);
                 }
             }
         };
+        if(app.getDescriptor().isCoordinatorApp()) {
+            panelController.patientsLabel.setVisible(false);
+            panelController.patients.setVisible(false);
+        }
         panelController.back.setVisible(true);
         panelController.content.setCenter(app.getUI());
         panelController.getBack().setOnAction(new GoBackAction(goBackAction));
@@ -171,9 +190,11 @@ public class IceAppsContainer extends IceApplication {
 
         public void start(ApplicationContext context, final Device device) throws IOException {
 
-            final EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
-            final Subscriber subscriber = (Subscriber) context.getBean("subscriber");
-
+            final NumericFxList numericList = context.getBean("numericList", NumericFxList.class);
+            final SampleArrayFxList sampleArrayList = context.getBean("sampleArrayList", SampleArrayFxList.class);
+            final InfusionStatusFxList infusionStatusList = context.getBean("infusionStatusList", InfusionStatusFxList.class);
+            final DeviceListModel deviceListModel = context.getBean("deviceListModel", DeviceListModel.class);
+            
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             ui = loader.load();
             devicePanel = loader.getController();
@@ -182,9 +203,8 @@ public class IceAppsContainer extends IceApplication {
             if (null != deviceMonitor) {
                 deviceMonitor.stop();
             }
-            deviceMonitor = new DeviceDataMonitor(device.getUDI());
+            deviceMonitor = new DeviceDataMonitor(device.getUDI(), deviceListModel, numericList, sampleArrayList, infusionStatusList);
             devicePanel.set(deviceMonitor);
-            deviceMonitor.start(subscriber, eventLoop);
         }
 
         @Override
@@ -206,15 +226,19 @@ public class IceAppsContainer extends IceApplication {
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("OpenICE");
-        primaryStage.setWidth(800);
-        primaryStage.setHeight(600);
+        
+        int visibleWidth  = Screen.getMainScreen().getVisibleWidth();
+        int visibleHeight = Screen.getMainScreen().getVisibleHeight();
+        
+        int width = (int) (0.85 * visibleWidth);
+        int height = (int) (0.85 * visibleHeight);
 
         Scene panelScene = new Scene(panelRoot);
         primaryStage.setOnHiding(new EventHandler<WindowEvent>() {
 
             @Override
             public void handle(WindowEvent event) {
-                final ExecutorService refreshScheduler = (ExecutorService) context.getBean("refreshScheduler");
+                final ExecutorService refreshScheduler = context.getBean("refreshScheduler", ExecutorService.class);
                 refreshScheduler.shutdownNow();
 
                 for (IceApplicationProvider.IceApp a : activeApps.values()) {
@@ -231,14 +255,15 @@ public class IceAppsContainer extends IceApplication {
                     }
                 }
 
+                log.info("All apps closed, stop OK");
                 stopOk.countDown();
             }
 
         });
 
         primaryStage.setScene(panelScene);
-        primaryStage.setWidth(800);
-        primaryStage.setHeight(600);
+        primaryStage.setWidth(width);
+        primaryStage.setHeight(height);
         primaryStage.centerOnScreen();
         primaryStage.show();
     }
@@ -252,24 +277,24 @@ public class IceAppsContainer extends IceApplication {
         stopOk = new CountDownLatch(1);
         context = getConfiguration().createContext("IceAppContainerContext.xml");
         context.registerShutdownHook();
+        final TimeManager timeManager = context.getBean("timeManager", TimeManager.class);
+        final Publisher publisher = context.getBean("publisher", Publisher.class);
+        final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+        final String udi = context.getBean("supervisorUdi", String.class);
+        final MDSHandler mdsConnectivity = context.getBean("mdsConnectivity", MDSHandler.class);
 
-        RtConfig rtConfig = (RtConfig) context.getBean("rtConfig");
-        final Publisher publisher = rtConfig.getPublisher();
-        final Subscriber subscriber = rtConfig.getSubscriber();
-        final String udi = (String) context.getBean("supervisorUdi");
+        final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
+        final EMRFacade emr = context.getBean("emr", EMRFacade.class);
 
-        final DomainParticipant participant = (DomainParticipant) context.getBean("domainParticipant");
-
-        final DeviceListModelImpl nc = (DeviceListModelImpl) context.getBean("deviceListModel");
-        final EventLoop eventLoop = (EventLoop) context.getBean("eventLoop");
-
+        timeManager.start();
+        
         // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();
-        panelController = ((DemoPanel) loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
-                .setModel(participant, eventLoop).set(context);
+        panelController = ((DemoPanel)loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
+                .setModel(emr.getPatients()).setDeviceListModel(nc).setMdsHandler(mdsConnectivity);
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
         // discoveryPeers = new DiscoveryPeers(this);
@@ -290,7 +315,7 @@ public class IceAppsContainer extends IceApplication {
             try {
                 IceApplicationProvider.IceApp a = ap.create(context);
                 activeApps.put(ap.getAppType(), a);
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 // continue as there is nothing mich that can be done,
                 // but print the error out to the log.
                 log.error("Failed to create " + ap.getAppType(), ex);
@@ -306,11 +331,34 @@ public class IceAppsContainer extends IceApplication {
                 return o1.getName().compareTo(o2.getName());
             }
         });
-
+        
+        
         loader = new FXMLLoader(MainMenu.class.getResource("MainMenu.fxml"));
         mainMenuRoot = loader.load();
         final MainMenu mainMenuController = loader.getController();
-
+        
+        final SingleSelectionModel<PatientInfo> selectionModel = panelController.getPatients().getSelectionModel();
+        StringProperty patientNameProperty = new SimpleStringProperty("");
+        patientNameProperty.bind(
+                Bindings.when(selectionModel.selectedItemProperty().isNotNull())
+                .then(selectionModel.selectedItemProperty().asString())
+                .otherwise(""));
+        
+        ListProperty<Device> deviceListProperty = new SimpleListProperty<>(nc.getContents());
+        
+        mainMenuController.getDevicesEmptyText().textProperty().bind(
+                Bindings.when(deviceListProperty.emptyProperty())
+                .then(Bindings.concat(
+                        "There are no devices associated with ", 
+                        patientNameProperty, 
+                        ".  Create an ICE Device Adapter connected to a physical medical device or a software simulator and associate that device with ", patientNameProperty, " using the Patient ID application."))
+                .otherwise(""));
+        mainMenuController.devicesLabel.textProperty().bind(
+                Bindings.when(patientNameProperty.isEmpty())
+                .then("Devices")
+                .otherwise(Bindings.concat("Devices assigned to ", patientNameProperty)));
+        
+        
         mainMenuController.getAppList().setCellFactory(new AppTypeCellFactory(new EventHandler<MouseEvent>() {
 
             @Override
@@ -320,8 +368,10 @@ public class IceAppsContainer extends IceApplication {
                 final IceApplicationProvider.IceApp app = activeApps.get(appType);
                 if (app != null) {
                     if (app.getUI() != null) {
+                        panelController.appTitle.setText(app.getDescriptor().getName());
                         activateGoBack(app);
                     }
+
                     app.activate(context);
                 }
 
@@ -363,8 +413,8 @@ public class IceAppsContainer extends IceApplication {
         // this will block until the frame is killed
         stopOk.await();
         panelController.stop();
+        // kill the spring context that is owned by this component.
         context.destroy();
-        Platform.exit();
         super.stop();
     }
 }

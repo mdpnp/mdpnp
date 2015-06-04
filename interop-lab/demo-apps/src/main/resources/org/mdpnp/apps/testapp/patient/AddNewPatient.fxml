@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.GridPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/2.2"
+            fx:controller="org.mdpnp.apps.testapp.patient.AddNewPatientController">
+    <center>
+        <GridPane>
+            <children>
+                <Label text="MRN" textAlignment="RIGHT"
+                       GridPane.columnIndex="1"
+                       GridPane.rowIndex="1"/>
+                <TextField fx:id="newPatientMRN"
+                           prefColumnCount="8"
+                           Editable="true"
+                           GridPane.columnIndex="2"
+                           GridPane.rowIndex="1"/>
+                <Label text="First Name"
+                       textAlignment="RIGHT"
+                       GridPane.columnIndex="1"
+                       GridPane.rowIndex="2"/>
+                <TextField fx:id="newPatientFirstName"
+                           prefColumnCount="15" text=""
+                           GridPane.columnIndex="2"
+                           GridPane.rowIndex="2"/>
+                <Label text="Last Name"
+                       textAlignment="RIGHT"
+                       GridPane.columnIndex="1"
+                       GridPane.rowIndex="3"/>
+                <TextField fx:id="newPatientLastName"
+                           prefColumnCount="15" text=""
+                           GridPane.columnIndex="2"
+                           GridPane.rowIndex="3"/>
+                <Label text="Gender" textAlignment="RIGHT"
+                       GridPane.columnIndex="1"
+                       GridPane.rowIndex="4"/>
+                <ComboBox fx:id="newPatientGender"
+                          GridPane.columnIndex="2"
+                          GridPane.rowIndex="4"/>
+                <Label text="DOB" textAlignment="RIGHT"
+                       GridPane.columnIndex="1"
+                       GridPane.rowIndex="5"/>
+                <DatePicker fx:id="newPatientDOB"
+                            GridPane.columnIndex="2"
+                            GridPane.rowIndex="5"/>
+                <Button fx:id="createNewPatient"
+                        text="Create"
+                        onAction="#createNewPatientHandler"
+                        GridPane.columnIndex="1"
+                        GridPane.rowIndex="6"/>
+                <Button onAction="#cancelHandler"
+                        text="Cancel"
+                        GridPane.columnIndex="2"
+                        GridPane.rowIndex="6"/>
+            </children>
+        </GridPane>
+    </center>
+</BorderPane>

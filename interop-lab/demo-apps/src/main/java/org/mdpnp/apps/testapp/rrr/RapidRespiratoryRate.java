@@ -17,12 +17,14 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -34,12 +36,13 @@ import javafx.scene.control.Slider;
 import javafx.util.Callback;
 import javafx.util.Duration;
 
-import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.MySampleArray;
-import org.mdpnp.apps.testapp.MySampleArrayItems;
-import org.mdpnp.apps.testapp.MySampleArrayListCell;
+import org.mdpnp.apps.fxbeans.FilteredList;
+import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.testapp.*;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
 import org.mdpnp.guis.waveform.WaveformCanvas;
@@ -48,10 +51,13 @@ import org.mdpnp.guis.waveform.WaveformSource.WaveformIterator;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
 
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 
 /**
  * @author Jeff Plourde
@@ -59,7 +65,7 @@ import com.rti.dds.subscription.SubscriberQos;
  */
 public class RapidRespiratoryRate implements Runnable {
 
-    @FXML protected ListView<MySampleArray> capnoSources;
+    @FXML protected ListView<SampleArrayFx> capnoSources;
     @FXML protected Slider thresholdSlider;
     @FXML protected CheckBox device;
     @FXML protected JavaFXWaveformPane wavePanel;
@@ -74,8 +80,8 @@ public class RapidRespiratoryRate implements Runnable {
             return "rrr.png";
         }
 
-        public RespiratoryRateDevice(int domainId, EventLoop eventLoop) {
-            super(domainId, eventLoop);
+        public RespiratoryRateDevice(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
+            super(subscriber, publisher, eventLoop);
             deviceIdentity.manufacturer = "";
             deviceIdentity.model = "Respiratory Rate Calc";
             deviceIdentity.serial_number = "1234";
@@ -94,18 +100,18 @@ public class RapidRespiratoryRate implements Runnable {
         }
     }
     protected final DeviceClock clock = new DeviceClock.WallClock();
-    private RespiratoryRateDevice rrDevice;
-    
-    public RapidRespiratoryRate set(final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {
+    private DeviceDriverProvider.DeviceAdapter rrDevice;
+
+    public RapidRespiratoryRate set(final ApplicationContext parentContext, final int domainId, final EventLoop eventLoop, final Subscriber subscriber, final DeviceListModel deviceListModel) {
 //        ((NumberAxis)wavePanel.getXAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).forceZeroInRangeProperty().set(false);
 //        ((NumberAxis)wavePanel.getYAxis()).autoRangingProperty().set(true);
 //        ((NumberAxis)wavePanel.getXAxis()).autoRangingProperty().set(true);
-        capnoSources.setCellFactory(new Callback<ListView<MySampleArray>,ListCell<MySampleArray>>() {
+        capnoSources.setCellFactory(new Callback<ListView<SampleArrayFx>,ListCell<SampleArrayFx>>() {
 
             @Override
-            public ListCell<MySampleArray> call(ListView<MySampleArray> param) {
-                return new MySampleArrayListCell(deviceListModel);
+            public ListCell<SampleArrayFx> call(ListView<SampleArrayFx> param) {
+                return new SampleArrayFxListCell(deviceListModel);
             }
             
         });
@@ -134,20 +140,44 @@ public class RapidRespiratoryRate implements Runnable {
             public void handle(ActionEvent event) {
                 if (device.isSelected()) {
                     if (rrDevice == null) {
-                        rrDevice = new RespiratoryRateDevice(domainId, eventLoop);
-                        // TODO Make this more elegant
-                        List<String> strings = new ArrayList<String>();
-                        SubscriberQos qos = new SubscriberQos();
-                        subscriber.get_qos(qos);
-                        
-                        for(int i = 0; i < qos.partition.name.size(); i++) {
-                            strings.add((String)qos.partition.name.get(i));
+
+                        DeviceDriverProvider.SpringLoadedDriver df = new DeviceDriverProvider.SpringLoadedDriver() {
+                            @Override
+                            public DeviceType getDeviceType() {
+                                return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "RespiratoryRate", "RespiratoryRate", 1);
+                            }
+
+                            @Override
+                            public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+                                EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+                                Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+                                Publisher publisher = context.getBean("publisher", Publisher.class);
+                                return new RespiratoryRateDevice(subscriber, publisher, eventLoop);
+                            }
+                        };
+
+                        try {
+                            rrDevice = df.create((AbstractApplicationContext) parentContext);
+
+                            // TODO Make this more elegant
+                            List<String> strings = new ArrayList<String>();
+                            SubscriberQos qos = new SubscriberQos();
+                            subscriber.get_qos(qos);
+
+                            for (int i = 0; i < qos.partition.name.size(); i++) {
+                                strings.add((String) qos.partition.name.get(i));
+                            }
+
+                            rrDevice.setPartition(strings.toArray(new String[0]));
                         }
-                        rrDevice.setPartition(strings.toArray(new String[0]));
+                        catch(Exception ex) {
+                            throw new RuntimeException("Failed to create a driver", ex);
+                        }
+
                     }
                 } else {
                     if (rrDevice != null) {
-                        rrDevice.shutdown();
+                        rrDevice.stop();
                         rrDevice = null;
                     }
                 }
@@ -155,13 +185,13 @@ public class RapidRespiratoryRate implements Runnable {
             }
             
         });
-        capnoSources.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MySampleArray>() {
+        capnoSources.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<SampleArrayFx>() {
 
             @Override
-            public void changed(ObservableValue<? extends MySampleArray> observable, MySampleArray oldValue, MySampleArray newValue) {
-                
-                SampleArrayInstanceModel model = RapidRespiratoryRate.this.model;
-                if(model != null && newValue != null) {
+            public void changed(ObservableValue<? extends SampleArrayFx> observable, SampleArrayFx oldValue, SampleArrayFx newValue) {
+
+                SampleArrayFxList model = RapidRespiratoryRate.this.model;
+                if (model != null && newValue != null) {
                     ice.SampleArray keyHolder = new ice.SampleArray();
                     model.getReader().get_key_value(keyHolder, newValue.getHandle());
                     source = new SampleArrayWaveformSource(model.getReader(), keyHolder);
@@ -169,18 +199,15 @@ public class RapidRespiratoryRate implements Runnable {
 //                wavePanel.getData().clear();
 //                Series<Number,Number> series = data.getSeries(newValue.getHandle());
 //                wavePanel.getData().add(series);
-                
+
             }
-            
+
         });
    
         return this;
     }
 
     public RapidRespiratoryRate() {
-
-
-//
 //        wavePanel.start();
         executor.scheduleAtFixedRate(new Runnable() {
             public void run() {
@@ -189,36 +216,26 @@ public class RapidRespiratoryRate implements Runnable {
             }
         }, 1000L, 200L, TimeUnit.MILLISECONDS);
     }
-    private SampleArrayInstanceModel model;
-//    private MySampleArrayData data;
+    private SampleArrayFxList model;
+    private ObservableList<SampleArrayFx> filteredModel;
+    
     private SampleArrayWaveformSource source;
     private final WaveformRenderer renderer = new WaveformRenderer();
     private WaveformCanvas canvas;
     private Timeline waveformRender;
     
-    public void setModel(SampleArrayInstanceModel model) {
-        this.model = model;
-//        this.data = new MySampleArrayData(model, 100);
-        
-        String selectedUdi = null;
-        MySampleArray selected = capnoSources.getSelectionModel().getSelectedItem();
-        if (null != selected) {
-            selectedUdi = selected.getUnique_device_identifier();
-        }
-
-        MySampleArrayItems items = new MySampleArrayItems();
-        items.setModel(model);
-        capnoSources.setItems(items.getItems());
-        
-        
-        if (null != selectedUdi && model != null) {
-            for(MySampleArray sa : items.getItems()) {
-                if(selectedUdi.equals(sa.getUnique_device_identifier())) {
-                    capnoSources.getSelectionModel().select(sa);
-                }
+    public void start(SampleArrayFxList sampleArrayList) {
+        this.model = sampleArrayList;
+        filteredModel = new FilteredList<>(sampleArrayList, new Predicate<SampleArrayFx>() {
+            @Override
+            public boolean test(SampleArrayFx t) {
+                return rosetta.MDC_AWAY_CO2.VALUE.equals(t.getMetric_id()) || rosetta.MDC_IMPED_TTHOR.VALUE.equals(t.getMetric_id());
             }
-        }
+            
+        });
+        capnoSources.setItems(filteredModel);
     }
+    
 
 
     private double rr;
@@ -295,7 +312,8 @@ public class RapidRespiratoryRate implements Runnable {
         Platform.runLater(updateLabel);
         //.rrLabel.setText(""+Math.round(rr));
         if (rrDevice != null) {
-            rrDevice.updateRate((float) Math.round(rr));
+            RespiratoryRateDevice impl = (RespiratoryRateDevice)rrDevice.getDevice();
+            impl.updateRate((float) Math.round(rr));
         }
     }
     protected Runnable updateLabel = new Runnable() {
@@ -304,6 +322,7 @@ public class RapidRespiratoryRate implements Runnable {
         }
     };
     public void stop() {
+        model.stop();
         waveformRender.stop();
         executor.shutdownNow();
     }

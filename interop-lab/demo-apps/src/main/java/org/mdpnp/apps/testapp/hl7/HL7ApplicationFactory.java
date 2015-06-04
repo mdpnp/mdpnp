@@ -7,15 +7,17 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
 import org.springframework.context.ApplicationContext;
+
+import ca.uhn.fhir.context.FhirContext;
 
 import com.rti.dds.subscription.Subscriber;
 
 public class HL7ApplicationFactory implements IceApplicationProvider {
     private final IceApplicationProvider.AppType HL7Application =
-            new IceApplicationProvider.AppType("HL7 Exporter", "NOHL7", (URL)HL7ApplicationFactory.class.getResource("hl7.png"), 0.75);
+            new IceApplicationProvider.AppType("HL7 Exporter", "NOHL7", (URL)HL7ApplicationFactory.class.getResource("hl7.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
@@ -26,13 +28,15 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
+        final Subscriber subscriber = parentContext.getBean("subscriber", Subscriber.class);
 
-        final EventLoop eventLoop = (EventLoop)parentContext.getBean("eventLoop");
+        final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
 
-        final NumericInstanceModel numericInstanceModel = (NumericInstanceModel) parentContext.getBean("numericInstanceModel");
+        final ValidationOracle validationOracle = parentContext.getBean("validationOracle", ValidationOracle.class);
+
+        final FhirContext fhirContext = parentContext.getBean("fhirContext", FhirContext.class);
         
-        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, numericInstanceModel);
+        final HL7Emitter emitter = new HL7Emitter(subscriber, eventLoop, validationOracle, fhirContext);
 
         FXMLLoader loader = new FXMLLoader(HL7Application.class.getResource("HL7Application.fxml"));
         
@@ -61,12 +65,13 @@ public class HL7ApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void stop() {
-                emitter.stop();
+                
             }
 
             @Override
             public void destroy() throws Exception {
-                controller.stop();
+                emitter.stop();
+                controller.shutdown();
             }
         };
     }

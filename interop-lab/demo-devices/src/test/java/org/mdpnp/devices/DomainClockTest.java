@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.Instant;
+import java.util.Date;
 
 public class DomainClockTest {
 
@@ -64,7 +65,9 @@ public class DomainClockTest {
 
         DeviceClock.Reading r = new DeviceClock.CombinedReading(ref.instant(), epoch.instant());
 
-        Assert.assertEquals(r.getTime(), 0);
+        Assert.assertEquals("combined reading should return the reference time", r.getTime(), Instant.ofEpochMilli(now));
+        Assert.assertTrue("combined reading must contain device time", r.hasDeviceTime());
+        Assert.assertEquals("invalid value for device time", r.getDeviceTime(), Instant.ofEpochMilli(0));
 
     }
 }

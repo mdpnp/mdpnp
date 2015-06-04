@@ -12,20 +12,24 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
+import java.util.Date;
+
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyFloatProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.Device;
 
 public interface Value {
     ReadOnlyFloatProperty valueProperty();
     float getValue();
     
-    ReadOnlyLongProperty timestampProperty();
-    long getTimestamp();
+    ReadOnlyObjectProperty<Date> timestampProperty();
+    Date getTimestamp();
     
     Device getDevice();
     String getUniqueDeviceIdentifier();
@@ -37,6 +41,7 @@ public interface Value {
     int getInstanceId();
 
     Vital getParent();
+    NumericFx getNumeric();
 
     ReadOnlyBooleanProperty atOrAboveHighProperty();
     boolean isAtOrAboveHigh();
@@ -56,11 +61,11 @@ public interface Value {
     ReadOnlyBooleanProperty atOrOutsideOfCriticalBoundsProperty();
     boolean isAtOrOutsideOfCriticalBounds();
 
-    ReadOnlyBooleanProperty atOrAboveValueMsHighProperty();
-    boolean isAtOrAboveValueMsHigh();
+//    ReadOnlyBooleanProperty atOrAboveValueMsHighProperty();
+//    boolean isAtOrAboveValueMsHigh();
 
-    ReadOnlyBooleanProperty atOrAboveValueMsLowProperty();
-    boolean isAtOrAboveValueMsLow();
+//    ReadOnlyBooleanProperty atOrAboveValueMsLowProperty();
+//    boolean isAtOrAboveValueMsLow();
 
     ReadOnlyBooleanProperty ignoreProperty();
     boolean isIgnore();
@@ -68,11 +73,11 @@ public interface Value {
     ReadOnlyLongProperty ageInMillisecondsProperty();
     long getAgeInMilliseconds();
 
-    void updateFrom(long timestamp, float value);
+//    void updateFrom(long timestamp, float value);
 
-    ReadOnlyLongProperty valueMsBelowLowProperty();
-    long getValueMsBelowLow();
+//    ReadOnlyLongProperty valueMsBelowLowProperty();
+//    long getValueMsBelowLow();
 
-    ReadOnlyLongProperty valueMsAboveHighProperty();
-    long getValueMsAboveHigh();
+//    ReadOnlyLongProperty valueMsAboveHighProperty();
+//    long getValueMsAboveHigh();
 }

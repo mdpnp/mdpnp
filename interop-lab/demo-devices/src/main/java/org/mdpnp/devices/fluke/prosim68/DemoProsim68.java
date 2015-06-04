@@ -12,7 +12,9 @@
  ******************************************************************************/
 package org.mdpnp.devices.fluke.prosim68;
 
+import ice.ConnectionState;
 import ice.GlobalSimulationObjective;
+import ice.GlobalSimulationObjectiveDataReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,16 +34,25 @@ import org.mdpnp.devices.serial.SerialSocket.Parity;
 import org.mdpnp.devices.serial.SerialSocket.StopBits;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
-import org.mdpnp.devices.simulation.GlobalSimulationObjectiveMonitor;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.GlobalSimulationObjectiveInstanceModel;
+import org.mdpnp.rtiapi.data.GlobalSimulationObjectiveInstanceModelImpl;
+import org.mdpnp.rtiapi.data.GlobalSimulationObjectiveInstanceModelListener;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> implements GlobalSimulationObjectiveListener {
+public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> implements GlobalSimulationObjectiveInstanceModelListener {
 
     private final static Logger log = LoggerFactory.getLogger(DemoProsim68.class);
 
@@ -57,23 +68,18 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
         }
     }
 
-    protected final GlobalSimulationObjectiveMonitor monitor;
+    protected final GlobalSimulationObjectiveInstanceModel monitor;
 
-    public DemoProsim68(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, FlukeProSim8.class);
+    public DemoProsim68(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, FlukeProSim8.class);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Fluke";
         deviceIdentity.model = "Prosim 6 / 8";
         writeDeviceIdentity();
 
-        monitor = new GlobalSimulationObjectiveMonitor(this);
-        monitor.register(domainParticipant, eventLoop);
-
-        linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
-            public void run() {
-                pollTime();
-            }
-        }, 4000L, 4000L, TimeUnit.MILLISECONDS);
+        monitor = new GlobalSimulationObjectiveInstanceModelImpl(ice.GlobalSimulationObjectiveTopic.VALUE);
+        monitor.addListener(this);
+        monitor.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
     }
 
     private ScheduledFuture<?> linkIsActive;
@@ -187,60 +193,138 @@ public class DemoProsim68 extends AbstractDelegatingSerialDevice<FlukeProSim8> i
     }
 
     @Override
-    public void shutdown() {
-        monitor.unregister();
-        super.shutdown();
+    public boolean connect(String address) {
+        boolean b = super.connect(address);
+        if(b) {
+            linkIsActive = executor.scheduleAtFixedRate(new Runnable() {
+                public void run() {
+                    pollTime();
+                }
+            }, 4000L, 4000L, TimeUnit.MILLISECONDS);
+        }
+        return b;
     }
 
-    // TODO Bit of a hack.. no full lifecycle implemented for these instances
-    private Integer invasiveSystolic, invasiveDiastolic;
-    private Integer noninvasiveSystolic, noninvasiveDiastolic;
+    @Override
+    public void shutdown() {
+        monitor.stopReader();
+        super.shutdown();
+    }
 
     @Override
     protected String iconResourceName() {
         return "prosim8.png";
     }
+    
+    private static final Number DEFAULT_INCREMENT = 0.01, DEFAULT_MAX_DELTA = 0.01; 
+    
+    private Number 
+        pulseRate = new NumberWithJitter<Double>(60.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        saturation = new NumberWithJitter<Double>(98.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        respRate = new NumberWithJitter<Double>(12.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        invasiveSystolic = new NumberWithJitter<Double>(120.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        invasiveDiastolic = new NumberWithJitter<Double>(80.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        noninvasiveSystolic = new NumberWithJitter<Double>(120.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA),
+        noninvasiveDiastolic = new NumberWithJitter<Double>(80.0, DEFAULT_INCREMENT, DEFAULT_MAX_DELTA);
+    
+    private class EmitData implements Runnable {
 
-    private final void setInvasive() throws IOException {
-        if (null != invasiveSystolic && null != invasiveDiastolic) {
-            getDelegate().invasiveBloodPressureDynamic(1, invasiveSystolic, invasiveDiastolic);
-            getDelegate().invasiveBloodPressureWave(1, Wave.Arterial);
+        @Override
+        public void run() {
+            log.info("Emitting data");
+            try {
+                Number n = pulseRate;
+                if(null != n) {
+                    int x = n.intValue();
+                    getDelegate().normalSinusRhythmAdult(x);
+                    log.info("pulseRate:"+x);
+                }
+                n = saturation;
+                if(null != n) {
+                    getDelegate().saturation(n.intValue());
+                }
+                n = respRate;
+                if(null != n) {
+                    getDelegate().respirationRate(n.intValue());
+                }
+                n = invasiveSystolic;
+                Number o = invasiveDiastolic;
+                if(null != n && null != o) {
+                    getDelegate().invasiveBloodPressureDynamic(1, n.intValue(), o.intValue());
+                    getDelegate().invasiveBloodPressureWave(1, Wave.Arterial);
+                }
+                n = noninvasiveSystolic;
+                o = noninvasiveDiastolic;
+                if(null != n && null != o) {
+                    getDelegate().nonInvasiveBloodPressureDynamic(n.intValue(), o.intValue());
+                }
+            } catch (IOException e) {
+                log.error("Unable to send command", e);
+            }
+            
+        }
+        
+    }
+    private ScheduledFuture<?> emitData;
+    private void startEmitData() {
+        if (null == emitData) {
+            emitData = executor.scheduleWithFixedDelay(new EmitData(), 1000L, 1000L, TimeUnit.MILLISECONDS);
+            log.trace("Scheduled emit data task");
+        } else {
+            log.trace("emit data already scheduled");
         }
     }
-
-    private final void setNoninvasive() throws IOException {
-        if (null != noninvasiveSystolic && null != noninvasiveDiastolic) {
-            getDelegate().nonInvasiveBloodPressureDynamic(noninvasiveSystolic, noninvasiveDiastolic);
+    private void stopEmitData() {
+        if (null != emitData) {
+            emitData.cancel(false);
+            emitData = null;
+            log.trace("Canceled emit data task");
+        } else {
+            log.trace("emit data already canceled");
         }
+    }
+    
+    @Override
+    protected void stateChanged(ConnectionState newState, ConnectionState oldState, String transitionNote) {
+        if (ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
+            startEmitData();
+        }
+        if (!ice.ConnectionState.Connected.equals(newState) && ice.ConnectionState.Connected.equals(oldState)) {
+            stopEmitData();
+        }
+        super.stateChanged(newState, oldState, transitionNote);
     }
 
     @Override
-    public void simulatedNumeric(GlobalSimulationObjective gso) {
-        try {
-            if (rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE.equals(gso.metric_id)) {
-                getDelegate().normalSinusRhythmAdult((int) gso.value);
-            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(gso.metric_id)) {
-                getDelegate().saturation((int) gso.value);
-            } else if (rosetta.MDC_CO2_RESP_RATE.VALUE.equals(gso.metric_id)) {
-                // TODO this isn't really apt since fluke cannot emit CO2 measures
-                getDelegate().respirationRate((int) gso.value);
-            } else if(rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(gso.metric_id)) {
-                getDelegate().respirationRate((int) gso.value);
-            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE.equals(gso.metric_id)) {
-                invasiveDiastolic = (int) gso.value;
-                setInvasive();
-            } else if (rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE.equals(gso.metric_id)) {
-                invasiveSystolic = (int) gso.value;
-                setInvasive();
-            } else if (rosetta.MDC_PRESS_BLD_NONINV_DIA.VALUE.equals(gso.metric_id)) {
-                noninvasiveDiastolic = (int) gso.value;
-                setNoninvasive();
-            } else if (rosetta.MDC_PRESS_BLD_NONINV_SYS.VALUE.equals(gso.metric_id)) {
-                noninvasiveSystolic = (int) gso.value;
-                setNoninvasive();
+    public void instanceAlive(ReaderInstanceModel<GlobalSimulationObjective, GlobalSimulationObjectiveDataReader> model,
+            GlobalSimulationObjectiveDataReader reader, GlobalSimulationObjective data, SampleInfo sampleInfo) {
+    }
+
+    @Override
+    public void instanceNotAlive(ReaderInstanceModel<GlobalSimulationObjective, GlobalSimulationObjectiveDataReader> model,
+            GlobalSimulationObjectiveDataReader reader, GlobalSimulationObjective keyHolder, SampleInfo sampleInfo) {
+    }
+
+    @Override
+    public void instanceSample(ReaderInstanceModel<GlobalSimulationObjective, GlobalSimulationObjectiveDataReader> model,
+            GlobalSimulationObjectiveDataReader reader, GlobalSimulationObjective data, SampleInfo sampleInfo) {
+        if(sampleInfo.valid_data) {
+            
+            if (rosetta.MDC_PULS_RATE.VALUE.equals(data.metric_id)) {
+                pulseRate = GlobalSimulationObjectiveListener.toDoubleNumber(data);
+            } else if (rosetta.MDC_PULS_OXIM_SAT_O2.VALUE.equals(data.metric_id)) {
+                saturation = GlobalSimulationObjectiveListener.toDoubleNumber(data);
+            } else if (rosetta.MDC_RESP_RATE.VALUE.equals(data.metric_id)) {
+                respRate = GlobalSimulationObjectiveListener.toDoubleNumber(data);
+            } else if (rosetta.MDC_PRESS_BLD_SYS.VALUE.equals(data.metric_id)) {
+                invasiveSystolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
+            } else if (rosetta.MDC_PRESS_BLD_DIA.VALUE.equals(data.metric_id)) {
+                invasiveDiastolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
+            } else if (rosetta.MDC_PRESS_CUFF_DIA.VALUE.equals(data.metric_id)) {
+                noninvasiveDiastolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
+            } else if (rosetta.MDC_PRESS_CUFF_SYS.VALUE.equals(data.metric_id)) {
+                noninvasiveSystolic = GlobalSimulationObjectiveListener.toDoubleNumber(data);
             }
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
         }
     }
 }

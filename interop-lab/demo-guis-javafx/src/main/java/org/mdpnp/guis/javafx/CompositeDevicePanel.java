@@ -36,7 +36,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 
 import org.mdpnp.rtiapi.data.DeviceDataMonitor;
-import org.mdpnp.rtiapi.data.InstanceModel;
+import org.mdpnp.rtiapi.data.ReaderInstanceModel;
 import org.mdpnp.rtiapi.data.InstanceModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,19 +94,19 @@ public class CompositeDevicePanel extends BorderPane {
     private final InstanceModelListener<ice.DeviceIdentity, ice.DeviceIdentityDataReader> deviceIdentityListener = new InstanceModelListener<ice.DeviceIdentity, ice.DeviceIdentityDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+        public void instanceAlive(ReaderInstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
                 DeviceIdentity data, SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+        public void instanceNotAlive(ReaderInstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
                 DeviceIdentity keyHolder, SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceSample(InstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
+        public void instanceSample(ReaderInstanceModel<DeviceIdentity, DeviceIdentityDataReader> model, DeviceIdentityDataReader reader,
                 DeviceIdentity data, SampleInfo sampleInfo) {
             Platform.runLater(new Runnable() {
                 public void run() {
@@ -124,18 +124,18 @@ public class CompositeDevicePanel extends BorderPane {
     private final InstanceModelListener<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader> deviceConnectivityListener = new InstanceModelListener<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+        public void instanceAlive(ReaderInstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
                 DeviceConnectivity data, SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+        public void instanceNotAlive(ReaderInstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
                 DeviceConnectivity keyHolder, SampleInfo sampleInfo) {
         }
 
         @Override
-        public void instanceSample(InstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
+        public void instanceSample(ReaderInstanceModel<DeviceConnectivity, DeviceConnectivityDataReader> model, DeviceConnectivityDataReader reader,
                 DeviceConnectivity data, SampleInfo sampleInfo) {
             Platform.runLater(new Runnable() {
                 public void run() {
@@ -149,7 +149,7 @@ public class CompositeDevicePanel extends BorderPane {
     private final InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        public void instanceAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
             if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & sampleInfo.instance_state) && !knownIdentifiers.contains(data.metric_id)) {
                 // avoid reboxing ... also tells us if something is new
                 knownIdentifiers.add(data.metric_id);
@@ -162,13 +162,13 @@ public class CompositeDevicePanel extends BorderPane {
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
+        public void instanceNotAlive(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric keyHolder,
                 SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceSample(InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
+        public void instanceSample(ReaderInstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data, SampleInfo sampleInfo) {
             
         }
         
@@ -177,7 +177,7 @@ public class CompositeDevicePanel extends BorderPane {
     private final InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+        public void instanceAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             if (0 != (InstanceStateKind.ALIVE_INSTANCE_STATE & sampleInfo.instance_state) && !knownIdentifiers.contains(data.metric_id)) {
                 knownIdentifiers.add(data.metric_id);
@@ -187,13 +187,13 @@ public class CompositeDevicePanel extends BorderPane {
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
+        public void instanceNotAlive(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray keyHolder,
                 SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceSample(InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
+        public void instanceSample(ReaderInstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader, SampleArray data,
                 SampleInfo sampleInfo) {
             
         }
@@ -203,7 +203,7 @@ public class CompositeDevicePanel extends BorderPane {
     private final InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader> infusionStatusListener = new InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader>() {
 
         @Override
-        public void instanceAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+        public void instanceAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
                 InfusionStatus data, SampleInfo sampleInfo) {
             // log.info("Pump Status:"+infusionStatus);
             // TODO Jeff, what are you doing?
@@ -214,13 +214,13 @@ public class CompositeDevicePanel extends BorderPane {
         }
 
         @Override
-        public void instanceNotAlive(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+        public void instanceNotAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
                 InfusionStatus keyHolder, SampleInfo sampleInfo) {
             
         }
 
         @Override
-        public void instanceSample(InstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
+        public void instanceSample(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
                 InfusionStatus data, SampleInfo sampleInfo) {
             
         }

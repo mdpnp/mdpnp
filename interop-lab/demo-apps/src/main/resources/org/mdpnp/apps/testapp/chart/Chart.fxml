@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import org.mdpnp.apps.testapp.chart.DateAxis?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.Tooltip?>
+
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.chart.Chart">
+<center>
+      
+</center>
+<right>
+    <Button prefWidth="30.0" BorderPane.alignment="CENTER" fx:id="removeButton">
+    <graphic>
+    <ImageView fitHeight="0.0" fitWidth="25.0" preserveRatio="true">
+    <Image url="@/org/mdpnp/apps/testapp/patient/stop.png"/>
+    </ImageView>
+    </graphic>
+    <tooltip>
+    <Tooltip text="Remove this vital sign"/>
+    </tooltip>
+    </Button>
+</right>
+</BorderPane>
+

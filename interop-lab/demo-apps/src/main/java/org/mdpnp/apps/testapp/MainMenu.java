@@ -21,6 +21,9 @@ import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+
 /**
  * @author Jeff Plourde
  *
@@ -34,6 +37,10 @@ public class MainMenu {
     
     @FXML
     protected GridView<Device> deviceList;
+
+    @FXML Label devicesLabel;
+
+    @FXML Label devicesEmptyText;
 
     public MainMenu setTypes(IceApplicationProvider.AppType[] appTypes) {
         appList.setItems(FXCollections.observableArrayList(appTypes));
@@ -55,5 +62,13 @@ public class MainMenu {
 
     public GridView<Device> getDeviceList() {
         return deviceList;
+    }
+    
+    public Label getDevicesLabel() {
+        return devicesLabel;
+    }
+    
+    public Label getDevicesEmptyText() {
+        return devicesEmptyText;
     }
 }

@@ -1,6 +1,6 @@
 package org.mdpnp.apps.testapp.patient;
 
-import javafx.beans.property.Property;
+import ice.MDSConnectivity;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -10,36 +10,46 @@ import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
+import java.util.List;
 import java.util.function.Predicate;
 
-public class PatientInfoController implements ListChangeListener<Device> {
+public class PatientInfoController implements ListChangeListener<Device>, MDSHandler.Connectivity.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(PatientInfoController.class);
 
     private DeviceListModel deviceListDataModel;
-    private DataSource      jdbcDB;
+    private EMRFacade       emr;
+    private MDSHandler      mdsConnectivity;
 
-    @FXML ComboBox<Device> deviceList;
-    @FXML ComboBox<PatientInfo> patientList;
     @FXML Button connectBtn;
+    @FXML TableView<PatientInfo> patientView;
+    @FXML TableView<Device> deviceView;
 
-    @FXML TableView<DevicePatientAssociation> tableView;
-    @FXML TableColumn<DevicePatientAssociation, String> tableViewActionColumn;
+    @FXML Button createNewPatient;
 
-    protected ObservableList<DevicePatientAssociation> tblModel = FXCollections.observableArrayList();
+    @FXML TableView<DevicePatientAssociation> associationTableView;
+    @FXML TableColumn<DevicePatientAssociation, String> associationTableActionColumn;
+
+    protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
     protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
-    protected ObservableList<PatientInfo> patientListModel = FXCollections.observableArrayList();
 
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
@@ -49,92 +59,65 @@ public class PatientInfoController implements ListChangeListener<Device> {
         deviceListDataModel = dlm;
     }
 
-    public DataSource getJdbcDB() {
-        return jdbcDB;
+    public EMRFacade getEmr() {
+        return emr;
     }
 
-    public void setJdbcDB(DataSource db) {
-        jdbcDB = db;
+    public void setEmr(EMRFacade db) {
+        emr = db;
     }
 
-    protected static class DevicePatientAssociation {
-        private final Device device;
-        private final PatientInfo  patient;
-
-        public DevicePatientAssociation(final Device d, PatientInfo p) {
-            device = d;
-            patient = p;
-        }
-
-        public Property<String> deviceNameProperty() {
-            return device.makeAndModelProperty();
-        }
-        public String getDeviceName() {
-            return device.makeAndModelProperty().getValue();
-        }
-        public Property<String> patientIdentifierProperty() {
-            return patient.patientNameProperty();
-        }
-        public String getPatientIdentifier() {
-            return patient.getPatientName();
-        }
-        public Property<String> deviceIdentifierProperty() {
-            return device.serial_numberProperty();
-        }
+    public MDSHandler getMdsConnectivity() {
+        return mdsConnectivity;
     }
 
+    public void setMdsConnectivity(MDSHandler mdsConnectivity) {
+        this.mdsConnectivity = mdsConnectivity;
+    }
+
+    /**
+     * UI callback from the table when row is selected.
+     * @param oldValue
+     * @param newValue
+     */
     void onAssociationSelected(DevicePatientAssociation oldValue, DevicePatientAssociation newValue)
     {
         /*
         if(oldValue != null) {
             uniqueDeviceIdentifier.textProperty().unbindBidirectional(oldValue.deviceIdentifierProperty());
-            patientIdentifier.textProperty().unbindBidirectional(oldValue.patientNameProperty());
+            patientIdentifier.textProperty().unbindBidirectional(oldValue.lastNameProperty());
             patientName.textProperty().unbindBidirectional(oldValue.patientIdentifierProperty());
         }
         
         uniqueDeviceIdentifier.textProperty().bindBidirectional(newValue.deviceIdentifierProperty());
-        patientIdentifier.textProperty().bindBidirectional(newValue.patientNameProperty());
+        patientIdentifier.textProperty().bindBidirectional(newValue.lastNameProperty());
         patientName.textProperty().bindBidirectional(newValue.patientIdentifierProperty());
         */
     }
 
 
     public void removeDeviceAssociation(DevicePatientAssociation assoc)  {
-        // TDB
-        tblModel.remove(assoc);
-        deviceListModel.add(assoc.device);
+        emr.deleteDevicePatientAssociation(assoc);
+        associationModel.remove(assoc);
+        deviceListModel.add(assoc.getDevice());
     }
 
-    public void addDeviceAssociation(Device d, PatientInfo p) {
-        DevicePatientAssociation assoc = persist(d, p);
-        tblModel.add(assoc);
+    void addDeviceAssociation(Device d, PatientInfo p) {
+        DevicePatientAssociation assoc = associate(d, p);
+        associationModel.add(assoc);
         deviceListModel.remove(d);
     }
 
-    // TDB
-    private DevicePatientAssociation persist(Device d, PatientInfo p)  {
-    /*
-    /*
-        conn = createConnection();
-        if(conn != null)
-            ps = conn.prepareStatement("INSERT INTO VITAL_VALUES (DEVICE_ID, METRIC_ID, INSTANCE_ID, TIME_TICK, VITAL_VALUE) VALUES(?,?,?,?,?)");
-        return conn != null;
+    private DevicePatientAssociation associate(Device d, PatientInfo p)  {
 
+        DevicePatientAssociation dpa = emr.updateDevicePatientAssociation(new DevicePatientAssociation(d, p));
 
-        if(ps != null) {
-            ps.setString   (1, value.getUniqueDeviceIdentifier());
-            ps.setString   (2, value.getMetricId());
-            ps.setInt      (3, value.getInstanceId());
-            ps.setTimestamp(4, new Timestamp(value.getTimestamp()));
-            ps.setDouble   (5, value.getValue());
+        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
+        mds.unique_device_identifier = d.getUDI();
+        mds.partition = "MRN="+p.getMrn();
+        mdsConnectivity.publish(mds);
 
-            ps.execute();
-
-            conn.commit();
-        }
-        */
-
-        return new DevicePatientAssociation(d, p);
+        return dpa;
     }
 
     public void handleDeviceLifecycleEvent(Device d, boolean added)  {
@@ -148,35 +131,16 @@ public class PatientInfoController implements ListChangeListener<Device> {
     /**
      * @return true if device already associated with the patient.
      */
-    private boolean inUse(Device d) {
-        FilteredList<DevicePatientAssociation> l = tblModel.filtered(new Predicate<DevicePatientAssociation>() {
+    private boolean inUse(final Device d) {
+        FilteredList<DevicePatientAssociation> l = associationModel.filtered(new Predicate<DevicePatientAssociation>() {
             @Override
             public boolean test(DevicePatientAssociation devicePatientAssociation) {
-                return devicePatientAssociation.device.getUDI().equals(d.getUDI());
+                return devicePatientAssociation.isForDevice(d);
             }
         });
         return l.size()!=0;
     }
 
-    private static class DeviceListCell extends ListCell<Device> {
-        @Override
-        protected void updateItem(Device item, boolean empty) {
-            super.updateItem(item, empty);
-            super.setText(getDisplayTextFor(item));
-        }
-    };
-
-    static String getDisplayTextFor(Device d) {
-        if(d == null || d.equals(NO_DEVICE)) {
-            return "";
-        }
-        else {
-            String mm = d.getMakeAndModel(); if(mm==null)mm="???";
-            String sn = d.getHostname();if(sn==null)sn="???";
-            String s=mm+"/"+sn;
-            return s;
-        }
-    }
     /**
      * A table cell containing a button deleting the row.
      **/
@@ -189,9 +153,9 @@ public class PatientInfoController implements ListChangeListener<Device> {
         DeleteAssociationCell() {
 
             try {
-                ImageView img = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("stop.png")));
-                img.setFitHeight(20.0);
-                img.setFitWidth(20.0);
+                ImageView img = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("disconnect.png")));
+                img.setFitHeight(15.0);
+                img.setFitWidth(15.0);
                 button.setGraphic(img);
             } catch (Exception noImg) {
                 log.error("Failed to load image for disconnect button", noImg);
@@ -245,27 +209,13 @@ public class PatientInfoController implements ListChangeListener<Device> {
             }
         };
 
-        tableViewActionColumn.setCellFactory(columnFac);
+        associationTableActionColumn.setCellFactory(columnFac);
 
-        tableView.setItems(tblModel);
+        associationTableView.setItems(associationModel);
+        deviceView.setItems(deviceListModel);
+        patientView.setItems(emr.getPatients());
 
-        Callback<ListView<Device>,ListCell<Device>> fac = new Callback<ListView<Device>,ListCell<Device>>() {
-            @Override
-            public ListCell<Device> call(ListView<Device> param) {
-                return new DeviceListCell();
-            }
-        };
-
-        deviceListModel.add(0, NO_DEVICE);
-        patientListModel.add(0, NO_PATIENT);
-
-        deviceList.setCellFactory(fac);
-        deviceList.setButtonCell(new DeviceListCell());
-        deviceList.setItems(deviceListModel);
-
-        patientList.setItems(patientListModel);
-
-        tableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
+        associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
             @Override
             public void changed(ObservableValue<? extends DevicePatientAssociation> observable,
                                 DevicePatientAssociation oldValue,
@@ -274,34 +224,119 @@ public class PatientInfoController implements ListChangeListener<Device> {
             }
         });
 
-
         connectBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                Device d = deviceList.getSelectionModel().getSelectedItem();
-                PatientInfo p = patientList.getSelectionModel().getSelectedItem();
-                if (d != NO_DEVICE && p != NO_PATIENT) {
-                    addDeviceAssociation(d, p);
+                Device d = getSelectedDevice();
+                PatientInfo p = getSelectedPatient();
+                if (d != null && p != null) {
+                    proposeDeviceAssociation(d, p);
                 }
             }
         });
 
-        patientListModel.add(new PatientInfo("Homer"));
-        patientListModel.add(new PatientInfo("Marge"));
-        patientListModel.add(new PatientInfo("Bart"));
-        patientListModel.add(new PatientInfo("Lisa"));
-        patientListModel.add(new PatientInfo("Margaret Evelyn"));
+        createNewPatient.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("AddNewPatient.fxml"));
+                    Parent ui = loader.load();
+                    Stage dialog = new Stage(StageStyle.DECORATED);
+                    dialog.setTitle("Add New Patient");
+                    dialog.setAlwaysOnTop(true);
+                    Scene scene = new Scene(ui);
+                    dialog.setScene(scene);
+                    dialog.sizeToScene();
+                    dialog.initModality(Modality.WINDOW_MODAL);
+                    dialog.initOwner(
+                            ((Node)actionEvent.getSource()).getScene().getWindow() );
+
+                    // Set the person into the controller
+                    AddNewPatientController controller = loader.getController();
+                    controller.setDialogStage(dialog);
+
+                    // Show the dialog and wait until the user closes it
+                    dialog.showAndWait();
+
+                    PatientInfo pi = controller.getPatientInfo();
+                    if(pi != null) {
+                        addPatient(pi);
+                    }
+                }
+                catch(Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+
+        mdsConnectivity.addConnectivityListener(this);
     }
 
+    PatientInfo getSelectedPatient() {
+        return patientView.getSelectionModel().getSelectedItem();
+    }
+
+    Device getSelectedDevice() {
+        return deviceView.getSelectionModel().getSelectedItem();
+    }
+
+    void setConnectHandler(EventHandler<ActionEvent> a) {
+        connectBtn.setOnAction(a);
+    }
+
+    public void proposeDeviceAssociation(Device d, PatientInfo p) {
+        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
+        mds.unique_device_identifier = d.getUDI();
+        mds.partition = "MRN="+p.getMrn();
+        mdsConnectivity.publish(mds);
+    }
+
+    private boolean addPatient(PatientInfo pi) {
+        if(emr.createPatient(pi)) {
+            return true;
+        }
+        return false;
+    }
 
     /**
      * called by the IOC framework when the component is about to be shut down.
      * @throws Exception when things go wrong
      */
     public void stop() throws Exception {
+        mdsConnectivity.removeConnectivityListener(this);
         deviceListDataModel.getContents().removeListener(this);
     }
 
+    @Override
+    public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+
+        MDSConnectivity state = (MDSConnectivity)evt.getSource();
+        Device d = findDevice(state.unique_device_identifier, deviceView.getItems());
+        PatientInfo p = findPatient(state.partition, patientView.getItems());
+        if(d != null && p != null)
+            addDeviceAssociation(d, p);
+        else if (d == null) 
+            log.warn("No device found for " + state.unique_device_identifier);
+        else if (p == null)
+            log.warn("No patient found for " + state.partition);
+    }
+
+    private static Device findDevice(String uid, ObservableList<Device> items) {
+        for (Device item : items) {
+            if(item.getUDI().equals(uid))
+                return item;
+        }
+        return null;
+    }
+
+    private static PatientInfo findPatient(String partition, ObservableList<PatientInfo> items) {
+        for (PatientInfo item : items) {
+            if(("MRN="+item.getMrn()).equals(partition))
+                return item;
+        }
+        return null;
+    }
 
     @Override
     public void onChanged(Change<? extends Device> c) {
@@ -319,14 +354,8 @@ public class PatientInfoController implements ListChangeListener<Device> {
         }
     }
 
-    private static boolean isEmpty(String s) {
-        return s == null || s.trim().length() == 0;
-    }
-
     public PatientInfoController() {
         super();
     }
 
-    private static final Device NO_DEVICE = new Device("");
-    private static final PatientInfo NO_PATIENT = new PatientInfo("");
 }

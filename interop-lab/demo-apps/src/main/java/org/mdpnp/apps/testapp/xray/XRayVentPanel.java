@@ -12,20 +12,17 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.xray;
 
-import ice.Numeric;
-import ice.NumericDataReader;
-import ice.SampleArray;
-import ice.SampleArrayDataReader;
-
+import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -42,32 +39,21 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
-import javafx.util.Duration;
 
+import org.mdpnp.apps.fxbeans.FilteredList;
+import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.MyNumeric;
-import org.mdpnp.apps.testapp.MyNumericItems;
-import org.mdpnp.apps.testapp.MyNumericListCell;
-import org.mdpnp.apps.testapp.MySampleArray;
-import org.mdpnp.apps.testapp.MySampleArrayListCell;
+import org.mdpnp.apps.testapp.NumericFxListCell;
 import org.mdpnp.guis.waveform.SampleArrayWaveformSource;
-import org.mdpnp.guis.waveform.WaveformCanvas;
-import org.mdpnp.guis.waveform.WaveformRenderer;
-import org.mdpnp.guis.waveform.javafx.JavaFXWaveformCanvas;
 import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
-import org.mdpnp.rtiapi.data.InstanceModelListener;
-import org.mdpnp.rtiapi.data.NumericInstanceModel;
-import org.mdpnp.rtiapi.data.NumericInstanceModelImpl;
-import org.mdpnp.rtiapi.data.QosProfiles;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModel;
-import org.mdpnp.rtiapi.data.SampleArrayInstanceModelImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.sarxos.webcam.Webcam;
-import com.rti.dds.infrastructure.StringSeq;
-import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 
 /**
@@ -82,10 +68,8 @@ public class XRayVentPanel {
     @FXML protected ComboBox<Webcam> cameraBox;
 
     @FXML protected JavaFXWaveformPane waveformPanel;
-    private final WaveformRenderer renderer = new WaveformRenderer();
-    private WaveformCanvas canvas;
 
-    @FXML protected ListView<MyNumeric> deviceList;
+    @FXML protected ListView<NumericFx> deviceList;
 
     public enum Strategy {
         Manual, Automatic
@@ -102,92 +86,145 @@ public class XRayVentPanel {
     @FXML protected ImageView camImage;
 
     private static final Logger log = LoggerFactory.getLogger(XRayVentPanel.class);
-
-    private NumericInstanceModel startOfBreathModel, deviceNumericModel;
-    private SampleArrayInstanceModel sampleArrayModel;
+    
+    private NumericFxList numericList;
+    private SampleArrayFxList sampleArrayList;
+    private ObservableList<NumericFx> startOfBreathModel, deviceNumericModel;
+    private ObservableList<SampleArrayFx> deviceFlowModel;
+    
     private SampleArrayWaveformSource source;
+    
+    protected void add(SampleArrayFx data) {
+        XRayVentPanel.this.source = new SampleArrayWaveformSource(sampleArrayList.getReader(), data.getHandle());
+        waveformPanel.setSource(source);
+        waveformPanel.start();
+    }
+    
+    protected void remove(SampleArrayFx data) {
+        XRayVentPanel.this.source = new SampleArrayWaveformSource(sampleArrayList.getReader(), data.getHandle());
+        waveformPanel.setSource(null);
+        waveformPanel.stop();
+    }
+    
+    private ListChangeListener<SampleArrayFx> sampleArrayListener = new ListChangeListener<SampleArrayFx>() {
+        @Override
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends SampleArrayFx> c) {
+            while(c.next()) {
+                if(c.wasAdded()) c.getAddedSubList().forEach( (fx) -> add(fx));
+                if(c.wasRemoved()) c.getRemoved().forEach( (fx) -> remove(fx));
+            }
+        }
+    };
+    
+    private final ChangeListener<Number> inspiratoryTimeListener = new ChangeListener<Number>() {
+        @Override
+        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            inspiratoryTime = (long) (1000.0 * newValue.doubleValue());
+        }
+    };
+    
+    private final ChangeListener<Number> periodListener = new ChangeListener<Number>() {
+        @Override
+        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            period = (long) (60000.0 / newValue.doubleValue());
+            log.debug("FrequencyIPPV=" + newValue + " period=" + period);
+        }
+    };
+    
+    private final ChangeListener<Date> startOfBreathListener = new ChangeListener<Date>() {
 
-    private InstanceModelListener<ice.Numeric, ice.NumericDataReader> numericListener = new InstanceModelListener<ice.Numeric, ice.NumericDataReader>() {
-        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data,
-                SampleInfo sampleInfo) {
+        @Override
+        public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
+            log.trace("START_INSPIRATORY_CYCLE");
+            Strategy strategy = (Strategy) XRayVentPanel.this.strategy.getSelectedToggle().getUserData();
+            TargetTime targetTime = (TargetTime) XRayVentPanel.this.targetTime.getSelectedToggle().getUserData();
 
-        };
-
-        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader,
-                Numeric keyHolder, SampleInfo sampleInfo) {
-
-        };
-
-        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<Numeric, NumericDataReader> model, NumericDataReader reader, Numeric data,
-                SampleInfo sampleInfo) {
-            if (sampleInfo.valid_data) {
-                long previousPeriod = period;
-                if (ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(data.metric_id)) {
-                    inspiratoryTime = (long) (1000.0 * data.value);
-                } else if (ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(data.metric_id)) {
-                    period = (long) (60000.0 / data.value);
-                    if (period != previousPeriod) {
-                        log.debug("FrequencyIPPV=" + data.value + " period=" + period);
-                    }
-                } else if (ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(data.metric_id)) {
-                    log.trace("START_INSPIRATORY_CYCLE");
-                    Strategy strategy = (Strategy) XRayVentPanel.this.strategy.getSelectedToggle().getUserData();
-                    TargetTime targetTime = (TargetTime) XRayVentPanel.this.targetTime.getSelectedToggle().getUserData();
-
-                    switch (strategy) {
-                    case Automatic:
-                        autoSync(targetTime);
-                        break;
-                    case Manual:
-                        break;
-                    }
-                }
+            switch (strategy) {
+            case Automatic:
+                autoSync(targetTime);
+                break;
+            case Manual:
+                break;
+            }
+        }
+        
+    };
+    
+    private void add(NumericFx fx) {
+        if(ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().addListener(inspiratoryTimeListener);
+        } else if(ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().addListener(periodListener);
+        } else if(ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(fx.getMetric_id())) {
+            fx.source_timestampProperty().addListener(startOfBreathListener);
+        }
+    }
+    
+    private void remove(NumericFx fx) {
+        if(ice.MDC_TIME_PD_INSPIRATORY.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().removeListener(inspiratoryTimeListener);
+        } else if(ice.MDC_VENT_TIME_PD_PPV.VALUE.equals(fx.getMetric_id())) {
+            fx.valueProperty().removeListener(periodListener);
+        } else if(ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(fx.getMetric_id())) {
+            fx.source_timestampProperty().removeListener(startOfBreathListener);
+        }
+    }
+    
+    private ListChangeListener<NumericFx> numericListener = new ListChangeListener<NumericFx>() {
+        @Override
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends NumericFx> c) {
+            while(c.next()) {
+                if(c.wasAdded()) c.getAddedSubList().forEach((fx) -> add(fx));
+                if(c.wasRemoved()) c.getRemoved().forEach((fx) -> remove(fx));
             }
         };
     };
-
-    private InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader> sampleArrayListener = new InstanceModelListener<ice.SampleArray, ice.SampleArrayDataReader>() {
-        public void instanceAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
-                SampleArray data, SampleInfo sampleInfo) {
-            if (sampleInfo.valid_data) {
-                if (rosetta.MDC_FLOW_AWAY.VALUE.equals(data.metric_id)) {
-                    XRayVentPanel.this.source = new SampleArrayWaveformSource(reader, data);
-                }
-            }
-        };
-
-        public void instanceNotAlive(org.mdpnp.rtiapi.data.InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
-                SampleArray keyHolder, SampleInfo sampleInfo) {
-
-        };
-
-        public void instanceSample(org.mdpnp.rtiapi.data.InstanceModel<SampleArray, SampleArrayDataReader> model, SampleArrayDataReader reader,
-                SampleArray data, SampleInfo sampleInfo) {
-
-        };
-    };
-
-    public void changeSource(String source, Subscriber subscriber, EventLoop eventLoop) {
+    
+    public void changeSource(final String source) {
         this.source = null;
-        deviceNumericModel.stop();
-        sampleArrayModel.stop();
-
-        StringSeq params = new StringSeq();
-        params.add("'" + rosetta.MDC_FLOW_AWAY.VALUE + "'");
-        sampleArrayModel.addListener(sampleArrayListener);
-        sampleArrayModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.waveform_data);
-        params = new StringSeq();
-        params.add("'" + source + "'");
+        
+        if(null != deviceNumericModel) {
+            deviceNumericModel.removeListener(numericListener);
+        }
+        deviceNumericModel = new FilteredList<>(numericList, new Predicate<NumericFx>() {
+            @Override
+            public boolean test(NumericFx t) {
+                return source.equals(t.getUnique_device_identifier());
+            }
+        });
         deviceNumericModel.addListener(numericListener);
-        deviceNumericModel.start(subscriber, eventLoop, "unique_device_identifier = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
+        deviceNumericModel.forEach((fx)->add(fx));
+
+        if(null != deviceFlowModel) {
+            deviceFlowModel.removeListener(sampleArrayListener);
+        }
+
+        deviceFlowModel = new FilteredList<>(sampleArrayList, new Predicate<SampleArrayFx>() {
+            @Override
+            public boolean test(SampleArrayFx t) {
+                return rosetta.MDC_FLOW_AWAY.VALUE.equals(t.getMetric_id()) && source.equals(t.getUnique_device_identifier());
+            }
+        });
+
+        
+        deviceFlowModel.addListener(sampleArrayListener);
+        deviceFlowModel.forEach( (fx) -> add(fx));
+        
+
         log.trace("new source is " + source);
+        
     }
 
     private boolean imageButtonDown = false;
 
-    public XRayVentPanel set(final Subscriber subscriber, final EventLoop eventLoop, final DeviceListModel deviceListModel) {
-        canvas = new JavaFXWaveformCanvas(waveformPanel);
-        
+    public XRayVentPanel set(final DeviceListModel deviceListModel, final NumericFxList numericList, final SampleArrayFxList sampleArrayList) {
+        this.numericList = numericList;
+        startOfBreathModel = new FilteredList<>(numericList, new Predicate<NumericFx>() {
+            @Override
+            public boolean test(NumericFx t) {
+                return ice.MDC_START_INSPIRATORY_CYCLE.VALUE.equals(t.getMetric_id());
+            }
+        });
         cameraPanel.set(executorNonCritical);
         manual.setUserData(Strategy.Manual);
         automatic.setUserData(Strategy.Automatic);
@@ -198,20 +235,19 @@ public class XRayVentPanel {
         cameraModel = new CameraComboBoxModel();
         cameraBox.setItems(cameraModel.getItems());
         
-        startOfBreathModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
-        sampleArrayModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
-        deviceNumericModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
+        
+        this.sampleArrayList = sampleArrayList;
 
-        deviceList.setCellFactory(new Callback<ListView<MyNumeric>,ListCell<MyNumeric>>() {
+        deviceList.setCellFactory(new Callback<ListView<NumericFx>,ListCell<NumericFx>>() {
 
             @Override
-            public ListCell<MyNumeric> call(ListView<MyNumeric> param) {
-                return new MyNumericListCell(deviceListModel);
+            public ListCell<NumericFx> call(ListView<NumericFx> param) {
+                return new NumericFxListCell(deviceListModel);
             }
             
         });
         
-        deviceList.setItems(new MyNumericItems().setModel(startOfBreathModel).getItems());
+        deviceList.setItems(startOfBreathModel);
         
         cameraBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Webcam>() {
 
@@ -238,27 +274,15 @@ public class XRayVentPanel {
             }
             
         });
-        deviceList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<MyNumeric>() {
+        deviceList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<NumericFx>() {
 
             @Override
-            public void changed(ObservableValue<? extends MyNumeric> observable, MyNumeric oldValue, MyNumeric newValue) {
-                changeSource(newValue.getUnique_device_identifier(), subscriber, eventLoop);
-            }
-        });
-        Timeline waveformRender = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent event) {
-                long tm = System.currentTimeMillis();
-                SampleArrayWaveformSource source = XRayVentPanel.this.source;
-                if(null != source) {
-                    renderer.render(source, canvas, tm-12000L, tm-2000L);
+            public void changed(ObservableValue<? extends NumericFx> observable, NumericFx oldValue, NumericFx newValue) {
+                if(newValue != null) {
+                    changeSource(newValue.getUnique_device_identifier());
                 }
             }
-            
-        }));
-        waveformRender.setCycleCount(Timeline.INDEFINITE);
-        waveformRender.play();
+        });
         return this;
     }
 
@@ -272,6 +296,7 @@ public class XRayVentPanel {
     
     public void stop() {
         Scene scene = main.getScene();
+        waveformPanel.stop();
         if(null != scene) {
             scene.removeEventFilter(KeyEvent.KEY_PRESSED, keyEventHandler);
             scene.removeEventFilter(KeyEvent.KEY_RELEASED, keyEventHandler);
@@ -283,11 +308,12 @@ public class XRayVentPanel {
 
             }
         }, 0L, TimeUnit.MILLISECONDS);
-        startOfBreathModel.stop();
-        sampleArrayModel.stop();
-        deviceNumericModel.stop();
-        executorNonCritical.shutdownNow();
-        executorCritical.shutdownNow();
+        
+    }
+    
+    public void destroy() {
+        executorNonCritical.shutdown();
+        executorCritical.shutdown();
     }
     
     private EventHandler<KeyEvent> keyEventHandler;
@@ -296,10 +322,6 @@ public class XRayVentPanel {
 
         deviceList.getSelectionModel().clearSelection();
 
-        StringSeq params = new StringSeq();
-        params.add("'" + ice.MDC_START_INSPIRATORY_CYCLE.VALUE + "'");
-//        params.add("'" + rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE + "'");
-        startOfBreathModel.start(subscriber, eventLoop, "metric_id = %0", params, QosProfiles.ice_library, QosProfiles.numeric_data);
 
         executorNonCritical.schedule(new Runnable() {
             public void run() {
@@ -335,7 +357,8 @@ public class XRayVentPanel {
             }
         };
         main.getScene().addEventFilter(KeyEvent.KEY_PRESSED, keyEventHandler);
-        main.getScene().addEventFilter(KeyEvent.KEY_RELEASED, keyEventHandler);        
+        main.getScene().addEventFilter(KeyEvent.KEY_RELEASED, keyEventHandler);   
+        waveformPanel.start();
     }
 
     protected long inspiratoryTime;

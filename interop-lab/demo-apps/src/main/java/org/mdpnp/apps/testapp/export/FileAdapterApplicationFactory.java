@@ -5,11 +5,11 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.testapp.DeviceListModelImpl;
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.springframework.context.ApplicationContext;
-
-import com.rti.dds.subscription.Subscriber;
 
 /**
  *
@@ -17,7 +17,7 @@ import com.rti.dds.subscription.Subscriber;
 public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType FileAdapter =
-            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  FileAdapterApplicationFactory.class.getResource("database-server.png"), 0.75);
+            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  FileAdapterApplicationFactory.class.getResource("database-server.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {
@@ -28,9 +28,10 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final Subscriber subscriber = (Subscriber)parentContext.getBean("subscriber");
-        final DeviceListModelImpl deviceListModel = (DeviceListModelImpl) parentContext.getBean("deviceListModel");
-        final DataCollector dataCollector = new DataCollector(subscriber);
+        final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
+        final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
+        final DeviceListModel deviceListModel = parentContext.getBean("deviceListModel", DeviceListModel.class);
+        final DataCollector dataCollector = new DataCollector(sampleArrayList, numericList);
         
         FXMLLoader loader = new FXMLLoader(DataCollectorApp.class.getResource("DataCollectorApp.fxml"));
         final Parent ui = loader.load();
@@ -53,21 +54,16 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void activate(ApplicationContext context) {
-                dataCollector.start();
             }
 
             @Override
             public void stop() {
-                try {
-                    dataCollector.stop();
-                } catch (Exception ex) {
-                    throw new IllegalStateException("Failed to stop data collector", ex);
-                }
             }
 
             @Override
             public void destroy() throws Exception {
                 controller.stop();
+                dataCollector.destroy();
             }
         };
     }

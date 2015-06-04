@@ -19,19 +19,15 @@ public class NumericWaveformSource extends AbstractDdsWaveformSource<ice.Numeric
         super(reader, keyHolder, ice.Numeric.class, ice.NumericSeq.class);
     }
 
-
+    public NumericWaveformSource(final ice.NumericDataReader reader, InstanceHandle_t instanceHandle) {
+        super(reader, instanceHandle, ice.Numeric.class, ice.NumericSeq.class);
+    }
     
     @Override
     public void iterate(WaveformIterator itr) {
         try {
             itr.begin();
-            InstanceHandle_t instanceHandle = null;
-            try {
-                instanceHandle = reader.lookup_instance(keyHolder);
-            } catch(RETCODE_ALREADY_DELETED alreadyDeleted) {
-                log.warn("Tried to iterate a deleted instance ");
-                return;
-            }
+
             if(null == instanceHandle || instanceHandle.is_nil()) {
                 log.warn("Tried to iterate a null or nil instance ");
                 return;

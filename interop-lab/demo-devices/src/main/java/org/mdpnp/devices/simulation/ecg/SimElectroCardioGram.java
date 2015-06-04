@@ -16,11 +16,13 @@ import ice.GlobalSimulationObjective;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -53,7 +55,7 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receiveECG(DeviceClock.Reading sampleTime, Number[] iValues, Number[] iiValues, Number[] iiiValues,
-                                  double heartRateValue, double respiratoryRateValue, int frequency) {
+                                  int heartRateValue, int respiratoryRateValue, int frequency) {
             // ecgCache[0][ecgCount] = copy(iValues, ecgCache[0][ecgCount]);
             // ecgCache[1][ecgCount] = copy(iiValues, ecgCache[1][ecgCount]);
             // ecgCache[2][ecgCount] = copy(iiiValues, ecgCache[2][ecgCount]);
@@ -103,8 +105,8 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
         super.disconnect();
     }
 
-    public SimElectroCardioGram(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public SimElectroCardioGram(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         DeviceClock referenceClock = super.getClockProvider();
         ecg = new SimulatedElectroCardioGramExt(referenceClock);
@@ -123,10 +125,13 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
     
     @Override
     public void simulatedNumeric(GlobalSimulationObjective obj) {
-        if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id)) {
-            ecg.setTargetRespiratoryRate((double)obj.value);
-        } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id)) {
-            ecg.setTargetHeartRate((double)obj.value);
+        Number value = GlobalSimulationObjectiveListener.toIntegerNumber(obj);
+        if (rosetta.MDC_TTHOR_RESP_RATE.VALUE.equals(obj.metric_id) ||
+            rosetta.MDC_RESP_RATE.VALUE.equals(obj.metric_id)) {
+            ecg.setTargetRespiratoryRate(value);
+        } else if (rosetta.MDC_ECG_HEART_RATE.VALUE.equals(obj.metric_id) ||
+                   rosetta.MDC_PULS_RATE.VALUE.equals(obj.metric_id)) {
+            ecg.setTargetHeartRate(value);
         }
     }
 }

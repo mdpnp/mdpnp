@@ -14,4 +14,20 @@ package org.mdpnp.devices.simulation;
 
 public interface GlobalSimulationObjectiveListener {
     void simulatedNumeric(ice.GlobalSimulationObjective obj);
+
+    //
+    // Helper API to convert ice primitives to behaviour-rich objects
+    //
+
+    public static Number toIntegerNumber(ice.GlobalSimulationObjective obj) {
+        if(obj.jitterStep == 0)
+            return (int)obj.value;
+        return new NumberWithJitter<Integer>(obj.value, obj.jitterStep, obj.floor, obj.ceil);
+    }
+
+    public static Number toDoubleNumber(ice.GlobalSimulationObjective obj) {
+        if(obj.jitterStep == 0)
+            return (double)obj.value;
+        return new NumberWithJitter<Double>(obj.value, obj.jitterStep, obj.floor, obj.ceil);
+    }
 }

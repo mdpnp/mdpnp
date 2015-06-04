@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -38,12 +37,17 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
+import javafx.collections.ObservableList;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.device.OnListChange;
+import org.mdpnp.apps.fxbeans.ElementObserver;
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,27 +93,15 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
 
     @Override
-    public void removeNumeric(final String udi, final String metric_id, final int instance_id) {
-        if(Platform.isFxApplicationThread()) {
-            _removeNumeric(udi, metric_id, instance_id);
-        } else {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    _removeNumeric(udi, metric_id, instance_id);
-                }
-            });
-        }
-    }
-    
-    private void _removeNumeric(final String udi, final String metric_id, final int instance_id) {
+    public void removeNumeric(NumericFx numeric) {
+        final String metric_id = numeric.getMetric_id();
         for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     if (x.equals(metric_id)) {
                         ListIterator<Value> li = v.listIterator();
                         while (li.hasNext()) {
-                            Value va = li.next();
-                            if (va.getUniqueDeviceIdentifier().equals(udi) && va.getInstanceId() == instance_id) {
+                            if(numeric.equals(li.next().getNumeric())) {
                                 li.remove();
                             }
                         }
@@ -119,10 +111,11 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         }
     }
 
-    private ice.GlobalAlarmSettingsObjectiveDataWriter writer;
-    private Topic globalAlarmSettingsTopic;
+    private ice.GlobalAlarmLimitObjectiveDataWriter writer;
+    private Topic globalAlarmLimitTopic;
 
-    public ice.GlobalAlarmSettingsObjectiveDataWriter getWriter() {
+
+    public ice.GlobalAlarmLimitObjectiveDataWriter getWriter() {
         return writer;
     }
 
@@ -131,50 +124,35 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     @Override
-    public void updateNumeric(final String unique_device_identifier, final String metric_id,
-            final int instance_id, final long timestamp, final float value) {
-        if(Platform.isFxApplicationThread()) {
-            _updateNumeric(unique_device_identifier, metric_id, instance_id, timestamp, value);
-        } else {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    _updateNumeric(unique_device_identifier, metric_id, instance_id, timestamp, value);
-                }
-            });
-        }
-    }
-    
-    private void _updateNumeric(final String unique_device_identifier, final String metric_id,
-            final int instance_id, final long timestamp, final float value) {
-        // TODO linear search? Query Condition should be vital specific
-        // or maybe these should be hashed because creating myriad
-        // QueryConditions is not advisable
+    public void addNumeric(final NumericFx numeric) {
+        final String metric_id = numeric.getMetric_id();
+        final String udi = numeric.getUnique_device_identifier();
+        final String unit_id = numeric.getUnit_id();
+        final int instance_id = numeric.getInstance_id();
         for (Vital v : this) {
             if (v != null) {
                 for (String x : v.getMetricIds()) {
                     // Change to this vital from a source
                     if (x.equals(metric_id)) {
-                        boolean updated = false;
                         for (Value va : v) {
                             if (va.getInstanceId() == instance_id && va.getMetricId().equals(metric_id)
-                                    && va.getUniqueDeviceIdentifier().equals(unique_device_identifier)) {
-                                va.updateFrom(timestamp, value);
-                                updated = true;
-                                break;
+                                    && va.getUniqueDeviceIdentifier().equals(udi)) {
+                                if(!numeric.equals(va.getNumeric())) {
+                                    log.warn("duplicate numeric added {} {}", va.getNumeric(), numeric);
+                                    
+                                }
+                                return;
                             }
                         }
-                        if (!updated) {
-                            final Value va = new ValueImpl(unique_device_identifier, metric_id, instance_id, v);
-                            va.updateFrom(timestamp, value);
-                            v.add(va);
-                            
-                        }
+                        final Value va = new ValueImpl(numeric, v);
+                        v.add(va);
                     }
                 }
             }
         }
-    }
 
+    }
+    
     @Override
     public Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
             double maximum, Long valueMsWarningLow, Long valueMsWarningHigh, Color color) {
@@ -195,39 +173,21 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     @Override
     public void start(final Publisher publisher, final EventLoop eventLoop) {
         this.eventLoop = eventLoop;
-        final CountDownLatch latch = new CountDownLatch(1);
-        eventLoop.doLater(() -> {
-            VitalModelImpl.this.publisher = publisher;
-            DomainParticipant participant = publisher.get_participant();
+        VitalModelImpl.this.publisher = publisher;
+        DomainParticipant participant = publisher.get_participant();
 
-            ice.GlobalAlarmSettingsObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name());
-
-            globalAlarmSettingsTopic = participant.create_topic(ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                    ice.GlobalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null,
-                    StatusKind.STATUS_MASK_NONE);
-            writer = (ice.GlobalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmSettingsTopic, QosProfiles.ice_library,
-                    QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-            latch.countDown();
-        });
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        ice.GlobalAlarmLimitObjectiveTypeSupport.register_type(participant, ice.GlobalAlarmLimitObjectiveTypeSupport.get_type_name());
+        
+        globalAlarmLimitTopic = TopicUtil.findOrCreateTopic(participant, ice.GlobalAlarmLimitObjectiveTopic.VALUE,
+                ice.GlobalAlarmLimitObjectiveTypeSupport.class); 
+        writer = (ice.GlobalAlarmLimitObjectiveDataWriter) publisher.create_datawriter_with_profile(globalAlarmLimitTopic, QosProfiles.ice_library,
+                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
     }
 
     @Override
     public void stop() {
-        if(eventLoop != null) {
-            eventLoop.doLater(new Runnable() {
-                public void run() {
-                    publisher.delete_datawriter(writer);
-    
-                    VitalModelImpl.this.eventLoop = null;
-                }
-            });
-
-        }
+        publisher.delete_datawriter(writer);
+        publisher.get_participant().delete_topic(globalAlarmLimitTopic);
     }
 
     private static final String DEFAULT_INTERLOCK_TEXT = "";
@@ -387,10 +347,16 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     }
 
     final DeviceListModel deviceListModel;
+    final ObservableList<NumericFx> numericList;
     private final ElementObserver<Vital> elementObserver;
     
-    public VitalModelImpl(DeviceListModel deviceListModel) {
+    public VitalModelImpl(DeviceListModel deviceListModel, ObservableList<NumericFx> numericList) {
         this.deviceListModel = deviceListModel;
+        this.numericList = numericList;
+        
+        numericList.addListener(new OnListChange<>((fx)->addNumeric(fx), null, (fx)->removeNumeric(fx)));
+        numericList.forEach((fx)->addNumeric(fx));
+
         this.elementObserver = new ElementObserver<Vital>(extractor, new Callback<Vital, InvalidationListener>() {
 
             @Override
@@ -438,6 +404,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         element.addListener(this);
         elementObserver.attachListener(element);
         vitals.add(index, element);
+        numericList.forEach((fx)->addNumeric(fx));
     }
 
     @Override
@@ -447,6 +414,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         elementObserver.detachListener(removed);
         elementObserver.attachListener(element);
         removed.addListener(this);
+        numericList.forEach((fx)->addNumeric(fx));
         return removed;
     }
 
@@ -484,5 +452,6 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     @Override
     public void onChanged(javafx.collections.ListChangeListener.Change<? extends Value> c) {
         updateState();
-    }    
+    }
+
 }

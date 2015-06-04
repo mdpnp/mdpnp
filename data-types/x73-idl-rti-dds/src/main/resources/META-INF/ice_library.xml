@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Copyright (c) 2014, MD PnP Program All rights reserved. Redistribution 
+ and use in source and binary forms, with or without modification, are permitted 
+ provided that the following conditions are met: 1. Redistributions of source 
+ code must retain the above copyright notice, this list of conditions and 
+ the following disclaimer. 2. Redistributions in binary form must reproduce 
+ the above copyright notice, this list of conditions and the following disclaimer 
+ in the documentation and/or other materials provided with the distribution. 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. -->
+<dds version="5.1.0">
+  <qos_library name="ice_library">
+    <!-- Using a singular default profile for now -->
+    <qos_profile name="default_profile" is_default_qos="true">
+      <participant_qos>
+        <!--
+          useful info on the subject:
+          http://community.rti.com/rti-doc/510/ndds/doc/html/api_java/classcom_1_1rti_1_1dds_1_1infrastructure_1_1DiscoveryQosPolicy.html
+          http://community.rti.com/rti-doc/510/ndds/doc/html/api_java/group__NDDS__DISCOVERY__PEERS.html
+          https://community.rti.com/howto/configure-rti-connext-dds-not-use-multicast
+        -->
+        <discovery>
+          <!--
+            Note, that it could be overridden in the code via APIs to favour a specific address
+            over multicast or to pick a different multicast address.
+
+            Executive summary (for the basic list of 1):
+            * for multicast discovery both multicast_receive_addresses and initial_peers has to be set to the same
+            value.
+            * in 'star' topology with no multicast, multicast_receive_addresses should be blank
+              and initial_peers should be set to a non-multicast address.
+          -->
+
+          <!-- promiscuous for the lab environment -->
+          <accept_unknown_peers>true</accept_unknown_peers>
+          <!--
+            Default address for the reception multicast for discovery.
+          -->
+          <multicast_receive_addresses>
+            <element>udpv4://239.255.0.1</element>
+          </multicast_receive_addresses>
+          <!--
+            Configure the destinations of discovery announcements.
+            This is the list of transports destinations where the participant will announce its presence
+          -->
+          <initial_peers>
+            <element>udpv4://239.255.0.1</element>
+          </initial_peers>
+          <!-- Under load could this be helpful to maintain participant liveliness
+           <metatraffic_transport_priority> 5 </metatraffic_transport_priority> -->
+        </discovery>
+        <discovery_config>
+          <!-- Is there a difference in SDP and SPDP? <builtin_discovery_plugins>
+           DDS_DISCOVERYCONFIG_BUILTIN_SPDP|DDS_DISCOVERYCONFIG_BUILTIN_SEDP </builtin_discovery_plugins> -->
+          <!-- RTPX announcements on domain 0 are not standard -->
+          <default_domain_announcement_period>
+            <sec>2147483647</sec>
+            <nanosec>2147483647</nanosec>
+          </default_domain_announcement_period>
+          <ignore_default_domain_announcements>
+            true
+          </ignore_default_domain_announcements>
+          <!-- initial_participant_announcements added with defaults for future
+           experimentation -->
+          <initial_participant_announcements>5
+          </initial_participant_announcements>
+          <min_initial_participant_announcement_period>
+            <sec>0</sec>
+            <nanosec>200000000</nanosec>
+          </min_initial_participant_announcement_period>
+          <max_initial_participant_announcement_period>
+            <sec>2</sec>
+            <nanosec>0</nanosec>
+          </max_initial_participant_announcement_period>
+          <!-- Participant liveliness is no longer used to detect 'device' connectivity
+           so these settings can be less stringent -->
+          <participant_liveliness_lease_duration>
+            <sec>10</sec>
+            <nanosec>0</nanosec>
+          </participant_liveliness_lease_duration>
+          <participant_liveliness_assert_period>
+            <sec>3</sec>
+            <nanosec>0</nanosec>
+          </participant_liveliness_assert_period>
+          <max_liveliness_loss_detection_period>
+            <sec>5</sec>
+            <nanosec>0</nanosec>
+          </max_liveliness_loss_detection_period>
+
+          <!-- Following SEDP controls added with defaults for future experimentation -->
+          <publication_writer>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>0</sec>
+              <nanosec>500000000</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>0</sec>
+              <nanosec>500000000</nanosec>
+            </late_joiner_heartbeat_period>
+          </publication_writer>
+
+          <subscription_writer>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>0</sec>
+              <nanosec>500000000</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>0</sec>
+              <nanosec>500000000</nanosec>
+            </late_joiner_heartbeat_period>
+          </subscription_writer>
+
+          <participant_message_writer>
+            <heartbeat_period>
+              <sec>3</sec>
+              <nanosec>0</nanosec>
+            </heartbeat_period>
+            <fast_heartbeat_period>
+              <sec>1</sec>
+              <nanosec>0</nanosec>
+            </fast_heartbeat_period>
+            <late_joiner_heartbeat_period>
+              <sec>1</sec>
+              <nanosec>0</nanosec>
+            </late_joiner_heartbeat_period>
+            <!-- Could multicast be more efficient for frequent heartbeats? <enable_multicast_periodic_heartbeat>
+             true </enable_multicast_periodic_heartbeat> -->
+          </participant_message_writer>
+          <!-- would it be more efficient for participant message reader to periodically
+           ACKNACK ? <participant_message_reader> <nack_period> <sec>0</sec> <nanosec>500000000</nanosec>
+           </nack_period> <samples_per_app_ack> -1 </samples_per_app_ack> <app_ack_period>
+           <sec>0</sec> <nanosec>500000000</nanosec> </app_ack_period> </participant_message_reader> -->
+
+          <!-- set to asynchronous to allow rtps fragmentation when transport
+           max message size is very small -->
+          <publication_writer_publish_mode>
+            <kind>DDS_ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          </publication_writer_publish_mode>
+          <subscription_writer_publish_mode>
+            <kind>DDS_ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+          </subscription_writer_publish_mode>
+        </discovery_config>
+
+        <!-- Mainly to disable shared memory transport because I have a lot of
+         trouble with it. To make shared memory work on OS X 10.9 (Mavericks) you
+         need to (at least) sudo sysctl -w kern.sysv.shmmax=8388608 sudo sysctl -w
+         kern.sysv.shmall=1024 sudo sysctl -w kern.sysv.shmmni=??? The RTI knowledge
+         base suggests settings for a server-class linux machine but not for OS X.
+         Since these settings cannot be changed at runtime without super-user privileges
+         I exclude shared memory transport. RTPS (DDS-I) protocol is only standardized
+         over UDPv4 and UDPv6 anyway. -->
+
+        <transport_builtin>
+          <mask>DDS_TRANSPORTBUILTIN_UDPv4
+          </mask>
+        </transport_builtin>
+        <!-- some typecodes serialize to something larger than is supported by
+         default -->
+        <resource_limits>
+          <contentfilter_property_max_length>512
+          </contentfilter_property_max_length>
+          <type_code_max_serialized_length>8192
+          </type_code_max_serialized_length>
+          <type_object_max_serialized_length>8192
+          </type_object_max_serialized_length>
+        </resource_limits>
+        <property>
+          <value>
+            <element>
+              <!-- Default setting; for future experimentation -->
+              <name>dds.transport.UDPv4.builtin.interface_poll_period</name>
+              <value>500</value>
+            </element>
+            <element>
+              <!-- Don't ignore an interface just because it is nonup -->
+              <name>dds.transport.UDPv4.builtin.ignore_nonup_interfaces</name>
+              <value>0</value>
+            </element>
+            <!-- 65507 is the default; IP level fragmentation doesn't seem to be
+             a problem -->
+            <element>
+              <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
+              <value>65507</value>
+              <!-- <value>8163</value> -->
+            </element>
+            <!-- Mostly harmless way to ensure ARP tables set up at onset of discovery,
+             but not part of the standard -->
+            <element>
+              <name>dds.transport.UDPv4.builtin.send_ping</name>
+              <value>false</value>
+            </element>
+            <element>
+              <name>dds.transport.UDPv4.builtin.ignore_loopback_interface</name>
+              <value>0</value>
+            </element>
+            <element>
+              <name>ignore_loopback_interface</name>
+              <value>0</value>
+            </element>
+            <element>
+              <name>ignore_loopback_interface</name>
+              <value>0</value>
+            </element>
+          </value>
+        </property>
+      </participant_qos>
+
+      <!-- Default reader QoS represent a minimum level of stringency, for any
+       reader that didn't bother selecting a more specific profile or setting QoS
+       policies programmatically. -->
+      <datareader_qos>
+        <reliability>
+          <kind>DDS_BEST_EFFORT_RELIABILITY_QOS</kind>
+        </reliability>
+        <liveliness>
+          <!-- Let DDS handle heartbeats -->
+          <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+          <!-- Point at which writers (and associated instances) become "not alive" -->
+          <lease_duration>
+            <sec>2147483647</sec>
+            <nanosec>2147483647</nanosec>
+          </lease_duration>
+        </liveliness>
+        <durability>
+          <!-- Writer is responsible for maintaining transient copies of samples
+           ... see history -->
+          <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
+          <!-- Contact that writer directly to get the samples -->
+          <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+        </durability>
+
+        <!-- UDI is typical in the instance key so instances are owned exclusively
+         by one publisher (device) This seems like a peculiar "default" -->
+        <ownership>
+          <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
+        </ownership>
+
+        <!-- Enabling lots of RTPS level fragmentation -->
+        <reader_resource_limits>
+          <max_fragments_per_sample>5000</max_fragments_per_sample>
+          <max_query_condition_filters>32</max_query_condition_filters>
+          <max_samples_per_read>65536</max_samples_per_read>
+        </reader_resource_limits>
+
+        <!-- Somewhat mooted by volatile durability but inheritors may override
+         that. KEEP_ALL would be a nice setting but without a reader LIFESPAN QoS
+         we're trusting the writer to set a reasonable LIFESPAN otherwise we'll 1.)
+         continually allocate or 2.) hit max_samples or max_samples_per_instance and
+         start discarding new samples -->
+        <history>
+          <kind>DDS_KEEP_LAST_HISTORY_QOS</kind>
+          <!-- samples kept in the writer ... see durability -->
+          <depth>500</depth>
+          <refilter>DDS_NONE_REFILTER_QOS</refilter>
+        </history>
+
+        <!-- Discarding samples based upon sequence via history (if durability
+         increased) -->
+        <resource_limits>
+          <max_samples>-1</max_samples>
+          <max_instances>-1</max_instances>
+          <max_samples_per_instance>-1</max_samples_per_instance>
+        </resource_limits>
+        <!-- JP 30-Sep-2013 get_key_value is failing on unalive instances maybe
+         they are being purged too quickly? -->
+        <!-- <reader_data_lifecycle> <autopurge_nowriter_samples_delay> <sec>INFINITE</sec>
+         <nanosec>INFINITE</nanosec> </autopurge_nowriter_samples_delay> <autopurge_disposed_samples_delay>
+         <sec>INFINITE</sec> <nanosec>INFINITE</nanosec> </autopurge_disposed_samples_delay>
+         </reader_data_lifecycle> -->
+      </datareader_qos>
+
+      <!-- "default" data writers will offer as stringent QoS policies as feasible -->
+      <datawriter_qos>
+        <!-- Jeff Plourde wants to use BEST EFFORT reliability for non-state
+         non-critical data But I'm continuing to make offering reliable reliability
+         the default for now for the sake of backward compatibility. -->
+        <reliability>
+          <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
+          <max_blocking_time>
+            <sec>2</sec>
+            <nanosec>0</nanosec>
+          </max_blocking_time>
+          <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
+          </acknowledgment_kind>
+        </reliability>
+
+        <liveliness>
+          <!-- Let DDS handle heartbeats -->
+          <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+          <!-- Point at which writers (and associated exclusively owned instances)
+           become "not alive". This is an offer; most readers should request a longer
+           duration. -->
+          <lease_duration>
+            <sec>1</sec>
+            <nanosec>0</nanosec>
+          </lease_duration>
+        </liveliness>
+
+        <!--
+          Ordered by reception time for now since we are not using shared ownership.
+          SOURCE_TIMESTAMP ordering would be required to achieve eventual consistency
+          if multiple writers were writing to the same instances.
+
+          Offering SOURCE_TIMESTAMP destination order makes DDS sensitive to realtime
+          clock changes so if we, in the future, enable SOURCE_TIMESTAMP we should consider
+          usage of a monotonic clock.
+
+          https://community.rti.com/rti-doc/510/ndds.5.1.0/doc/html/api_java/classcom_1_1rti_1_1dds_1_1infrastructure_1_1DestinationOrderQosPolicy.html
+         -->
+        <destination_order>
+          <kind>DDS_BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+        </destination_order>
+        <durability>
+          <!-- Writer is responsible for maintaining transient copies of samples
+           ... see history -->
+          <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+          <!-- Contact that writer directly to get the samples -->
+          <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+        </durability>
+
+        <!-- UDI is typical in the instance key so instances are owned exclusively
+         by one publisher (device). This may not be a reasonable default. -->
+        <ownership>
+          <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
+        </ownership>
+        <!-- Set to async to allow RTPS fragmentation where it's necessary to
+         exceed max message size of transport -->
+        <publish_mode>
+          <kind>DDS_ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+        </publish_mode>
+        <protocol>
+          <serialize_key_with_dispose>
+            true
+          </serialize_key_with_dispose>
+
+        </protocol>
+
+        <!-- By default samples will expire temporally via LIFESPAN and not by
+         sequence. -->
+        <history>
+          <kind>DDS_KEEP_ALL_HISTORY_QOS</kind>
+        </history>
+
+        <resource_limits>
+          <max_samples>-1</max_samples>
+          <max_instances>-1</max_instances>
+          <max_samples_per_instance>-1</max_samples_per_instance>
+        </resource_limits>
+      </datawriter_qos>
+    </qos_profile>
+
+
+    <qos_profile name="himss" base_name="default_profile"
+                 is_default_qos="false">
+      <datareader_qos>
+        <reliability>
+          <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
+        </reliability>
+        <ownership>
+          <kind>DDS_SHARED_OWNERSHIP_QOS</kind>
+        </ownership>
+        <durability>
+          <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+        </durability>
+        <history>
+          <kind>DDS_KEEP_LAST_HISTORY_QOS</kind>
+          <depth>5</depth>
+        </history>
+      </datareader_qos>
+      <datawriter_qos>
+        <ownership>
+          <kind>DDS_SHARED_OWNERSHIP_QOS</kind>
+        </ownership>
+      </datawriter_qos>
+
+    </qos_profile>
+
+
+    <qos_profile name="heartbeat" base_name="default_profile"
+                 is_default_qos="false">
+      <datareader_qos>
+        <liveliness>
+          <!-- Heartbeats must be written regularly; so no automatic liveliness
+           updates need be sent. -->
+          <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
+          <!-- Point at which writers (and associated instances) become "not alive" -->
+          <lease_duration>
+            <sec>5</sec>
+            <nanosec>0</nanosec>
+          </lease_duration>
+        </liveliness>
+        <durability>
+          <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+
+        <!-- Just for completeness; durability is volatile -->
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <depth>1</depth>
+        </history>
+      </datareader_qos>
+      <datawriter_qos>
+        <!-- These samples are too small for fragmentation and it is important
+         to delay them as little as possible. -->
+        <publish_mode>
+          <kind>DDS_SYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+        </publish_mode>
+        <!-- No need to persist -->
+        <durability>
+          <kind>DDS_VOLATILE_DURABILITY_QOS</kind>
+        </durability>
+        <liveliness>
+          <!-- Handle heartbeats ourselves by writing to this topic periodically -->
+          <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind>
+          <!-- Point at which writers (and associated instances) become "not alive" -->
+          <lease_duration>
+            <sec>3</sec>
+            <nanosec>0</nanosec>
+          </lease_duration>
+        </liveliness>
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <depth>1</depth>
+        </history>
+      </datawriter_qos>
+
+    </qos_profile>
+    <qos_profile name="timesync" base_name="default_profile"
+                 is_default_qos="false">
+      <datawriter_qos>
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <depth>1</depth>
+        </history>
+      </datawriter_qos>
+      <datareader_qos>
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <depth>1</depth>
+        </history>
+      </datareader_qos>
+    </qos_profile>
+    <qos_profile name="state" base_name="default_profile"
+                 is_default_qos="false">
+      <datareader_qos>
+        <!-- State information should be acknowledged -->
+        <reliability>
+          <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
+          <max_blocking_time>
+            <sec>2</sec>
+            <nanosec>0</nanosec>
+          </max_blocking_time>
+          <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
+          </acknowledgment_kind>
+        </reliability>
+
+        <liveliness>
+          <!-- Let DDS handle heartbeats -->
+          <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+          <!-- Point at which writers (and associated instances) become "not alive" -->
+          <!-- For state information a lack of liveliness means remote state may
+           change and we will not get an update. More critical state information might
+           set a more stringent lease -->
+          <lease_duration>
+            <sec>5</sec>
+            <nanosec>0</nanosec>
+          </lease_duration>
+        </liveliness>
+        <!--  See the offering (DataWriter) policy for more information.  Requesting
+              SOURCE_TIMESTAMP ordering might be useful if we employ, in the future,
+              shared instances.  Until then it makes the system more brittle to clock
+              changes. -->
+        <destination_order>
+          <kind>DDS_BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+        </destination_order>
+        <durability>
+          <!-- Writer is responsible for maintaining transient copies of samples
+           ... see history -->
+          <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+          <!-- Contact that writer directly to get the samples -->
+          <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+        </durability>
+        <!-- The most recent sample is the "current" state -->
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <!-- samples kept in the writer ... see durability -->
+          <depth>1</depth>
+          <refilter>DDS_NONE_REFILTER_QOS</refilter>
+        </history>
+      </datareader_qos>
+      <datawriter_qos>
+        <history>
+          <kind>KEEP_LAST_HISTORY_QOS</kind>
+          <depth>1</depth>
+        </history>
+      </datawriter_qos>
+    </qos_profile>
+
+    <qos_profile name="device_identity" base_name="state"
+                 is_default_qos="false">
+      <datareader_qos>
+        <!-- <liveliness> <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind> <lease_duration>
+         <sec>5</sec> <nanosec>0</nanosec> </lease_duration> </liveliness> -->
+        <!-- If the state information will not vary (currently thinking of something
+         like device serial number) then if the writer misses a heartbeat we are at
+         no risk of "missing" subsequent changes to the state -->
+        <liveliness>
+          <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+          <lease_duration>
+            <sec>2147483647</sec>
+            <nanosec>2147483647</nanosec>
+          </lease_duration>
+        </liveliness>
+      </datareader_qos>
+      <datawriter_qos>
+        <!-- <liveliness> <kind>DDS_MANUAL_BY_TOPIC_LIVELINESS_QOS</kind> <lease_duration>
+         <sec>1</sec> <nanosec>0</nanosec> </lease_duration> </liveliness> -->
+      </datawriter_qos>
+
+    </qos_profile>
+
+
+    <qos_profile name="observed_data" base_name="default_profile"
+                 is_default_qos="false">
+      <datareader_qos>
+        <destination_order>
+          <kind>DDS_BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS</kind>
+        </destination_order>
+        <reliability>
+          <kind>DDS_RELIABLE_RELIABILITY_QOS</kind>
+          <max_blocking_time>
+            <sec>2</sec>
+            <nanosec>0</nanosec>
+          </max_blocking_time>
+          <acknowledgment_kind>DDS_PROTOCOL_ACKNOWLEDGMENT_MODE
+          </acknowledgment_kind>
+        </reliability>
+        <liveliness>
+          <!-- Let DDS handle heartbeats -->
+          <kind>DDS_AUTOMATIC_LIVELINESS_QOS</kind>
+          <!-- Point at which writers (and associated instances) become "not alive" -->
+          <lease_duration>
+            <sec>5</sec>
+            <nanosec>0</nanosec>
+          </lease_duration>
+        </liveliness>
+        <durability>
+          <!-- Writer is responsible for maintaining transient copies of samples
+           ... see history -->
+          <kind>DDS_TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+          <!-- Contact that writer directly to get the samples -->
+          <direct_communication>DDS_BOOLEAN_TRUE</direct_communication>
+        </durability>
+
+        <!-- This is contrived and meaningless because sample rate is not the
+         same in all cases -->
+        <history>
+          <kind>KEEP_ALL_HISTORY_QOS</kind>
+          <!-- <depth>1</depth> -->
+        </history>
+        <!-- Why isn't lifespan supported on the reading side? -->
+        <!-- For data sampled at different rates one history depth does not fit
+         all cases -->
+        <!-- <lifespan> <duration> <sec>10</sec> <nanosec>0</nanosec> </duration>
+         </lifespan> -->
+      </datareader_qos>
+      <datawriter_qos>
+        <!-- For TRANSIENT_LOCAL durability ease the burden on writers by only
+         storing numeric data for 30 seconds. A persistent store could make it reasonable
+         to store more -->
+        <lifespan>
+          <duration>
+            <sec>15</sec>
+            <nanosec>0</nanosec>
+          </duration>
+        </lifespan>
+        <!-- Reliability is offered by default -->
+        <!-- Liveliness lease of 1 second is offered by default -->
+        <!-- Destination ordering BY_SOURCE is offered by default -->
+        <!-- Durability offered is TRANSIENT_LOCAL by default; change here for
+         persistence of numerics? -->
+        <!-- Ownership is exclusive by default -->
+        <!-- Publish-mode async by default; is that necessary for these small
+         messages? -->
+        <!-- History is KEEP_ALL by default -->
+      </datawriter_qos>
+    </qos_profile>
+
+    <qos_profile name="numeric_data" base_name="observed_data"
+                 is_default_qos="false">
+
+    </qos_profile>
+
+    <qos_profile name="waveform_data" base_name="observed_data"
+                 is_default_qos="false">
+      <datareader_qos>
+
+      </datareader_qos>
+
+      <datawriter_qos>
+        <batch>
+          <enable>false</enable>
+          <max_samples>-1</max_samples>
+          <max_flush_delay>
+            <sec>2147483647</sec>
+            <nanosec>2147483647</nanosec>
+          </max_flush_delay>
+          <!-- allows coalescing of source_timestamp for the whole batch Cuts
+           down the overhead of INFO_TS for each DATA -->
+          <source_timestamp_resolution>
+            <sec>0</sec>
+            <nanosec>0</nanosec>
+          </source_timestamp_resolution>
+        </batch>
+      </datawriter_qos>
+    </qos_profile>
+
+  </qos_library>
+</dds>

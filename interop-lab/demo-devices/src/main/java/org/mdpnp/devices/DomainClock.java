@@ -63,8 +63,8 @@ public class DomainClock implements DeviceClock  {
     private final DomainParticipant domainParticipant;
 
     static int ensureResolutionForFrequency(int currentResolutionNsPerSample, int hertz, int size) {
-        int periodNs = 1000000000 / hertz;
-        periodNs *= size;
+        // It's important to multiply first because hertz may not divide 1000000000ns evenly
+        long periodNs = 1000000000L * size / hertz;
         if(periodNs < currentResolutionNsPerSample) {
             if(periodNs < 0)
                 throw new IllegalStateException("Frequency " + hertz + "Hz overflow for size " +  size);
@@ -72,7 +72,7 @@ public class DomainClock implements DeviceClock  {
             log.info("Increase resolution arrayResolutionNs for " + size + " samples at " + hertz +
                      "Hz from minimum period of " + currentResolutionNsPerSample + "ns to " + periodNs + "ns");
 
-            currentResolutionNsPerSample = periodNs;
+            currentResolutionNsPerSample = (int) periodNs;
         }
         return currentResolutionNsPerSample;
     }

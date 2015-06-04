@@ -18,12 +18,19 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
+import org.mdpnp.devices.simulation.NumberWithGradient;
+import org.mdpnp.devices.simulation.NumberWithJitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Jeff Plourde
  *
  */
 public class SimulatedCapnometer {
+
+    private static final Logger log = LoggerFactory.getLogger(SimulatedCapnometer.class);
+
     private int count;
 
     protected int postIncrCount() {
@@ -41,27 +48,16 @@ public class SimulatedCapnometer {
         @Override
         public void run() {
 
-            if (null != targetRespirationRate) {
-                int delta = targetRespirationRate - respiratoryRate;
-                delta = Math.min(1, delta);
-                delta = Math.max(-1, delta);
-                respiratoryRate += delta;
-            }
-
-            if (null != targetEndTidalCO2) {
-                int delta = targetEndTidalCO2 - etCO2;
-                delta = Math.min(5, delta);
-                delta = Math.max(-5, delta);
-                etCO2 += delta;
-            }
-
             for (int i = 0; i < values.length; i++) {
                 values[i] = SimulatedCapnometer.this.co2[postIncrCount()];
             }
 
             DeviceClock.Reading  t = deviceClock.instant();
 
-            receiveCO2(t, values, respiratoryRate, etCO2, FREQUENCY);
+            int rRate = respiratoryRate.intValue();
+            int co2   = etCO2.intValue();
+
+            receiveCO2(t, values, rRate, co2, FREQUENCY);
         }
 
     };
@@ -95,10 +91,8 @@ public class SimulatedCapnometer {
             -0.33315287258643744, 0.04515924646026637, -0.561927692186718, 0.7799330968687627, -0.33990498476784836, 0.32590698371138915 };
     private final double[] co2 = new double[co2Coeffs.length];
 
-    // TODO realistic simulator ... requires a common control system
-    private int respiratoryRate = 13, etCO2 = 29;
-    private Integer targetRespirationRate = null;
-    private Integer targetEndTidalCO2 = null;
+    private Number respiratoryRate = new NumberWithJitter(13, 1, 5);
+    private Number etCO2 = new NumberWithJitter(29, 1, 5);
 
     private void initWaves() {
         DCT.idct(co2Coeffs, co2);
@@ -134,12 +128,14 @@ public class SimulatedCapnometer {
         initWaves();
     }
 
-    public void setEndTidalCO2(Integer targetEndTidalCO2) {
-        this.targetEndTidalCO2 = targetEndTidalCO2;
+    public void setEndTidalCO2(Number targetEndTidalCO2) {
+        this.etCO2 = new NumberWithGradient(etCO2, targetEndTidalCO2, 5);
+        log.debug("Set etCO2 to " + this.etCO2);
     }
 
-    public void setRespirationRate(Integer targetRespirationRate) {
-        this.targetRespirationRate = targetRespirationRate;
+    public void setRespirationRate(Number targetRespirationRate) {
+        this.respiratoryRate = new NumberWithGradient(respiratoryRate, targetRespirationRate, 1);
+        log.debug("Set respiratoryRate to " + this.respiratoryRate);
     }
 
 }

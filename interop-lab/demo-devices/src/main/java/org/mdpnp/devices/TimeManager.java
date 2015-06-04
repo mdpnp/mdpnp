@@ -1,34 +1,42 @@
 package org.mdpnp.devices;
 
-import ice.HeartBeat;
-import ice.HeartBeatDataReader;
-import ice.HeartBeatDataWriter;
-import ice.TimeSync;
-import ice.TimeSyncDataReader;
-import ice.TimeSyncDataWriter;
+import ice.*;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.WeakHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
 import com.rti.dds.infrastructure.Condition;
-import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Duration_t;
-import com.rti.dds.infrastructure.GuardCondition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.Locator_t;
+import com.rti.dds.infrastructure.Property_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
-import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.infrastructure.Time_t;
-import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
@@ -36,48 +44,39 @@ import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
 
+import org.springframework.jmx.export.annotation.ManagedResource;
 
-
-public class TimeManager implements Runnable {
+@ManagedResource(description="TimeManager Controller")
+public class TimeManager {
+    private final ScheduledExecutorService executor;
+    private ScheduledFuture<?> heartbeatTask;
+    private final EventLoop eventLoop;
     private final Subscriber subscriber;
     private final Publisher publisher;
-    protected final String uniqueDeviceIdentifier, type;
+	private final String uniqueDeviceIdentifier, type;
     
     private ice.HeartBeatDataWriter hbWriter;
     private ice.HeartBeatDataReader hbReader;
-    private ice.TimeSyncDataWriter tsWriter;
-    private ice.TimeSyncDataReader tsReader;
+	private ice.TimeSyncDataReader tsReader;
     private Topic hbTopic, tsTopic;
-    private boolean ownHbTopic, ownTsTopic;
-    private ContentFilteredTopic cfHbTopic, cfTsTopic;
+    private ContentFilteredTopic cfTsTopic, cfHbTopic;
     private ReadCondition hbReadCond;
     private ReadCondition tsReadCond;
-    private final GuardCondition guardCondition = new  GuardCondition();
+    private Map<InstanceHandle_t, String> hostnameByPublicationHandle = new WeakHashMap<>(); 
     
     private InstanceHandle_t hbHandle;
     private final ice.HeartBeat hbData = (HeartBeat) ice.HeartBeat.create();
-    
-    private Thread thread;
-    private boolean stop = false;
-    
+
+    private TimeSyncHandler timeSyncHandler=null;
+
     private Map<InstanceHandle_t, ice.HeartBeat> heartbeats = new java.util.concurrent.ConcurrentHashMap<>();
-    
-    private static final Logger log = LoggerFactory.getLogger(TimeManager.class);
-    
-    private static final class TimeSyncHolder {
-        public final TimeSync timeSync;
-        public final InstanceHandle_t handle;
-        
-        public TimeSyncHolder(final TimeSync timeSync, final InstanceHandle_t handle) {
-            this.timeSync = timeSync;
-            this.handle = handle;
-        }
-    }
-    
+
+
     public void addListener(TimeManagerListener listener) {
         this.listeners.add(listener);
     }
@@ -85,112 +84,162 @@ public class TimeManager implements Runnable {
     public void removeListener(TimeManagerListener listener) {
         this.listeners.remove(listener);
     }
-    
-    private final Map<String,TimeSyncHolder> sync = new HashMap<String, TimeSyncHolder>();
-    
-    public TimeManager(DomainParticipant participant, String uniqueDeviceIdentifier, String type) {
-        this(participant.get_implicit_publisher(), participant.get_implicit_subscriber(),
-                uniqueDeviceIdentifier, type);
+
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, DeviceIdentity deviceIdentifier) {
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier, null);
     }
     
-    public TimeManager(Publisher publisher, Subscriber subscriber, String uniqueDeviceIdentifier, String type) {
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, DeviceIdentity deviceIdentifier, String type) {
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier.unique_device_identifier, type);
+    }
+
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String deviceIdentifier) {
+        this(executor, eventLoop, publisher, subscriber, deviceIdentifier, null);
+    }
+
+    public TimeManager(ScheduledExecutorService executor, EventLoop eventLoop, Publisher publisher, Subscriber subscriber, String deviceIdentifier, String type) {
         if(!publisher.get_participant().equals(subscriber.get_participant())) {
             throw new RuntimeException("publisher and subscriber must be from the same participant");
         }
+        this.executor = executor;
+        this.eventLoop = eventLoop;
         this.subscriber = subscriber;
         this.publisher = publisher;
-        this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
+        this.uniqueDeviceIdentifier = deviceIdentifier;
         this.type = type;
     }
     
+    private static int instanceCounter = 0;
+    private int instanceNumber = instanceCounter++;
+    private final Logger log = LoggerFactory.getLogger("TimeManager"+instanceNumber);
+    
     public void start() {
-        DomainParticipant participant = publisher.get_participant();
-
-        hbTopic = (Topic) participant.lookup_topicdescription(ice.HeartBeatTopic.VALUE);
-        if(null == hbTopic) {
-            ownHbTopic = true;
+        eventLoop.doNow( () -> {
+            SubscriberQos sQos = new SubscriberQos();
+            subscriber.get_qos(sQos);
+            boolean wasSubscriberAutoenable = sQos.entity_factory.autoenable_created_entities;
+            sQos.entity_factory.autoenable_created_entities = false;
+            subscriber.set_qos(sQos);
+            
+            DomainParticipant participant = publisher.get_participant();
+    
             ice.HeartBeatTypeSupport.register_type(participant, ice.HeartBeatTypeSupport.get_type_name());
-            hbTopic = participant.create_topic(ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        }
-        tsTopic = (Topic) participant.lookup_topicdescription(ice.TimeSyncTopic.VALUE);
-        if(null == tsTopic) {
-            ownTsTopic = true;
-            ice.TimeSyncTypeSupport.register_type(participant, ice.TimeSyncTypeSupport.get_type_name());
-            tsTopic = participant.create_topic(ice.TimeSyncTopic.VALUE, ice.TimeSyncTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        }
-        StringSeq params = new StringSeq();
-        params.add("'"+uniqueDeviceIdentifier+"'");
-        cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE, hbTopic, "unique_device_identifier <> %0", params);
-        cfTsTopic = participant.create_contentfilteredtopic("CF"+ice.TimeSyncTopic.VALUE, tsTopic, "heartbeat_source = %0", params);
+            
+            hbTopic = TopicUtil.findOrCreateTopic(participant, ice.HeartBeatTopic.VALUE, ice.HeartBeatTypeSupport.class);
+            StringSeq params = new StringSeq();
+            params.add("'"+uniqueDeviceIdentifier+"'");
+            cfHbTopic = participant.create_contentfilteredtopic("CF"+ice.HeartBeatTopic.VALUE+instanceNumber, hbTopic, "unique_device_identifier <> %0", params);
+            hbReader = (HeartBeatDataReader) subscriber.create_datareader_with_profile(cfHbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
+            hbReadCond = hbReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+            eventLoop.addHandler(hbReadCond, hbReadHandler);
+            
+            if(null != type) {
+                ice.TimeSyncTypeSupport.register_type(participant, ice.TimeSyncTypeSupport.get_type_name());
+                tsTopic = TopicUtil.findOrCreateTopic(participant, ice.TimeSyncTopic.VALUE, ice.TimeSyncTypeSupport.class);
+                
+                cfTsTopic = participant.create_contentfilteredtopic("CF"+ice.TimeSyncTopic.VALUE+instanceNumber, tsTopic, "heartbeat_source = %0", params);
+                
+                hbWriter = (HeartBeatDataWriter) publisher.create_datawriter_with_profile(hbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
 
-        hbReader = (HeartBeatDataReader) subscriber.create_datareader_with_profile(cfHbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
-        hbWriter = (HeartBeatDataWriter) publisher.create_datawriter_with_profile(hbTopic, QosProfiles.ice_library, QosProfiles.heartbeat, null, StatusKind.STATUS_MASK_NONE);
+                hbData.unique_device_identifier = uniqueDeviceIdentifier;
+                hbData.type = type;
+                hbHandle = hbWriter.register_instance(hbData);
+                
+                tsReader = (TimeSyncDataReader) subscriber.create_datareader_with_profile(cfTsTopic, QosProfiles.ice_library, QosProfiles.timesync, null, StatusKind.STATUS_MASK_NONE);
 
-        hbData.unique_device_identifier = uniqueDeviceIdentifier;
-        hbData.type = type;
-        hbHandle = hbWriter.register_instance(hbData);
-        
-        tsReader = (TimeSyncDataReader) subscriber.create_datareader_with_profile(cfTsTopic, QosProfiles.ice_library, QosProfiles.timesync, null, StatusKind.STATUS_MASK_NONE);
-        tsWriter = (TimeSyncDataWriter) publisher.create_datawriter_with_profile(tsTopic, QosProfiles.ice_library, QosProfiles.timesync, null, StatusKind.STATUS_MASK_NONE);
+				ice.TimeSyncDataWriter tsWriter = (TimeSyncDataWriter) publisher.create_datawriter_with_profile(tsTopic, QosProfiles.ice_library, QosProfiles.timesync, null, StatusKind.STATUS_MASK_NONE);
+				timeSyncHandler = TimeSyncHandler.makeTimeSyncHandler(TimeSyncHandler.HandlerType.SupervisorAware,
+						                                              uniqueDeviceIdentifier,
+						                                              tsWriter);
 
-        
-        hbReadCond = hbReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                tsReadCond = tsReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
+                eventLoop.addHandler(tsReadCond, tsReadHandler);
+                tsReader.enable();
+                
+                heartbeatTask = executor.scheduleAtFixedRate(() -> hbWriter.write(hbData, hbHandle), 
+                        0L, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
+            }
+            
+            hbReader.enable();
+            
+            
+            sQos.entity_factory.autoenable_created_entities = wasSubscriberAutoenable;
+            subscriber.set_qos(sQos);
 
-        tsReadCond = tsReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE);
-        
-        thread = new Thread(this, "TimeManager");
-        thread.setDaemon(true);
-        thread.start();
+        });
     }
     
     public void stop() {
-        if(null != thread) {
-            stop = true;
-            guardCondition.set_trigger_value(true);
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        eventLoop.doNow( () -> {
+            Iterator<Entry<InstanceHandle_t, HeartBeat>> itr = heartbeats.entrySet().iterator();
+            while(itr.hasNext()) {
+                Entry<InstanceHandle_t, HeartBeat> hb = itr.next();
+                processNotAliveHeartbeat(hb.getValue().unique_device_identifier, hb.getValue().type);
+                itr.remove();
             }
-        }
-        hbReader.delete_readcondition(hbReadCond);
-        tsReader.delete_readcondition(tsReadCond);
-        
-        hbWriter.unregister_instance(hbData, hbHandle);
-        
-        for(TimeSyncHolder holder : sync.values()) {
-            tsWriter.unregister_instance(holder.timeSync, holder.handle);
-        }
-        sync.clear();
-        
-        publisher.delete_datawriter(tsWriter);
-        publisher.delete_datawriter(hbWriter);
-        
-        subscriber.delete_datareader(hbReader);
-        subscriber.delete_datareader(tsReader);
-        
-        DomainParticipant participant = publisher.get_participant();
-        
-        participant.delete_contentfilteredtopic(cfHbTopic);
-        participant.delete_contentfilteredtopic(cfTsTopic);
-        
-        if(ownHbTopic) {
-            participant.delete_topic(hbTopic);
-            ice.HeartBeatTypeSupport.unregister_type(participant, ice.HeartBeatTypeSupport.get_type_name());
-        }
-        if(ownTsTopic) {
-            participant.delete_topic(tsTopic);
-            ice.TimeSyncTypeSupport.unregister_type(participant, ice.TimeSyncTypeSupport.get_type_name());
-        }
-        
-        
-    }
-    
-    private static final void elapsedTime(Time_t t1, Time_t t2, Duration_t elapsed) {
-        elapsed.sec = t2.sec - t1.sec;
-        elapsed.nanosec = t2.nanosec - t1.nanosec;
-        
-       normalize(elapsed);
+            
+            if(null != heartbeatTask) {
+                heartbeatTask.cancel(true);
+                heartbeatTask = null;
+            }
+            
+            if(null != hbReader && null != hbReadCond) {
+                eventLoop.removeHandler(hbReadCond);
+                hbReader.delete_readcondition(hbReadCond);
+                hbReadCond = null;
+            }
+            if(null != tsReader && null != tsReadCond) {
+                eventLoop.removeHandler(tsReadCond);
+                tsReader.delete_readcondition(tsReadCond);
+                tsReadCond = null;
+            }
+            
+            if(null != hbWriter && null != hbData && null != hbHandle) {
+                hbWriter.unregister_instance(hbData, hbHandle);
+                hbHandle = null;
+            }
+
+
+            if(null != timeSyncHandler) {
+				ice.TimeSyncDataWriter tsWriter = timeSyncHandler.shutdown();
+				timeSyncHandler = null;
+                publisher.delete_datawriter(tsWriter);
+            }
+            
+            if(null != hbWriter) {
+                publisher.delete_datawriter(hbWriter);
+                hbWriter = null;
+            }
+            
+            if(null != hbReader) {
+                subscriber.delete_datareader(hbReader);
+                hbReader = null;
+            }
+            
+            if(null != tsReader) {
+                subscriber.delete_datareader(tsReader);
+                tsReader = null;
+            }
+            
+            DomainParticipant participant = publisher.get_participant();
+            
+            if(null != cfHbTopic) {
+                participant.delete_contentfilteredtopic(cfHbTopic);
+                cfHbTopic = null;
+            }
+            if(null != cfTsTopic) {
+                participant.delete_contentfilteredtopic(cfTsTopic);
+                cfTsTopic = null;
+            }
+            if(null != hbTopic) {
+                participant.delete_topic(hbTopic);
+                hbTopic = null;
+            }
+            if(null != tsTopic) {
+                participant.delete_topic(tsTopic);
+                tsTopic = null;
+            }
+        });
     }
     
     private static final void normalize(Duration_t d) {
@@ -215,25 +264,6 @@ public class TimeManager implements Runnable {
         normalize(elapsed);
     }
     
-    private static final int compare(Duration_t d1, Duration_t d2) {
-        int d_sec = d1.sec - d2.sec;
-        int d_nanosec = d1.nanosec - d2.nanosec;
-
-        if(d_sec == 0) {
-            if(d_nanosec == 0) {
-                return 0;
-            } else if(d_nanosec<0) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else if(d_sec<0){
-            return -1;
-        } else {
-            return 1;
-        }
-    }
-    
     private static final void divide(Duration_t d, int x) {
         int remain = d.sec % x;
         d.sec /= x;
@@ -250,17 +280,20 @@ public class TimeManager implements Runnable {
     
     private final List<TimeManagerListener> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     
-    private static final Duration_t HEARTBEAT_INTERVAL = new Duration_t(2,0);
+    private static final long HEARTBEAT_INTERVAL = 2000L;
     
-    protected void processAliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat) {
+    protected void processAliveHeartbeat(final String unique_device_identifier, final String type, String host_name) {
+        
+        log.trace("ALIVE:{}",unique_device_identifier);
         for(TimeManagerListener listener : listeners) {
-            listener.aliveHeartbeat(sampleInfo, heartbeat);
+            listener.aliveHeartbeat(unique_device_identifier, type, host_name);
         }
     }
     
-    protected void processNotAliveHeartbeat(SampleInfo sampleInfo, ice.HeartBeat heartbeat) {
+    protected void processNotAliveHeartbeat(final String unique_device_identifier, final String type) {
+        log.trace("NOT ALIVE:{}",unique_device_identifier);
         for(TimeManagerListener listener : listeners) {
-            listener.notAliveHeartbeat(sampleInfo, heartbeat);
+            listener.notAliveHeartbeat(unique_device_identifier, type);
         }
     }
     
@@ -269,151 +302,172 @@ public class TimeManager implements Runnable {
             listener.synchronization(remote_udi, latency, clockDifference);
         }
     }
-
-    public void run() {
-        final WaitSet waitSet = new WaitSet();
-        final Duration_t timeout = new Duration_t();
-        final ConditionSeq condSeq = new ConditionSeq();
-        final DomainParticipant participant = publisher.get_participant();
-        final Time_t now = new Time_t(0,0);
-        final Time_t lastHeartbeatEmitted = new Time_t(0,0);
-        final Duration_t sinceLastHeartbeat = new Duration_t();
-        final ice.HeartBeatSeq hb_seq = new ice.HeartBeatSeq();
-        final ice.TimeSyncSeq ts_seq = new ice.TimeSyncSeq();
-        final SampleInfoSeq sa_seq = new SampleInfoSeq();
-        
-        final Duration_t remoteProcessingTime = new Duration_t();
-        final Duration_t totalRoundtripTime = new Duration_t();
-        final Duration_t latencyTime = new Duration_t();
-        final Duration_t clockDifference = new Duration_t();
-        
-        waitSet.attach_condition(hbReadCond);
-        waitSet.attach_condition(tsReadCond);
-        waitSet.attach_condition(guardCondition);
-        
-        
-        do {
-            try {
-                participant.get_current_time(now);
-                
-                elapsedTime(lastHeartbeatEmitted, now, sinceLastHeartbeat);
-                if(compare(sinceLastHeartbeat, HEARTBEAT_INTERVAL)>=0) {
-                    hbWriter.write(hbData, hbHandle);
-                    lastHeartbeatEmitted.sec = now.sec; lastHeartbeatEmitted.nanosec = now.nanosec;
-                }
-                for(int i =0; i < condSeq.size(); i++) {
-                    Condition c = (Condition) condSeq.get(i);
-                    if(hbReadCond.equals(c)) {
-                        for(;;) {
-                            try { 
-                                hbReader.read_w_condition(hb_seq, sa_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, hbReadCond);
-                                int size = sa_seq.size();
     
-                                for(int j = 0; j < size; j++) {
-                                    SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
-                                    ice.HeartBeat sampleHeartbeat = (HeartBeat) hb_seq.get(j);
-                                    
+    private DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"); 
 
-                                    ice.HeartBeat heartbeat = heartbeats.get(sampleInfo.instance_handle);
-                                    if(null == heartbeat) {
-                                        heartbeat = new ice.HeartBeat();
-                                        heartbeats.put(new InstanceHandle_t(sampleInfo.instance_handle), heartbeat);
-                                    }
-                                    if(sampleInfo.valid_data) {
-                                        heartbeat.copy_from(sampleHeartbeat);
-                                    }
+    private final ConditionHandler hbReadHandler = new ConditionHandler() {
+        private final ice.HeartBeatSeq hb_seq = new ice.HeartBeatSeq();
+        private final SampleInfoSeq sa_seq = new SampleInfoSeq();
+        
+        @Override
+        public void conditionChanged(Condition condition) {
+            for(;;) {
+                try { 
+                    hbReader.read(hb_seq, sa_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, SampleStateKind.NOT_READ_SAMPLE_STATE, ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE);
+                    int size = sa_seq.size();
 
-                                    
-                                    TimeSyncHolder holder = sync.get(heartbeat.unique_device_identifier);
-                                    if (0 != (sampleInfo.instance_state & InstanceStateKind.NOT_ALIVE_INSTANCE_STATE)) {
-                                        processNotAliveHeartbeat(sampleInfo, heartbeat);
-                                        if(null != holder) {
-                                            tsWriter.unregister_instance(holder.timeSync, holder.handle);
-                                        }
-                                    }
-                                    if(0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
-                                        processAliveHeartbeat(sampleInfo, heartbeat);
-                                        if(sampleInfo.valid_data) {
-                                            if(holder == null) {
-                                                TimeSync ts = new TimeSync();
-                                                ts.heartbeat_source = heartbeat.unique_device_identifier;
-                                                ts.heartbeat_recipient = this.uniqueDeviceIdentifier;
-                                                holder = new TimeSyncHolder(ts, tsWriter.register_instance(ts));
-                                                sync.put(heartbeat.unique_device_identifier, holder);
-                                            }
-                                            holder.timeSync.source_source_timestamp.sec = sampleInfo.source_timestamp.sec;
-                                            holder.timeSync.source_source_timestamp.nanosec = sampleInfo.source_timestamp.nanosec;
-                                            holder.timeSync.recipient_receipt_timestamp.sec = sampleInfo.reception_timestamp.sec;
-                                            holder.timeSync.recipient_receipt_timestamp.nanosec = sampleInfo.reception_timestamp.nanosec;
-                                            tsWriter.write(holder.timeSync, holder.handle);
-                                        }
-                                    }
-                                    
-                                }
-                            } catch (RETCODE_NO_DATA noData) {
-                                break;
-                            } finally {
-                                hbReader.return_loan(hb_seq, sa_seq);
-                            }
+                    for(int j = 0; j < size; j++) {
+                        SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
+                        ice.HeartBeat sampleHeartbeat = (HeartBeat) hb_seq.get(j);
+
+                        // Ignore our own heartbeats
+                        if(uniqueDeviceIdentifier.equals(sampleHeartbeat.unique_device_identifier)) {
+                            log.warn("Received my own heartbeat; check content filtering");
+                            continue;
                         }
-                    } else if(tsReadCond.equals(c)) {
-                        for(;;) {
-                            try {
-                                tsReader.read_w_condition(ts_seq, sa_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, tsReadCond);
-                                 int size = sa_seq.size();
-                                for(int j = 0; j < size; j++) {
-                                    SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
-                                    ice.TimeSync timeSync = (TimeSync) ts_seq.get(j);
-                                    
-                                    if(sampleInfo.valid_data) {
-                                        elapsedTime(timeSync.recipient_receipt_timestamp, sampleInfo.source_timestamp, remoteProcessingTime);
-                                        elapsedTime(timeSync.source_source_timestamp, sampleInfo.reception_timestamp, totalRoundtripTime);
-                                        latencyTime.sec = totalRoundtripTime.sec;
-                                        latencyTime.nanosec = totalRoundtripTime.nanosec;
-                                        subtract(latencyTime, remoteProcessingTime);
-                                        divide(latencyTime, 2);
-                                        
-                                        elapsedTime(timeSync.source_source_timestamp, timeSync.recipient_receipt_timestamp, clockDifference);
-                                        subtract(clockDifference, latencyTime);
-                                        
-                                        processSynchronization(timeSync.heartbeat_recipient, latencyTime, clockDifference);
-                                    }
-                                }
-                            } catch (RETCODE_NO_DATA noData) {
-                                break;
-                            } finally {
-                                tsReader.return_loan(ts_seq, sa_seq);
+                        
+                        
+                        ice.HeartBeat heartbeat = heartbeats.get(sampleInfo.instance_handle);
+                        if(null == heartbeat) {
+                            if(!sampleInfo.valid_data) {
+                                log.warn("Received an initial heartbeat with no valid_data");
+                                hbReader.get_key_value(sampleHeartbeat, sampleInfo.instance_handle);
                             }
+                            heartbeat = new ice.HeartBeat();
+                            heartbeats.put(new InstanceHandle_t(sampleInfo.instance_handle), heartbeat);
+                        }
+                        
+                        if(sampleInfo.valid_data) {
+                            heartbeat.copy_from(sampleHeartbeat);
+                        }
+
+						if(0!=(InstanceStateKind.NOT_ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
+                            processNotAliveHeartbeat(heartbeat.unique_device_identifier, heartbeat.type);
+							if(timeSyncHandler != null)
+								timeSyncHandler.processNotAliveHeartbeat(heartbeat.unique_device_identifier);
+                        }
+						else if(0!=(InstanceStateKind.ALIVE_INSTANCE_STATE&sampleInfo.instance_state)) {
+                            String host_name = hostnameByPublicationHandle.get(sampleInfo.publication_handle);
+                            if(null == host_name) {
+                                ParticipantBuiltinTopicData data = null;
+                                
+                                try {
+                                    data = new ParticipantBuiltinTopicData();
+                                    hbReader.get_matched_publication_participant_data(data, sampleInfo.publication_handle);
+                                    host_name = getHostname(data);
+                                    hostnameByPublicationHandle.put(new InstanceHandle_t(sampleInfo.publication_handle), host_name);
+                                } catch(Exception e) {
+                                    log.warn("Unable to get participant information for HeartBeat publication");
+                                }
+                            }
+                            
+                            if(null != df && System.currentTimeMillis() < 31536000000L) {
+                                // one time attempt to set the system clock
+                                String dt = df.format(new Date(sampleInfo.source_timestamp.sec * 1000L + sampleInfo.source_timestamp.nanosec / 1000000L));
+                                try {
+                                    log.warn("Attempting date --set " + dt);
+                                    // This may or may not work, in any event we only try once
+                                    Runtime.getRuntime().exec(new String[]{"sudo", "date","--set",dt});
+                                } catch (IOException e) {
+                                    log.error("Error invoking 'date'", e);
+                                }
+                                df = null;
+                            }
+                            
+                            
+                            processAliveHeartbeat(heartbeat.unique_device_identifier, heartbeat.type, host_name);
+							if(timeSyncHandler != null)
+								timeSyncHandler.handleTimeSync(sampleInfo, heartbeat);
+						}
+                        
+                    }
+                } catch (RETCODE_NO_DATA noData) {
+                    break;
+                } finally {
+                    hbReader.return_loan(hb_seq, sa_seq);
+                }
+            }
+        }
+
+    };
+
+    private final ConditionHandler tsReadHandler = new ConditionHandler() {
+        private final ice.TimeSyncSeq ts_seq = new ice.TimeSyncSeq();
+        private final SampleInfoSeq sa_seq = new SampleInfoSeq();
+        
+        private final Duration_t remoteProcessingTime = new Duration_t();
+        private final Duration_t totalRoundtripTime = new Duration_t();
+        private final Duration_t latencyTime = new Duration_t();
+        private final Duration_t clockDifference = new Duration_t();
+        
+        @Override
+        public void conditionChanged(Condition condition) {
+            for(;;) {
+                try {
+                    tsReader.read_w_condition(ts_seq, sa_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED, tsReadCond);
+                     int size = sa_seq.size();
+                    for(int j = 0; j < size; j++) {
+                        SampleInfo sampleInfo = (SampleInfo) sa_seq.get(j);
+                        ice.TimeSync timeSync = (TimeSync) ts_seq.get(j);
+                        
+                        if(sampleInfo.valid_data) {
+                            elapsedTime(timeSync.recipient_receipt_timestamp, sampleInfo.source_timestamp, remoteProcessingTime);
+                            elapsedTime(timeSync.source_source_timestamp, sampleInfo.reception_timestamp, totalRoundtripTime);
+                            latencyTime.sec = totalRoundtripTime.sec;
+                            latencyTime.nanosec = totalRoundtripTime.nanosec;
+                            subtract(latencyTime, remoteProcessingTime);
+                            divide(latencyTime, 2);
+                            
+                            elapsedTime(timeSync.source_source_timestamp, timeSync.recipient_receipt_timestamp, clockDifference);
+                            subtract(clockDifference, latencyTime);
+                            
+                            processSynchronization(timeSync.heartbeat_recipient, latencyTime, clockDifference);
                         }
                     }
+                } catch (RETCODE_NO_DATA noData) {
+                    break;
+                } finally {
+                    tsReader.return_loan(ts_seq, sa_seq);
                 }
-                
-              
-                timeout.sec = HEARTBEAT_INTERVAL.sec;
-                timeout.nanosec = HEARTBEAT_INTERVAL.nanosec;
-                subtract(timeout, sinceLastHeartbeat);
-                waitSet.wait(condSeq, timeout);
-            } catch(RETCODE_TIMEOUT t) {
-                
-            } catch(Throwable th) {
-                log.error("unexpected error in TimeManager", th);
             }
-        } while(!stop);
-    }
+
+        }
+        
+    };
     
-    public static void main(String[] args) throws InterruptedException {
-        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(15, DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        TimeManager t1 = new TimeManager(participant, "A", "");
-//        TimeManager t2 = new TimeManager(participant, "B", "");
-        
-        t1.start();
-//        t2.start();
-//        
-        Thread.sleep(10000L);
-        
-        
-//        t2.stop();
-        t1.stop();
-        DomainParticipantFactory.get_instance().delete_participant(participant);
-    }
+    public static final String getHostname(ParticipantBuiltinTopicData participantData) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < participantData.property.value.size(); i++) {
+            Property_t prop = (Property_t) participantData.property.value.get(i);
+            if ("dds.sys_info.hostname".equals(prop.name)) {
+                sb.append(prop.value).append(" ");
+            }
+        }
+
+        for (int i = 0; i < participantData.default_unicast_locators.size(); i++) {
+            Locator_t locator = (Locator_t) participantData.default_unicast_locators.get(i);
+            try {
+                InetAddress addr = null;
+                switch (locator.kind) {
+                case Locator_t.KIND_TCPV4_LAN:
+                case Locator_t.KIND_TCPV4_WAN:
+                case Locator_t.KIND_TLSV4_LAN:
+                case Locator_t.KIND_TLSV4_WAN:
+                case Locator_t.KIND_UDPv4:
+                    addr = InetAddress
+                            .getByAddress(new byte[] { locator.address[12], locator.address[13], locator.address[14], locator.address[15] });
+                    break;
+                case Locator_t.KIND_UDPv6:
+                default:
+                    addr = InetAddress.getByAddress(locator.address);
+                    break;
+                }
+                sb.append(addr.getHostAddress()).append(" ");
+            } catch (UnknownHostException e) {
+                // TODO log
+//                 log.error("getting locator address", e);
+            }
+        }
+        return sb.toString();
+    }    
 }

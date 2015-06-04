@@ -1,0 +1,38 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+                           http://www.springframework.org/schema/util
+                           http://www.springframework.org/schema/util/spring-util-4.1.xsd">
+
+
+    <!--
+    Controller that would know which beans from the contest to lookup when
+    loading a particular fxml UI definition
+    -->
+    <bean id="fxDecorator" class="org.mdpnp.apps.testapp.FxmlLoaderFactory">
+        <property name="screenDefinitions">
+            <map>
+                <entry key="SimControl.fxml"  value="uiController" />
+            </map>
+        </property>
+    </bean>
+
+    <bean id="uiController"
+          class="org.mdpnp.apps.testapp.sim.SimControl"
+          destroy-method="shutDown"
+          depends-on="fxDecorator">
+        <constructor-arg ref="eventLoop"/>
+        <constructor-arg ref="subscriber"/>
+        <constructor-arg ref="publisher"/>
+    </bean>
+
+    <!--
+    UI entry-point
+     -->
+    <bean id="mainUI" class="javafx.scene.Parent" factory-bean="fxDecorator" factory-method="getScreen">
+        <constructor-arg value="SimControl.fxml"/>
+    </bean>
+
+</beans>

@@ -21,14 +21,17 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public abstract class AbstractDelegatingSerialDevice<T> extends AbstractSerialDevice {
-    public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop, Class<T> clazz) {
-        this(domainId, eventLoop, 1, clazz);
+    public AbstractDelegatingSerialDevice(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop, Class<T> clazz) {
+        this(subscriber, publisher, eventLoop, 1, clazz);
     }
     
     @SuppressWarnings("unchecked")
-    public AbstractDelegatingSerialDevice(int domainId, EventLoop eventLoop, final int countSerialPorts, Class<T> clazz) {
-        super(domainId, eventLoop, countSerialPorts);
+    public AbstractDelegatingSerialDevice(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop, final int countSerialPorts, Class<T> clazz) {
+        super(subscriber, publisher, eventLoop, countSerialPorts);
         inputStream = new InputStream[countSerialPorts];
         outputStream = new OutputStream[countSerialPorts];
         delegate = (T[]) Array.newInstance(clazz, countSerialPorts);

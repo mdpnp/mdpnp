@@ -5,13 +5,18 @@
 <?import javafx.scene.layout.*?>
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
-<?import org.mdpnp.guis.javafx.ResizableCanvas?>
 
-<BorderPane fx:id="container" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.VitalMonitoring">
-   <top>
-      <Label text="Data Visualization" BorderPane.alignment="CENTER"/>
-   </top>
-   <center>
-      <ResizableCanvas fx:id="canvas" />
-   </center>
+<BorderPane fx:id="container" xmlns="http://javafx.com/javafx/8"
+ xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pca.VitalMonitoring">
+ <center>
+  <ScrollPane fitToHeight="true" fitToWidth="true">
+   <content>
+    <BorderPane>
+     <center>
+      <Canvas BorderPane.alignment="CENTER" fx:id="canvas" height="400.0" width="400.0"/>
+     </center>
+    </BorderPane>
+   </content>
+  </ScrollPane>
+ </center>
 </BorderPane>

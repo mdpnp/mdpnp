@@ -18,6 +18,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Spring lifecycle interceptor to perform additional initialization of the object - such as
+ * fxml loading and data binding before it is returned to the context.
+ *
+ * @param <T>
+ */
 public class FxmlLoaderFactory<T> implements BeanPostProcessor, InitializingBean, ApplicationContextAware
 {
     private static final Logger log = LoggerFactory.getLogger(FxmlLoaderFactory.class);

@@ -5,15 +5,40 @@
                            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
                            http://www.springframework.org/schema/util
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
-
-
-    <bean id="jdbcDB"
-          class="org.mdpnp.apps.testapp.patient.PatientApplicationFactory.EmbeddedDB"
-          init-method="init"
-          destroy-method="shutdown">
-        <property name="schemaDef" value="DbSchema.sql"/>
+ 
+    <bean id="wildcardDomainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
+        <constructor-arg ref="domainId" />
     </bean>
+    
+    <bean id="wildcardSubscriber" class="org.mdpnp.devices.SubscriberFactory">
+        <constructor-arg ref="wildcardDomainParticipant"></constructor-arg>
+        <constructor-arg><value>*</value></constructor-arg>
+    </bean>
+    
+    <bean id="wildcardPublisher" class="org.mdpnp.devices.PublisherFactory">
+        <constructor-arg ref="wildcardDomainParticipant"></constructor-arg>
+        <constructor-arg><value>*</value></constructor-arg>
+    </bean>
+    
+    <bean id="wildcardTimeManager" class="org.mdpnp.devices.TimeManagerFactory">
+      <property name="executor" ref="refreshScheduler"/>
+      <property name="eventLoop" ref="eventLoop"/>
+      <property name="publisher" ref="wildcardPublisher"/>
+      <property name="subscriber" ref="wildcardSubscriber"/>
+      <property name="uniqueDeviceIdentifier" ref="supervisorUdi" />
+      <!-- Omitting the type means this TimeManager will only passively monitor heartbeats -->
+    </bean>
+    
+    <bean id="wildcardDeviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory">
+        <constructor-arg ref="eventLoop" />
+        <constructor-arg ref="wildcardSubscriber" />
+        <constructor-arg ref="wildcardTimeManager" />
+    </bean>    
 
+    <!--
+    Controller that would know which beans from the contest to lookup when
+    loading a particular fxml UI definition
+    -->
     <bean id="fxDecorator" class="org.mdpnp.apps.testapp.FxmlLoaderFactory">
         <property name="screenDefinitions">
             <map>
@@ -28,12 +53,15 @@
           destroy-method="stop"
           depends-on="fxDecorator">
 
-        <property name="jdbcDB"              ref="jdbcDB"/>
-        <property name="deviceListDataModel" ref="deviceListModel"/>
+        <property name="emr"                 ref="emr"/>
+        <property name="deviceListDataModel" ref="wildcardDeviceListModel"/>
+        <property name="mdsConnectivity"     ref="mdsConnectivity"/>
     </bean>
 
+    <!--
+    UI entry-point
+     -->
     <bean id="mainUI" class="javafx.scene.Parent" factory-bean="fxDecorator" factory-method="getScreen">
         <constructor-arg value="PatientDeviceAssn.fxml"/>
     </bean>
-
 </beans>

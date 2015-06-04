@@ -37,9 +37,12 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.rtiapi.data.InfusionStatusInstanceModel;
+import org.mdpnp.rtiapi.data.EventLoop;
+
+import com.rti.dds.subscription.Subscriber;
 
 /**
  * @author Jeff Plourde
@@ -50,7 +53,8 @@ public class PCAPanel implements InvalidationListener {
     
     @FXML protected BorderPane pcaConfig;
     @FXML protected PCAConfig pcaConfigController;
-
+    
+    private static final Border NO_BORDER = new Border(new BorderStroke(Color.TRANSPARENT, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
     private static final Border YELLOW_BORDER = new Border(new BorderStroke(Color.YELLOW, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
     private static final Border RED_BORDER = new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(3) ));
 
@@ -68,8 +72,9 @@ public class PCAPanel implements InvalidationListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, DeviceListModel deviceListModel) {
-        pcaConfigController.set(refreshScheduler, objectiveWriter, deviceListModel);
+    public PCAPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter, 
+            DeviceListModel deviceListModel, InfusionStatusFxList infusionStatusList) {
+        pcaConfigController.set(refreshScheduler, objectiveWriter, deviceListModel, infusionStatusList);
         return this;
     }
     
@@ -107,17 +112,20 @@ public class PCAPanel implements InvalidationListener {
     }
 
     private VitalModel model;
-
-    public void setModel(VitalModel vitalModel, InfusionStatusInstanceModel pumpModel) {
+    
+    public void setModel(VitalModel vitalModel) {
         if (this.model != null) {
             this.model.stateProperty().removeListener(this);
             this.model.isInfusionStoppedProperty().removeListener(this);
         }
         this.model = vitalModel;
-        pcaConfigController.setModel(vitalModel, pumpModel);
+        pcaConfigController.setModel(vitalModel);
         if(null != vitalModel) {
             model.stateProperty().addListener(this);
             model.isInfusionStoppedProperty().addListener(this);
+        } else {
+            generalAlarm.stop();
+            drugDeliveryAlarm.stop();
         }
     }
 
@@ -161,7 +169,7 @@ public class PCAPanel implements InvalidationListener {
             } else if (VitalModel.State.Warning.equals(model.getState())) {
                 main.setBorder(YELLOW_BORDER);
             } else {
-                main.setBorder(Border.EMPTY);
+                main.setBorder(NO_BORDER);
             }
         }
     }

@@ -4,28 +4,27 @@ import org.mdpnp.devices.TimeManager;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.subscription.Subscriber;
 
-public class DeviceListModelFactory implements FactoryBean<DeviceListModelImpl> {
+public class DeviceListModelFactory implements FactoryBean<DeviceListModel>, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(DeviceListModelFactory.class);
 
-    private DeviceListModelImpl instance;
+    private DeviceListModel instance;
 
     private final EventLoop eventLoop;
     private final Subscriber subscriber;
     private final TimeManager timeManager;
 
     @Override
-    public DeviceListModelImpl getObject() throws Exception {
+    public DeviceListModel getObject() throws Exception {
         if(instance == null) {
             instance = new DeviceListModelImpl(subscriber, eventLoop, timeManager);
-            eventLoop.doLater(new Runnable() {
-                @Override
-                public void run() {
-                    instance.start();
-                }
+            // TODO Figure out why it is so important that this be scheduled on the EventLoop
+            eventLoop.doNow(() -> {
+                instance.start();
             });
         }
         return instance;
@@ -33,7 +32,7 @@ public class DeviceListModelFactory implements FactoryBean<DeviceListModelImpl> 
 
     @Override
     public Class<?> getObjectType() {
-        return DeviceListModelImpl.class;
+        return DeviceListModel.class;
     }
 
     @Override
@@ -48,6 +47,11 @@ public class DeviceListModelFactory implements FactoryBean<DeviceListModelImpl> 
     }
 
     public void stop() {
+        
+    }
+
+    @Override
+    public void destroy() throws Exception {
         if(instance != null) {
             log.info("Shutting down the model");
             instance.tearDown();

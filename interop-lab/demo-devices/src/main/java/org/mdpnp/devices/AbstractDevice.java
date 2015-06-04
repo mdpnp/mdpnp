@@ -15,9 +15,8 @@ package org.mdpnp.devices;
 import ice.Alert;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataWriter;
-import ice.DeviceIdentityTypeCode;
 import ice.DeviceIdentityTypeSupport;
-import ice.LocalAlarmSettingsObjectiveDataWriter;
+import ice.LocalAlarmLimitObjectiveDataWriter;
 import ice.Numeric;
 import ice.NumericDataWriter;
 import ice.NumericTypeSupport;
@@ -25,41 +24,28 @@ import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.management.ManagementFactory;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import javax.management.JMException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
-import org.mdpnp.rtiapi.data.TypeCodeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedResource;
 
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.BadKind;
-import com.rti.dds.infrastructure.Bounds;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
@@ -67,29 +53,39 @@ import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.Time_t;
 import com.rti.dds.publication.Publisher;
-import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.ReadCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 
-public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBean {
-    protected final ThreadGroup threadGroup;
-    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(this);
+@ManagedResource(description="MDPNP Device Driver")
+public abstract class AbstractDevice {
+
+    public static ThreadGroup threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "DeviceAdapter") {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            log.error("Thrown by " + t.toString(), e);
+            super.uncaughtException(t, e);
+        }
+    };
+    // TODO this is a good idea but the threadgroup gets destroyed when the last thread finishes
+//    static
+//    {
+//        threadGroup.setDaemon(true);
+//    }
+
     protected final EventLoop eventLoop;
+    protected ScheduledExecutorService executor;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDevice.class);
 
     protected final DomainParticipant domainParticipant;
     protected final Publisher publisher;
     protected final Subscriber subscriber;
-    protected TimeManager timeManager;
     protected final Topic deviceIdentityTopic;
     private final DeviceIdentityDataWriter deviceIdentityWriter;
     protected final DeviceIdentity deviceIdentity;
@@ -103,11 +99,13 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
 
     private final DeviceClock timestampFactory;
 
-    protected final Topic alarmSettingsTopic;
-    protected final ice.AlarmSettingsDataWriter alarmSettingsDataWriter;
+    protected final Topic alarmLimitTopic;
+    protected final ice.AlarmLimitDataWriter alarmLimitDataWriter;
 
-    protected final Topic alarmSettingsObjectiveTopic;
-    protected final ice.LocalAlarmSettingsObjectiveDataWriter alarmSettingsObjectiveWriter;
+
+    protected final Topic localAlarmLimitObjectiveTopic;
+    protected final ice.LocalAlarmLimitObjectiveDataWriter alarmLimitObjectiveWriter;
+
     
     protected Topic deviceAlertConditionTopic;
     protected ice.DeviceAlertConditionDataWriter deviceAlertConditionWriter;
@@ -118,8 +116,10 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
     protected Topic technicalAlertTopic;
     protected ice.AlertDataWriter technicalAlertWriter;
 
-    protected ice.GlobalAlarmSettingsObjectiveDataReader alarmSettingsObjectiveReader;
-    protected ReadCondition alarmSettingsObjectiveCondition;
+	protected Topic globalAlarmLimitObjectiveTopic;
+    protected ice.GlobalAlarmLimitObjectiveDataReader alarmLimitObjectiveReader;
+    protected ReadCondition alarmLimitObjectiveCondition;
+
     
     protected InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
 
@@ -182,39 +182,41 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return holder;
     }
 
-    protected InstanceHolder<ice.AlarmSettings> createAlarmSettingsInstance(String metric_id) {
+    protected InstanceHolder<ice.AlarmLimit> createAlarmLimitInstance(String metric_id, ice.LimitType limit_type ) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
         }
 
-        InstanceHolder<ice.AlarmSettings> holder = new InstanceHolder<ice.AlarmSettings>();
-        holder.data = new ice.AlarmSettings();
+        InstanceHolder<ice.AlarmLimit> holder = new InstanceHolder<ice.AlarmLimit>();
+        holder.data = new ice.AlarmLimit();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
-        holder.handle = alarmSettingsDataWriter.register_instance(holder.data);
-        registeredAlarmSettingsInstances.add(holder);
+        holder.data.limit_type = limit_type;
+        holder.handle = alarmLimitDataWriter.register_instance(holder.data);
+        registeredAlarmLimitInstances.add(holder);
         return holder;
     }
 
-    protected InstanceHolder<ice.LocalAlarmSettingsObjective> createAlarmSettingsObjectiveInstance(String metric_id) {
+    protected InstanceHolder<ice.LocalAlarmLimitObjective> createAlarmLimitObjectiveInstance(String metric_id, ice.LimitType limit_type) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
         }
 
-        InstanceHolder<ice.LocalAlarmSettingsObjective> holder = new InstanceHolder<ice.LocalAlarmSettingsObjective>();
-        holder.data = new ice.LocalAlarmSettingsObjective();
+        InstanceHolder<ice.LocalAlarmLimitObjective> holder = new InstanceHolder<ice.LocalAlarmLimitObjective>();
+        holder.data = new ice.LocalAlarmLimitObjective();
         holder.data.unique_device_identifier = deviceIdentity.unique_device_identifier;
         holder.data.metric_id = metric_id;
-        holder.handle = alarmSettingsObjectiveWriter.register_instance(holder.data);
-        registeredAlarmSettingsObjectiveInstances.add(holder);
+        holder.data.limit_type = limit_type;
+        holder.handle = alarmLimitObjectiveWriter.register_instance(holder.data);
+        registeredAlarmLimitObjectiveInstances.add(holder);
         return holder;
     }
 
     protected void unregisterAllInstances() {
         unregisterAllNumericInstances();
         unregisterAllSampleArrayInstances();
-        unregisterAllAlarmSettingsInstances();
-        unregisterAllAlarmSettingsObjectiveInstances();
+        unregisterAllAlarmLimitInstances();
+        unregisterAllAlarmLimitObjectiveInstances();
         unregisterAllPatientAlertInstances();
         unregisterAllTechnicalAlertInstances();
     }
@@ -232,15 +234,15 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         unregisterAllAlertInstances(oldTechnicalAlertInstances, technicalAlertInstances, technicalAlertWriter);
     }
 
-    protected void unregisterAllAlarmSettingsObjectiveInstances() {
-        while (!registeredAlarmSettingsObjectiveInstances.isEmpty()) {
-            unregisterAlarmSettingsObjectiveInstance(registeredAlarmSettingsObjectiveInstances.get(0));
+    protected void unregisterAllAlarmLimitObjectiveInstances() {
+        while (!registeredAlarmLimitObjectiveInstances.isEmpty()) {
+            unregisterAlarmLimitObjectiveInstance(registeredAlarmLimitObjectiveInstances.get(0));
         }
     }
 
-    protected void unregisterAllAlarmSettingsInstances() {
-        while (!registeredAlarmSettingsInstances.isEmpty()) {
-            unregisterAlarmSettingsInstance(registeredAlarmSettingsInstances.get(0));
+    protected void unregisterAllAlarmLimitInstances() {
+        while (!registeredAlarmLimitInstances.isEmpty()) {
+            unregisterAlarmLimitInstance(registeredAlarmLimitInstances.get(0));
         }
     }
 
@@ -270,20 +272,20 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         sampleArrayDataWriter.unregister_instance(holder.data, holder.handle);
     }
 
-    protected void unregisterAlarmSettingsInstance(InstanceHolder<ice.AlarmSettings> holder) {
-        registeredAlarmSettingsInstances.remove(holder);
-        alarmSettingsDataWriter.unregister_instance(holder.data, holder.handle);
+    protected void unregisterAlarmLimitInstance(InstanceHolder<ice.AlarmLimit> holder) {
+        registeredAlarmLimitInstances.remove(holder);
+        alarmLimitDataWriter.unregister_instance(holder.data, holder.handle);
     }
 
-    protected void unregisterAlarmSettingsObjectiveInstance(InstanceHolder<ice.LocalAlarmSettingsObjective> holder) {
-        registeredAlarmSettingsObjectiveInstances.remove(holder);
-        alarmSettingsObjectiveWriter.unregister_instance(holder.data, holder.handle);
+    protected void unregisterAlarmLimitObjectiveInstance(InstanceHolder<ice.LocalAlarmLimitObjective> holder) {
+        registeredAlarmLimitObjectiveInstances.remove(holder);
+        alarmLimitObjectiveWriter.unregister_instance(holder.data, holder.handle);
     }
 
     private final List<InstanceHolder<SampleArray>> registeredSampleArrayInstances = new ArrayList<InstanceHolder<SampleArray>>();
     private final List<InstanceHolder<Numeric>> registeredNumericInstances = new ArrayList<InstanceHolder<Numeric>>();
-    private final List<InstanceHolder<ice.AlarmSettings>> registeredAlarmSettingsInstances = new ArrayList<InstanceHolder<ice.AlarmSettings>>();
-    private final List<InstanceHolder<ice.LocalAlarmSettingsObjective>> registeredAlarmSettingsObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmSettingsObjective>>();
+    private final List<InstanceHolder<ice.AlarmLimit>> registeredAlarmLimitInstances = new ArrayList<InstanceHolder<ice.AlarmLimit>>();
+    private final List<InstanceHolder<ice.LocalAlarmLimitObjective>> registeredAlarmLimitObjectiveInstances = new ArrayList<InstanceHolder<ice.LocalAlarmLimitObjective>>();
     private final Map<String, InstanceHolder<ice.Alert>> patientAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
     private final Map<String, InstanceHolder<ice.Alert>> technicalAlertInstances = new HashMap<String, InstanceHolder<ice.Alert>>();
     private final Set<String> oldPatientAlertInstances = new HashSet<String>();
@@ -333,52 +335,65 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         numericDataWriter.write(holder.data, holder.handle);
     }
 
-    protected void alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper) {
-        newLower = null == newLower ? Float.NEGATIVE_INFINITY : newLower;
-        newUpper = null == newUpper ? Float.POSITIVE_INFINITY : newUpper;
-        if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = newLower;
-            holder.data.upper = newUpper;
-            alarmSettingsDataWriter.write(holder.data, holder.handle);
+    protected void alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue) {
+        if(0 != Float.compare(newValue, holder.data.value) ||  
+           !unit_id.equals(holder.data.unit_identifier)) {
+            holder.data.value = newValue;
+            holder.data.unit_identifier = unit_id;
+            alarmLimitDataWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected void alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder, float newLower, float newUpper) {
-        if(0 != Float.compare(newLower, holder.data.lower) || 0 != Float.compare(newUpper, holder.data.upper)) {
-            holder.data.lower = newLower;
-            holder.data.upper = newUpper;
-            alarmSettingsObjectiveWriter.write(holder.data, holder.handle);
+    protected void alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder, String unit_id, Float newValue) {
+        if(0 != Float.compare(newValue, holder.data.value) || 
+           !unit_id.equals(holder.data.unit_identifier)) {
+            holder.data.value = newValue;
+            holder.data.unit_identifier = unit_id;
+            alarmLimitObjectiveWriter.write(holder.data, holder.handle);
         }
     }
 
-    protected InstanceHolder<ice.AlarmSettings> alarmSettingsSample(InstanceHolder<ice.AlarmSettings> holder, Float newLower, Float newUpper,
-            String metric_id) {
-        if (holder != null && !holder.data.metric_id.equals(metric_id)) {
-            unregisterAlarmSettingsInstance(holder);
+    protected InstanceHolder<ice.AlarmLimit> alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue,
+            String metric_id, ice.LimitType limit_type) {
+        if (holder != null && 
+                (!holder.data.unique_device_identifier.equals(deviceIdentity.unique_device_identifier) ||
+                 !holder.data.metric_id.equals(metric_id) || 
+                 !holder.data.limit_type.equals(limit_type))) {
+            unregisterAlarmLimitInstance(holder);
             holder = null;
         }
-        if (null == holder) {
-            holder = createAlarmSettingsInstance(metric_id);
+        if(null != newValue) {
+            if (null == holder) {
+                holder = createAlarmLimitInstance(metric_id, limit_type);
+            }
+            alarmLimitSample(holder, unit_id, newValue);
+        } else {
+            if(null != holder) {
+                unregisterAlarmLimitInstance(holder);
+                holder = null;
+            }
         }
-        alarmSettingsSample(holder, newLower, newUpper);
 
         return holder;
     }
 
-    protected InstanceHolder<ice.LocalAlarmSettingsObjective> alarmSettingsObjectiveSample(InstanceHolder<ice.LocalAlarmSettingsObjective> holder,
-            Float newLower, Float newUpper, String metric_id) {
-        if (holder != null && !holder.data.metric_id.equals(metric_id)) {
-            unregisterAlarmSettingsObjectiveInstance(holder);
+    protected InstanceHolder<ice.LocalAlarmLimitObjective> alarmLimitObjectiveSample(InstanceHolder<ice.LocalAlarmLimitObjective> holder,
+            Float newValue, String unit_id, String metric_id, ice.LimitType limit_type) {
+        if ( holder != null && 
+                (!holder.data.unique_device_identifier.equals(deviceIdentity.unique_device_identifier) ||
+                 !holder.data.metric_id.equals(metric_id) ||
+                 !holder.data.limit_type.equals(limit_type))) {
+            unregisterAlarmLimitObjectiveInstance(holder);
             holder = null;
         }
-        if (null != newLower && null != newUpper) {
+        if (null != newValue) {
             if (null == holder) {
-                holder = createAlarmSettingsObjectiveInstance(metric_id);
+                holder = createAlarmLimitObjectiveInstance(metric_id, limit_type);
             }
-            alarmSettingsObjectiveSample(holder, newLower, newUpper);
+            alarmLimitObjectiveSample(holder, unit_id, newValue);
         } else {
             if (null != holder) {
-                unregisterAlarmSettingsObjectiveInstance(holder);
+                unregisterAlarmLimitObjectiveInstance(holder);
                 holder = null;
             }
 
@@ -615,45 +630,6 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         return null;
     }
 
-    protected boolean iconFromResource(DeviceIdentity di, String iconResourceName) throws IOException {
-        if (null == iconResourceName) {
-            di.icon.content_type = "";
-            di.icon.image.clear();
-            return true;
-        }
-
-        InputStream is = getClass().getResourceAsStream(iconResourceName);
-        if (null != is) {
-            try {
-                {
-                    byte[] xfer = new byte[1024];
-                    int len = is.read(xfer);
-
-                    di.icon.image.userData.clear();
-
-                    while (len >= 0) {
-                        di.icon.image.userData.addAllByte(xfer, 0, len);
-                        len = is.read(xfer);
-                    }
-                    is.close();
-                }
-                return true;
-            } catch (Exception e) {
-                log.error("error in iconUpdateFromResource", e);
-            }
-        }
-        return false;
-    }
-
-    private int threadOrdinal = 0;
-
-    @Override
-    public Thread newThread(Runnable r) {
-        Thread t = new Thread(threadGroup, r, "AbstractDevice-" + (++threadOrdinal));
-        t.setDaemon(true);
-        return t;
-    }
-
     public void shutdown() {
         // TODO there is nothing preventing inheritors from interacting with
         // these objects as (and after) they are destroyed.
@@ -661,141 +637,76 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         // inheritor may have registered... perhaps they should be responsible
         // in their override of shutdown?
 
-        if(timeManager!=null) {
-            timeManager.stop();
-        }
-        
-        if (null != alarmSettingsObjectiveCondition) {
-            eventLoop.removeHandler(alarmSettingsObjectiveCondition);
-            alarmSettingsObjectiveReader.delete_readcondition(alarmSettingsObjectiveCondition);
-            alarmSettingsObjectiveCondition = null;
-        }
+		if (null != alarmLimitObjectiveCondition) {
+		    eventLoop.removeHandler(alarmLimitObjectiveCondition);
+		    alarmLimitObjectiveReader.delete_readcondition(alarmLimitObjectiveCondition);
+		    alarmLimitObjectiveCondition = null;
+		}
 
-        subscriber.delete_datareader(alarmSettingsObjectiveReader);
+		subscriber.delete_datareader(alarmLimitObjectiveReader);
+        domainParticipant.delete_topic(globalAlarmLimitObjectiveTopic);
 
-        publisher.delete_datawriter(alarmSettingsObjectiveWriter);
-        domainParticipant.delete_topic(alarmSettingsObjectiveTopic);
-        ice.LocalAlarmSettingsObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
+        publisher.delete_datawriter(alarmLimitObjectiveWriter);
+        domainParticipant.delete_topic(localAlarmLimitObjectiveTopic);
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.LocalAlarmLimitObjectiveTypeSupport.unregister_type(domainParticipant, ice.LocalAlarmLimitObjectiveTypeSupport.get_type_name());
 
-        publisher.delete_datawriter(alarmSettingsDataWriter);
-        domainParticipant.delete_topic(alarmSettingsTopic);
-        ice.AlarmSettingsTypeSupport.unregister_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
+        publisher.delete_datawriter(alarmLimitDataWriter);
+        domainParticipant.delete_topic(alarmLimitTopic);
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.AlarmLimitTypeSupport.unregister_type(domainParticipant, ice.AlarmLimitTypeSupport.get_type_name());
 
         publisher.delete_datawriter(sampleArrayDataWriter);
         domainParticipant.delete_topic(sampleArrayTopic);
-        SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        SampleArrayTypeSupport.unregister_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
 
         publisher.delete_datawriter(numericDataWriter);
         domainParticipant.delete_topic(numericTopic);
-        NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        NumericTypeSupport.unregister_type(domainParticipant, NumericTypeSupport.get_type_name());
 
         publisher.delete_datawriter(deviceIdentityWriter);
         domainParticipant.delete_topic(deviceIdentityTopic);
-        DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        DeviceIdentityTypeSupport.unregister_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
         
         publisher.delete_datawriter(deviceAlertConditionWriter);
         domainParticipant.delete_topic(deviceAlertConditionTopic);
-        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.DeviceAlertConditionTypeSupport.unregister_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
 
         publisher.delete_datawriter(patientAlertWriter);
         domainParticipant.delete_topic(patientAlertTopic);
         
         publisher.delete_datawriter(technicalAlertWriter);
         domainParticipant.delete_topic(technicalAlertTopic);
-        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
+        // TODO Where a participant is shared it is not safe to unregister types
+//        ice.AlertTypeSupport.unregister_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
 
-        domainParticipant.delete_publisher(publisher);
-        domainParticipant.delete_subscriber(subscriber);
-
-        domainParticipant.delete_contained_entities();
-
-        DomainParticipantFactory.get_instance().delete_participant(domainParticipant);
-
-        executor.shutdown();
         log.info("AbstractDevice shutdown complete");
     }
 
-    public AbstractDevice(int domainId, EventLoop eventLoop) {
-        DomainParticipantQos pQos = new DomainParticipantQos();
-        DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-        pQos.participant_name.name = "Device";
+    public AbstractDevice(final Subscriber subscriber, final Publisher publisher, final EventLoop eventLoop) {
+
+        deviceIdentity  = (new DeviceIdentityBuilder()).osName().softwareRev().withIcon(this, iconResourceName()).build();
         
-        domainParticipant = DomainParticipantFactory.get_instance().create_participant(domainId, pQos, null, StatusKind.STATUS_MASK_NONE);
-        publisher = domainParticipant.create_publisher(DomainParticipant.PUBLISHER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        subscriber = domainParticipant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        this.domainParticipant = subscriber.get_participant();
+        this.subscriber = subscriber;
+        this.publisher = publisher;
 
         timestampFactory = new DomainClock(domainParticipant);
 
         DeviceIdentityTypeSupport.register_type(domainParticipant, DeviceIdentityTypeSupport.get_type_name());
-        deviceIdentityTopic = domainParticipant.create_topic(ice.DeviceIdentityTopic.VALUE, DeviceIdentityTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceIdentityTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.DeviceIdentityTopic.VALUE, ice.DeviceIdentityTypeSupport.class);
         deviceIdentityWriter = (DeviceIdentityDataWriter) publisher.create_datawriter_with_profile(deviceIdentityTopic, QosProfiles.ice_library,
                 QosProfiles.device_identity, null, StatusKind.STATUS_MASK_NONE);
         if (null == deviceIdentityWriter) {
             throw new RuntimeException("deviceIdentityWriter not created");
         }
-        deviceIdentity = new DeviceIdentity();
-        deviceIdentity.icon.content_type = "image/png";
-        deviceIdentity.build = BuildInfo.getDescriptor();
-        
-        
-        String osName = System.getProperty("os.name");
-        
-        int maxOperatingSystemLength = 0;
-        try {
-            maxOperatingSystemLength = TypeCodeHelper.fieldLength(DeviceIdentityTypeCode.VALUE, "operating_system");
-        } catch (BadKind | Bounds e) {
-            log.warn("Unable to find length of DeviceIdentity.operating_system", e);
-        }
-        
-        if(maxOperatingSystemLength > 0) {
-            if("Linux".equals(osName)) {
-            
-                final String OS_RELEASE_FILE = "/etc/os-release";
-                Path osRelease = Paths.get(OS_RELEASE_FILE);
-                File f = osRelease.toFile();
-                if(f.exists() && f.canRead()) {
-                    try {
-                        
-                        List<String> definitions = Files.readAllLines(osRelease, Charset.forName("UTF-8"));
-                        for (String line : definitions) {
-                            try {
-                                if (line.startsWith("PRETTY_NAME=")) {
-                                    String value = line.substring(line.indexOf("=") + 1);
-                                    if (value.startsWith("\"")) { // Remove the quotes around the value.
-                                        value = value.substring(1, value.length() - 1);
-                                    }
-                                    osName = value;
-                                    break;
-                                }
-                            } catch (IndexOutOfBoundsException e) {
-                                log.debug(e.getMessage(), e);
-                            }
-                        }
-                    } catch (IOException e1) {
-                        log.info("Unable to read " + OS_RELEASE_FILE + " on this Linux system", e1);
-                    }
-                }
-            }
-            String operatingSystem = osName + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version");
-
-            if (operatingSystem.length() > maxOperatingSystemLength) {
-                operatingSystem = operatingSystem.substring(0, maxOperatingSystemLength);
-            }
-            deviceIdentity.operating_system = operatingSystem;
-        } else {
-            deviceIdentity.operating_system = "";
-        }
-
-        try {
-            iconFromResource(deviceIdentity, iconResourceName());
-        } catch (IOException e1) {
-            log.warn("", e1);
-        }
 
         NumericTypeSupport.register_type(domainParticipant, NumericTypeSupport.get_type_name());
-        numericTopic = domainParticipant.create_topic(ice.NumericTopic.VALUE, NumericTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        numericTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.NumericTopic.VALUE, NumericTypeSupport.class);
         numericDataWriter = (NumericDataWriter) publisher.create_datawriter_with_profile(numericTopic, QosProfiles.ice_library,
                 QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
         if (null == numericDataWriter) {
@@ -803,68 +714,57 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         }
 
         SampleArrayTypeSupport.register_type(domainParticipant, SampleArrayTypeSupport.get_type_name());
-        sampleArrayTopic = domainParticipant.create_topic(ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        sampleArrayTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.SampleArrayTopic.VALUE, SampleArrayTypeSupport.class);
         sampleArrayDataWriter = (SampleArrayDataWriter) publisher.create_datawriter_with_profile(sampleArrayTopic, QosProfiles.ice_library,
                 QosProfiles.waveform_data, null, StatusKind.STATUS_MASK_NONE);
         if (null == sampleArrayDataWriter) {
             throw new RuntimeException("sampleArrayDataWriter not created");
         }
 
-        ice.AlarmSettingsTypeSupport.register_type(domainParticipant, ice.AlarmSettingsTypeSupport.get_type_name());
-        alarmSettingsTopic = domainParticipant.create_topic(ice.AlarmSettingsTopic.VALUE, ice.AlarmSettingsTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsDataWriter = (ice.AlarmSettingsDataWriter) publisher.create_datawriter_with_profile(alarmSettingsTopic, QosProfiles.ice_library,
+        ice.AlarmLimitTypeSupport.register_type(domainParticipant, ice.AlarmLimitTypeSupport.get_type_name());
+        alarmLimitTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.AlarmLimitTopic.VALUE, ice.AlarmLimitTypeSupport.class);
+        alarmLimitDataWriter = (ice.AlarmLimitDataWriter) publisher.create_datawriter_with_profile(alarmLimitTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        ice.LocalAlarmSettingsObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name());
-        alarmSettingsObjectiveTopic = domainParticipant.create_topic(ice.LocalAlarmSettingsObjectiveTopic.VALUE,
-                ice.LocalAlarmSettingsObjectiveTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
-        alarmSettingsObjectiveWriter = (LocalAlarmSettingsObjectiveDataWriter) publisher.create_datawriter_with_profile(alarmSettingsObjectiveTopic,
+        ice.LocalAlarmLimitObjectiveTypeSupport.register_type(domainParticipant, ice.LocalAlarmLimitObjectiveTypeSupport.get_type_name());
+        localAlarmLimitObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.LocalAlarmLimitObjectiveTopic.VALUE,
+                ice.LocalAlarmLimitObjectiveTypeSupport.class);
+        alarmLimitObjectiveWriter = (LocalAlarmLimitObjectiveDataWriter) publisher.create_datawriter_with_profile(localAlarmLimitObjectiveTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
-        TopicDescription alarmSettingsObjectiveTopic = TopicUtil.lookupOrCreateTopic(domainParticipant, ice.GlobalAlarmSettingsObjectiveTopic.VALUE,
-                ice.GlobalAlarmSettingsObjectiveTypeSupport.class);
-        alarmSettingsObjectiveReader = (ice.GlobalAlarmSettingsObjectiveDataReader) subscriber.create_datareader_with_profile(
-                alarmSettingsObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-
+        globalAlarmLimitObjectiveTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.GlobalAlarmLimitObjectiveTopic.VALUE,
+                ice.GlobalAlarmLimitObjectiveTypeSupport.class);
+        alarmLimitObjectiveReader = (ice.GlobalAlarmLimitObjectiveDataReader) subscriber.create_datareader_with_profile(
+                 globalAlarmLimitObjectiveTopic, QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+       
         ice.DeviceAlertConditionTypeSupport.register_type(domainParticipant, ice.DeviceAlertConditionTypeSupport.get_type_name());
-        deviceAlertConditionTopic = domainParticipant.create_topic(ice.DeviceAlertConditionTopic.VALUE,
-                ice.DeviceAlertConditionTypeSupport.get_type_name(), DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        deviceAlertConditionTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.DeviceAlertConditionTopic.VALUE,
+                ice.DeviceAlertConditionTypeSupport.class);
         deviceAlertConditionWriter = (ice.DeviceAlertConditionDataWriter) publisher.create_datawriter_with_profile(deviceAlertConditionTopic,
                 QosProfiles.ice_library, QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         ice.AlertTypeSupport.register_type(domainParticipant, ice.AlertTypeSupport.get_type_name());
-        patientAlertTopic = domainParticipant.create_topic(ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        patientAlertTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.PatientAlertTopic.VALUE, ice.AlertTypeSupport.class);
         patientAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(patientAlertTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         
-        technicalAlertTopic = domainParticipant.create_topic(ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, null, StatusKind.STATUS_MASK_NONE);
+        technicalAlertTopic = TopicUtil.findOrCreateTopic(domainParticipant, ice.TechnicalAlertTopic.VALUE, ice.AlertTypeSupport.class);
         technicalAlertWriter = (ice.AlertDataWriter) publisher.create_datawriter_with_profile(technicalAlertTopic, QosProfiles.ice_library,
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
-        
-        
-        
-        threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "AbstractDevice") {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                log.error("Thrown by " + t.toString(), e);
-                super.uncaughtException(t, e);
-            }
-        };
 
-        threadGroup.setDaemon(true);
         this.eventLoop = eventLoop;
-        
-        executor.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                checkForPartitionFile();
-            }
-        }, 1000L, 5000L, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * post-construction initialization method to allow implementations to
+     * initialize/start whatever sub-components they manage. Ideally, for
+     * more sophisticated devices everything complex should be moved out and
+     * assembled via 'spring' ioc composition, but there are plenty of cases
+     * in the middle where this is appropriate. This would be spring's
+     * InitializingBean::afterPropertiesSet lifecycle pointcut.
+     */
+    public void init() {
+    }
 
     /**
      * @return an instance of the device clock that should be used in stamping messages. Fall-back implementation
@@ -872,30 +772,35 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
      * to provide clock reading that would contain multiple values.
      **/
 
-    protected final DeviceClock getClockProvider()
-    {
+    protected final DeviceClock getClockProvider() {
         return timestampFactory;
     }
 
-    public void setAlarmSettings(ice.GlobalAlarmSettingsObjective obj) {
-
+    public void setAlarmLimit(ice.GlobalAlarmLimitObjective obj) {
     }
 
-    public void unsetAlarmSettings(String metricId) {
-
+    public void unsetAlarmLimit(String metricId, ice.LimitType limit_type) {
     }
 
-    private Map<InstanceHandle_t, String> instanceMetrics = new HashMap<InstanceHandle_t, String>();
+    private static class MetricAndType {
+        private final String metric_id;
+        private final ice.LimitType limit_type;
+        public MetricAndType(final String metric_id, final ice.LimitType limit_type) {
+            this.metric_id = metric_id;
+            this.limit_type = limit_type;
+        }
+        public ice.LimitType getLimit_type() {
+            return limit_type;
+        }
+        public String getMetric_id() {
+            return metric_id;
+        }
+    }
+    private Map<InstanceHandle_t, MetricAndType> instanceToAlarmLimit = new HashMap<>();
 
     protected void writeDeviceIdentity() {
         if (null == deviceIdentity.unique_device_identifier || "".equals(deviceIdentity.unique_device_identifier)) {
             throw new IllegalStateException("cannot write deviceIdentity without a UDI");
-        }
-        registerForManagement();
-        
-        if(null == timeManager) {
-            timeManager = new TimeManager(publisher, subscriber, deviceIdentity.unique_device_identifier, "Device");
-            timeManager.start();
         }
 
         if (null == deviceIdentityHandle) {
@@ -909,33 +814,33 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
         InstanceHandle_t deviceAlertHandle = deviceAlertConditionWriter.register_instance(alertCondition);
         deviceAlertConditionInstance = new InstanceHolder<ice.DeviceAlertCondition>(alertCondition, deviceAlertHandle);
 
-        if (null == alarmSettingsObjectiveCondition) {
+        if (null == alarmLimitObjectiveCondition) {
             final SampleInfoSeq info_seq = new SampleInfoSeq();
-            final ice.GlobalAlarmSettingsObjectiveSeq data_seq = new ice.GlobalAlarmSettingsObjectiveSeq();
+            final ice.GlobalAlarmLimitObjectiveSeq data_seq = new ice.GlobalAlarmLimitObjectiveSeq();
             eventLoop.addHandler(
-                    alarmSettingsObjectiveCondition = alarmSettingsObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+            		alarmLimitObjectiveCondition = alarmLimitObjectiveReader.create_readcondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
                             ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ANY_INSTANCE_STATE), new ConditionHandler() {
                         @Override
                         public void conditionChanged(Condition condition) {
                             try {
-                                alarmSettingsObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                            	alarmLimitObjectiveReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
                                         (ReadCondition) condition);
                                 for (int i = 0; i < data_seq.size(); i++) {
                                     SampleInfo si = (SampleInfo) info_seq.get(i);
-                                    ice.GlobalAlarmSettingsObjective obj = (ice.GlobalAlarmSettingsObjective) data_seq.get(i);
+                                    ice.GlobalAlarmLimitObjective obj = (ice.GlobalAlarmLimitObjective) data_seq.get(i);
 
                                     if (0 != (si.view_state & ViewStateKind.NEW_VIEW_STATE) && si.valid_data) {
-                                        log.warn("Handle for metric_id=" + obj.metric_id + " is " + si.instance_handle);
-                                        instanceMetrics.put(new InstanceHandle_t(si.instance_handle), obj.metric_id);
+                                        log.debug("Handle for metric_id=" + obj.metric_id + " is " + si.instance_handle);
+                                        instanceToAlarmLimit.put(new InstanceHandle_t(si.instance_handle), new MetricAndType(obj.metric_id, obj.limit_type));
                                     }
 
                                     if (0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
                                         if (si.valid_data) {
-                                            log.warn("Setting " + obj.metric_id + " to [ " + obj.lower + " , " + obj.upper + "]");
-                                            setAlarmSettings(obj);
+                                            log.warn("Limit " + obj.metric_id + " "+obj.limit_type+" limit changed to [ " + obj.value + "  " + obj.unit_identifier + "]");
+                                            setAlarmLimit(obj);
                                         }
                                     } else {
-                                        obj = new ice.GlobalAlarmSettingsObjective();
+                                        obj = new ice.GlobalAlarmLimitObjective();
                                         log.warn("Unsetting handle " + si.instance_handle);
                                         // TODO 1-Oct-2013 JP This call to
                                         // get_key_value fails consistently on
@@ -944,10 +849,11 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                                         // for the time being
                                         // alarmSettingsObjectiveReader.get_key_value(obj,
                                         // si.instance_handle);
-                                        String metricId = instanceMetrics.get(si.instance_handle);
-                                        log.warn("Unsetting " + metricId);
-                                        if (null != metricId) {
-                                            unsetAlarmSettings(metricId);
+                                        MetricAndType mt = instanceToAlarmLimit.get(si.instance_handle);
+                                        
+                                        if (null != mt) {
+                                            log.debug("Unsetting alarm limit " + mt.getMetric_id()+ " " + mt.getLimit_type());
+                                            unsetAlarmLimit(mt.getMetric_id(), mt.getLimit_type());
                                         }
 
                                     }
@@ -955,145 +861,38 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
                             } catch (RETCODE_NO_DATA noData) {
 
                             } finally {
-                                alarmSettingsObjectiveReader.return_loan(data_seq, info_seq);
+                            	alarmLimitObjectiveReader.return_loan(data_seq, info_seq);
                             }
                         }
                     });
         }
     }
-    
-    @Override
+
+    @ManagedAttribute(description="Device Manufacturer.")
     public String getManufacturer() {
         return null == deviceIdentity ? null : deviceIdentity.manufacturer;
     }
 
-    @Override
+    @ManagedAttribute(description="Device Model.")
     public String getModel() {
         return null == deviceIdentity ? null : deviceIdentity.model;
     }
 
-    @Override
-    public String[] getPartition() {
-        PublisherQos pQos = new PublisherQos();
-        publisher.get_qos(pQos);
-        String[] partition = new String[pQos.partition.name.size()];
-        for (int i = 0; i < partition.length; i++) {
-            partition[i] = (String) pQos.partition.name.get(i);
-        }
-        return partition;
-    }
-
-    @Override
-    public void addPartition(String partition) {
-        List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
-        currentPartition.add(partition);
-        setPartition(currentPartition.toArray(new String[0]));
-    }
-
-    @Override
-    public void removePartition(String partition) {
-        List<String> currentPartition = new ArrayList<String>(Arrays.asList(getPartition()));
-        currentPartition.remove(partition);
-        setPartition(currentPartition.toArray(new String[0]));
-    }
-
-    @Override
-    public void setPartition(String[] partition) {
-        PublisherQos pQos = new PublisherQos();
-        SubscriberQos sQos = new SubscriberQos();
-        publisher.get_qos(pQos);
-        subscriber.get_qos(sQos);
-        
-        if(null == partition) {
-            partition = new String[0];
-        }
-        
-        boolean same = partition.length == pQos.partition.name.size();
-        
-        if(same) {
-            for(int i = 0; i < partition.length; i++) {
-                if(!partition[i].equals(pQos.partition.name.get(i))) {
-                    same = false;
-                    break;
-                }
-            }
-        }
-        
-        if(!same) {
-            log.info("Changing partition to " + Arrays.toString(partition));
-            pQos.partition.name.clear();
-            sQos.partition.name.clear();
-            pQos.partition.name.addAll(Arrays.asList(partition));
-            sQos.partition.name.addAll(Arrays.asList(partition));
-            publisher.set_qos(pQos);
-            subscriber.set_qos(sQos);
-        } else {
-            log.info("Not changing to same partition " + Arrays.toString(partition));
-        }
-    }
-
-    @Override
+    @ManagedAttribute(description="Unique Device Identifier.")
     public String getUniqueDeviceIdentifier() {
         return null == deviceIdentity ? null : deviceIdentity.unique_device_identifier;
     }
 
-    private ObjectInstance objInstance;
-
-    private void registerForManagement() {
-        if (null == objInstance) {
-            try {
-                objInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(
-                        this,
-                        new ObjectName(AbstractDevice.class.getPackage().getName() + ":type=" + AbstractDevice.class.getSimpleName() + ",name="
-                                + getUniqueDeviceIdentifier()));
-            } catch (JMException e) {
-                log.warn("Unable to register with JMX", e);
-            }
-        }
+    public ScheduledExecutorService getExecutor() {
+        return executor;
     }
-    
-    private long lastPartitionFileTime = 0L;
-    
-    public void checkForPartitionFile() {
-        File f = new File("device.partition");
-        
-        if(!f.exists()) {
-            // File once existed
-            if(lastPartitionFileTime!=0L) {
-                setPartition(new String[0]);
-                lastPartitionFileTime = 0L;
-            } else {
-                // No file and it never existed
-            }
-        } else if(f.canRead() && f.lastModified()>lastPartitionFileTime) {
-            try {
-                List<String> partition = new ArrayList<String>();
-                FileReader fr = new FileReader(f);
-                BufferedReader br = new BufferedReader(fr);
-                String line = null;
-                while(null != (line = br.readLine())) {
-                    partition.add(line);
-                }
-                br.close();
-                setPartition(partition.toArray(new String[0]));
-            } catch (FileNotFoundException e) {
-                log.error("Reading partition info", e);
-            } catch (IOException e) {
-                log.error("Reading partition info", e);
-            }
-            
-            lastPartitionFileTime = f.lastModified();
-        }
+
+    public void setExecutor(ScheduledExecutorService executor) {
+        this.executor = executor;
     }
 
     protected void iconOrBlank(String model, String icon) {
-        deviceIdentity.model = model;
-        try {
-            iconFromResource(deviceIdentity, icon);
-        } catch (IOException e) {
-            log.error("Error loading icon resource", e);
-            deviceIdentity.icon.image.userData.clear();
-        }
+        (new DeviceIdentityBuilder(deviceIdentity)).withIcon(this, icon).model(model).build();
         writeDeviceIdentity();
     }
 
@@ -1168,4 +967,5 @@ public abstract class AbstractDevice implements ThreadFactory, AbstractDeviceMBe
             throw new UnsupportedOperationException();
         }
     }
+
 }

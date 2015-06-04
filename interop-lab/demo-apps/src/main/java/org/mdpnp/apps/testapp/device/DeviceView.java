@@ -1,10 +1,10 @@
 package org.mdpnp.apps.testapp.device;
 
+import org.mdpnp.apps.device.CompositeDevicePanel;
+import org.mdpnp.apps.device.DeviceDataMonitor;
+
 import javafx.fxml.FXML;
 import javafx.scene.layout.BorderPane;
-
-import org.mdpnp.guis.javafx.CompositeDevicePanel;
-import org.mdpnp.rtiapi.data.DeviceDataMonitor;
 
 public class DeviceView {
     @FXML BorderPane main;

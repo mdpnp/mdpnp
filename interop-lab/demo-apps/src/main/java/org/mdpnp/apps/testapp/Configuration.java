@@ -65,8 +65,7 @@ public class Configuration {
 
     enum Application {
         ICE_Supervisor(IceAppsContainer.class),
-        ICE_Device_Interface(DeviceAdapter.DeviceAdapterCommand.class),
-        ICE_ParticipantOnly(ParticipantOnly.class);
+        ICE_Device_Interface(DeviceAdapterCommand.class);
 
         Application(Class<?> c) {
             clazz = c;
@@ -78,25 +77,33 @@ public class Configuration {
         }
     }
     
-    interface Command {
+    interface HeadlessCommand {
         int execute(Configuration config) throws Exception;
-    }    
+    }
+
+    interface GUICommand {
+        IceApplication create(Configuration config) throws Exception;
+    }
 
     private final boolean              headless;
     private final Application          application;
     private final DeviceDriverProvider deviceFactory;
     private final String               address;
     private final int                  domainId;
+    private final String               fhirServerName;
     private final Properties           cmdLineEnv = new Properties();
 
-    public Configuration(boolean headless, Application application, int domainId, DeviceDriverProvider deviceFactory, String address) {
+    public Configuration(boolean headless, Application application, int domainId, 
+            DeviceDriverProvider deviceFactory, String address, String fhirServerName) {
         this.headless = headless;
         this.deviceFactory = deviceFactory;
         this.address = address;
         this.domainId = domainId;
         this.application = application;
+        this.fhirServerName = fhirServerName;
 
         cmdLineEnv.put("mdpnp.domain", Integer.toString(domainId));
+        cmdLineEnv.put("mdpnp.fhir.url", fhirServerName);
     }
 
     public boolean isHeadless()
@@ -108,10 +115,10 @@ public class Configuration {
         return cmdLineEnv;
     }
 
-    public Command getCommand() {
+    public HeadlessCommand getCommand() {
 
         try {
-            Command command = (Command) application.clazz.newInstance();
+            HeadlessCommand command = (HeadlessCommand) application.clazz.newInstance();
             return command;
         }
         catch(Exception ex)
@@ -136,13 +143,21 @@ public class Configuration {
         return address;
     }
 
-    private static final String APPLICATION = "application";
-    private static final String DOMAIN_ID   = "domainId";
-    private static final String DEVICE_TYPE = "deviceType";
-    private static final String ADDRESS     = "address";
+    private static final String APPLICATION           = "application";
+    private static final String DOMAIN_ID             = "domainId";
+    private static final String DEVICE_TYPE           = "deviceType";
+    private static final String ADDRESS               = "address";
+    private static final String FHIR_SERVER_NAME      = "fhirServerName"; 
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
+    /**
+     * @param path
+     * @return spring's application context. The point of this API is to insert a higher priority
+     * property resolver into the context so that command line arguments could be used in property
+     * resolution. Out of the box our spring xml configs wire property resolvers with 'order=1'
+     * which functions just fine, but also allows for a 'order=0' to take over as a primary.
+     */
     public AbstractApplicationContext createContext(String path)
     {
         ClassPathXmlApplicationContext ctx =
@@ -151,6 +166,7 @@ public class Configuration {
         Properties props = getCmdLineEnv();
 
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        ppc.setIgnoreUnresolvablePlaceholders(true);
         ppc.setProperties(props);
         ppc.setOrder(0);
 
@@ -163,10 +179,17 @@ public class Configuration {
         Properties p = new Properties();
         p.setProperty(APPLICATION, application.name());
         p.setProperty(DOMAIN_ID,   Integer.toString(domainId));
-        if (null != deviceFactory)
+        if (null != deviceFactory) {
             p.setProperty(DEVICE_TYPE, deviceFactory.getDeviceType().getAlias());
-        if (null != address)
+        }
+        
+        if (null != address) {
             p.setProperty(ADDRESS, address);
+        }
+        
+        if (null != fhirServerName) {
+            p.setProperty(FHIR_SERVER_NAME, fhirServerName);
+        }
 
         p.list(os);
     }
@@ -180,6 +203,7 @@ public class Configuration {
         int domainId = 0;
         DeviceDriverProvider deviceType = null;
         String address = null;
+        String fhirServerName = "";
 
         if(p.containsKey(APPLICATION)) {
             String s = p.getProperty(APPLICATION);
@@ -208,8 +232,12 @@ public class Configuration {
         if(p.containsKey(ADDRESS)) {
             address = p.getProperty(ADDRESS);
         }
+        
+        if(p.containsKey(FHIR_SERVER_NAME)) {
+            fhirServerName = p.getProperty(FHIR_SERVER_NAME, "");
+        }
 
-        return new Configuration(false, app, domainId, deviceType, address);
+        return new Configuration(false, app, domainId, deviceType, address, fhirServerName);
     }
 
     @SuppressWarnings("static-access")
@@ -230,6 +258,12 @@ public class Configuration {
                 .isRequired(true)
                 .withDescription("DDS domain identifier")
                 .create("domain");
+        
+        Option fhirServerNameArg = OptionBuilder.withArgName("fhirServerName")
+                .hasArg()
+                .isRequired(false)
+                .withDescription("FHIR Server URL to use for patient information")
+                .create("fhirServerNAme");
 
         StringBuilder ds = new StringBuilder();
         ds.append("if Application is ").append(Application.ICE_Device_Interface.name()).append(" then DeviceType may be one of:");
@@ -264,6 +298,7 @@ public class Configuration {
         options.addOption( domainArg );
         options.addOption( deviceArg );
         options.addOption( addressArg );
+        options.addOption( fhirServerNameArg );
 
         CommandLine line = parseCommandLine("ICE", cmdLineArgs, options);
         if(line == null)
@@ -273,6 +308,7 @@ public class Configuration {
         int domainId = 0;
         DeviceDriverProvider deviceType = null;
         String address = null;
+        String fhirServerName = "";
 
         String v = line.getOptionValue("app");
         try {
@@ -295,12 +331,17 @@ public class Configuration {
                 address = line.getOptionValue("address");
             }
         }
+        
+        if(line.hasOption("fhirServerName")) {
+            v = line.getOptionValue("fhirServerName");
+            fhirServerName = v;
+        }
 
         // if mdpnp.ui is set to true, force the system to come up in the UI mode regardless of
         // command line having arguments or not. If not set, default to headless==true.
         //
         boolean headless=!Boolean.getBoolean("mdpnp.ui");
-        return new Configuration(headless, app, domainId, deviceType, address);
+        return new Configuration(headless, app, domainId, deviceType, address, fhirServerName);
     }
 
     public static Configuration searchAndLoadSettings(File[] fPath) throws IOException {

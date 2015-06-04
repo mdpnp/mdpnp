@@ -4,6 +4,9 @@ module ice {
   struct GlobalSimulationObjective {
     MetricIdentifier metric_id; //@key
     float value;
+    float jitterStep;    // 0 if no jitter
+    float floor;         // 'hard stop' limit of the model 
+    float ceil;          // 'hard stop' limit of the model
   };
   #pragma keylist GlobalSimulationObjective metric_id
   const string GlobalSimulationObjectiveTopic = "GlobalSimulationObjective";

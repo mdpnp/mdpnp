@@ -12,12 +12,18 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import java.awt.*;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 
+import javafx.application.Platform;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.imageio.ImageIO;
 
 /**
  * @author Jeff Plourde
@@ -26,6 +32,11 @@ import org.slf4j.LoggerFactory;
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+
+    private final static File[] searchPath = new File [] {
+            new File(".JumpStartSettings"),
+            new File(System.getProperty("user.home"), ".JumpStartSettings")
+    };
 
     public static void main(final String[] args) throws Exception {
         URL u = Main.class.getResource("/ice.system.properties");
@@ -45,19 +56,65 @@ public class Main {
             } else {
                 Configuration.searchAndSaveSettings(runConf, searchPath);
             }
-            Configuration.Command cmd = runConf.getCommand();
+            Configuration.HeadlessCommand cmd = runConf.getCommand();
             int retCode = cmd.execute(runConf);
             log.info("This is the end, exit code=" + retCode);
             System.exit(retCode);
             
         } else {
-            javafx.application.Application.launch(MainApplication.class, args);
+            javafx.application.Application.launch(Main.FxApplication.class, args);
+            Platform.exit();
+            log.info("This is the end, exit code=" + 0);
+            System.exit(0);
         }
     }
 
-    private final static File[] searchPath = new File [] {
-        new File(".JumpStartSettings"),
-        new File(System.getProperty("user.home"), ".JumpStartSettings")
-    };
+    public static class FxApplication extends javafx.application.Application {
 
+        private Configuration runConf;
+        private IceApplication app;
+
+        @Override
+        public void start(Stage primaryStage) throws Exception {
+            runConf = Configuration.searchAndLoadSettings(searchPath);
+
+            ConfigurationDialog d = ConfigurationDialog.showDialog(runConf, this);
+
+            // It's nice to be able to change settings even without running
+            // Even if the user presses 'quit' save the state so that it can be used
+            // to boot strap the dialog later.
+            //
+            if (d.getQuitPressed()) {
+                Configuration c = d.getLastConfiguration();
+                Configuration.searchAndSaveSettings(c, searchPath);
+                runConf = null;
+            } else {
+                runConf = d.getLastConfiguration();
+                Object o = runConf.getApplication().getAppClass().newInstance();
+
+                if(o instanceof Configuration.GUICommand) {
+                    o = ((Configuration.GUICommand)o).create(runConf);
+                }
+
+                if(o instanceof IceApplication) {
+                    app = (IceApplication) o;
+                    app.setConfiguration(runConf);
+                    app.init();
+                    app.start(primaryStage);
+                }
+                else {
+                    throw new IllegalStateException("Invalid FX application request " + o);
+                }
+            }
+        }
+
+        @Override
+        public void stop() throws Exception {
+            super.stop();
+            if(null != app) {
+                app.stop();
+                app = null;
+            }
+        }
+    }
 }

@@ -22,6 +22,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -65,8 +68,8 @@ public class DemoSymbiq extends SimInfusionPump {
 
     }
 
-    public DemoSymbiq(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public DemoSymbiq(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
     }
 

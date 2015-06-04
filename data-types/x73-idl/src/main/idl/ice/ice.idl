@@ -169,6 +169,8 @@ module ice {
    * states of the further connection to a device.
    */
   enum ConnectionState {
+    /** Connection is not yet initialized **/
+    Initial,
     /** Connection is initialized and data is flowing normally */
     Connected,
     /** Connection has been physically made (perhaps an open socket or serial port) but 
@@ -177,10 +179,8 @@ module ice {
     /** Information exchange has commenced to establish the connection.  Some devices may
         skip this state. */
     Negotiating,
-    /** Disconnection has been requested and is being processed. */
-    Disconnecting,
-    /** The connection is not active. */
-    Disconnected
+    /** Connection has been shut down in anticipation of the termination of the device adapter */
+    Terminal
   };
 
   /**
@@ -213,24 +213,35 @@ module ice {
     ConnectionType type;
     LongString info;
     ValidTargets valid_targets;
-  }; //@Extensibility MUTABLE_EXTENSIBILITY
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivity unique_device_identifier
   const string DeviceConnectivityTopic = "DeviceConnectivity";
 
   /**
-   * This topic allows a participant to instruct a further connected device adapter 
-   * to establish the further connection to the specified target.
+   * MDSConnectivity 
    * 
-   * Stability: 0 - Deprecated
+   * Stability: 2 - Unstable
    */
-  struct DeviceConnectivityObjective {
+  struct MDSConnectivity {
     UniqueDeviceIdentifier unique_device_identifier; //@key
-    boolean connected;
-    LongString target;
+    string<128> partition;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist DeviceConnectivityObjective unique_device_identifier
-  const string DeviceConnectivityObjectiveTopic = "DeviceConnectivityObjective";
+  #pragma keylist MDSConnectivity unique_device_identifier
+  const string MDSConnectivityTopic = "MDSConnectivity";
 
+  /**
+   * This topic allows a participant to instruct a connected device adapter 
+   * to configure itself.
+   * 
+   * Stability: 2 - Unstable
+   */
+  struct MDSConnectivityObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    string<128> partition;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist MDSConnectivityObjective unique_device_identifier
+  const string MDSConnectivityObjectiveTopic = "MDSConnectivityObjective";
+  
   /**
    * A number of speculative nomenclature codes not (yet) included in the
    * harmonized rosetta.
@@ -377,53 +388,78 @@ module ice {
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "InfusionStatus";
-
+  
   /**
-   * The current alarm thresholds for a particular metric on a particular device.
-   *
-   * Stability: 1 - Experimental
+   * Type of alarm limit for the settings of Alarms 
    */
-  struct AlarmSettings {
+  enum LimitType {
+    low_limit, 
+    high_limit
+  };
+  
+  /**
+  * Priority of an alarm 
+  */
+  enum AlarmPriority{
+    low,
+    medium,
+    high
+  }; 
+  
+  
+  /**
+  * An alarm limit for a particular metric on a device
+  *
+  * Stability: 1 - Experimental
+  */
+  struct AlarmLimit {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
-    float lower;
-    float upper;
+    LimitType limit_type; //@key
+    //AlarmPriority alarm_priority; //
+    UnitIdentifier unit_identifier;
+    float value;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist AlarmSettings unique_device_identifier metric_id
-  const string AlarmSettingsTopic = "AlarmSettings";
+  #pragma keylist AlarmLimit unique_device_identifier metric_id alarm_limit_type
+  const string AlarmLimitTopic = "AlarmLimit";
 
-  /**
+
+/**
    * This objective is published by a Supervisory participant to request that all 
-   * participants use the specified thresholds for alarms on a particular metric.
+   * participants use the specified thresholds (Limits) for alarms on a particular metric.
    * 
    * Stability: 1 - Experimental
    */
-  struct GlobalAlarmSettingsObjective {
+  struct GlobalAlarmLimitObjective {
     MetricIdentifier metric_id; //@key
-    float lower;
-    float upper;
+    LimitType limit_type; //@key
+    UnitIdentifier unit_identifier;
+    float value;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist GlobalAlarmSettingsObjective metric_id
-  const string GlobalAlarmSettingsObjectiveTopic = "GlobalAlarmSettingsObjective";
+  #pragma keylist GlobalAlarmLimitObjective metric_id alarm_limit_threshold
+  const string GlobalAlarmLimitObjectiveTopic = "GlobalAlarmLimitObjective";
+  
 
-  /**
+ /**
    * This objective is published by a device to acknowledge that it has received the 
-   * global alarm settings objective for a metric. Eventually its AlarmSettings should 
-   * indicate that the change has been made. So the three AlarmSettingsXXX topics form 
+   * global alarm limit objective for a metric. Eventually its AlarmLimit should 
+   * indicate that the change has been made. So the are three AlarmLimitXXX topics form 
    * an objective-state form of command and control. At any time any participant can see
    * the current state of request, acknowledgment of the request, and implementation of 
    * the requested change.
    * 
    * Stability: 1 - Experimental
    */
-  struct LocalAlarmSettingsObjective {
+  struct LocalAlarmLimitObjective {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     MetricIdentifier metric_id; //@key
-    float lower;
-    float upper;
+    LimitType limit_type; //@key
+    UnitIdentifier unit_identifier;
+    float value;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
-  #pragma keylist LocalAlarmSettingsObjective unique_device_identifier metric_id
-  const string LocalAlarmSettingsObjectiveTopic = "LocalAlarmSettingsObjective";
+  #pragma keylist LocalAlarmLimitObjective unique_device_identifier metric_id alarm_limit_type
+  const string LocalAlarmLimitObjectiveTopic = "LocalAlarmLimitObjective";
+  
 
   /**
    * In the current iteration this is status text associated with the device globally. 
@@ -473,4 +509,26 @@ module ice {
    * Stability: 1 - Experimental
    */
   const string TechnicalAlertTopic = "TechnicalAlert";
+
+  /**
+   * Patient is a simple representation of instances of patient information.  The original
+   * driver behind this experiment was to demonstrate the use of unicode (UTF-32) characters
+   * in the system and to ensure that various nodes were correctly converting to their own 
+   * preferred encoding (UTF-16 for Java, UTF-8 for the web, etc.) 
+   *
+   * As a topic describing the many patients this naturally begins an expansion of OpenICE
+   * into functionality attributed by the standard for the Integrated Clinical Environment
+   * to the ICE Coordinator.
+   * 
+   * Stability: 1 - Experimental
+   */  
+  struct Patient {
+    string<16> mrn; //@key
+    wstring<256> given_name;
+    wstring<256> family_name;
+  };
+  #pragma keylist Patient mrn
+  const string PatientTopic = "Patient";
 };
+
+

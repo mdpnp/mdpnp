@@ -80,7 +80,4 @@
    </center>
   </BorderPane>
  </bottom>
-   <top>
-      <Label text="Data Collector" BorderPane.alignment="CENTER" />
-   </top>
 </BorderPane>

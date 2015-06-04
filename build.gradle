@@ -40,20 +40,49 @@ def fromOsArch(arch) {
     X86
 }
 
+// Follow MAJOR.MINOR.REVISION-BUILDNUMBER versioning pattern to 
+// be consistent with Maven schema.
+// http://docs.codehaus.org/display/MAVEN/Versioning
+// 
+// MAJOR changes is backward incompatible and require changing 
+// project name, path to files, GUIDs, etc.
+//
+// MINOR changes is backward compatible. Mark introduction of 
+// new features.
+//
+// REVISION for security/bug fixes. Backward and forward compatible.
+//
+//
+// For builds in user sandboxes, -SNAPSHOT is the identifier,
+// for the CI system -bXXXX where XXX is a build number 
+//
+def BUILD_NUMBER = 'SNAPSHOT'
+if(null != System.properties['BUILD_NUMBER']) {
+  BUILD_NUMBER = System.properties['BUILD_NUMBER']
+} 
+
+// MDPNP_VERSION_NUMBER is defined in the root gradle.properties file
+//
+if(null != System.properties['MDPNP_VERSION_NUMBER']) {
+  MDPNP_VERSION_NUMBER = System.properties['MDPNP_VERSION_NUMBER']
+} 
+
 ext {
     localOsName = fromOsName(System.properties['os.name'])
     localOsArch = fromOsArch(System.properties['os.arch'])
     targetOsName = project.hasProperty('OS_NAME') ? fromOsName(OS_NAME) : localOsName
     targetOsArch = project.hasProperty('OS_ARCH') ? fromOsArch(OS_ARCH) : localOsArch
+    VERSION_NUMBER = MDPNP_VERSION_NUMBER + ((null!=BUILD_NUMBER&&!"".equals(BUILD_NUMBER))?"-":"") + BUILD_NUMBER 
 }
+
 group 'org.mdpnp'
-version '0.5.1-SNAPSHOT'
 
 subprojects {
     apply plugin: 'maven'
     apply plugin: 'eclipse'
+    version VERSION_NUMBER
+
     group 'org.mdpnp'
-    version '0.5.1-SNAPSHOT'
     buildscript {
         repositories {
 

@@ -41,7 +41,7 @@ interop-lab/
         * GUI components (mostly waveform related) that can be used with any framework (swing, jogl, android, etc)
     * __demo-guis-jogl/__
         * Components to bind demo-guis to Java OpenGL (JOGL)
-    * __demo-guis-swing/__
-        * Components to bind demo-guis to Swing
+    * __demo-guis-javafx/__
+        * Components to bind demo-guis to JavaFX
 
 ![](https://build.openice.info/ht/?SOURCEFORGEMAINCODE)

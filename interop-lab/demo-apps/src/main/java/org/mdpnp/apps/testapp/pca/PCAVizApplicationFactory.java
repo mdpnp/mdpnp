@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationContext;
 public class PCAVizApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType PCAViz =
-            new IceApplicationProvider.AppType("Data Visualization", "NOPCAVIZ", VitalMonitoring.class.getResource("data-viz.png"), 0.75);
+            new IceApplicationProvider.AppType("Data Visualization", "NOPCAVIZ", VitalMonitoring.class.getResource("data-viz.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

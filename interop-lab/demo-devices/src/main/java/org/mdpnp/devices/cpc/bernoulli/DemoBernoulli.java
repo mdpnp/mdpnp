@@ -34,6 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -209,8 +212,8 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         }
     }
 
-    public DemoBernoulli(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public DemoBernoulli(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
 
         // Random UDI is for the device module
         // this allows the module to exist within the ICE in a disconnected
@@ -225,6 +228,12 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void init() {
+
+        super.init();
+
         if (MAX_QUIET_TIME > 0L) {
             executor.scheduleAtFixedRate(new Runnable() {
                 public void run() {
@@ -232,7 +241,6 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
                 }
             }, 0L, MAX_QUIET_TIME, TimeUnit.MILLISECONDS);
         }
-
     }
 
     private final MyBernoulli myBernoulli = new MyBernoulli();
@@ -262,12 +270,7 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             this.port = port;
 
             switch (getState().ordinal()) {
-            case ice.ConnectionState._Connected:
-            case ice.ConnectionState._Negotiating:
-            case ice.ConnectionState._Connecting:
-                return true;
-            case ice.ConnectionState._Disconnected:
-            case ice.ConnectionState._Disconnecting:
+            case ice.ConnectionState._Initial:
                 stateMachine.transitionWhenLegal(ice.ConnectionState.Connecting, "connect requested");
                 break;
             }
@@ -328,15 +331,9 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
             log.info(Thread.currentThread().getName() + " (" + Thread.currentThread().getId() + ")  ends");
             ice.ConnectionState priorState = getState();
             close();
-            stateMachine.transitionIfLegal(ice.ConnectionState.Disconnected, "socket reached EOF");
-            switch (priorState.ordinal()) {
-            case ice.ConnectionState._Connected:
-            case ice.ConnectionState._Connecting:
-            case ice.ConnectionState._Negotiating:
+            if(!ice.ConnectionState.Terminal.equals(priorState)) {
                 log.trace("process thread died unexpectedly, trying to reconnect");
                 connect(host);
-                break;
-            default:
             }
         }
 
@@ -369,23 +366,22 @@ public class DemoBernoulli extends AbstractConnectedDevice implements Runnable {
     @Override
     public void disconnect() {
         log.trace("disconnect requested");
-        synchronized (this) {
-            switch (getState().ordinal()) {
-            case ice.ConnectionState._Disconnected:
-            case ice.ConnectionState._Disconnecting:
-                return;
-            case ice.ConnectionState._Connecting:
-            case ice.ConnectionState._Connected:
-            case ice.ConnectionState._Negotiating:
-                stateMachine.transitionWhenLegal(ice.ConnectionState.Disconnecting, "disconnect requested");
+        
+        switch (getState().ordinal()) {
+        case ice.ConnectionState._Terminal:
+            break;
+        case ice.ConnectionState._Initial:
+            log.error("disconnect() called before connect()");
+            break;
+        default:
+            stateMachine.transitionWhenLegal(ice.ConnectionState.Terminal, "disconnect requested");
 
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-                break;
+            try {
+                socket.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
             }
+            break;
         }
     }
 

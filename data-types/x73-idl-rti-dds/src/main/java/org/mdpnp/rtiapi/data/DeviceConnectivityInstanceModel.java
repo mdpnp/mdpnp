@@ -1,6 +1,6 @@
 package org.mdpnp.rtiapi.data;
 
-public interface DeviceConnectivityInstanceModel extends InstanceModel<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader> {
+public interface DeviceConnectivityInstanceModel extends ReaderInstanceModel<ice.DeviceConnectivity, ice.DeviceConnectivityDataReader> {
     
 
 }

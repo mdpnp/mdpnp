@@ -12,10 +12,7 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
-import java.awt.Desktop;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,27 +25,22 @@ import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
-import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.apps.testapp.comboboxfix.FixedComboBox;
+import org.mdpnp.apps.testapp.patient.PatientInfo;
+import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
@@ -63,10 +55,13 @@ public class DemoPanel implements Runnable {
     protected Label clock;
 
     @FXML
-    protected Button back, changePartition, createAdapter;
+    protected Button back, createAdapter;
 
     @FXML
     protected BorderPane content;
+    
+    @FXML 
+    protected Label appTitle;
 
     private PartitionChooserModel partitionChooserModel;
 
@@ -80,20 +75,39 @@ public class DemoPanel implements Runnable {
         return back;
     }
 
-    public Button getChangePartition() {
-        return changePartition;
+    public FixedComboBox<PatientInfo> getPatients() {
+        return patients;
     }
 
     public Button getCreateAdapter() {
         return createAdapter;
     }
 
-    private MyPublicationBuiltinTopicDataItems items;
+    public DemoPanel setModel(final ObservableList<PatientInfo> patients) {
+        final ObservableList<PatientInfo> combined = FXCollections.observableArrayList();
+        PatientInfo nobody = new PatientInfo("", "", "<Unassigned>", PatientInfo.Gender.M, new Date());
+        combined.add(nobody);
+        combined.add(new PatientInfo("*", "", "<Anybody>", PatientInfo.Gender.M, new Date()));
+        patients.forEach((x)->combined.add(x));
+        
+        patients.addListener(new ListChangeListener<PatientInfo>() {
 
-    public DemoPanel setModel(DomainParticipant participant, EventLoop eventLoop) {
-        items = new MyPublicationBuiltinTopicDataItems();
-        this.partitions.setItems(items.getPartitions());
-        items.setModel(participant, eventLoop);
+            @Override
+            public void onChanged(javafx.collections.ListChangeListener.Change<? extends PatientInfo> c) {
+                while(c.next()) {
+                    if(c.wasAdded()) {
+                        c.getAddedSubList().forEach((x)->combined.add(x));
+                    }
+                    if(c.wasRemoved()) {
+                        c.getRemoved().forEach((x)->combined.remove(x));
+                    }
+                }
+            }
+            
+        });
+        this.patients.setItems(combined);
+        this.patients.setValue(nobody);
+        
         return this;
     }
 
@@ -104,6 +118,8 @@ public class DemoPanel implements Runnable {
 
     private String udiText = "";
     private String versionText = "";
+    private DeviceListModel deviceListModel;
+    protected MDSHandler mdsHandler;
 
     private void setTooltip() {
         clock.setTooltip(new Tooltip(udiText + "\n" + versionText));
@@ -120,44 +136,24 @@ public class DemoPanel implements Runnable {
         setTooltip();
         return this;
     }
+    
+    public DemoPanel setMdsHandler(MDSHandler mdsHandler) {
+        this.mdsHandler = mdsHandler;
+        return this;
+    }
+    
+    public DemoPanel setDeviceListModel(DeviceListModel deviceListModel) {
+        this.deviceListModel = deviceListModel;
+        return this;
+    }
 
     public DemoPanel() throws IOException {
         this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
     }
 
-    public DemoPanel set(AbstractApplicationContext context) {
-        this.context = context;
-        return this;
-    }
-
-    @FXML
-    public void clickChangePartition(ActionEvent evt) throws IOException {
-        final Stage dialog = new Stage(StageStyle.UTILITY);
-        dialog.setAlwaysOnTop(true);
-
-        FXMLLoader loader = new FXMLLoader(PartitionChooser.class.getResource("PartitionChooser.fxml"));
-        BorderPane root = loader.load();
-        PartitionChooser partitionChooser = loader.getController();
-        partitionChooser.setItems(FXCollections.observableArrayList()).setModel(partitionChooserModel);
-        partitionChooser.setHide(new Runnable() {
-            public void run() {
-                dialog.hide();
-            }
-        });
-        Scene scene = new Scene(root);
-        dialog.setScene(scene);
-        dialog.sizeToScene();
-
-        dialog.showAndWait();
-    }
-
     public void stop() {
         timeFuture.cancel(true);
         executor.shutdownNow();
-        if (null != items) {
-            items.stop();
-            items = null;
-        }
     }
 
     private ScheduledFuture<?> timeFuture;
@@ -179,81 +175,82 @@ public class DemoPanel implements Runnable {
     }
 
     @FXML
-    public void clickURL(ActionEvent evt) {
-        String url = ((Hyperlink) evt.getSource()).getText();
-        if (Desktop.isDesktopSupported()) {
-            Desktop desktop = Desktop.getDesktop();
-            try {
-                URI uri = new URI(url);
-                desktop.browse(uri);
-            } catch (IOException ex) {
-
-            } catch (URISyntaxException ex) {
-
-            }
-        }
-    }
-
-    private AbstractApplicationContext context;
-
-    @FXML
     BorderPane demoPanel;
 
     @FXML
-    ComboBox<String> partitions;
+    FixedComboBox<PatientInfo> patients;
+    
+    @FXML
+    Label patientsLabel;
+    
+    
 
     @FXML
     public void clickCreateAdapter(ActionEvent evt) {
         try {
             final Subscriber subscriber = partitionChooserModel.getSubscriber();
-            Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
-            if (null != c) {
-                Thread t = new Thread(new Runnable() {
-                    public void run() {
-                        try {
-
-                            DomainParticipantQos pQos = new DomainParticipantQos();
-                            DomainParticipantFactory.get_instance().get_default_participant_qos(pQos);
-                            pQos.discovery.initial_peers.clear();
-                            // for (int i = 0; i <
-                            // discoveryPeers.peers.getSize(); i++) {
-                            // pQos.discovery.initial_peers.add(discoveryPeers.peers.getElementAt(i));
-                            // System.err.println("PEER:" +
-                            // discoveryPeers.peers.getElementAt(i));
-                            // }
-                            DomainParticipantFactory.get_instance().set_default_participant_qos(pQos);
+            final Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
+            if(null != c) {
+                Thread t = new Thread(() -> {
+                    try {
+                        
+                        if (null != c) {
                             SubscriberQos qos = new SubscriberQos();
                             subscriber.get_qos(qos);
                             List<String> partition = new ArrayList<String>();
                             for (int i = 0; i < qos.partition.name.size(); i++) {
                                 partition.add((String) qos.partition.name.get(i));
                             }
-                            DeviceAdapter da = DeviceAdapter.newGUIAdapter(c.getDeviceFactory(), context);
-                            da.setInitialPartition(partition.toArray(new String[0]));
-                            da.start(c.getAddress());
-
-                            log.info("DeviceAdapter ended");
-                        } catch (Exception e) {
-                            log.error("Error in spawned DeviceAdapter", e);
+            
+                            try {
+                                // TODO this must not use the same context as the app as it messes up DDS
+                                final AbstractApplicationContext context = c.createContext("DeviceAdapterContext.xml");
+                                final DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(c.getDeviceFactory(), context, false) {
+                                    // intercept stop to destroy the context specific to this device
+                                    public void stop() {
+                                        super.stop();
+                                        context.destroy();
+                                    };
+                                };
+                                // Use the current partition of the app container
+                                da.setPartition(partition.toArray(new String[0]));
+                                da.setAddress(c.getAddress());
+                                da.init();
+                                da.connect();
+                                Platform.runLater(()->deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da));
+                                
+                                ice.MDSConnectivityObjective obj = new ice.MDSConnectivityObjective();
+                                obj.unique_device_identifier = da.getDevice().getUniqueDeviceIdentifier();
+                                obj.partition = partition.isEmpty() ? "" : partition.get(0);
+                                mdsHandler.publish(obj);
+                            } catch (Exception e) {
+                                log.error("Error in spawned DeviceAdapter", e);
+                            }
                         }
+            
+                    } catch (Exception e) {
+                        log.error("", e);
                     }
                 });
                 t.setDaemon(true);
                 t.start();
             }
-
+            
         } catch (IOException e) {
-            log.error("", e);
+            log.error("Error getting configuration", e);
         }
-
     }
 
     @FXML
-    public void changePartition(ActionEvent event) {
-        String p = this.partitions.getSelectionModel().getSelectedItem();
-        if(null != p) {
+    public void changePatient(ActionEvent event) {
+        PatientInfo pi = this.patients.getSelectionModel().getSelectedItem();
+        if(null != pi) {
             final List<String> partitions = new ArrayList<String>(1);
-            partitions.add(p);
+            if("".equals(pi.getMrn())||"*".equals(pi.getMrn())) {
+                partitions.add(pi.getMrn());
+            } else {
+                partitions.add("MRN="+pi.getMrn());
+            }
             partitionChooserModel.set(partitions);
         }
         

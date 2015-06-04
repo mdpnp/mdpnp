@@ -13,6 +13,7 @@
 package org.mdpnp.devices.draeger.medibus;
 
 import ice.ConnectionState;
+import ice.LimitType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -45,6 +46,9 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice<RTMedibus> {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractDraegerVent.class);
@@ -55,7 +59,8 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Object, InstanceHolder<ice.Numeric>> settingUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
     protected Map<Object, InstanceHolder<ice.Numeric>> numericUpdates = new HashMap<Object, InstanceHolder<ice.Numeric>>();
     protected Map<Object, InstanceHolder<ice.SampleArray>> sampleArrayUpdates = new HashMap<Object, InstanceHolder<ice.SampleArray>>();
-    protected Map<Object, InstanceHolder<ice.AlarmSettings>> alarmSettingsUpdates = new HashMap<Object, InstanceHolder<ice.AlarmSettings>>();
+    protected Map<Object, InstanceHolder<ice.AlarmLimit>> alarmLowLimitUpdates = new HashMap<Object, InstanceHolder<ice.AlarmLimit>>();
+    protected Map<Object, InstanceHolder<ice.AlarmLimit>> alarmHighLimitUpdates = new HashMap<Object, InstanceHolder<ice.AlarmLimit>>();
 
     protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate;
 
@@ -174,9 +179,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     }
 
     @Override
-    protected void unregisterAllAlarmSettingsInstances() {
-        super.unregisterAllAlarmSettingsInstances();
-        alarmSettingsUpdates.clear();
+    protected void unregisterAllAlarmLimitInstances() {
+        super.unregisterAllAlarmLimitInstances();
+        alarmLowLimitUpdates.clear();
+        alarmHighLimitUpdates.clear();
     }
 
     protected void processCorrupt() {
@@ -339,10 +345,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad number format for low alarm " + d.code + " " + nfe.getMessage());
                     }
-                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                    InstanceHolder<ice.AlarmLimit> a = alarmLowLimitUpdates.get(d.code);
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, f, null == a ? Float.MAX_VALUE : a.data.upper, metric));
+                    alarmLowLimitUpdates.put(d.code, alarmLimitSample(a, rosetta.MDC_DIM_DIMLESS.VALUE, f, metric, LimitType.low_limit));
                 }
             }
         }
@@ -357,10 +363,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                     } catch (NumberFormatException nfe) {
                         log.error("Bad number format for high alarm " + d.code + " " + nfe.getMessage());
                     }
-                    InstanceHolder<ice.AlarmSettings> a = alarmSettingsUpdates.get(d.code);
+                    InstanceHolder<ice.AlarmLimit> a = alarmHighLimitUpdates.get(d.code);
                     String metric = numerics.get(d.code);
                     metric = metricOrCode(metric, d.code, "ALARM_LIMIT_CP"+codepage);
-                    alarmSettingsUpdates.put(d.code, alarmSettingsSample(a, null == a ? Float.NEGATIVE_INFINITY : a.data.lower, f, metric));
+                    alarmHighLimitUpdates.put(d.code, alarmLimitSample(a, rosetta.MDC_DIM_DIMLESS.VALUE, f, metric, LimitType.high_limit));
                 }
             }
         }
@@ -471,57 +477,59 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
         @Override
         public void run() {
-            try {
-                for (int i = 0; i < realtimeBuffer.length; i++) {
-                    if (null == realtimeConfig[i] || realtimeFrequency[i] != this.frequency) {
-                        continue;
-                    }
-                    Object code = realtimeConfig[i].realtimeData;
-                    InstanceHolder<ice.SampleArray> sa = sampleArrayUpdates.get(code);
-                    if (null != sa) {
-                        // In this implementation we're not changing the
-                        // requested realtime data; so we
-                        // expedite here using the same preregistered instance
-                        synchronized (realtimeBuffer[i]) {
-                            if (realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
-                                if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
-                                    realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
+            if(ice.ConnectionState.Connected.equals(getState())) {
+                try {
+                    for (int i = 0; i < realtimeBuffer.length; i++) {
+                        if (null == realtimeConfig[i] || realtimeFrequency[i] != this.frequency) {
+                            continue;
+                        }
+                        Object code = realtimeConfig[i].realtimeData;
+                        InstanceHolder<ice.SampleArray> sa = sampleArrayUpdates.get(code);
+                        if (null != sa) {
+                            // In this implementation we're not changing the
+                            // requested realtime data; so we
+                            // expedite here using the same preregistered instance
+                            synchronized (realtimeBuffer[i]) {
+                                if (realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
+                                    if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
+                                        realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
+                                    }
+                                    sampleArraySample(sa, realtimeBuffer[i], deviceClock.instant());
                                 }
-                                sampleArraySample(sa, realtimeBuffer[i], deviceClock.instant());
+                            }
+                        } else {
+    
+                            String metric_id = null;
+                            // flush
+                            if (realtimeConfig[i].realtimeData instanceof Enum<?>) {
+                                metric_id = waveforms.get(realtimeConfig[i].realtimeData);
+                            }
+                            // NOTE: config.interval is the sampling interval
+                            // expressed in MICRO-seconds
+                            // The specification is ambiguous using ms for micro and
+                            // milli...
+                            // but in the examples '16000' is stated to mean 16
+                            // milliseconds
+                            // int frequency = (int)(1000000f /
+                            // realtimeConfig[i].interval /
+                            // realtimeConfig[i].multiplier);
+    
+                            metric_id = metricOrCode(metric_id, code, "RT");
+                            synchronized (realtimeBuffer[i]) {
+                                if (realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
+                                    if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
+                                        realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
+                                    }
+                                    sampleArrayUpdates.put(code,
+                                            sampleArraySample(sa, realtimeBuffer[i], metric_id, codeToString(code), 0, units(code), realtimeFrequency[i], deviceClock.instant()));
+                                }
                             }
                         }
-                    } else {
-
-                        String metric_id = null;
-                        // flush
-                        if (realtimeConfig[i].realtimeData instanceof Enum<?>) {
-                            metric_id = waveforms.get(realtimeConfig[i].realtimeData);
-                        }
-                        // NOTE: config.interval is the sampling interval
-                        // expressed in MICRO-seconds
-                        // The specification is ambiguous using ms for micro and
-                        // milli...
-                        // but in the examples '16000' is stated to mean 16
-                        // milliseconds
-                        // int frequency = (int)(1000000f /
-                        // realtimeConfig[i].interval /
-                        // realtimeConfig[i].multiplier);
-
-                        metric_id = metricOrCode(metric_id, code, "RT");
-                        synchronized (realtimeBuffer[i]) {
-                            if (realtimeBuffer[i].size() >= BUFFER_SAMPLES) {
-                                if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
-                                    realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
-                                }
-                                sampleArrayUpdates.put(code,
-                                        sampleArraySample(sa, realtimeBuffer[i], metric_id, codeToString(code), 0, units(code), realtimeFrequency[i], deviceClock.instant()));
-                            }
-                        }
+    
                     }
-
+                } catch (Throwable t) {
+                    log.error("error emitting fast data", t);
                 }
-            } catch (Throwable t) {
-                log.error("error emitting fast data", t);
             }
         }
 
@@ -603,7 +611,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         super.disconnect();
     }
 
-    private void init() {
+    public void init() {
+
+        super.init();
+
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Dr\u00E4ger";
         deviceIdentity.model = "???";
@@ -737,12 +748,11 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     }
 
-    public AbstractDraegerVent(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop, RTMedibus.class);
+    public AbstractDraegerVent(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop, RTMedibus.class);
         for (int i = 0; i < realtimeBuffer.length; i++) {
             realtimeBuffer[i] = Collections.synchronizedList(new ArrayList<Number>());
         }
-        init();
         loadMap(numerics, waveforms);
     }
 

@@ -12,13 +12,14 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
-import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.math.DCT;
+import org.mdpnp.devices.simulation.NumberWithGradient;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +49,12 @@ public class SimulatedPulseOximeter {
                 for (int i = 0; i < plethValues.length; i++) {
                     plethValues[i] = pleth[postIncrCount()];
                 }
-                nextDraw();
+
+                int val[] = nextDraw();
 
                 DeviceClock.Reading  t = deviceClock.instant();
 
-                receivePulseOx(t, (int) Math.round(heartRate), (int) Math.round(spO2), plethValues, FREQUENCY);
+                receivePulseOx(t, val[0], val[1], plethValues, FREQUENCY);
 
             } catch (Throwable t) {
                 log.error("Error sending simulated pulse oximetry data", t);
@@ -118,53 +120,20 @@ public class SimulatedPulseOximeter {
         initPleth();
     }
 
-    private double heartRate = 60;
-    private double spO2 = 98;
+    private Number heartRate = new NumberWithJitter<Integer>(60, 5, 30, 200);
+    private Number spO2      = new NumberWithJitter<Integer>(98, 2, 60, 100);
 
-    private final double floorHeartRate = 30;
-    private final double floorSpO2 = 60;
-    private final double ceilingHeartRate = 200;
-    private final double ceilingSpO2 = 100;
-
-    private final Random random = new Random(System.currentTimeMillis());
-
-    private Double targetHeartRate = null;
-    private Double targetSpO2 = null;
-
-    public void nextDraw() {
-        if (null != targetHeartRate) {
-            double delta = targetHeartRate - heartRate;
-            delta = Math.min(5, delta);
-            delta = Math.max(-5, delta);
-            heartRate += delta;
-        } else {
-            double d1 = random.nextDouble();
-            double hr = heartRate + (d1 > 0.3 ? 0 : (d1 > 0.15 ? 0.3 : -0.3));
-            hr = Math.max(hr, floorHeartRate);
-            hr = Math.min(hr, ceilingHeartRate);
-            heartRate = hr;
-        }
-
-        if (null != targetSpO2) {
-            double delta = targetSpO2 - spO2;
-            delta = Math.min(2, delta);
-            delta = Math.max(-2, delta);
-            spO2 += delta;
-        } else {
-            double d2 = random.nextDouble();
-            double spo2 = spO2 + (d2 > 0.3 ? 0 : (d2 > 0.1 ? 0.3 : -0.3));
-            spo2 = Math.max(spo2, floorSpO2);
-            spo2 = Math.min(spo2, ceilingSpO2);
-            spO2 = spo2;
-        }
-
+    int[] nextDraw() {
+        return new int[] { heartRate.intValue(), spO2.intValue() };
     }
 
-    public void setTargetHeartRate(Double targetHeartRate) {
-        this.targetHeartRate = targetHeartRate;
+    public void setTargetHeartRate(Number targetHeartRate) {
+        this.heartRate = new NumberWithGradient(heartRate, targetHeartRate, 5);
+        log.debug("Set heartRate to " + this.heartRate);
     }
 
-    public void setTargetSpO2(Double targetSpO2) {
-        this.targetSpO2 = targetSpO2;
+    public void setTargetSpO2(Number targetSpO2) {
+        this.spO2 = new NumberWithGradient(spO2, targetSpO2, 2);
+        log.debug("Set spO2 to " + this.spO2);
     }
 }

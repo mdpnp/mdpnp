@@ -1,0 +1,108 @@
+/**
+ * @file himss2015.idl
+ * DDS data objects and topics to be shared by MDPnP and
+ * DocBox for HIMSS 2015.
+ *
+ * @author Wayne Saari
+ * 2 APR 2015
+ */ 
+
+module himss
+{
+const long DDS_DOMAIN_ID_MANAGER = 2;
+
+const long SHORTSHORT_STRING_LEN  = 16;
+const long SHORT_STRING_LEN   = 32;
+const long MEDIUM_STRING_LEN  = 64;
+const long LONG_STRING_LEN    = 128;
+
+const long MAX_ICE_UDI_LENGTH = 16;
+
+const long MAX_ASSESSMENT_ENTRIES = 50;
+
+/**
+ * Identifiers for Dash measurements of interest to DICES and OpenICE
+ */
+const long MDC_ECG_HEART_RATE = 16770;  // "HR BPM"
+const long MDC_TTHOR_RESP_RATE = 20506; // "RR BPM"
+const long MDC_PRESS_BLD_ART_ABP_DIA = 18966;   // "ABP mmHg"
+const long MDC_PRESS_BLD_ART_ABP_SYS = 18965;   // "ABP mmHg"
+const long MDC_PRESS_BLD_ART_ABP_MEAN = 18967;  // "ABP Mean mmHg"
+const long MDC_PULS_OXIM_SAT_O2 = 19384;        // "SpO2 %"
+const long MDC_PULS_OXIM_PULS_RATE = 18458;     // "PR BPM"
+
+/**
+ * Date, time
+ */
+typedef long TIME_T;
+
+struct Timespec
+{
+  TIME_T seconds;
+  long nanoseconds;
+}; //@top-level false
+
+// AbsoluteTime specifies the number of seconds and nanoseconds since
+// 1970-01-01 00:00:00 UTC.
+typedef Timespec AbsoluteTime;
+
+/**
+ * The Date data type specifies a certain calendar date. (NOT BCD-encoded.)
+ */
+struct Date
+{
+  octet century;  // Ex: for year 2012, century = 20, ...
+  octet year;     // and year = 12
+  octet month;    // January = 1
+  octet day;
+}; //@top-level false
+
+/**
+ * ICE Unique Device Identification (UDI)
+ */
+typedef string<MAX_ICE_UDI_LENGTH> ICE_UDI;
+
+/**
+ * For multiple instances of the same sensor. Use this type to disambiguate.
+ */
+typedef long InstanceIdentifier;
+
+// Assessment list 
+struct AssessmentEntry
+{
+  string<MEDIUM_STRING_LEN> name;
+  string<LONG_STRING_LEN> value;
+}; //top-level false
+typedef sequence<AssessmentEntry, MAX_ASSESSMENT_ENTRIES> AssessmentList;
+
+/**
+ * MetricDataQuality object
+ *
+ * The MetricDataQuality object indicates the status for a specified
+ * measurement. It includes a validated data indicator.
+ */
+struct MetricDataQuality
+{
+  ICE_UDI udi; //@key
+  long metric_id; //@key
+  InstanceIdentifier instance_id; //@key
+  boolean validated_data;
+}; //@top-level true
+#pragma keylist MetricDataQuality udi metric_id instance_id
+const string MetricDataQualityTopic = "MetricDataQuality";
+
+/**
+ * PatientAssessment object
+ *
+ * The PatientAssessment object defines patient assessment attributes.
+ */
+struct PatientAssessment
+{
+  string<LONG_STRING_LEN> operator_id; //@key
+  AbsoluteTime date_and_time; // UTC
+  AssessmentList assessments;
+}; //@top-level true
+#pragma keylist PatientAssessment operator_id
+const string PatientAssessmentTopic = "PatientAssessment";
+
+};

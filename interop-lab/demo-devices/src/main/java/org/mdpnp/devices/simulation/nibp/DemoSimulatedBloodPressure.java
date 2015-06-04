@@ -18,6 +18,9 @@ import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
@@ -64,8 +67,8 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
 
     private final DeviceClock clock = new DeviceClock.WallClock();
     
-    public DemoSimulatedBloodPressure(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public DemoSimulatedBloodPressure(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
         deviceIdentity.model = "NIBP (Simulated)";
         writeDeviceIdentity();
 

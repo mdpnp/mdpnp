@@ -5,6 +5,8 @@ import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -18,24 +20,23 @@ import com.rti.dds.subscription.Subscriber;
 public class IceApplicationFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType XRay =
-            new IceApplicationProvider.AppType("X-Ray Ventilator Sync", "NOXRAYVENT", IceApplicationProvider.class.getResource("xray-vent.png"), 0.75);
+            new IceApplicationProvider.AppType("X-Ray Ventilator Sync", "NOXRAYVENT", XRayVentPanel.class.getResource("xray-vent.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() { return XRay;}
 
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
-        final EventLoop  eventLoop = (EventLoop)parentContext.getBean("eventLoop");
-        final Subscriber subscriber= (Subscriber)parentContext.getBean("subscriber");
-        final DeviceListModel deviceListModel = (DeviceListModel)parentContext.getBean("deviceListModel");
-
+        final DeviceListModel deviceListModel = parentContext.getBean("deviceListModel", DeviceListModel.class);
+        final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
+        final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
         FXMLLoader loader = new FXMLLoader(XRayVentPanel.class.getResource("XRayVentPanel.fxml"));
         
         final Parent ui = loader.load();
         
         final XRayVentPanel controller = ((XRayVentPanel)loader.getController());
 
-        controller.set(subscriber, eventLoop, deviceListModel);
+        controller.set(deviceListModel, numericList, sampleArrayList);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -63,7 +64,7 @@ public class IceApplicationFactory implements IceApplicationProvider {
 
             @Override
             public void destroy() {
-                
+                controller.destroy();
             }
         };
     }

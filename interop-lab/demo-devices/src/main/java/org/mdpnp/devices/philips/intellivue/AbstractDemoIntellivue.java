@@ -35,8 +35,10 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
+import org.mdpnp.devices.io.util.StateMachine;
 import org.mdpnp.devices.net.NetworkLoop;
 import org.mdpnp.devices.net.TaskQueue;
 import org.mdpnp.devices.philips.intellivue.action.ExtendedPollDataResult;
@@ -100,6 +102,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
@@ -134,6 +138,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             lastMessageSentTime = 0L;
             lastKeepAlive = 0L;
             stopEmitFastData();
+        } else if(ice.ConnectionState.Connected.equals(newState) && !ice.ConnectionState.Connected.equals(oldState)) {
+            startEmitFastData();
         }
     }
 
@@ -158,36 +164,42 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private long lastKeepAlive = 0L;
     private long lastMessageSentTime = 0L;
     
-    private final Map<Integer, ScheduledFuture<?>> emitFastDataByFrequency = new HashMap<Integer, ScheduledFuture<?>>();
-    private static final int BUFFER_SAMPLES = 125;
+    
+    private enum DisconnectState {
+        Initial,
+        Disconnecting,
+        Disconnected
+    };
+    
+    private final StateMachine<DisconnectState> disconnectState = new StateMachine<DisconnectState>(
+            new DisconnectState[][] { {DisconnectState.Initial, DisconnectState.Disconnecting},
+                                      {DisconnectState.Disconnecting, DisconnectState.Disconnected} }, 
+            DisconnectState.Initial, "");
+    
+    private static final long PERIOD = 2000L;
+    private ScheduledFuture<?> emitFastData;
 
-    private synchronized void startEmitFastData(long msInterval) {
-        int frequency = (int)(1000 / msInterval);
-        // for the 62.5Hz case; 
-        // TODO client will see an overlapping sample where 62.5Hz is truncated to 62Hz
-        long interval = msInterval * BUFFER_SAMPLES;
-        if (!emitFastDataByFrequency.containsKey(frequency)) {
-            log.info("Start emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.put(frequency, executor.scheduleAtFixedRate(new EmitFastData(frequency), 2* interval - System.currentTimeMillis()
-                    % interval, interval, TimeUnit.MILLISECONDS));
-        }
+    private synchronized void startEmitFastData() {
+        // for the 62.5Hz case we use two seconds (125 samples)
+        log.info("Start emit fast data for period " + PERIOD + "ms");
+        emitFastData = executor.scheduleAtFixedRate(new EmitFastData(), 
+                    2* PERIOD - System.currentTimeMillis() % PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
     
     private synchronized void stopEmitFastData() {
-        for (Integer frequency : emitFastDataByFrequency.keySet()) {
-            log.info("stop emit fast data at frequency " + frequency);
-            emitFastDataByFrequency.get(frequency).cancel(false);
-        }
-        emitFastDataByFrequency.clear();
+        emitFastData.cancel(false);
+        emitFastData = null;
+        log.info("stop emit fast data");
     }
 
     protected void watchdog() {
         long now = System.currentTimeMillis();
         switch (stateMachine.getState().ordinal()) {
         case ice.ConnectionState._Negotiating:
-            // In the negotiating state we are emitted association requests
+            // In the negotiating state we are emitting association requests
             if (now - lastAssociationRequest >= ASSOCIATION_REQUEST_INTERVAL) {
                 try {
+                    log.debug("Requesting association");
                     myIntellivue.requestAssociation();
                     lastAssociationRequest = now;
                 } catch (IOException e1) {
@@ -196,15 +208,17 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             }
             break;
 
-        case ice.ConnectionState._Disconnecting:
+        case ice.ConnectionState._Terminal:
             // In the disconnecting state we are emitting association finish
             // requests
-            if (now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
-                try {
-                    myIntellivue.send(new AssociationFinishImpl());
-                    lastFinishRequest = now;
-                } catch (IOException e1) {
-                    log.error("sending association finish", e1);
+            if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                if (now - lastFinishRequest >= FINISH_REQUEST_INTERVAL) {
+                    try {
+                        myIntellivue.send(new AssociationFinishImpl());
+                        lastFinishRequest = now;
+                    } catch (IOException e1) {
+                        log.error("sending association finish", e1);
+                    }
                 }
             }
             break;
@@ -353,8 +367,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "reconnecting after active association is later refused");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association refused!");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "associating refused when disconnecting");
+                }
                 break;
             case ice.ConnectionState._Negotiating:
                 setConnectionInfo("association refused, retrying...");
@@ -370,8 +386,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "reconnecting after active association is later aborted");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association aborted!");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "association aborted!");
+                }
                 break;
             }
             super.handle(sockaddr, message);
@@ -383,8 +401,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association disconnected");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "association disconnected");
+                }
                 break;
             }
             super.handle(sockaddr, message);
@@ -397,8 +417,10 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
             case ice.ConnectionState._Connected:
                 state(ice.ConnectionState.Negotiating, "unexpected disconnect message");
                 break;
-            case ice.ConnectionState._Disconnecting:
-                state(ice.ConnectionState.Disconnected, "association disconnected");
+            case ice.ConnectionState._Terminal:
+                if(DisconnectState.Disconnecting.equals(disconnectState.getState())) {
+                    disconnectState.transitionIfLegal(DisconnectState.Disconnected, "association disconnected unexpectedly");
+                }
                 break;
             }
         }
@@ -714,7 +736,6 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             }
                             
                             sampleCache.addNewSamples(w.getNumbers());
-                            startEmitFastData(rt.toMilliseconds());
                         }
                     }
                 }
@@ -754,10 +775,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     }
     private class EmitFastData implements Runnable {
 
-        private final int frequency;
-
-        public EmitFastData(final int frequency) {
-            this.frequency = frequency;
+        public EmitFastData() {
         }
 
         private ObservedValue[] observedValues = new ObservedValue[10];
@@ -767,6 +785,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         public void run() {
             try {
                 observedValues = sampleArrayCache.keySet().toArray(observedValues);
+                DeviceClock.Reading fakeSampleTime = getClockProvider().instant();
+                
                 for(ObservedValue ov : observedValues) {
                     if(null == ov) {
                         break;
@@ -784,31 +804,27 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                             log.warn("No RelativeTime for handle=" + handle + " rt=" + rt + " sampleCache=" + sampleCache + " unitCode="+unitCode);
                             continue;
                         }
-                        int frequency = (int)(1000 / rt.toMilliseconds());
+                        int samples = (int) (PERIOD / rt.toMilliseconds());
 
-                        DeviceClock.Reading fakeSampleTime = getClockProvider().instant();
-
-                        if(this.frequency == frequency) {
-                            if(null != sa) {
-                                synchronized(sampleCache) {
-                                    Collection<Number> c = sampleCache.emitSamples(BUFFER_SAMPLES, sa.data.metric_id+" "+sa.data.instance_id);
-                                    if(null == c) {
-                                        putSampleArrayUpdate(ov, handle, null);
-                                    } else {
-                                        sampleArraySample(sa, c, fakeSampleTime);
-                                    }
+                        if(null != sa) {
+                            synchronized(sampleCache) {
+                                Collection<Number> c = sampleCache.emitSamples(samples, sa.data.metric_id+" "+sa.data.instance_id);
+                                if(null == c) {
+                                    putSampleArrayUpdate(ov, handle, null);
+                                } else {
+                                    sampleArraySample(sa, c, fakeSampleTime);
                                 }
-                            } else {
-                                String metric_id = sampleArrayMetricIds.get(ov);
-                                UnitCode unitCode = handleToUnitCode.get(handle);
-                                synchronized(sampleCache) {
-                                    putSampleArrayUpdate(
-                                            ov, handle,
-                                            sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(BUFFER_SAMPLES, metric_id+" "+handle),
-                                            metric_id, ov.toString(), handle, 
-                                            RosettaUnits.units(unitCode),
-                                            frequency, fakeSampleTime));
-                                }
+                            }
+                        } else {
+                            String metric_id = sampleArrayMetricIds.get(ov);
+                            UnitCode unitCode = handleToUnitCode.get(handle);
+                            synchronized(sampleCache) {
+                                putSampleArrayUpdate(
+                                        ov, handle,
+                                        sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(samples, metric_id+" "+handle),
+                                        metric_id, ov.toString(), handle, 
+                                        RosettaUnits.units(unitCode),
+                                        (int)(1000L / rt.toMilliseconds()), fakeSampleTime));
                             }
                         }
                     }
@@ -952,12 +968,12 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private final Thread networkLoopThread;
     private final TaskQueue.Task<?> watchdogTask; // ,    serviceSampleArrays;
 
-    public AbstractDemoIntellivue(int domainId, EventLoop eventLoop) throws IOException {
-        this(domainId, eventLoop, null);
+    public AbstractDemoIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) throws IOException {
+        this(subscriber, publisher, eventLoop, null);
     }
 
-    public AbstractDemoIntellivue(int domainId, EventLoop eventLoop, NetworkLoop loop) throws IOException {
-        super(domainId, eventLoop);
+    public AbstractDemoIntellivue(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop, NetworkLoop loop) throws IOException {
+        super(subscriber, publisher, eventLoop);
         loadMap(numericMetricIds, numericLabels, sampleArrayMetricIds, sampleArrayLabels);
 
         deviceIdentity.manufacturer = "Philips";
@@ -967,7 +983,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         if (null == loop) {
             networkLoop = new NetworkLoop();
-            networkLoopThread = new Thread(threadGroup, new Runnable() {
+            networkLoopThread = new Thread(AbstractDevice.threadGroup, new Runnable() {
                 @Override
                 public void run() {
                     try {
@@ -1242,7 +1258,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
     public void connect(InetSocketAddress remote, InetSocketAddress local) throws IOException {
         switch (stateMachine.getState().ordinal()) {
-        case ice.ConnectionState._Disconnected:
+        case ice.ConnectionState._Initial:
             state(ice.ConnectionState.Connecting, "trying " + remote.getAddress().getHostAddress() + ":" + remote.getPort());
             break;
         case ice.ConnectionState._Connecting:
@@ -1262,23 +1278,25 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
 
         registrationKeys.add(networkLoop.register(myIntellivue, channel));
 
-        state(ice.ConnectionState.Negotiating, "");
+        state(ice.ConnectionState.Negotiating, "Requesting Association");
     }
 
     @Override
     public void disconnect() {
         synchronized (stateMachine) {
-            if (ice.ConnectionState.Disconnected.equals(stateMachine.getState())) {
+            if (ice.ConnectionState.Terminal.equals(stateMachine.getState())) {
                 return;
             }
-            if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
-                state(ice.ConnectionState.Disconnected, "");
-                return;
-            } else {
-                state(ice.ConnectionState.Disconnecting, "disassociating");
-            }
+            stateMachine.transitionIfLegal(ice.ConnectionState.Terminal, "disconnect()");
         }
-        if (!stateMachine.wait(ice.ConnectionState.Disconnected, 5000L)) {
+        if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
+            disconnectState.transitionIfLegal(DisconnectState.Disconnecting, "");
+            disconnectState.transitionIfLegal(DisconnectState.Disconnected, "");
+            return;
+        } else {
+            disconnectState.transitionIfLegal(DisconnectState.Disconnecting, "");
+        }
+        if (!disconnectState.wait(DisconnectState.Disconnected, 5000L)) {
             log.trace("No disconnect received in response to finish");
         }
 

@@ -68,8 +68,9 @@ public class CreateAdapter {
             return null;
         }
         address = d.settingsController.addressProperty().get();
+        String fhirServerName = d.settingsController.getFhirServerName();
         
-        return d.closePressed ? null : new Configuration(false, Application.ICE_Device_Interface, 1, ddp, address);
+        return d.closePressed ? null : new Configuration(false, Application.ICE_Device_Interface, domainId, ddp, address, fhirServerName);
 
     }
 }

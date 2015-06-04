@@ -1,5 +1,5 @@
 package org.mdpnp.rtiapi.data;
 
-public interface NumericInstanceModel extends InstanceModel<ice.Numeric, ice.NumericDataReader> {
+public interface NumericInstanceModel extends ReaderInstanceModel<ice.Numeric, ice.NumericDataReader> {
 
 }

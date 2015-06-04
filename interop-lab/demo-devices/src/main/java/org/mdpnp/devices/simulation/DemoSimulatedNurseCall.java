@@ -14,14 +14,17 @@ package org.mdpnp.devices.simulation;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.Subscriber;
+
 /**
  * @author Jeff Plourde
  *
  */
 public class DemoSimulatedNurseCall extends AbstractSimulatedDevice {
 
-    public DemoSimulatedNurseCall(int domainId, EventLoop eventLoop) {
-        super(domainId, eventLoop);
+    public DemoSimulatedNurseCall(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+        super(subscriber, publisher, eventLoop);
         deviceIdentity.model = "Simulated Nurse Call";
         writeDeviceIdentity();
     }

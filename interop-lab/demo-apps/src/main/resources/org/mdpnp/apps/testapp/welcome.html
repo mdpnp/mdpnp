@@ -1,0 +1,72 @@
+<html>
+<head>
+
+<style>
+
+body {
+ margin:0;
+ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+ font-size: 12pt;
+ color: #333333;
+ background-color: #F1F1F1;
+}
+
+.heading {
+ font-size: 24pt;
+ text-align:center; 
+}
+
+.subheading {
+  font-size: 18pt;
+}
+
+.center {
+  text-align: center;
+}
+
+/** center the content */
+.centeredcontent {
+    text-align:center;
+}
+
+/** strech the image in the div container to use full width*/
+.strechablecontainer img{
+    width:100%;
+    height:auto;
+    max-height:100%;
+}
+
+</style>
+</head>
+<body>
+
+<div class="strechablecontainer">
+	<img src="banner.png"/>
+</div>
+
+<div class="heading">OpenICE Launch Settings</div>
+
+<div class="center">Scroll down for more information</div> 
+
+<ul><span class="subheading">Application</span>
+
+<li>The <u>ICE_Supervisor</u> hosts clinical apps.</li>
+<li>The <u>ICE_Device_Interface</u> uses this computer to connect a medical device to an ICE_Supervisor.</li>
+</ul>
+
+<ul><span class="subheading">Domain Id</span>
+<li>OpenICE systems on the same network can coexist by using different integer domain identifiers.  If there are no other ICE systems on your network you may use any value.</li> 
+</ul>
+
+<ul><span class="subheading">FHIR Server</span>
+<li>The base URL of a FHIR server from which patient information should be received.  You can leave this field blank to use a local database of patients.
+</ul>
+
+<ul><span class="subheading">Further Information</span>
+<li>For more information visit <a href="https://www.openice.info">https://www.openice.info</a>.</li>
+<li>To post questions to the OpenICE community visit <a href="http://community.openice.info">http://community.openice.info</a>.</li>
+<li>For more information about this software visit <a href="http://mdpnp.sourceforge.net">http://mdpnp.sourceforge.net</a>.</li>
+</ul>
+
+</body>
+</html>
