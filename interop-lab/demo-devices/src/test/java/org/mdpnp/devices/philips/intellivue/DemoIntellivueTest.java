@@ -55,10 +55,11 @@ public class DemoIntellivueTest {
         log.info("sampleArrayMetricIds" + sampleArrayMetricIds);
         log.info("sampleArrayLabels" + sampleArrayLabels);
 
-        Assert.assertEquals("Failed to load numerics ids",    15, numericMetricIds.size());
-        Assert.assertEquals("Failed to load numerics labels", 15, numericLabels.size());
-        Assert.assertEquals("Failed to load array metrics",    7, sampleArrayMetricIds.size());
-        Assert.assertEquals("Failed to load array labels ",    7, sampleArrayLabels.size());
-
+//        Assert.assertEquals("Failed to load numerics ids",    15, numericMetricIds.size());
+//        Assert.assertEquals("Failed to load numerics labels", 15, numericLabels.size());
+//        Assert.assertEquals("Failed to load array metrics",    7, sampleArrayMetricIds.size());
+//        Assert.assertEquals("Failed to load array labels ",    7, sampleArrayLabels.size());
+        Assert.assertEquals("Unequal count of numeric labels and nomenclature codes", numericMetricIds.size(), numericLabels.size());
+        Assert.assertEquals("Unequal count of sample array labels and nomenclature codes", sampleArrayMetricIds.size(), sampleArrayLabels.size());
     }
 }

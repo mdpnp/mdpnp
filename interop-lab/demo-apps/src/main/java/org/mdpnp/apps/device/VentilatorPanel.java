@@ -26,7 +26,7 @@ public class VentilatorPanel extends AbstractWaveAndParamsPanel {
             rosetta.MDC_AWAY_CO2.VALUE, rosetta.MDC_IMPED_TTHOR.VALUE };
 
     private final static String[][] PARAMS = new String[][] {
-            { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE }, { rosetta.MDC_AWAY_CO2_ET.VALUE } };
+            { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_AWAY_RESP_RATE.VALUE }, { rosetta.MDC_AWAY_CO2_ET.VALUE } };
     private final static String[] PARAM_LABELS = new String[] { "Resp Rate", "etCO2" };
     private final static String[] PARAM_UNITS = new String[] { "BPM", "mmHg" };
 
