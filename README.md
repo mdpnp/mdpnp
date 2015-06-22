@@ -1,6 +1,8 @@
 What's Available
 ========
 
+[![Join the chat at https://gitter.im/mdpnp/mdpnp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mdpnp/mdpnp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 The MD PnP lab is working on a wide variety of projects.  All will incubate in this main repository and some will eventually spin out into separate projects.  Here is what you will find in our code repository.
 
 data-types/
