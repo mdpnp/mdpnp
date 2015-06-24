@@ -72,9 +72,6 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
             // the localhost might be outside of this process.
 //            dpQos.wire_protocol.participant_id = nextParticipantId++;
 
-            if(dpQos.discovery.multicast_receive_addresses.size() != 0)
-                log.warn(dpQos.discovery.multicast_receive_addresses.size() + " " + dpQos.discovery.multicast_receive_addresses.get(0).toString());
-
             if(!discoveryPeers.isEmpty()) {
                 dpQos.discovery.multicast_receive_addresses.clear();
                 dpQos.discovery.initial_peers.clear();
@@ -107,6 +104,9 @@ public class DomainParticipantFactory implements FactoryBean<DomainParticipant>,
                 }
             }
 
+			if(dpQos.discovery.multicast_receive_addresses.size() != 0)
+				log.warn("Discovery 'multicast_receive_addresses' size:" + dpQos.discovery.multicast_receive_addresses.size() +
+						 " first entry:" + dpQos.discovery.multicast_receive_addresses.get(0).toString());
 
             instance = com.rti.dds.domain.DomainParticipantFactory.get_instance().create_participant(domain, dpQos, null,
                     StatusKind.STATUS_MASK_NONE);

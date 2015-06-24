@@ -14,6 +14,8 @@ package org.mdpnp.apps.testapp;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -39,14 +41,9 @@ public class Main {
     };
 
     public static void main(final String[] args) throws Exception {
-        URL u = Main.class.getResource("/ice.system.properties");
-        if(u != null) {
-            log.info("Loading System configuration from " + u.toExternalForm());
-            InputStream is = u.openStream();
-            System.getProperties().load(is);
-            is.close();
-        }
-        
+
+		loadSystemProps();
+
         Configuration runConf;
         if(args.length > 0) {
             runConf = Configuration.read(args);
@@ -69,7 +66,24 @@ public class Main {
         }
     }
 
-    public static class FxApplication extends javafx.application.Application {
+	static void loadSystemProps() throws IOException {
+		URL u = Main.class.getResource("/ice.system.properties");
+		if(u != null) {
+			log.info("Loading base system configuration from " + u.toExternalForm());
+			InputStream is = u.openStream();
+			System.getProperties().load(is);
+			is.close();
+		}
+		File f = new File("ice.system.properties");
+		if(f.exists()) {
+			log.info("Loading user overrides configuration from " + f.getAbsolutePath());
+			InputStream is = new FileInputStream(f);
+			System.getProperties().load(is);
+			is.close();
+		}
+	}
+
+	public static class FxApplication extends javafx.application.Application {
 
         private Configuration runConf;
         private IceApplication app;

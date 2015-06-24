@@ -1,8 +1,10 @@
 package org.mdpnp.rtiapi.qos;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -88,11 +90,25 @@ public class IceQos {
 
     public static boolean loadIceQosLibrary(DomainParticipantFactoryQos qos) throws IOException {
 
-        URL url = IceQos.class.getResource("/META-INF/ice_library.xml");
-        if (url != null) {
-            log.info("Loading ice_library.xml from " + url.toExternalForm());
+		URL url;
+        //
+        // handle the -Dmdpnp.dds.qos=file:///some/path/to/ice_library.xml
+        //
+		if(QOS_DEFINITION.indexOf(":") > 0) {
+			try {
+				url = new URL(QOS_DEFINITION);
+			}
+			catch(MalformedURLException ex) {
+				url = null;
+			}
+		}
+		else
+			url = IceQos.class.getResource(QOS_DEFINITION);
 
-            InputStream is = url.openStream();
+		if (url != null) {
+			log.info("Loading ice_library.xml from " + url.toExternalForm());
+			InputStream is = url.openStream();
+
             java.util.Scanner scanner = new java.util.Scanner(is);
             try {
                 qos.profile.url_profile.clear();
@@ -109,8 +125,10 @@ public class IceQos {
             }
         }
         else {
-            log.warn("Could not locate '/META-INF/ice_library.xml' on classpath");
+			log.error("Could not locate '" + QOS_DEFINITION +"'");
             return false;
         }
     }
+
+	private static final String QOS_DEFINITION = System.getProperty("mdpnp.dds.qos", "/META-INF/ice_library.xml");
 }
