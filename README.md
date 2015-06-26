@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/mdpnp/mdpnp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mdpnp/mdpnp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://jenkins.openice.info/job/mdpnp-demoapp/badge/icon)](https://jenkins.openice.info/job/mdpnp-demoapp)
-![Latest Release](https://img.shields.io/github/release/mdpnp/mdpnp.svg)
+[![Latest Release](https://img.shields.io/github/release/mdpnp/mdpnp.svg)](https://github.com/mdpnp/mdpnp/releases/latest)
 Getting Started
 ---------------
 
