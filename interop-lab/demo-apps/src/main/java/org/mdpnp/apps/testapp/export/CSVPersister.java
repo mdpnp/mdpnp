@@ -105,7 +105,7 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
         }
     }
     
-    private File defaultLogFileName = new File("demo-app.csv");
+    private File defaultLogFileName = new File("openice.csv");
     
     public void setup() {
         backupIndex.getSelectionModel().select(0);
@@ -151,7 +151,7 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
         // add file size controls.
         appender = new org.apache.log4j.RollingFileAppender();
         appender.setFile(defaultLogFileName.getAbsolutePath());
-        appender.setMaxBackupIndex(Integer.parseInt(backupIndex.getSelectionModel().getSelectedItem())-1);
+        appender.setMaxBackupIndex(Integer.parseInt(backupIndex.getSelectionModel().getSelectedItem()));
         appender.setMaxFileSize(fSize.getSelectionModel().getSelectedItem());
         appender.setAppend(true);
         appender.setLayout(new org.apache.log4j.PatternLayout("%m%n"));
