@@ -16,6 +16,10 @@ buildscript {
     repositories {
         mavenLocal()
         maven {
+            url 'https://build.openice.info/artifactory/remote-repos' 
+        }
+        
+        maven {
             name = 'BinTray'
             url = 'http://dl.bintray.com/content/shemnon/javafx-gradle/'
         }

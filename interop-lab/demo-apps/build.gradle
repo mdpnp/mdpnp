@@ -67,6 +67,9 @@ buildscript {
 
     repositories {
         maven {
+            url 'https://build.openice.info/artifactory/remote-repos' 
+        }
+        maven {
             url="https://dl.bintray.com/calmdev/gradle-plugins"
         }
     }
