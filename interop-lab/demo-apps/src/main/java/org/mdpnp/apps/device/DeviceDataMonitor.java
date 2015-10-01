@@ -15,8 +15,8 @@ package org.mdpnp.apps.device;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 
-import org.mdpnp.apps.fxbeans.FilteredList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFx;

@@ -30,11 +30,11 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
-import org.mdpnp.apps.testapp.comboboxfix.FixedComboBox;
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public class DemoPanel implements Runnable {
         return back;
     }
 
-    public FixedComboBox<PatientInfo> getPatients() {
+    public ComboBox<PatientInfo> getPatients() {
         return patients;
     }
 
@@ -178,7 +178,7 @@ public class DemoPanel implements Runnable {
     BorderPane demoPanel;
 
     @FXML
-    FixedComboBox<PatientInfo> patients;
+    ComboBox<PatientInfo> patients;
     
     @FXML
     Label patientsLabel;
