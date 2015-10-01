@@ -25,10 +25,10 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 
-import com.sun.javafx.Utils;
 import com.sun.javafx.scene.control.behavior.BehaviorBase;
 import com.sun.javafx.scene.control.behavior.KeyBinding;
 import com.sun.javafx.scene.control.behavior.OrientedKeyBinding;
+import com.sun.javafx.util.Utils;
 
 public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
     
