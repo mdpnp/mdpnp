@@ -31,7 +31,7 @@ javafx {
 
     profiles {
         macosx {
-            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_40.jdk/'
+            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/'
 
             bundleArguments = [
                 // for mac apps
