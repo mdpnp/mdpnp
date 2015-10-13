@@ -3,7 +3,10 @@ package org.mdpnp.apps.testapp.vital;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
@@ -105,7 +108,20 @@ public class VitalModelTest {
             model.addNumeric(numeric);
             assertNotEquals("", model.getWarningText());
         });
-    }    
+    }
 
-    
+
+    @Test
+    public void testAdvisorySort() throws InterruptedException {
+
+        List<VitalModelImpl.Advisory> advisories = new ArrayList<>();
+        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Warning, "This is an warning 0"));
+        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Alarm,   "This is an alarm 0"));
+        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Alarm,   "This is an alarm 1"));
+        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Warning, "This is an warning 1"));
+
+        Collections.sort(advisories);
+
+        assertEquals("Did not sort advisories properly", advisories.get(0).state, VitalModel.State.Alarm);
+    }
 }

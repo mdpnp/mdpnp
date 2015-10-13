@@ -116,13 +116,13 @@ public class PCAPanel implements InvalidationListener {
     public void setModel(VitalModel vitalModel) {
         if (this.model != null) {
             this.model.stateProperty().removeListener(this);
-            this.model.isInfusionStoppedProperty().removeListener(this);
+            pcaConfigController.infusionPumpModel.isInfusionStoppedProperty().removeListener(this);
         }
         this.model = vitalModel;
         pcaConfigController.setModel(vitalModel);
         if(null != vitalModel) {
             model.stateProperty().addListener(this);
-            model.isInfusionStoppedProperty().addListener(this);
+            pcaConfigController.infusionPumpModel.isInfusionStoppedProperty().addListener(this);
         } else {
             generalAlarm.stop();
             drugDeliveryAlarm.stop();
@@ -136,7 +136,7 @@ public class PCAPanel implements InvalidationListener {
     @Override
     public void invalidated(Observable observable) {
         if(null != model) {
-            if (model.isInfusionStopped()) {
+            if (pcaConfigController.infusionPumpModel.isInfusionStopped()) {
                 if (null != drugDeliveryAlarm && !drugDeliveryAlarm.isRunning()) {
                     drugDeliveryAlarm.loop(Clip.LOOP_CONTINUOUSLY);
                 }
@@ -164,7 +164,7 @@ public class PCAPanel implements InvalidationListener {
                 default:
                 }
             }
-            if (model.isInfusionStopped() || model.getState().equals(VitalModel.State.Alarm)) {
+            if (pcaConfigController.infusionPumpModel.isInfusionStopped() || model.getState().equals(VitalModel.State.Alarm)) {
                 main.setBorder(RED_BORDER);
             } else if (VitalModel.State.Warning.equals(model.getState())) {
                 main.setBorder(YELLOW_BORDER);

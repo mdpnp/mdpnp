@@ -12,7 +12,11 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.vital;
 
-import java.awt.Color;
+import java.awt.*;
+import java.awt.List;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.*;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -30,6 +34,7 @@ public interface VitalModel extends ObservableList<Vital> {
     enum State {
         Alarm, Warning, Normal
     };
+
     DeviceListModel getDeviceListModel();
 
     Vital addVital(String label, String units, String[] names, Double low, Double high, Double criticalLow, Double criticalHigh, double minimum,
@@ -57,7 +62,7 @@ public interface VitalModel extends ObservableList<Vital> {
      * 
      * @return
      */
-    ReadOnlyObjectProperty<State> stateProperty();
+    ReadOnlyObjectProperty<StateChange> stateProperty();
     State getState();
 
     /**
@@ -68,26 +73,54 @@ public interface VitalModel extends ObservableList<Vital> {
     ReadOnlyStringProperty warningTextProperty();
     String getWarningText();
 
-    /**
-     * Reset the infusion pump interlock
-     */
-    void resetInfusion();
-
-    /**
-     * Has the infusion been stopped?
-     */
-    ReadOnlyBooleanProperty isInfusionStoppedProperty();
-    boolean isInfusionStopped();
-
-    /**
-     * Why has the infusion been stopped
-     * 
-     * @return
-     */
-    ReadOnlyStringProperty interlockTextProperty();
-    String getInterlockText();
-
     void addNumeric(NumericFx numeric);
-
     void removeNumeric(NumericFx numeric);
+
+
+    class StateChange {
+        public final java.util.List<Advisory> advisories;
+        public final State state;
+
+        public StateChange(State state) {
+            this(state, Collections.emptyList());
+        }
+
+        public StateChange(State state, java.util.List<Advisory> advisories) {
+            this.advisories = advisories;
+            this.state = state;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            StateChange that = (StateChange) o;
+            return state == that.state;
+        }
+
+        @Override
+        public int hashCode() {
+            return state.hashCode();
+        }
+    }
+
+    class Advisory implements Comparable<Advisory> {
+        public final State state;
+        public final String cause;
+
+        @Override
+        public int compareTo(Advisory o) {
+            return state.compareTo(o.state);
+        }
+
+        public Advisory(State state, String cause) {
+            this.state = state;
+            this.cause = cause;
+        }
+
+        @Override
+        public String toString() {
+            return "{" + state + "'" + cause + "'}";
+        }
+    }
 }

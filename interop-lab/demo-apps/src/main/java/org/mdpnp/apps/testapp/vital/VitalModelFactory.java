@@ -4,6 +4,7 @@ import javafx.application.Platform;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.pca.InfusionPumpModel;
 import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.publication.Publisher;
+
+import java.beans.PropertyChangeEvent;
 
 /**
  *
@@ -33,7 +36,7 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
             instance = new VitalModelImpl(deviceListModel, numericList);
             
             instance.start(publisher, eventLoop);
-            
+
             Platform.runLater( () -> {
                 VitalSign.RespiratoryRate.addToModel(instance);
                 VitalSign.HeartRate.addToModel(instance);

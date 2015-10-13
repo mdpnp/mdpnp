@@ -50,7 +50,7 @@ import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.InfusionStatusFxListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.apps.testapp.vital.VitalModel.State;
+import org.mdpnp.apps.testapp.vital.VitalModel.StateChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +71,8 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
     
     private ice.InfusionObjectiveDataWriter objectiveWriter;
+
+    InfusionPumpModel infusionPumpModel = new InfusionPumpModel();
 
     
     
@@ -178,7 +180,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
             }
         }
     }
-    
+
     public void setModel(VitalModel model) {
         if (this.model != null) {
             this.model.removeListener(this);
@@ -188,13 +190,14 @@ public class PCAConfig implements ListChangeListener<Vital> {
         if (this.model != null) {
             this.model.addListener(this);
         }
+
         updateVitals();
         if(model != null) {
             warningsToAlarm.getSelectionModel().select(model.getCountWarningsBecomeAlarm());
             warningStatus.textProperty().bind(model.warningTextProperty());
-            interlockStatus.textProperty().bind(model.interlockTextProperty());
+            interlockStatus.textProperty().bind(infusionPumpModel.interlockTextProperty());
             // TODO Bind up the warnings to alarms dropdown 
-            model.isInfusionStoppedProperty().addListener(new ChangeListener<Boolean>() {
+            infusionPumpModel.isInfusionStoppedProperty().addListener(new ChangeListener<Boolean>() {
 
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -206,13 +209,15 @@ public class PCAConfig implements ListChangeListener<Vital> {
                 
             });
             
-            model.stateProperty().addListener(new ChangeListener<VitalModel.State>() {
+            model.stateProperty().addListener(new ChangeListener<VitalModel.StateChange>() {
 
                 @Override
-                public void changed(ObservableValue<? extends State> observable, State oldValue, State newValue) {
-                    switch(newValue) {
+                public void changed(ObservableValue<? extends StateChange> observable, StateChange oldValue, StateChange newValue) {
+                    switch(newValue.state) {
                     case Alarm:
                         warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
+                        VitalModel.Advisory advisory = newValue.advisories.get(0);
+                        infusionPumpModel.stopInfusion(advisory.cause);
                         break;
                     case Warning:
                         warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
@@ -254,7 +259,7 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
     @FXML public void interlockStatusClicked(MouseEvent event) {
         if(model != null) {
-            model.resetInfusion();
+            infusionPumpModel.resetInfusion();
         }
     }
 }

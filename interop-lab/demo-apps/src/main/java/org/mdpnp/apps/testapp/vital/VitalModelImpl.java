@@ -13,13 +13,12 @@
 package org.mdpnp.apps.testapp.vital;
 
 import java.awt.Color;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -38,6 +37,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.util.Callback;
 
 import org.mdpnp.apps.device.OnListChange;
@@ -87,7 +87,10 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
     protected Publisher publisher;
     protected EventLoop eventLoop;
-    private ObjectProperty<State> state = new SimpleObjectProperty<State>(this, "state", State.Normal);
+
+    private PropertyChangeSupport stateChange = new PropertyChangeSupport(this);
+
+    private ObjectProperty<StateChange> state = new SimpleObjectProperty<StateChange>(this, "state", new StateChange(State.Normal));
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(VitalModelImpl.class);
@@ -190,20 +193,9 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         publisher.get_participant().delete_topic(globalAlarmLimitTopic);
     }
 
-    private static final String DEFAULT_INTERLOCK_TEXT = "";
-
     private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
-    private String[] advisories = new String[0];
-    private final Date now = new Date();
     private final StringBuilder warningTextBuilder = new StringBuilder();
     private StringProperty warningText = new SimpleStringProperty(this, "warningText", "");
-    private StringProperty interlockText = new SimpleStringProperty(this, "interlockText", DEFAULT_INTERLOCK_TEXT);
-    private BooleanProperty interlock = new SimpleBooleanProperty(this, "interlock", false);
-   
-    @Override
-    public ReadOnlyBooleanProperty isInfusionStoppedProperty() {
-        return interlock;
-    }
 
 
     private final void updateState() {
@@ -214,64 +206,77 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         
         int N = size();
 
-        while (advisories.length < N) {
-            advisories = new String[2 * N + 1];
-        }
-        now.setTime(System.currentTimeMillis());
+        Date now = new Date(System.currentTimeMillis());
         String time = timeFormat.format(now);
 
-        int countWarnings = 0;
+        List<Advisory> advisories = new ArrayList<>();
 
         for (int i = 0; i < N; i++) {
             Vital vital = get(i);
-            advisories[i] = null;
             if (vital.isNoValueWarning() && vital.isEmpty()) {
-                countWarnings++;
-                advisories[i] = "- no source of " + vital.getLabel() + "\r\n";
+                advisories.add(new Advisory(State.Warning, "- no source of " + vital.getLabel() + "\r\n"));
             } else {
                 for (Value val : vital) {
                     if (val.isAtOrBelowLow()) {
-                        countWarnings++;
-                        advisories[i] = "- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
+                        String advisory = "- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
+                        advisories.add(new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning, advisory));
                     }
                     if (val.isAtOrAboveHigh()) {
-                        countWarnings++;
-                        advisories[i] = "- high " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
+                        String advisory = "- high " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
+                        advisories.add(new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning, advisory));
                     }
                 }
             }
         }
 
+        State newState = State.Normal;
+
         // Advisory processing
-        if (countWarnings > 0) {
-            warningTextBuilder.delete(0, warningTextBuilder.length());
-            for (int i = 0; i < N; i++) {
-                if (null != advisories[i]) {
-                    warningTextBuilder.append(advisories[i]);
-                }
+        if(!advisories.isEmpty()) {
+
+            Collections.sort(advisories);
+
+            newState = State.Warning;
+
+            if(advisories.get(0).state==State.Alarm) {
+                newState = State.Alarm;
+
+            } else if(advisories.size() >= getCountWarningsBecomeAlarm()) {
+                newState = State.Alarm;
             }
+
+            warningTextBuilder.delete(0, warningTextBuilder.length());
+            for (Advisory a : advisories) {
+                warningTextBuilder.append(a.cause);
+            }
+
             warningTextBuilder.append("at ").append(time);
             warningText.set(warningTextBuilder.toString());
-            state.set(State.Warning);
+
         } else {
             warningText.set("");
-            state.set(State.Normal);
         }
 
+        /*)
+        // First see of there is enough warnings out there that the system should go into alarm
+        // state just because there are too many things that are wrong.
+        //
         if (countWarnings >= getCountWarningsBecomeAlarm()) {
-            state.set(State.Alarm);
+            newState = State.Alarm;
             stopInfusion("Pump Stopped\r\n" + warningText.get() + "\r\nnurse alerted");
-        } else {
+        }
+        // Now see if there anything critical there that should set the state.
+        else {
             for (int i = 0; i < N; i++) {
                 Vital vital = get(i);
                 for (Value val : vital) {
                     if (val.isAtOrBelowCriticalLow()) {
-                        state.set(State.Alarm);
+                        newState = State.Alarm;
                         stopInfusion("Pump Stopped\r\n- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\nat "
                                 + time + "\r\nnurse alerted");
                         break;
                     } else if (val.isAtOrAboveCriticalHigh()) {
-                        state.set(State.Alarm);
+                        newState = State.Alarm;
                         stopInfusion("Pump Stopped\r\n- high " + vital.getLabel() + " " + +val.getValue() + " " + vital.getUnits()
                                 + "\r\nat " + time + "\r\nnurse alerted");
                         break;
@@ -279,34 +284,22 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
                 }
             }
         }
+        */
 
+        if(newState == null)
+            throw new IllegalStateException("Failed to establish a new state of the model");
+
+        state.set(new StateChange(newState, advisories));
     }
 
-    private final void stopInfusion(String str) {
-        if (!interlock.get()) {
-            interlock.set(true);
-            interlockText.set(str);
-        }
-    }
-    
     @Override
-    public ReadOnlyObjectProperty<State> stateProperty() {
+    public ReadOnlyObjectProperty<StateChange> stateProperty() {
         return state;
     }
 
     @Override
     public State getState() {
-        return state.get();
-    }
-    
-    @Override
-    public ReadOnlyStringProperty interlockTextProperty() {
-        return interlockText;
-    }
-
-    @Override
-    public String getInterlockText() {
-        return interlockText.get();
+        return state.get().state;
     }
 
     @Override
@@ -316,17 +309,6 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
     @Override
     public String getWarningText() {
         return warningText.get();
-    }
-
-    @Override
-    public void resetInfusion() {
-        interlock.set(false);
-        interlockText.set(DEFAULT_INTERLOCK_TEXT);
-    }
-
-    @Override
-    public boolean isInfusionStopped() {
-        return interlock.get();
     }
 
     private IntegerProperty countWarningsBecomeAlarm = new SimpleIntegerProperty(this, "countWarningsBecomeAlarm", 2);
