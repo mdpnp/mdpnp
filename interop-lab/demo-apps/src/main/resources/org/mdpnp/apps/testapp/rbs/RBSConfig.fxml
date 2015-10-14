@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.*?>
+<?import java.lang.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane styleClass="pca-config" 
+ xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+ fx:controller="org.mdpnp.apps.testapp.rbs.RBSConfig">
+ <bottom>
+  <BorderPane>
+   <center>
+    <FlowPane fx:id="controls">
+     <children>
+      <Button fx:id="load" mnemonicParsing="false" onAction="#loadVitalRule" text="Load Rule Set" />
+     </children>
+    </FlowPane>
+   </center>
+  </BorderPane>
+ </bottom>
+ <center>
+  <SplitPane dividerPositions="0.33" orientation="VERTICAL">
+   <items>
+
+    <GridPane>
+     <children>
+      <GridPane GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES"
+       GridPane.vgrow="ALWAYS">
+       <children>
+        <BorderPane GridPane.rowIndex="0">
+         <center>
+          <ScrollPane fitToHeight="true" fitToWidth="true">
+           <content>
+            <AnchorPane>
+             <children>
+              <TextArea fx:id="interlockStatus" editable="false"
+               onMouseClicked="#interlockStatusClicked" prefColumnCount="1"
+               AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+               BorderPane.alignment="CENTER" />
+             </children>
+            </AnchorPane>
+           </content>
+          </ScrollPane>
+         </center>
+         <top>
+          <Label text="Interlock Status" BorderPane.alignment="CENTER" />
+         </top>
+        </BorderPane>
+        <BorderPane GridPane.rowIndex="1">
+         <center>
+          <ScrollPane fitToHeight="true" fitToWidth="true">
+           <content>
+            <AnchorPane id="Content">
+             <children>
+              <TextArea fx:id="infusionStatus" editable="false"
+               prefColumnCount="1"  text="Select an infusion"
+               wrapText="true" AnchorPane.bottomAnchor="0.0"
+               AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+               AnchorPane.topAnchor="0.0" />
+             </children>
+            </AnchorPane>
+           </content>
+          </ScrollPane>
+         </center>
+         <top>
+          <Label alignment="CENTER" contentDisplay="CENTER"
+           text="Infusion Status" BorderPane.alignment="CENTER" />
+         </top>
+        </BorderPane>
+       </children>
+       <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" />
+       </columnConstraints>
+       <rowConstraints>
+        <RowConstraints vgrow="SOMETIMES" />
+        <RowConstraints vgrow="SOMETIMES" />
+       </rowConstraints>
+      </GridPane>
+      <BorderPane 
+       GridPane.columnIndex="2">
+       <center>
+        <ScrollPane fitToHeight="true" fitToWidth="true">
+         <content>
+          <AnchorPane id="Content">
+           <children>
+            <TextArea fx:id="warningStatus" editable="false"
+             prefColumnCount="1"
+             text="Here is some text about informational messages"
+             wrapText="true" AnchorPane.bottomAnchor="0.0"
+             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+             AnchorPane.topAnchor="0.0" />
+           </children>
+          </AnchorPane>
+         </content>
+        </ScrollPane>
+       </center>
+       <top>
+        <Label text="Informational Messages" />
+       </top>
+      </BorderPane>
+     </children>
+     <columnConstraints>
+      <ColumnConstraints hgrow="ALWAYS" />
+      <ColumnConstraints hgrow="ALWAYS" />
+      <ColumnConstraints hgrow="ALWAYS" />
+     </columnConstraints>
+     <rowConstraints>
+      <RowConstraints vgrow="ALWAYS" />
+     </rowConstraints>
+    </GridPane>
+    <ScrollPane fitToHeight="false" fitToWidth="true">
+      <VBox styleClass="vitals-panel" fx:id="vitalsPanel"/>
+    </ScrollPane>
+   </items>
+  </SplitPane>
+
+ </center>
+</BorderPane>
