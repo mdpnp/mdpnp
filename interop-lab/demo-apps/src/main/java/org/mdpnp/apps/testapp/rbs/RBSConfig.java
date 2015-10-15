@@ -27,12 +27,15 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.util.Callback;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -55,6 +58,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -64,14 +68,18 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class RBSConfig implements ListChangeListener<Vital> {
 
-    @FXML TextArea warningStatus;
-    @FXML TextArea infusionStatus;
-    @FXML TextArea interlockStatus;
+    @FXML
+    WebView ruleInformation;
+    @FXML
+    TextArea warningStatus;
 
-    @FXML VBox vitalsPanel;
+    @FXML
+    VBox vitalsPanel;
 
-    @FXML Button   load;
-    @FXML FlowPane controls;
+    @FXML
+    Button load;
+    @FXML
+    FlowPane controls;
 
 
     private static final ReadOnlyBooleanProperty OFF = new ReadOnlyBooleanWrapper(false);
@@ -82,8 +90,24 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     private ice.InfusionObjectiveDataWriter objectiveWriter;
 
-    private Invocable invocable;
+    private static class ActiveRule {
+        ActiveRule(Invocable invocable, URL context, String welcome) {
+            this.context = context;
+            this.invocable = invocable;
+            this.welcome = welcome;
+        }
 
+        void load(WebView webView, String pageName) throws Exception {
+            URL url = new URL(context, pageName);
+            webView.getEngine().load(url.toExternalForm());
+        }
+
+        final Invocable invocable;
+        final URL       context;
+        final String    welcome;
+    }
+
+    ActiveRule activeRule = null;
 
     public RBSConfig set(final ScheduledExecutorService executor, final ice.InfusionObjectiveDataWriter objectiveWriter,
                          final DeviceListModel deviceListModel, final InfusionStatusFxList infusionStatusList) {
@@ -106,17 +130,28 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 new FileChooser.ExtensionFilter("All Files", "*.*")
         );
 
-        File ruleName = fc.showOpenDialog(null);
-        if(null != ruleName) {
+        File ruleFile = fc.showOpenDialog(null);
+        if(null != ruleFile) {
 
             ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-            InputStream is = new FileInputStream(ruleName);
+
+            InputStream is = new FileInputStream(ruleFile);
             engine.eval(new InputStreamReader(is));
             is.close();
 
-            invocable = (Invocable) engine;
-            invocable.invokeFunction("create", model);
+            Invocable invocable = (Invocable) engine;
+
+            ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("create", model);
+
+            String pageName = (String) result.get("ruleDescription");
+
+            // MIKEFIX: CHANGE THIS IF WE WANT TO LOAD RULED FROM THE JAR
+            URL url = ruleFile.getParentFile().toURI().toURL();
+            activeRule = new ActiveRule(invocable, url, pageName);
+
+            activeRule.load(ruleInformation, activeRule.welcome);
         }
+
     }
 
 
@@ -180,7 +215,11 @@ public class RBSConfig implements ListChangeListener<Vital> {
             this.model.addListener(this);
         }
 
+        String welcomeUrl = getClass().getResource("welcome.html").toExternalForm();
+        ruleInformation.getEngine().load(welcomeUrl);
+
         updateVitals();
+
         if(model != null) {
 
             warningStatus.textProperty().bind(model.warningTextProperty());
@@ -189,25 +228,29 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
                 @Override
                 public void changed(ObservableValue<? extends StateChange> observable, StateChange oldValue, StateChange newValue) {
-                    switch(newValue.state) {
-                    case Alarm:
-                        warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
 
-                        try {
+                    if(activeRule == null)
+                        throw new IllegalStateException("No ruleset");
+
+                    try {
+                        switch(newValue.state) {
+                        case Alarm:
+                            warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
                             handleAlarm(newValue);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            break;
+                        case Warning:
+                            warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
+                            break;
+                        case Normal:
+                            activeRule.load(ruleInformation, activeRule.welcome);
+                            warningStatus.setBackground(new Background(new BackgroundFill(null, null, null)));
+                            break;
+                        default:
+                            break;
                         }
 
-                        break;
-                    case Warning:
-                        warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
-                        break;
-                    case Normal:
-                        warningStatus.setBackground(new Background(new BackgroundFill(null, null, null)));
-                        break;
-                    default:
-                        break;
+                    } catch (Exception e) {
+                        log.error("Failed to handle alarm", e);
                     }
                 }
 
@@ -215,34 +258,22 @@ public class RBSConfig implements ListChangeListener<Vital> {
         } else {
             vitalsPanel.getChildren().clear();
             warningStatus.textProperty().unbind();
-            interlockStatus.textProperty().unbind();
         }
     }
 
 
     protected void handleAlarm(StateChange v) throws Exception {
 
-        if(invocable == null)
+        if(activeRule == null)
             throw new IllegalStateException("No ruleset");
 
-        ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("handleAlarm", v);
+        ScriptObjectMirror result = (ScriptObjectMirror) activeRule.invocable.invokeFunction("handleAlarm", v);
 
-        VitalModel.State o = (VitalModel.State) result.get("status");
-        System.out.println(o);
-
-        /*
-        if(result.isArray()) {
-            Set<String> keys = result.keySet();
-            for(String key: keys) {
-                VitalModel.State o = (VitalModel.State) result.get(key);
-                //String code = (String) ((ScriptObjectMirror) o.get("valueQuantity")).get("code");
-                //Number value = (Number) ((ScriptObjectMirror) o.get("valueQuantity")).get("value");
-                //
-                //ScriptObjectMirror o = (ScriptObjectMirror) result.get(key);
-                System.out.println(keys + "->" + o);
-            }
+        VitalModel.State state = (VitalModel.State) result.get("status");
+        if(VitalModel.State.Alarm.equals(state) && result.hasMember("statusInformation")) {
+            String pageName = (String) result.get("statusInformation");
+            activeRule.load(ruleInformation, pageName);
         }
-        */
     }
 
 

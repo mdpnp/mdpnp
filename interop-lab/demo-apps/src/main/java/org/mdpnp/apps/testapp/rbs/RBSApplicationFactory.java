@@ -74,6 +74,7 @@ public class RBSApplicationFactory implements IceApplicationProvider {
             @Override
             public void stop() {
                 rbsPanel.setModel(null);
+                vitalModel.clear();
             }
 
             @Override

@@ -20,6 +20,14 @@ var create = function (model) {
     spo2.setRequired(true);
 
     model.setCountWarningsBecomeAlarm(2);
+
+    var obj =
+    {
+        "version":1,
+        "ruleDescription":"ruleset-1-info.html"
+    };
+
+    return obj;
 };
 
 var handleAlarm = function(stateChange) {
@@ -27,31 +35,10 @@ var handleAlarm = function(stateChange) {
     var obj =
     {
         "resourceType":"alarm handler",
-        "status": stateChange.state
-
+        "status": stateChange.state,
+        "statusInformation": "ruleset-1-fire.html"
     };
 
     return obj;
 };
 
-
-var __makeObservation = function(code, value, dt) {
-
-    var obj =
-    {
-        "resourceType":"Observation",
-        "valueQuantity":{
-            "value":value,
-            "units":"MDC_DIM_DIMLESS",
-            "system":"OpenICE",
-            "code": code
-        },
-        "appliesDateTime": dt,
-        "status":"preliminary",
-        "subject":{
-            "reference":"Patient/1"
-        }
-    };
-
-    return obj;
-};

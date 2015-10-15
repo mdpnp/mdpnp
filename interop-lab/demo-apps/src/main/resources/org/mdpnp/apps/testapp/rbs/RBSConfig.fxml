@@ -8,7 +8,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane styleClass="pca-config" 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.web.WebView?>
+<BorderPane styleClass="pca-config"
  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
  fx:controller="org.mdpnp.apps.testapp.rbs.RBSConfig">
  <bottom>
@@ -16,73 +18,23 @@
    <center>
     <FlowPane fx:id="controls">
      <children>
-      <Button fx:id="load" mnemonicParsing="false" onAction="#loadVitalRule" text="Load Rule Set" />
+      <Button fx:id="load" mnemonicParsing="false" onAction="#loadVitalRule" text="Load Event Description" />
      </children>
     </FlowPane>
    </center>
   </BorderPane>
  </bottom>
  <center>
-  <SplitPane dividerPositions="0.33" orientation="VERTICAL">
+  <SplitPane dividerPositions="0.75" orientation="VERTICAL">
    <items>
-
     <GridPane>
      <children>
-      <GridPane GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES"
-       GridPane.vgrow="ALWAYS">
-       <children>
-        <BorderPane GridPane.rowIndex="0">
-         <center>
-          <ScrollPane fitToHeight="true" fitToWidth="true">
-           <content>
-            <AnchorPane>
-             <children>
-              <TextArea fx:id="interlockStatus" editable="false"
-               onMouseClicked="#interlockStatusClicked" prefColumnCount="1"
-               AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-               BorderPane.alignment="CENTER" />
-             </children>
-            </AnchorPane>
-           </content>
-          </ScrollPane>
-         </center>
-         <top>
-          <Label text="Interlock Status" BorderPane.alignment="CENTER" />
-         </top>
-        </BorderPane>
-        <BorderPane GridPane.rowIndex="1">
-         <center>
-          <ScrollPane fitToHeight="true" fitToWidth="true">
-           <content>
-            <AnchorPane id="Content">
-             <children>
-              <TextArea fx:id="infusionStatus" editable="false"
-               prefColumnCount="1"  text="Select an infusion"
-               wrapText="true" AnchorPane.bottomAnchor="0.0"
-               AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-               AnchorPane.topAnchor="0.0" />
-             </children>
-            </AnchorPane>
-           </content>
-          </ScrollPane>
-         </center>
-         <top>
-          <Label alignment="CENTER" contentDisplay="CENTER"
-           text="Infusion Status" BorderPane.alignment="CENTER" />
-         </top>
-        </BorderPane>
-       </children>
-       <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" />
-       </columnConstraints>
-       <rowConstraints>
-        <RowConstraints vgrow="SOMETIMES" />
-        <RowConstraints vgrow="SOMETIMES" />
-       </rowConstraints>
-      </GridPane>
-      <BorderPane 
-       GridPane.columnIndex="2">
+      <BorderPane GridPane.columnIndex="0" >
+      <center>
+       <WebView fx:id="ruleInformation"/>
+      </center>
+      </BorderPane>
+      <BorderPane GridPane.columnIndex="1">
        <center>
         <ScrollPane fitToHeight="true" fitToWidth="true">
          <content>
@@ -105,9 +57,8 @@
       </BorderPane>
      </children>
      <columnConstraints>
-      <ColumnConstraints hgrow="ALWAYS" />
-      <ColumnConstraints hgrow="ALWAYS" />
-      <ColumnConstraints hgrow="ALWAYS" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
      </columnConstraints>
      <rowConstraints>
       <RowConstraints vgrow="ALWAYS" />
