@@ -24,7 +24,7 @@ import javafx.scene.control.Spinner;
 import javafx.scene.layout.Pane;
 
 import org.mdpnp.apps.device.OnListChange;
-import org.mdpnp.apps.testapp.pca.VitalSign;
+import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.slf4j.Logger;

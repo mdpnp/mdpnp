@@ -4,8 +4,6 @@ import javafx.application.Platform;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.pca.InfusionPumpModel;
-import org.mdpnp.apps.testapp.pca.VitalSign;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +11,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import com.rti.dds.publication.Publisher;
-
-import java.beans.PropertyChangeEvent;
 
 /**
  *
@@ -29,6 +25,7 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
     private final EventLoop eventLoop;
     private final NumericFxList numericList;
     private final Publisher publisher;
+    private final VitalSign[] defaultVitals;
 
     @Override
     public VitalModel getObject() throws Exception {
@@ -37,11 +34,13 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
             
             instance.start(publisher, eventLoop);
 
-            Platform.runLater( () -> {
-                VitalSign.RespiratoryRate.addToModel(instance);
-                VitalSign.HeartRate.addToModel(instance);
-                VitalSign.SpO2.addToModel(instance);
-            });
+            if(defaultVitals != null) {
+                Platform.runLater(() -> {
+                    for(VitalSign vs : defaultVitals) {
+                        vs.addToModel(instance);
+                    }
+                });
+            }
         }
         return instance;
     }
@@ -56,11 +55,19 @@ public class VitalModelFactory implements FactoryBean<VitalModel>, DisposableBea
         return true;
     }
 
-    public VitalModelFactory(EventLoop eventLoop, Publisher publisher, DeviceListModel deviceListModel, NumericFxList numericList) {
+    public VitalModelFactory(EventLoop eventLoop, Publisher publisher,
+                             DeviceListModel deviceListModel, NumericFxList numericList) {
+        this(eventLoop, publisher, deviceListModel, numericList, null);
+    }
+
+    public VitalModelFactory(EventLoop eventLoop, Publisher publisher,
+                             DeviceListModel deviceListModel, NumericFxList numericList,
+                             VitalSign[] defaultVitals) {
         this.eventLoop = eventLoop;
         this.publisher = publisher;
         this.deviceListModel = deviceListModel;
         this.numericList = numericList;
+        this.defaultVitals = defaultVitals;
     }
 
     @Override

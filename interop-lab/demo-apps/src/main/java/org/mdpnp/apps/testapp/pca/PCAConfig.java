@@ -51,6 +51,7 @@ import org.mdpnp.apps.testapp.InfusionStatusFxListCell;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModel.StateChange;
+import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

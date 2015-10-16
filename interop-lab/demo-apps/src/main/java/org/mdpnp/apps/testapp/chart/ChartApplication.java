@@ -19,7 +19,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
-import org.mdpnp.apps.testapp.pca.VitalSign;
+import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.slf4j.Logger;

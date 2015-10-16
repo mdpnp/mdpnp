@@ -125,10 +125,18 @@
     </bean>    
 
     <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true">
-        <constructor-arg ref="deviceListModel" />
-        <constructor-arg ref="publisher" />
-        <constructor-arg ref="eventLoop" />
-        <constructor-arg ref="numericList"/>
+        <constructor-arg name="deviceListModel" ref="deviceListModel" />
+        <constructor-arg name="publisher"       ref="publisher" />
+        <constructor-arg name="eventLoop"       ref="eventLoop" />
+        <constructor-arg name="numericList"     ref="numericList"/>
+        <constructor-arg name="defaultVitals">
+            <array>
+                <value type="org.mdpnp.apps.testapp.vital.VitalSign">RespiratoryRate</value>
+                <value type="org.mdpnp.apps.testapp.vital.VitalSign">HeartRate</value>
+                <value type="org.mdpnp.apps.testapp.vital.VitalSign">SpO2</value>
+            </array>
+        </constructor-arg>
+
     </bean>
     
     <bean id="fhirContext" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">

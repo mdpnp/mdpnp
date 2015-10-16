@@ -3,10 +3,7 @@ package org.mdpnp.apps.testapp.vital;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
@@ -19,7 +16,6 @@ import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.mdpnp.apps.testapp.SimpleDeviceListModel;
-import org.mdpnp.apps.testapp.pca.VitalSign;
 
 public class VitalModelTest {
 
