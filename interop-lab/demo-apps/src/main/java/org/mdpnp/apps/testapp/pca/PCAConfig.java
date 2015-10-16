@@ -74,8 +74,8 @@ public class PCAConfig implements ListChangeListener<Vital> {
 
     InfusionPumpModel infusionPumpModel = new InfusionPumpModel();
 
-    
-    
+
+
     public PCAConfig set(final ScheduledExecutorService executor, final ice.InfusionObjectiveDataWriter objectiveWriter, 
             final DeviceListModel deviceListModel, final InfusionStatusFxList infusionStatusList) {
         controls.visibleProperty().bind(configure.selectedProperty());
@@ -216,8 +216,12 @@ public class PCAConfig implements ListChangeListener<Vital> {
                     switch(newValue.state) {
                     case Alarm:
                         warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
-                        VitalModel.Advisory advisory = newValue.advisories.get(0);
-                        infusionPumpModel.stopInfusion(advisory.cause);
+
+                        VitalModel.Advisory advisory = newValue.getAdvisory(VitalModel.State.Alarm);
+                        StringBuilder sb = new StringBuilder();
+                        VitalModel.Advisory.toMessage(sb, advisory);
+                        infusionPumpModel.stopInfusion(sb.toString());
+
                         break;
                     case Warning:
                         warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));

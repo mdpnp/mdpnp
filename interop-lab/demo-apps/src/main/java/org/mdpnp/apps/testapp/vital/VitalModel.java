@@ -13,13 +13,9 @@
 package org.mdpnp.apps.testapp.vital;
 
 import java.awt.*;
-import java.awt.List;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.collections.ObservableList;
@@ -78,16 +74,24 @@ public interface VitalModel extends ObservableList<Vital> {
 
 
     class StateChange {
-        public final java.util.List<Advisory> advisories;
+        public final Map<String, Advisory> advisories;
         public final State state;
 
         public StateChange(State state) {
-            this(state, Collections.emptyList());
+            this(state, Collections.emptyMap());
         }
 
-        public StateChange(State state, java.util.List<Advisory> advisories) {
+        public StateChange(State state, Map<String, Advisory> advisories) {
             this.advisories = advisories;
             this.state = state;
+        }
+
+        public Advisory getAdvisory(State s) {
+            for (Advisory a : advisories.values()) {
+                if(a.state.equals(s))
+                    return a;
+            }
+            return null;
         }
 
         @Override
@@ -105,22 +109,40 @@ public interface VitalModel extends ObservableList<Vital> {
     }
 
     class Advisory implements Comparable<Advisory> {
-        public final State state;
-        public final String cause;
+        public final State  state;
+        public final String advise;
+        public final Float  value;
+        public final Vital  cause;
 
         @Override
         public int compareTo(Advisory o) {
             return state.compareTo(o.state);
         }
 
-        public Advisory(State state, String cause) {
+        public Advisory(State state, Vital cause, Float value, String advise) {
+            this.advise = advise;
             this.state = state;
+            this.value = value;
             this.cause = cause;
         }
 
         @Override
         public String toString() {
             return "{" + state + "'" + cause + "'}";
+        }
+
+        public static void toMessage(StringBuilder builder, Advisory a) {
+
+            builder.append(" - ");
+            builder.append(a.advise);
+            builder.append(" ");
+            builder.append(a.cause.getLabel());
+            if (a.value != null) {
+                builder.append(" ");
+                builder.append(a.value);
+                builder.append(" ");
+                builder.append(a.cause.getUnits());
+            }
         }
     }
 }

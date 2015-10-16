@@ -110,18 +110,4 @@ public class VitalModelTest {
         });
     }
 
-
-    @Test
-    public void testAdvisorySort() throws InterruptedException {
-
-        List<VitalModelImpl.Advisory> advisories = new ArrayList<>();
-        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Warning, "This is an warning 0"));
-        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Alarm,   "This is an alarm 0"));
-        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Alarm,   "This is an alarm 1"));
-        advisories.add(new VitalModelImpl.Advisory(VitalModel.State.Warning, "This is an warning 1"));
-
-        Collections.sort(advisories);
-
-        assertEquals("Did not sort advisories properly", advisories.get(0).state, VitalModel.State.Alarm);
-    }
 }

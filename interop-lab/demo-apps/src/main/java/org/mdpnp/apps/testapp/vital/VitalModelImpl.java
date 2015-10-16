@@ -13,8 +13,6 @@
 package org.mdpnp.apps.testapp.vital;
 
 import java.awt.Color;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -23,13 +21,10 @@ import java.util.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -37,7 +32,6 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ModifiableObservableListBase;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
 import javafx.util.Callback;
 
 import org.mdpnp.apps.device.OnListChange;
@@ -199,55 +193,26 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
 
     private final void updateState() {
+
         // This used to be synchronized but now we do this instead
         if(!Platform.isFxApplicationThread()) {
             throw new IllegalThreadStateException("Must be on the Fx App Thread");
         }
-        
-        int N = size();
 
-        Date now = new Date(System.currentTimeMillis());
-        String time = timeFormat.format(now);
+        Map<String, Advisory> advisories = evaluateState();
 
-        List<Advisory> advisories = new ArrayList<>();
-
-        for (int i = 0; i < N; i++) {
-            Vital vital = get(i);
-            if (vital.isNoValueWarning() && vital.isEmpty()) {
-                advisories.add(new Advisory(State.Warning, "- no source of " + vital.getLabel() + "\r\n"));
-            } else {
-                for (Value val : vital) {
-                    if (val.isAtOrBelowLow()) {
-                        String advisory = "- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
-                        advisories.add(new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning, advisory));
-                    }
-                    if (val.isAtOrAboveHigh()) {
-                        String advisory = "- high " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\n";
-                        advisories.add(new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning, advisory));
-                    }
-                }
-            }
-        }
-
-        State newState = State.Normal;
+        State newState = evaluateAdvisories(advisories);;
 
         // Advisory processing
-        if(!advisories.isEmpty()) {
+        if(newState != State.Normal) {
 
-            Collections.sort(advisories);
-
-            newState = State.Warning;
-
-            if(advisories.get(0).state==State.Alarm) {
-                newState = State.Alarm;
-
-            } else if(advisories.size() >= getCountWarningsBecomeAlarm()) {
-                newState = State.Alarm;
-            }
+            Date now = new Date(System.currentTimeMillis());
+            String time = timeFormat.format(now);
 
             warningTextBuilder.delete(0, warningTextBuilder.length());
-            for (Advisory a : advisories) {
-                warningTextBuilder.append(a.cause);
+            for (Advisory a : advisories.values()) {
+                Advisory.toMessage(warningTextBuilder, a);
+                warningTextBuilder.append("\r\n");
             }
 
             warningTextBuilder.append("at ").append(time);
@@ -257,39 +222,63 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
             warningText.set("");
         }
 
-        /*)
-        // First see of there is enough warnings out there that the system should go into alarm
-        // state just because there are too many things that are wrong.
-        //
-        if (countWarnings >= getCountWarningsBecomeAlarm()) {
-            newState = State.Alarm;
-            stopInfusion("Pump Stopped\r\n" + warningText.get() + "\r\nnurse alerted");
-        }
-        // Now see if there anything critical there that should set the state.
-        else {
-            for (int i = 0; i < N; i++) {
-                Vital vital = get(i);
-                for (Value val : vital) {
-                    if (val.isAtOrBelowCriticalLow()) {
+        state.set(new StateChange(newState, advisories));
+    }
+
+    protected State evaluateAdvisories(Map<String, Advisory> advisories) {
+
+        State newState = State.Normal;
+
+        if(!advisories.isEmpty()) {
+
+            if (advisories.size() >= getCountWarningsBecomeAlarm()) {
+                newState = State.Alarm;
+            } else {
+                newState = State.Warning;
+                for (Advisory a : advisories.values()) {
+                    if (a.state == State.Alarm) {
                         newState = State.Alarm;
-                        stopInfusion("Pump Stopped\r\n- low " + vital.getLabel() + " " + val.getValue() + " " + vital.getUnits() + "\r\nat "
-                                + time + "\r\nnurse alerted");
-                        break;
-                    } else if (val.isAtOrAboveCriticalHigh()) {
-                        newState = State.Alarm;
-                        stopInfusion("Pump Stopped\r\n- high " + vital.getLabel() + " " + +val.getValue() + " " + vital.getUnits()
-                                + "\r\nat " + time + "\r\nnurse alerted");
                         break;
                     }
                 }
             }
         }
-        */
 
-        if(newState == null)
-            throw new IllegalStateException("Failed to establish a new state of the model");
+        return newState;
+    }
 
-        state.set(new StateChange(newState, advisories));
+    protected Map<String, Advisory> evaluateState() {
+
+        int N = size();
+
+        Map<String, Advisory> advisories = new HashMap<>();
+
+        for (int i = 0; i < N; i++) {
+            Vital vital = get(i);
+            if (vital.isNoValueWarning() && vital.isEmpty()) {
+                advisories.put(vital.getLabel(), new Advisory(State.Warning, vital, null, "no source of"));
+            } else {
+                Advisory a = null;
+
+                for (Value val : vital) {
+                    if (val.isAtOrBelowLow()) {
+                        a = new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning,
+                                         vital, val.getValue(), "low");
+                    }
+                    if (val.isAtOrAboveHigh()) {
+                        a = new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning,
+                                         vital, val.getValue(), "high");
+                    }
+                    if(a != null && a.state==State.Alarm)
+                        break;
+                }
+
+                if(a != null)
+                    advisories.put(vital.getLabel(), a);
+            }
+        }
+
+        return advisories;
     }
 
     @Override
