@@ -121,7 +121,8 @@ public enum VitalSign {
                 valueMsWarningLow, valueMsWarningHigh, color);
     }
 
-    private final String label, units;;
+
+    public final String label, units;
     private final String[] metric_ids;
     private final Double startingLow, startingHigh, criticalLow, criticalHigh;
     private final Long valueMsWarningLow, valueMsWarningHigh;

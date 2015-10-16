@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -109,6 +110,10 @@ public class RBSPanel implements InvalidationListener {
             generalAlarm.stop();
             drugDeliveryAlarm.stop();
         }
+    }
+
+    VitalModel.State evaluateAdvisories(Map<String, VitalModel.Advisory> advisories) {
+        return rbsConfigController.evaluateAdvisories(advisories);
     }
 
     public VitalModel getVitalModel() {

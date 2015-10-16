@@ -1,6 +1,6 @@
 var System      = java.lang.System;
 var VitalSign   = org.mdpnp.apps.testapp.vital.VitalSign;
-
+var State       = org.mdpnp.apps.testapp.vital.VitalModel.State;
 
 var create = function (model) {
 
@@ -20,7 +20,8 @@ var create = function (model) {
     spo2.setCriticalHigh(100);
     spo2.setRequired(true);
 
-    model.setCountWarningsBecomeAlarm(2);
+    var temperature = VitalSign.Temperature.addToModel(model);
+    temperature.setRequired(true);
 
     var obj =
     {
@@ -31,11 +32,25 @@ var create = function (model) {
     return obj;
 };
 
+var evaluate = function(advisories) {
+
+    var hr =          advisories.get(VitalSign.HeartRate.label);
+    var spo2 =        advisories.get(VitalSign.SpO2.label);
+    var temperature = advisories.get(VitalSign.Temperature.label);
+
+    if(temperature == null &&
+        (hr   != null && hr.state == State.Alarm) &&
+        (spo2 != null && spo2.state == State.Alarm)) {
+        return State.Alarm;
+    } else {
+        return State.Normal;
+    }
+};
+
 var handleAlarm = function(stateChange) {
 
     var obj =
     {
-        "resourceType":"alarm handler",
         "status": stateChange.state,
         "statusInformation": "ruleset-1-fire.html"
     };

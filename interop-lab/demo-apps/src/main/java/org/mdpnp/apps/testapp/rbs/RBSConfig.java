@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
@@ -143,6 +144,21 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     }
 
+    VitalModel.State evaluateAdvisories(Map<String, VitalModel.Advisory> advisories) {
+
+        if(activeRule == null)
+            throw new IllegalStateException("No active rule");
+
+        if(advisories.isEmpty())
+            return VitalModel.State.Normal;
+
+        try {
+            VitalModel.State v = (VitalModel.State) activeRule.invocable.invokeFunction("evaluate", advisories);
+            return v;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public RBSConfig() {
     }
@@ -219,7 +235,7 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 public void changed(ObservableValue<? extends StateChange> observable, StateChange oldValue, StateChange newValue) {
 
                     if(activeRule == null)
-                        throw new IllegalStateException("No ruleset");
+                        throw new IllegalStateException("No active rule");
 
                     try {
                         switch(newValue.state) {
@@ -254,7 +270,7 @@ public class RBSConfig implements ListChangeListener<Vital> {
     protected void handleAlarm(StateChange v) throws Exception {
 
         if(activeRule == null)
-            throw new IllegalStateException("No ruleset");
+            throw new IllegalStateException("No active rule");
 
         ScriptObjectMirror result = (ScriptObjectMirror) activeRule.invocable.invokeFunction("handleAlarm", v);
 

@@ -16,6 +16,7 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -51,7 +52,12 @@ public class RBSApplicationFactory implements IceApplicationProvider {
         rbsPanel.set(refreshScheduler, objectiveWriter, deviceListModel, infusionStatusList);
 
 
-        final VitalModel vitalModel = new VitalModelImpl(deviceListModel, numericList);
+        final VitalModel vitalModel = new VitalModelImpl(deviceListModel, numericList) {
+            protected State evaluateAdvisories(Map<String, Advisory> advisories) {
+                return rbsPanel.evaluateAdvisories(advisories);
+            }
+        };
+
         vitalModel.start(publisher, eventLoop);
 
         return new IceApp() {
