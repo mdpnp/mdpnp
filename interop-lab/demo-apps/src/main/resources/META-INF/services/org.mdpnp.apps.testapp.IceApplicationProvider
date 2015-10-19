@@ -1,5 +1,6 @@
 org.mdpnp.apps.testapp.pca.PCAApplicationFactory
 org.mdpnp.apps.testapp.pca.PCAVizApplicationFactory
+org.mdpnp.apps.testapp.rbs.RBSApplicationFactory
 org.mdpnp.apps.testapp.rrr.RapidRespiratoryRateFactory
 org.mdpnp.apps.testapp.xray.IceApplicationFactory
 org.mdpnp.apps.testapp.sim.SimControlFactory

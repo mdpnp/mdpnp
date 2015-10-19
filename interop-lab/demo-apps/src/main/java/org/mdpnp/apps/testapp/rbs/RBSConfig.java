@@ -40,6 +40,7 @@ import org.mdpnp.apps.testapp.pca.VitalView;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModel.StateChange;
+import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,8 +79,6 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     private static final Logger log = LoggerFactory.getLogger(RBSConfig.class);
 
-    private ice.InfusionObjectiveDataWriter objectiveWriter;
-
     private static class ActiveRule {
         ActiveRule(Invocable invocable, URL context, String welcome) {
             this.context = context;
@@ -99,14 +98,6 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     ActiveRule activeRule = null;
 
-    public RBSConfig set(final ScheduledExecutorService executor, final ice.InfusionObjectiveDataWriter objectiveWriter,
-                         final DeviceListModel deviceListModel, final InfusionStatusFxList infusionStatusList) {
-
-        this.objectiveWriter = objectiveWriter;
-
-        return this;
-    }
-
 
     @FXML public void loadVitalRule(ActionEvent evt) throws  Exception {
 
@@ -119,6 +110,8 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 new FileChooser.ExtensionFilter("OpenICE Rules", "*.js"),
                 new FileChooser.ExtensionFilter("All Files", "*.*")
         );
+
+        model.clear();
 
         File ruleFile = fc.showOpenDialog(null);
         if(null != ruleFile) {
@@ -146,14 +139,12 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     VitalModel.State evaluateAdvisories(Map<String, VitalModel.Advisory> advisories) {
 
-        if(activeRule == null)
-            throw new IllegalStateException("No active rule");
-
-        if(advisories.isEmpty())
+        if(activeRule == null || advisories.isEmpty())
             return VitalModel.State.Normal;
 
         try {
-            VitalModel.State v = (VitalModel.State) activeRule.invocable.invokeFunction("evaluate", advisories);
+            Advisoris a = new Advisoris(advisories);
+            VitalModel.State v = (VitalModel.State) activeRule.invocable.invokeFunction("evaluate", a);
             return v;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -272,22 +263,11 @@ public class RBSConfig implements ListChangeListener<Vital> {
         if(activeRule == null)
             throw new IllegalStateException("No active rule");
 
-        ScriptObjectMirror result = (ScriptObjectMirror) activeRule.invocable.invokeFunction("handleAlarm", v);
-
-        VitalModel.State state = (VitalModel.State) result.get("status");
-        if(VitalModel.State.Alarm.equals(state) && result.hasMember("statusInformation")) {
+        ScriptObjectMirror result = (ScriptObjectMirror) activeRule.invocable.invokeFunction("handleAlarm");
+        if(result.hasMember("statusInformation")) {
             String pageName = (String) result.get("statusInformation");
             activeRule.load(ruleInformation, pageName);
         }
-    }
-
-
-    public void setStop(InfusionStatusFx status, boolean stop) {
-        ice.InfusionObjective obj = new ice.InfusionObjective();
-        obj.requestor = "ME";
-        obj.unique_device_identifier = status.getUnique_device_identifier();
-        obj.stopInfusion = stop;
-        objectiveWriter.write(obj, InstanceHandle_t.HANDLE_NIL);
     }
 
     @Override
@@ -301,5 +281,27 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     @FXML public void interlockStatusClicked(MouseEvent event) {
 
+    }
+
+    // wrapper for the advisories collection so that VitalSign could be uses as key from the js file
+    //
+    static public class Advisoris {
+        public Advisoris(Map<String, VitalModel.Advisory> advisories) {
+            this.advisories = advisories;
+        }
+
+        public int size() {
+            return advisories.size();
+        }
+
+        public boolean isEmpty() {
+            return advisories.isEmpty();
+        }
+
+        public VitalModel.Advisory get(VitalSign key) {
+            return advisories.get(key.label);
+        }
+
+        private final Map<String, VitalModel.Advisory> advisories;
     }
 }

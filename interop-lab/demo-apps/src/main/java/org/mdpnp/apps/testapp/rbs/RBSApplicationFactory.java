@@ -36,10 +36,7 @@ public class RBSApplicationFactory implements IceApplicationProvider {
     @Override
     public IceApp create(ApplicationContext parentContext) throws IOException {
 
-        final ScheduledExecutorService refreshScheduler = (ScheduledExecutorService) parentContext.getBean("refreshScheduler");
-        final ice.InfusionObjectiveDataWriter objectiveWriter = (ice.InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
         final DeviceListModel deviceListModel = (DeviceListModel) parentContext.getBean("deviceListModel");
-        final InfusionStatusFxList infusionStatusList = parentContext.getBean("infusionStatusList", InfusionStatusFxList.class);
         final Publisher publisher = parentContext.getBean("publisher", Publisher.class);
         final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
         final ObservableList<NumericFx> numericList = parentContext.getBean("numericList", ObservableList.class);
@@ -48,9 +45,6 @@ public class RBSApplicationFactory implements IceApplicationProvider {
         Parent ui = loader.load();
 
         final RBSPanel rbsPanel = loader.getController();
-
-        rbsPanel.set(refreshScheduler, objectiveWriter, deviceListModel, infusionStatusList);
-
 
         final VitalModel vitalModel = new VitalModelImpl(deviceListModel, numericList) {
             protected State evaluateAdvisories(Map<String, Advisory> advisories) {

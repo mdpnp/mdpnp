@@ -4,8 +4,6 @@ var State       = org.mdpnp.apps.testapp.vital.VitalModel.State;
 
 var create = function (model) {
 
-    model.clear();
-
     var hr = VitalSign.HeartRate.addToModel(model);
     hr.setCriticalLow(20);
     hr.setWarningLow(30);
@@ -34,9 +32,9 @@ var create = function (model) {
 
 var evaluate = function(advisories) {
 
-    var hr =          advisories.get(VitalSign.HeartRate.label);
-    var spo2 =        advisories.get(VitalSign.SpO2.label);
-    var temperature = advisories.get(VitalSign.Temperature.label);
+    var hr =          advisories.get(VitalSign.HeartRate);
+    var spo2 =        advisories.get(VitalSign.SpO2);
+    var temperature = advisories.get(VitalSign.Temperature);
 
     if(temperature == null &&
         (hr   != null && hr.state == State.Alarm) &&
@@ -47,11 +45,10 @@ var evaluate = function(advisories) {
     }
 };
 
-var handleAlarm = function(stateChange) {
+var handleAlarm = function() {
 
     var obj =
     {
-        "status": stateChange.state,
         "statusInformation": "ruleset-1-fire.html"
     };
 

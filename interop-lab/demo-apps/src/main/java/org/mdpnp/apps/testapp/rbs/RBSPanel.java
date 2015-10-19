@@ -57,12 +57,6 @@ public class RBSPanel implements InvalidationListener {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    public RBSPanel set(ScheduledExecutorService refreshScheduler, ice.InfusionObjectiveDataWriter objectiveWriter,
-            DeviceListModel deviceListModel, InfusionStatusFxList infusionStatusList) {
-        rbsConfigController.set(refreshScheduler, objectiveWriter, deviceListModel, infusionStatusList);
-        return this;
-    }
-
     public RBSPanel() {
 
         try {
