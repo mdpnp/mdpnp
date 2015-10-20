@@ -31,7 +31,7 @@
      <children>
       <BorderPane GridPane.columnIndex="0" >
       <center>
-       <WebView fx:id="ruleInformation"/>
+       <WebView fx:id="ruleInformation" focusTraversable="false"/>
       </center>
       </BorderPane>
       <BorderPane GridPane.columnIndex="1">
@@ -57,8 +57,8 @@
       </BorderPane>
      </children>
      <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="300.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
      </columnConstraints>
      <rowConstraints>
       <RowConstraints vgrow="ALWAYS" />

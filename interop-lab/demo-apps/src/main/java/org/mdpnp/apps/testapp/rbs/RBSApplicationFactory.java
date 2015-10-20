@@ -50,6 +50,11 @@ public class RBSApplicationFactory implements IceApplicationProvider {
         final VitalModel vitalModel = new VitalModelImpl(deviceListModel, numericList) {
 
             @Override
+            protected String getStatusOKMessage() {
+                return "No Abnormal Conditions Detected";
+            }
+
+            @Override
             protected Advisory evaluateVital(Vital vital) {
 
                 Advisory a = super.evaluateVital(vital);
@@ -72,7 +77,7 @@ public class RBSApplicationFactory implements IceApplicationProvider {
                 // Warnings do not count for this application. We only care when all
                 // conditions become red.
                 //
-                if (advisories.size() == size()) {
+                if (!isEmpty() && advisories.size() == size()) {
                     for (Advisory a : advisories.values()) {
                         if (a.state != State.Alarm)
                             return State.Normal;

@@ -75,14 +75,12 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
         
     };
     
-    
+    protected String getStatusOKMessage() { return "";}
     
     private final List<Vital> vitals = Collections.synchronizedList(new ArrayList<Vital>());
 
     protected Publisher publisher;
     protected EventLoop eventLoop;
-
-    private PropertyChangeSupport stateChange = new PropertyChangeSupport(this);
 
     private ObjectProperty<StateChange> state = new SimpleObjectProperty<StateChange>(this, "state", new StateChange(State.Normal));
 
@@ -189,7 +187,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
     private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     private final StringBuilder warningTextBuilder = new StringBuilder();
-    private StringProperty warningText = new SimpleStringProperty(this, "warningText", "");
+    private StringProperty warningText = new SimpleStringProperty(this, "warningText", getStatusOKMessage());
 
 
     private final void updateState() {
@@ -217,9 +215,8 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
             warningTextBuilder.append("at ").append(time);
             warningText.set(warningTextBuilder.toString());
-
         } else {
-            warningText.set("");
+            warningText.set(getStatusOKMessage());
         }
 
         state.set(new StateChange(newState, advisories));
