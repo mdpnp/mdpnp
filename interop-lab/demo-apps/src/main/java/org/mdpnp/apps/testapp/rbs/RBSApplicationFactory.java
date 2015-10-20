@@ -10,6 +10,7 @@ import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.pca.PCAConfig;
 import org.mdpnp.apps.testapp.pca.PCAPanel;
+import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -47,11 +48,40 @@ public class RBSApplicationFactory implements IceApplicationProvider {
         final RBSPanel rbsPanel = loader.getController();
 
         final VitalModel vitalModel = new VitalModelImpl(deviceListModel, numericList) {
+
+            @Override
+            protected Advisory evaluateVital(Vital vital) {
+
+                Advisory a = super.evaluateVital(vital);
+                if(State.Normal == vital.getModelStateTransitionCondition()) {
+                    if(a == null) {
+                        a = new Advisory(State.Alarm, vital, null, "normal");
+                    }
+                    else if(a.state == State.Alarm){
+                        // we are not interested in the 'out-of-range-condition' since this vital
+                        // triggers the alarm only when it in the 'normal' range.
+                        a = null;
+                    }
+                }
+                return a;
+            }
+
+            @Override
             protected State evaluateAdvisories(Map<String, Advisory> advisories) {
-                return rbsPanel.evaluateAdvisories(advisories);
+                //
+                // Warnings do not count for this application. We only care when all
+                // conditions become red.
+                //
+                if (advisories.size() == size()) {
+                    for (Advisory a : advisories.values()) {
+                        if (a.state != State.Alarm)
+                            return State.Normal;
+                    }
+                    return State.Alarm;
+                }
+                return State.Normal;
             }
         };
-
         vitalModel.start(publisher, eventLoop);
 
         return new IceApp() {

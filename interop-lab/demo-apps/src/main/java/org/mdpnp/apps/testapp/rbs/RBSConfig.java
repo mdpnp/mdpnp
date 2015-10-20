@@ -137,23 +137,8 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     }
 
-    VitalModel.State evaluateAdvisories(Map<String, VitalModel.Advisory> advisories) {
-
-        if(activeRule == null || advisories.isEmpty())
-            return VitalModel.State.Normal;
-
-        try {
-            Advisoris a = new Advisoris(advisories);
-            VitalModel.State v = (VitalModel.State) activeRule.invocable.invokeFunction("evaluate", a);
-            return v;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public RBSConfig() {
     }
-
 
     protected void updateVitals() {
         if(Platform.isFxApplicationThread()) {
@@ -225,9 +210,6 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 @Override
                 public void changed(ObservableValue<? extends StateChange> observable, StateChange oldValue, StateChange newValue) {
 
-                    if(activeRule == null)
-                        throw new IllegalStateException("No active rule");
-
                     try {
                         switch(newValue.state) {
                         case Alarm:
@@ -258,15 +240,17 @@ public class RBSConfig implements ListChangeListener<Vital> {
     }
 
 
-    protected void handleAlarm(StateChange v) throws Exception {
+    private void handleAlarm(StateChange v) throws Exception {
 
-        if(activeRule == null)
-            throw new IllegalStateException("No active rule");
+        // fx thread will call us while the model is loading so no active rule is an ok condition.
+        //
+        if(activeRule != null) {
 
-        ScriptObjectMirror result = (ScriptObjectMirror) activeRule.invocable.invokeFunction("handleAlarm");
-        if(result.hasMember("statusInformation")) {
-            String pageName = (String) result.get("statusInformation");
-            activeRule.load(ruleInformation, pageName);
+            ScriptObjectMirror result = (ScriptObjectMirror) activeRule.invocable.invokeFunction("handleAlarm");
+            if (result.hasMember("statusInformation")) {
+                String pageName = (String) result.get("statusInformation");
+                activeRule.load(ruleInformation, pageName);
+            }
         }
     }
 
@@ -281,27 +265,5 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     @FXML public void interlockStatusClicked(MouseEvent event) {
 
-    }
-
-    // wrapper for the advisories collection so that VitalSign could be uses as key from the js file
-    //
-    static public class Advisoris {
-        public Advisoris(Map<String, VitalModel.Advisory> advisories) {
-            this.advisories = advisories;
-        }
-
-        public int size() {
-            return advisories.size();
-        }
-
-        public boolean isEmpty() {
-            return advisories.isEmpty();
-        }
-
-        public VitalModel.Advisory get(VitalSign key) {
-            return advisories.get(key.label);
-        }
-
-        private final Map<String, VitalModel.Advisory> advisories;
     }
 }

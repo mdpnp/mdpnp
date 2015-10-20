@@ -45,24 +45,9 @@
  *      return obj;
  *  };
  *
- *  // Evaluation function called every time the vitals change their values. 
- *  // System logic evaluates the values against the threshold limits and calls
- *  // the evaluate method to calculate the new state of the system.
- *  // A collection of advisories is passed in for every vital that is not in 
- *  // the ‘normal’ state.
- *  // 
- *  var evaluate = function(advisories) {
- *      var temperature = advisories.get(VitalSign.Temperature);
- *      if(temperature!= null && temperature.state == State.Alarm) {
- *          return State.Alarm;
- *      }
- *      else {
- *          return State.Normal;
- *     }
- *  };
  *
- *  // Function called once at the create time. Returns a json object containing
- *  // reference to a the html file with the description of the emergency procedure.
+ *  // Function called once at the the evaluation fires an alarm. Returns a json object
+ *  // containing reference to a the html file with the description of the emergency procedure.
  *  //
  *  var handleAlarm = function() {
  *      var obj =

@@ -396,7 +396,9 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
 
     private final BooleanProperty ignoreZero = new SimpleBooleanProperty(this, "ignoreZero", true);
     private final BooleanProperty required = new SimpleBooleanProperty(this, "required", false);
-    
+    private final SimpleObjectProperty<VitalModel.State> modelStateTransitionCondition = new SimpleObjectProperty<>(this, "modelStateTransitionCondition", VitalModel.State.Alarm);
+
+
     @Override
     public boolean isIgnoreZero() {
         return ignoreZero.get();
@@ -615,5 +617,13 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
         this.requiredProperty().set(required);
     }
 
-
+    public final ReadOnlyObjectProperty<VitalModel.State> modelStateTransitionConditionProperty() {
+        return this.modelStateTransitionCondition;
+    }
+    public final VitalModel.State getModelStateTransitionCondition() {
+        return this.modelStateTransitionCondition.get();
+    }
+    public final void setModelStateTransitionCondition(VitalModel.State v){
+        this.modelStateTransitionCondition.set(v);
+    }
 }

@@ -106,10 +106,6 @@ public class RBSPanel implements InvalidationListener {
         }
     }
 
-    VitalModel.State evaluateAdvisories(Map<String, VitalModel.Advisory> advisories) {
-        return rbsConfigController.evaluateAdvisories(advisories);
-    }
-
     public VitalModel getVitalModel() {
         return model;
     }

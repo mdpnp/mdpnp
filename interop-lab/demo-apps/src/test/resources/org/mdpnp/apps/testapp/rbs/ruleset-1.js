@@ -10,6 +10,7 @@ var create = function (model) {
     hr.setWarningHigh(60);
     hr.setCriticalHigh(110);
     hr.setRequired(true);
+    hr.setModelStateTransitionCondition(State.Alarm);
 
     var spo2 = VitalSign.SpO2.addToModel(model);
     spo2.setCriticalLow(50);
@@ -17,9 +18,11 @@ var create = function (model) {
     spo2.setWarningHigh(100);
     spo2.setCriticalHigh(100);
     spo2.setRequired(true);
+    spo2.setModelStateTransitionCondition(State.Alarm);
 
     var temperature = VitalSign.Temperature.addToModel(model);
     temperature.setRequired(true);
+    temperature.setModelStateTransitionCondition(State.Normal);
 
     var obj =
     {
@@ -28,21 +31,6 @@ var create = function (model) {
     };
 
     return obj;
-};
-
-var evaluate = function(advisories) {
-
-    var hr =          advisories.get(VitalSign.HeartRate);
-    var spo2 =        advisories.get(VitalSign.SpO2);
-    var temperature = advisories.get(VitalSign.Temperature);
-
-    if(temperature == null &&
-        (hr   != null && hr.state == State.Alarm) &&
-        (spo2 != null && spo2.state == State.Alarm)) {
-        return State.Alarm;
-    } else {
-        return State.Normal;
-    }
 };
 
 var handleAlarm = function() {

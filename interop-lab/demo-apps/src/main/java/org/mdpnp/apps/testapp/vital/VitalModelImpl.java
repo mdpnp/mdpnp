@@ -201,7 +201,7 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
         Map<String, Advisory> advisories = evaluateState();
 
-        State newState = evaluateAdvisories(advisories);;
+        State newState = evaluateAdvisories(advisories);
 
         // Advisory processing
         if(newState != State.Normal) {
@@ -258,27 +258,32 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
             if (vital.isNoValueWarning() && vital.isEmpty()) {
                 advisories.put(vital.getLabel(), new Advisory(State.Warning, vital, null, "no source of"));
             } else {
-                Advisory a = null;
-
-                for (Value val : vital) {
-                    if (val.isAtOrBelowLow()) {
-                        a = new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning,
-                                         vital, val.getValue(), "low");
-                    }
-                    if (val.isAtOrAboveHigh()) {
-                        a = new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning,
-                                         vital, val.getValue(), "high");
-                    }
-                    if(a != null && a.state==State.Alarm)
-                        break;
-                }
-
+                Advisory a = evaluateVital(vital);
                 if(a != null)
                     advisories.put(vital.getLabel(), a);
             }
         }
 
         return advisories;
+    }
+
+    protected Advisory evaluateVital(Vital vital) {
+
+        Advisory a = null;
+
+        for (Value val : vital) {
+            if (val.isAtOrBelowLow()) {
+                a = new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning,
+                                 vital, val.getValue(), "low");
+            }
+            if (val.isAtOrAboveHigh()) {
+                a = new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning,
+                                 vital, val.getValue(), "high");
+            }
+            if(a != null && a.state== State.Alarm)
+                break;
+        }
+        return a;
     }
 
     @Override

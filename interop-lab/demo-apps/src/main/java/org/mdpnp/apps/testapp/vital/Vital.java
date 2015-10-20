@@ -187,4 +187,15 @@ public interface Vital extends ObservableList<Value> {
     BooleanProperty requiredProperty();
     boolean isRequired();
     void setRequired(boolean required);
+
+    /**
+     * Vitals are attached to a VitalModel that has a state. The transition between states
+     * is determined by the combination of states of the all vitals that make up that model.
+     * If a collection of vitals is modeling a particular scenario, an alarm condition could
+     * be triggered when a particular parameter is in the 'normal' range.
+     */
+    ReadOnlyObjectProperty<VitalModel.State> modelStateTransitionConditionProperty();
+    VitalModel.State getModelStateTransitionCondition();
+    void setModelStateTransitionCondition(VitalModel.State v);
+
 }
