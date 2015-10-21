@@ -4,7 +4,15 @@ var State       = org.mdpnp.apps.testapp.vital.VitalModel.State;
 
 var create = function (model) {
 
-    var hr = VitalSign.HeartRate.addToModel(model);
+    var spo2pr = VitalSign.SpO2PulseRate.addToModel(model);
+    spo2pr.setRequired(true);
+    spo2pr.setModelStateTransitionCondition(State.Alarm);
+    spo2pr.setCriticalLow(25);
+    spo2pr.setWarningLow(30);
+    spo2pr.setWarningHigh(150);
+    spo2pr.setCriticalHigh(175);
+
+    var hr = VitalSign.ECGHeartRate.addToModel(model);
     hr.setRequired(true);
     hr.setModelStateTransitionCondition(State.Normal);
     hr.setCriticalLow(25);
@@ -27,6 +35,14 @@ var create = function (model) {
     ibp.setWarningLow(30);
     ibp.setWarningHigh(200);
     ibp.setCriticalHigh(200);
+
+    var etco2 = VitalSign.EndTidalCO2.addToModel(model);
+    etco2.setRequired(true);
+    etco2.setModelStateTransitionCondition(State.Alarm);
+    etco2.setCriticalLow(20);
+    etco2.setWarningLow(30);
+    etco2.setWarningHigh(200);
+    etco2.setCriticalHigh(200);
 
     var obj =
     {
