@@ -25,7 +25,7 @@ import com.sun.javafx.css.StyleManager;
 import com.sun.javafx.scene.control.skin.BehaviorSkinBase;
 
 public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, MultiRangeSliderBehavior> {
-    
+
     static {
         // refer to ControlsFXControl for why this is necessary
         StyleManager.getInstance().addUserAgentStylesheet(
@@ -43,8 +43,6 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
     private Orientation orientation;
 
     private StackPane track;
-    private double trackStart;
-    private double trackLength;
     private double lowestThumbPos;
     private double lowerThumbPos;
     private double rangeStartLowest, rangeStartLower, rangeStartMid, rangeStartHigher, rangeStartHighest;
@@ -236,10 +234,11 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         track.setOnMousePressed( new EventHandler<javafx.scene.input.MouseEvent>() {
             @Override public void handle(javafx.scene.input.MouseEvent me) {
                 if (!lowestThumb.isPressed() && !lowerThumb.isPressed() && !higherThumb.isPressed() && !highestThumb.isPressed()) {
+                    Scalar track = getTrackScalar();
                     if (isHorizontal()) {
-                        getBehavior().trackPress(me, (me.getX() / trackLength));
+                        getBehavior().trackPress(me, (me.getX() / track.length));
                     } else {
-                        getBehavior().trackPress(me, (me.getY() / trackLength));
+                        getBehavior().trackPress(me, (me.getY() / track.length));
                     }
                 }
             }
@@ -285,10 +284,11 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
 
         lowestThumb.setOnMouseDragged(new EventHandler<javafx.scene.input.MouseEvent>() {
             @Override public void handle(javafx.scene.input.MouseEvent me) {
+                Scalar track = getTrackScalar();
                 Point2D cur = lowestThumb.localToParent(me.getX(), me.getY());
                 double dragPos = (isHorizontal())?
                     cur.getX() - preDragThumbPoint.getX() : -(cur.getY() - preDragThumbPoint.getY());
-                getBehavior().lowestThumbDragged(me, preDragPos + dragPos / trackLength);
+                getBehavior().lowestThumbDragged(me, preDragPos + dragPos / track.length);
             }
         });
     }
@@ -322,10 +322,11 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
 
         lowerThumb.setOnMouseDragged(new EventHandler<javafx.scene.input.MouseEvent>() {
             @Override public void handle(javafx.scene.input.MouseEvent me) {
+                Scalar track = getTrackScalar();
                 Point2D cur = lowerThumb.localToParent(me.getX(), me.getY());
                 double dragPos = (isHorizontal())?
                     cur.getX() - preDragThumbPoint.getX() : -(cur.getY() - preDragThumbPoint.getY());
-                getBehavior().lowerThumbDragged(me, preDragPos + dragPos / trackLength);
+                getBehavior().lowerThumbDragged(me, preDragPos + dragPos / track.length);
             }
         });
     }    
@@ -359,12 +360,10 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         );
         higherThumb.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent e) {
-                boolean orientation = ((MultiRangeSlider) getSkinnable()).getOrientation() == Orientation.HORIZONTAL;
-                double trackLength = orientation ? track.getWidth() : track.getHeight();
-
+                Scalar track = getTrackScalar();
                 Point2D point2d = higherThumb.localToParent(e.getX(), e.getY());
                 double d = ((MultiRangeSlider) getSkinnable()).getOrientation() != Orientation.HORIZONTAL ? -(point2d.getY() - preDragThumbPoint.getY()) : point2d.getX() - preDragThumbPoint.getX();
-                ((MultiRangeSliderBehavior) getBehavior()).higherThumbDragged(e, preDragPos + d / trackLength);
+                ((MultiRangeSliderBehavior) getBehavior()).higherThumbDragged(e, preDragPos + d / track.length);
             }
         });
     }
@@ -398,12 +397,10 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         );
         highestThumb.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent e) {
-                boolean orientation = ((MultiRangeSlider) getSkinnable()).getOrientation() == Orientation.HORIZONTAL;
-                double trackLength = orientation ? track.getWidth() : track.getHeight();
-
+                Scalar track = getTrackScalar();
                 Point2D point2d = highestThumb.localToParent(e.getX(), e.getY());
                 double d = ((MultiRangeSlider) getSkinnable()).getOrientation() != Orientation.HORIZONTAL ? -(point2d.getY() - preDragThumbPoint.getY()) : point2d.getX() - preDragThumbPoint.getX();
-                ((MultiRangeSliderBehavior) getBehavior()).highestThumbDragged(e, preDragPos + d / trackLength);
+                ((MultiRangeSliderBehavior) getBehavior()).highestThumbDragged(e, preDragPos + d / track.length);
             }
         });
     }    
@@ -568,50 +565,71 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         MultiRangeSlider s = getSkinnable();
         return s.getMax() - s.getMin() == 0 ? 1 : s.getMax() - s.getMin();
     }
-    
-    /**
-     * Called when ever either min, max or lowValue changes, so lowthumb's layoutX, Y is recomputed.
-     */
-    private void positionLowestThumb() {
-        MultiRangeSlider s = getSkinnable();
+
+    private static class Scalar {
+        final double start;
+        final double length;
+
+        public Scalar(double trackStart, double length) {
+            this.length = length;
+            this.start = trackStart;
+        }
+    }
+
+    private Scalar getTrackScalar() {
+
         boolean horizontal = isHorizontal();
         BackgroundFill fill = track.getBackground().getFills().isEmpty() ? null : track.getBackground().getFills().get(0);
         double pad = null == fill ? 0 : (horizontal ? fill.getRadii().getTopLeftHorizontalRadius() : fill.getRadii().getTopLeftVerticalRadius());
-        
-        double thumbWidth = lowestThumb.getWidth();
-        double thumbHeight = lowestThumb.getHeight();
-        highestThumb.resize(thumbWidth, thumbHeight);
- 
+
         double trackStart = horizontal ? track.getLayoutX() : track.getLayoutY();
         trackStart += pad;
         double trackLength = horizontal ? track.getWidth() : track.getHeight();
         trackLength -= 2 * pad;
+        return new Scalar(trackStart, trackLength);
+    }
+    /**
+     * Called when ever either min, max or lowValue changes, so lowthumb's layoutX, Y is recomputed.
+     */
+    private void positionLowestThumb() {
+
+        double thumbWidth = lowestThumb.getWidth();
+        double thumbHeight = lowestThumb.getHeight();
+        highestThumb.resize(thumbWidth, thumbHeight);
+
+        MultiRangeSlider s = getSkinnable();
+        boolean horizontal = isHorizontal();
+
+        Scalar t  = getTrackScalar();
         
-        double lx = (horizontal) ? trackStart + (
-                ((trackLength * ((s.getLowestValue() - s.getMin()) /
+        double lx = (horizontal) ? t.start + (
+                ((t.length * ((s.getLowestValue() - s.getMin()) /
                  (getMaxMinusMinNoZero()))) - thumbWidth/2)) 
                  : lowestThumbPos;
         double ly = (horizontal) ? lowestThumbPos :
-            getSkinnable().getInsets().getTop() + trackLength - (trackLength * ((s.getLowestValue() - s.getMin()) /
+            getSkinnable().getInsets().getTop() + t.length - (t.length * ((s.getLowestValue() - s.getMin()) /
                 (getMaxMinusMinNoZero()))); //  - thumbHeight/2
         lowestThumb.setLayoutX(lx);
         lowestThumb.setLayoutY(ly);
-        if (horizontal) rangeStartLowest = trackStart; else rangeEndLowest = trackStart + trackLength;
+        if (horizontal) rangeStartLowest = t.start; else rangeEndLowest = t.start + t.length;
         if (horizontal) rangeEndLowest = lx + thumbWidth / 2D; else rangeStartLowest = ly + thumbWidth / 2D;
         if (horizontal) rangeStartLower = lx + thumbWidth / 2D; else rangeEndLower = ly + thumbWidth / 2D;
     }
+
     private void positionLowerThumb() {
         MultiRangeSlider s = getSkinnable();
         boolean horizontal = isHorizontal();
         
         double thumbWidth = lowestThumb.getWidth();
         double thumbHeight = lowestThumb.getHeight();
-        lowerThumb.resize(thumbWidth, thumbHeight);        
-        
-        double lx = (horizontal) ? trackStart + (((trackLength * ((s.getLowerValue() - s.getMin()) /
+        lowerThumb.resize(thumbWidth, thumbHeight);
+
+        Scalar t  = getTrackScalar();
+
+        double lx = (horizontal) ? t.start + (((t.length * ((s.getLowerValue() - s.getMin()) /
                 (getMaxMinusMinNoZero()))) - thumbWidth/2)) : lowerThumbPos;
         double ly = (horizontal) ? lowerThumbPos :
-            getSkinnable().getInsets().getTop() + trackLength - (trackLength * ((s.getLowerValue() - s.getMin()) /
+            getSkinnable().getInsets().getTop() + t.length - (t.length * ((s.getLowerValue() - s.getMin()) /
                 (getMaxMinusMinNoZero()))); //  - thumbHeight/2
         lowerThumb.setLayoutX(lx);
         lowerThumb.setLayoutY(ly);
@@ -623,54 +641,46 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
      * Called when ever either min, max or highValue changes, so highthumb's layoutX, Y is recomputed.
      */
     private void positionHigherThumb() {
-        MultiRangeSlider slider = (MultiRangeSlider) getSkinnable();
-        boolean orientation = ((MultiRangeSlider) getSkinnable()).getOrientation() == Orientation.HORIZONTAL;
 
         double thumbWidth = lowestThumb.getWidth();
         double thumbHeight = lowestThumb.getHeight();
         higherThumb.resize(thumbWidth, thumbHeight);
 
-        BackgroundFill fill = track.getBackground().getFills().isEmpty() ? null : track.getBackground().getFills().get(0);
-        double pad = null == fill ? 0 : (orientation ? fill.getRadii().getTopLeftHorizontalRadius() : fill.getRadii().getTopLeftVerticalRadius());
-        double trackStart = orientation ? track.getLayoutX() : track.getLayoutY();
-        trackStart += pad;
-        double trackLength = orientation ? track.getWidth() : track.getHeight();
-        trackLength -= 2 * pad;
+        MultiRangeSlider s = getSkinnable();
+        boolean horizontal = isHorizontal();
 
-        double x = orientation ? trackStart + (trackLength * ((slider.getHigherValue() - slider.getMin()) / (getMaxMinusMinNoZero())) - thumbWidth / 2D) : lowestThumb.getLayoutX();
-        double y = orientation ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + trackLength) - trackLength * ((slider.getHigherValue() - slider.getMin()) / (getMaxMinusMinNoZero()));
+        Scalar t  = getTrackScalar();
+
+        double x = horizontal ? t.start + (t.length * ((s.getHigherValue() - s.getMin()) / (getMaxMinusMinNoZero())) - thumbWidth / 2D) : lowestThumb.getLayoutX();
+        double y = horizontal ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + t.length) - t.length * ((s.getHigherValue() - s.getMin()) / (getMaxMinusMinNoZero()));
         higherThumb.setLayoutX(x);
         higherThumb.setLayoutY(y);
-        if (orientation) rangeStartHigher = x + thumbWidth / 2D; else rangeEndHigher = y + thumbWidth / 2D;
-        if (orientation) rangeEndMid = x + thumbWidth / 2D; else rangeStartMid = y + thumbWidth / 2D;
+        if (horizontal) rangeStartHigher = x + thumbWidth / 2D; else rangeEndHigher = y + thumbWidth / 2D;
+        if (horizontal) rangeEndMid = x + thumbWidth / 2D; else rangeStartMid = y + thumbWidth / 2D;
     }
     
     private void positionHighestThumb() {
-        MultiRangeSlider slider = (MultiRangeSlider) getSkinnable();
-        boolean orientation = ((MultiRangeSlider) getSkinnable()).getOrientation() == Orientation.HORIZONTAL;
 
         double thumbWidth = lowestThumb.getWidth();
         double thumbHeight = lowestThumb.getHeight();
         highestThumb.resize(thumbWidth, thumbHeight);
 
-        BackgroundFill fill = track.getBackground().getFills().isEmpty() ? null : track.getBackground().getFills().get(0);
-        double pad = null == fill ? 0 : (orientation ? fill.getRadii().getTopLeftHorizontalRadius() : fill.getRadii().getTopLeftVerticalRadius()); 
-        double trackStart = orientation ? track.getLayoutX() : track.getLayoutY();
-        trackStart += pad;
-        double trackLength = orientation ? track.getWidth() : track.getHeight();
-        trackLength -= 2 * pad;
+        MultiRangeSlider s = getSkinnable();
+        boolean horizontal = isHorizontal();
 
-        double x = orientation ? trackStart + (trackLength * ((slider.getHighestValue() - slider.getMin()) / (getMaxMinusMinNoZero())) - thumbWidth / 2D) : lowestThumb.getLayoutX();
-        double y = orientation ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + trackLength) - trackLength * ((slider.getHighestValue() - slider.getMin()) / (getMaxMinusMinNoZero()));
+        Scalar t  = getTrackScalar();
+
+        double x = horizontal ? t.start + (t.length * ((s.getHighestValue() - s.getMin()) / (getMaxMinusMinNoZero())) - thumbWidth / 2D) : lowestThumb.getLayoutX();
+        double y = horizontal ? lowestThumb.getLayoutY() : (getSkinnable().getInsets().getTop() + t.length) - t.length * ((s.getHighestValue() - s.getMin()) / (getMaxMinusMinNoZero()));
         highestThumb.setLayoutX(x);
         highestThumb.setLayoutY(y);
-        if (orientation) rangeEndHigher = x + thumbWidth / 2D; else rangeStartHigher = y + thumbWidth /2D;
-        if (orientation) rangeStartHighest = x + thumbWidth / 2D; else rangeEndHighest = y + thumbWidth /2D;
-        if (orientation) rangeEndHighest = trackStart + trackLength; else rangeStartHighest = trackStart;
+        if (horizontal) rangeEndHigher = x + thumbWidth / 2D; else rangeStartHigher = y + thumbWidth /2D;
+        if (horizontal) rangeStartHighest = x + thumbWidth / 2D; else rangeEndHighest = y + thumbWidth /2D;
+        if (horizontal) rangeEndHighest = t.start + t.length; else rangeStartHighest = t.start;
     }    
     
-    @Override protected void layoutChildren(final double x, final double y,
-            final double w, final double h) {
+    @Override
+    protected void layoutChildren(final double x, final double y, final double w, final double h) {
         // resize thumb to preferred size
         thumbWidth = lowestThumb.prefWidth(-1);
         thumbHeight = lowestThumb.prefHeight(-1);
@@ -678,24 +688,27 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
         // we are assuming the is common radius's for all corners on the track
         double trackRadius = track.getBackground() == null ? 0 : track.getBackground().getFills().size() > 0 ?
                 track.getBackground().getFills().get(0).getRadii().getTopLeftHorizontalRadius() : 0;
-      
+
         if (isHorizontal()) {
             double tickLineHeight =  (showTickMarks) ? tickLine.prefHeight(-1) : 0;
             double trackHeight = track.prefHeight(-1);
             double trackAreaHeight = Math.max(trackHeight,thumbHeight);
             double totalHeightNeeded = trackAreaHeight  + ((showTickMarks) ? trackToTickGap+tickLineHeight : 0);
             double startY = y + ((h - totalHeightNeeded)/2); // center slider in available height vertically
-            trackLength = w - thumbWidth;
-            trackStart = x + (thumbWidth/2);
+            double trackLength = w - thumbWidth;
+            double trackStart = x + (thumbWidth/2);
             double trackTop = (int)(startY + ((trackAreaHeight-trackHeight)/2));
             lowestThumbPos = (int)(startY + ((trackAreaHeight-thumbHeight)/2));
             
-            positionLowestThumb();
-            positionLowerThumb();
+
             // layout track
             track.resizeRelocate(trackStart - trackRadius, trackTop , trackLength + trackRadius + trackRadius, trackHeight);
+
+            positionLowestThumb();
+            positionLowerThumb();
             positionHigherThumb();
             positionHighestThumb();
+
             // layout range bar
             rangeBarLowest.resizeRelocate(rangeStartLowest, trackTop, rangeEndLowest - rangeStartLowest, trackHeight);
             rangeBarLower.resizeRelocate(rangeStartLower, trackTop, rangeEndLower - rangeStartLower, trackHeight);
@@ -721,8 +734,8 @@ public class MultiRangeSliderSkin extends BehaviorSkinBase<MultiRangeSlider, Mul
             double trackAreaWidth = Math.max(trackWidth,thumbWidth);
             double totalWidthNeeded = trackAreaWidth  + ((showTickMarks) ? trackToTickGap+tickLineWidth : 0) ;
             double startX = x + ((w - totalWidthNeeded)/2); // center slider in available width horizontally
-            trackLength = h - thumbHeight;
-            trackStart = y + (thumbHeight/2);
+            double trackLength = h - thumbHeight;
+            double trackStart = y + (thumbHeight/2);
             double trackLeft = (int)(startX + ((trackAreaWidth-trackWidth)/2));
             lowestThumbPos = (int)(startX + ((trackAreaWidth-thumbWidth)/2));
 
