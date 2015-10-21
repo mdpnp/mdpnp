@@ -626,4 +626,46 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
     public final void setModelStateTransitionCondition(VitalModel.State v){
         this.modelStateTransitionCondition.set(v);
     }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        VitalImpl values1 = (VitalImpl) o;
+
+        if (!label.equals(values1.label)) return false;
+        if (!units.equals(values1.units)) return false;
+        if (!metricIds.equals(values1.metricIds)) return false;
+        if (!minimum.equals(values1.minimum)) return false;
+        if (!maximum.equals(values1.maximum)) return false;
+        if (!warningLow.equals(values1.warningLow)) return false;
+        if (!warningHigh.equals(values1.warningHigh)) return false;
+        if (!criticalLow.equals(values1.criticalLow)) return false;
+        if (!criticalHigh.equals(values1.criticalHigh)) return false;
+        if (!valueMsWarningLow.equals(values1.valueMsWarningLow)) return false;
+        if (!valueMsWarningHigh.equals(values1.valueMsWarningHigh)) return false;
+        return values.equals(values1.values);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + label.hashCode();
+        result = 31 * result + units.hashCode();
+        result = 31 * result + metricIds.hashCode();
+        result = 31 * result + minimum.hashCode();
+        result = 31 * result + maximum.hashCode();
+        result = 31 * result + warningLow.hashCode();
+        result = 31 * result + warningHigh.hashCode();
+        result = 31 * result + criticalLow.hashCode();
+        result = 31 * result + criticalHigh.hashCode();
+        result = 31 * result + valueMsWarningLow.hashCode();
+        result = 31 * result + valueMsWarningHigh.hashCode();
+        result = 31 * result + values.hashCode();
+        return result;
+    }
 }

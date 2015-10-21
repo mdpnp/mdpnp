@@ -164,12 +164,11 @@ public class PCAConfig implements ListChangeListener<Vital> {
                 final Vital vital = itr.next();
 
                 Node jVital = existentJVitals.get(vital);
-                if(null != jVital) {
-                    vitalsPanel.getChildren().add(jVital);
-                } else {
+                if(null == jVital) {
                     FXMLLoader loader = new FXMLLoader(VitalView.class.getResource("VitalView.fxml"));
                     try {
                         jVital = loader.load();
+                        jVital.setUserData(vital);
                     } catch (IOException e) {
                         log.warn("",e);
                         continue;

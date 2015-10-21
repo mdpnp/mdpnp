@@ -168,12 +168,11 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 final Vital vital = itr.next();
 
                 Node jVital = existentJVitals.get(vital);
-                if(null != jVital) {
-                    vitalsPanel.getChildren().add(jVital);
-                } else {
+                if(null == jVital) {
                     FXMLLoader loader = new FXMLLoader(VitalView.class.getResource("VitalView.fxml"));
                     try {
                         jVital = loader.load();
+                        jVital.setUserData(vital);
                     } catch (IOException e) {
                         log.warn("",e);
                         continue;
@@ -213,15 +212,13 @@ public class RBSConfig implements ListChangeListener<Vital> {
                     try {
                         switch(newValue.state) {
                         case Alarm:
-                            warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
                             handleAlarm(newValue);
                             break;
                         case Warning:
                             warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
                             break;
                         case Normal:
-                            activeRule.load(ruleInformation, activeRule.welcome);
-                            warningStatus.setBackground(new Background(new BackgroundFill(null, null, null)));
+                            handleNormal(newValue);
                             break;
                         default:
                             break;
@@ -242,6 +239,8 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
     private void handleAlarm(StateChange v) throws Exception {
 
+        warningStatus.setBackground(new Background(new BackgroundFill(Color.RED, null, null)));
+
         // fx thread will call us while the model is loading so no active rule is an ok condition.
         //
         if(activeRule != null) {
@@ -251,6 +250,17 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 String pageName = (String) result.get("statusInformation");
                 activeRule.load(ruleInformation, pageName);
             }
+        }
+    }
+
+    private void handleNormal(StateChange v) throws Exception {
+
+        warningStatus.setBackground(new Background(new BackgroundFill(null, null, null)));
+
+        // fx thread will call us while the model is loading so no active rule is an ok condition.
+        //
+        if(activeRule != null) {
+            activeRule.load(ruleInformation, activeRule.welcome);
         }
     }
 
