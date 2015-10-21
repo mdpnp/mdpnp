@@ -57,15 +57,20 @@ public class RBSApplicationFactory implements IceApplicationProvider {
             @Override
             protected Advisory evaluateVital(Vital vital) {
 
-                Advisory a = super.evaluateVital(vital);
-                if(State.Normal == vital.getModelStateTransitionCondition()) {
-                    if(a == null) {
-                        a = new Advisory(State.Alarm, vital, null, "normal");
-                    }
-                    else if(a.state == State.Alarm){
-                        // we are not interested in the 'out-of-range-condition' since this vital
-                        // triggers the alarm only when it in the 'normal' range.
-                        a = null;
+                Advisory a;
+                if (vital.isRequired() && vital.isEmpty()) {
+                    a = new Advisory(State.Alarm, vital, null, "vital is missing");
+                }
+                else {
+                    a = super.evaluateVital(vital);
+                    if (State.Normal == vital.getModelStateTransitionCondition()) {
+                        if (a == null) {
+                            a = new Advisory(State.Alarm, vital, null, "normal");
+                        } else if (a.state == State.Alarm) {
+                            // we are not interested in the 'out-of-range-condition' since this vital
+                            // triggers the alarm only when it in the 'normal' range.
+                            a = null;
+                        }
                     }
                 }
                 return a;

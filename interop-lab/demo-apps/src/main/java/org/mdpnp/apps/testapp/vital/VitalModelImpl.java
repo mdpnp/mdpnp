@@ -252,13 +252,9 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
         for (int i = 0; i < N; i++) {
             Vital vital = get(i);
-            if (vital.isNoValueWarning() && vital.isEmpty()) {
-                advisories.put(vital.getLabel(), new Advisory(State.Warning, vital, null, "no source of"));
-            } else {
-                Advisory a = evaluateVital(vital);
-                if(a != null)
-                    advisories.put(vital.getLabel(), a);
-            }
+            Advisory a = evaluateVital(vital);
+            if(a != null)
+                advisories.put(vital.getLabel(), a);
         }
 
         return advisories;
@@ -268,17 +264,22 @@ public class VitalModelImpl extends ModifiableObservableListBase<Vital> implemen
 
         Advisory a = null;
 
-        for (Value val : vital) {
-            if (val.isAtOrBelowLow()) {
-                a = new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning,
-                                 vital, val.getValue(), "low");
+        if (vital.isNoValueWarning() && vital.isEmpty()) {
+            a = new Advisory(State.Warning, vital, null, "no source of");
+        }
+        else {
+            for (Value val : vital) {
+                if (val.isAtOrBelowLow()) {
+                    a = new Advisory(val.isAtOrBelowCriticalLow() ? State.Alarm : State.Warning,
+                            vital, val.getValue(), "low");
+                }
+                if (val.isAtOrAboveHigh()) {
+                    a = new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning,
+                            vital, val.getValue(), "high");
+                }
+                if (a != null && a.state == State.Alarm)
+                    break;
             }
-            if (val.isAtOrAboveHigh()) {
-                a = new Advisory(val.isAtOrAboveCriticalHigh() ? State.Alarm : State.Warning,
-                                 vital, val.getValue(), "high");
-            }
-            if(a != null && a.state== State.Alarm)
-                break;
         }
         return a;
     }
