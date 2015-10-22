@@ -79,27 +79,13 @@ public final class VitalView implements ListChangeListener<Value> {
             lbl = lbl + " (" + vital.getUnits() + ")";
         }
         name.textProperty().bind(vital.labelProperty());
-        slider.maxProperty().bind(vital.maximumProperty());
-        slider.minProperty().bind(vital.minimumProperty());
-        slider.lowestValueVisibleProperty().bind(vital.criticalLowProperty().isNotNull());
-        slider.lowerValueVisibleProperty().bind(vital.warningLowProperty().isNotNull());
-        slider.higherValueVisibleProperty().bind(vital.warningHighProperty().isNotNull());
-        slider.highestValueVisibleProperty().bind(vital.criticalHighProperty().isNotNull());
+
         ignoreZeroBox.selectedProperty().bindBidirectional(vital.ignoreZeroProperty());
         requiredBox.selectedProperty().bindBidirectional(vital.requiredProperty());
-        
+
         controls.visibleProperty().bind(configuration);
-      
-        // Cripes if you think about it the order here is really quite important since values will be clamped
-        // down
-//        slider.highestValueProperty().set(vital.criticalHighProperty().get());
-//        slider.lowestValueProperty().set(vital.criticalLowProperty().get());
-//        slider.higherValueProperty().set(vital.warningHighProperty().get());
-//        slider.lowerValueProperty().set(vital.warningLowProperty().get());
-        slider.highestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalHighProperty()));
-        slider.lowestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalLowProperty()));
-        slider.higherValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningHighProperty()));
-        slider.lowerValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningLowProperty()));
+
+        bindSlider(slider, vital);
         
         for(Value v : vital) {
             add(v);
@@ -109,7 +95,32 @@ public final class VitalView implements ListChangeListener<Value> {
         
         return this;
     }
-    
+
+    static public void bindSlider(MultiRangeSlider slider, Vital vital) {
+
+        // Before we bind the properties, set the values so that validation logic is not
+        // going crazy 'cause of values interdependencies and the order or bind commands.
+        //
+        slider.maxProperty().set(vital.getMaximum());
+        slider.minProperty().set(vital.getMinimum());
+        slider.highestValueProperty().set(vital.getCriticalHigh());
+        slider.lowerValueProperty().set(vital.getWarningLow());
+        slider.lowestValueProperty().set(vital.getCriticalLow());
+        slider.higherValueProperty().set(vital.getWarningHigh());
+
+        slider.maxProperty().bind(vital.maximumProperty());
+        slider.minProperty().bind(vital.minimumProperty());
+        slider.lowestValueVisibleProperty().bind(vital.criticalLowProperty().isNotNull());
+        slider.lowerValueVisibleProperty().bind(vital.warningLowProperty().isNotNull());
+        slider.higherValueVisibleProperty().bind(vital.warningHighProperty().isNotNull());
+        slider.highestValueVisibleProperty().bind(vital.criticalHighProperty().isNotNull());
+
+        slider.highestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalHighProperty()));
+        slider.lowerValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningLowProperty()));
+        slider.lowestValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.criticalLowProperty()));
+        slider.higherValueProperty().bindBidirectional(new ConcreteDoubleProperty(vital.warningHighProperty()));
+    }
+
     public VitalView() {
 
 

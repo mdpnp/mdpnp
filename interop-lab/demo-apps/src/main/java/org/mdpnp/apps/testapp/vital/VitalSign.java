@@ -104,7 +104,9 @@ public enum VitalSign {
     NIBPMean("NIBP Mean", "mmHg", new String[] {
             rosetta.MDC_PRESS_CUFF_MEAN.VALUE,
             rosetta.MDC_PRESS_BLD_NONINV_MEAN.VALUE     
-    }, 60.0, 100.0, 40.0, 120.0, 0.0, 200.0, 5000L, 5000L, Color.red)
+    }, 60.0, 100.0, 40.0, 120.0, 0.0, 200.0, 5000L, 5000L, Color.red),
+
+    Test("Test", "", new String[] {}, 60.0, 100.0, 40.0, 120.0, 10.0, 200.0, 5000L, 5000L, Color.red),
     ;
 
     VitalSign(String label, String units, String[] metric_ids, Double startingLow, Double startingHigh, Double criticalLow, Double criticalHigh,
@@ -131,8 +133,8 @@ public enum VitalSign {
 
     public final String label, units;
     private final String[] metric_ids;
-    private final Double startingLow, startingHigh, criticalLow, criticalHigh;
-    private final Long valueMsWarningLow, valueMsWarningHigh;
-    private final double minimum, maximum;
-    private final Color color;
+    public final Double startingLow, startingHigh, criticalLow, criticalHigh;
+    public final Long valueMsWarningLow, valueMsWarningHigh;
+    public final double minimum, maximum;
+    public final Color color;
 }
