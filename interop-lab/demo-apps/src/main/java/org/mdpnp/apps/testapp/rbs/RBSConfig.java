@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp.rbs;
 
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -33,14 +32,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import org.mdpnp.apps.fxbeans.InfusionStatusFx;
-import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
-import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.pca.VitalView;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModel.StateChange;
-import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,12 +46,8 @@ import javax.script.ScriptException;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
 
-/**
- * @author Jeff Plourde
- *
- */
+
 public class RBSConfig implements ListChangeListener<Vital> {
 
     @FXML
@@ -111,10 +102,10 @@ public class RBSConfig implements ListChangeListener<Vital> {
                 new FileChooser.ExtensionFilter("All Files", "*.*")
         );
 
-        model.clear();
-
         File ruleFile = fc.showOpenDialog(null);
         if(null != ruleFile) {
+
+            model.clear();
 
             ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
 
@@ -132,7 +123,7 @@ public class RBSConfig implements ListChangeListener<Vital> {
             URL url = ruleFile.getParentFile().toURI().toURL();
             activeRule = new ActiveRule(invocable, url, pageName);
 
-            activeRule.load(ruleInformation, activeRule.welcome);
+            handleStateChange(model.stateProperty().get());
         }
 
     }
@@ -208,22 +199,8 @@ public class RBSConfig implements ListChangeListener<Vital> {
 
                 @Override
                 public void changed(ObservableValue<? extends StateChange> observable, StateChange oldValue, StateChange newValue) {
-
                     try {
-                        switch(newValue.state) {
-                        case Alarm:
-                            handleAlarm(newValue);
-                            break;
-                        case Warning:
-                            warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
-                            break;
-                        case Normal:
-                            handleNormal(newValue);
-                            break;
-                        default:
-                            break;
-                        }
-
+                        handleStateChange(newValue);
                     } catch (Exception e) {
                         log.error("Failed to handle alarm", e);
                     }
@@ -236,6 +213,21 @@ public class RBSConfig implements ListChangeListener<Vital> {
         }
     }
 
+    private synchronized void handleStateChange(StateChange v) throws Exception {
+        switch(v.state) {
+            case Alarm:
+                handleAlarm(v);
+                break;
+            case Warning:
+                warningStatus.setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
+                break;
+            case Normal:
+                handleNormal(v);
+                break;
+            default:
+                break;
+        }
+    }
 
     private void handleAlarm(StateChange v) throws Exception {
 
