@@ -178,7 +178,9 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
         setWarningHigh(high);
         setValueMsWarningLow(valueMsWarningLow);
         setValueMsWarningHigh(valueMsWarningHigh);
-        
+
+        setIgnoreZero(minimum > 0.0);
+
         computeDisplayMinMax.invalidated(null);
         
         warningHigh.addListener(computeDisplayMinMax);
