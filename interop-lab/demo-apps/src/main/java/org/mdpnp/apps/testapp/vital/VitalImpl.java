@@ -394,7 +394,7 @@ class VitalImpl extends ModifiableObservableListBase<Value> implements Vital {
         return cnt;
     }
 
-    private final BooleanProperty ignoreZero = new SimpleBooleanProperty(this, "ignoreZero", true);
+    private final BooleanProperty ignoreZero = new SimpleBooleanProperty(this, "ignoreZero", false);
     private final BooleanProperty required = new SimpleBooleanProperty(this, "required", false);
     private final SimpleObjectProperty<VitalModel.State> modelStateTransitionCondition = new SimpleObjectProperty<>(this, "modelStateTransitionCondition", VitalModel.State.Alarm);
 
