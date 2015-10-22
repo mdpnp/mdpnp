@@ -8,7 +8,7 @@ var create = function (model) {
     hr.setRequired(true);
     hr.setModelStateTransitionCondition(State.Normal);
     hr.setCriticalLow(25);
-    hr.setWarningLow(50);
+    hr.setWarningLow(40);
     hr.setWarningHigh(150);
     hr.setCriticalHigh(175);
 
@@ -23,18 +23,18 @@ var create = function (model) {
     var spo2pr = VitalSign.SpO2PulseRate.addToModel(model);
     spo2pr.setRequired(true);
     spo2pr.setModelStateTransitionCondition(State.Alarm);
-    spo2pr.setCriticalLow(20);
-    spo2pr.setWarningLow(20);
-    spo2pr.setWarningHigh(225);
-    spo2pr.setCriticalHigh(250);
+    spo2pr.setCriticalLow(50);
+    spo2pr.setWarningLow(50);
+    spo2pr.setWarningHigh(200);
+    spo2pr.setCriticalHigh(200);
 
     var ibp = VitalSign.InvSystolic.addToModel(model);
     ibp.setRequired(true);
     ibp.setModelStateTransitionCondition(State.Alarm);
     ibp.setCriticalLow(30);
     ibp.setWarningLow(30);
-    ibp.setWarningHigh(225);
-    ibp.setCriticalHigh(250);
+    ibp.setWarningHigh(180);
+    ibp.setCriticalHigh(200);
 
     var etco2 = VitalSign.EndTidalCO2.addToModel(model);
     etco2.setRequired(true);
