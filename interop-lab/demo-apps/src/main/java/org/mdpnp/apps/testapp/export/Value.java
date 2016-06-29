@@ -31,4 +31,16 @@ public class Value {
     public double getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Value {");
+        sb.append("devTime=").append(devTime);
+        sb.append(", uid='").append(uniqueDeviceIdentifier).append('\'');
+        sb.append(", metricId='").append(metricId).append('\'');
+        sb.append(", instanceId=").append(instanceId);
+        sb.append(", value=").append(value);
+        sb.append('}');
+        return sb.toString();
+    }
 }
