@@ -1,10 +1,10 @@
 package org.mdpnp.apps.testapp.export;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.EventListener;
-import java.util.EventObject;
+import java.util.*;
 
+import ice.MDSConnectivity;
+import ice.Patient;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
@@ -17,10 +17,11 @@ import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataCollector {
+public class DataCollector implements MDSHandler.Connectivity.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(DataCollector.class);
 
@@ -32,8 +33,20 @@ public class DataCollector {
 
     @SuppressWarnings("serial")
     public static class DataSampleEvent extends EventObject {
+
+        private final Patient patient; // optional; could be null
+
         public DataSampleEvent(Object source) {
+            this(source, null);
+        }
+
+        public DataSampleEvent(Object source, Patient p) {
             super(source);
+            patient = p;
+        }
+
+        public Patient getPatient() {
+            return patient;
         }
     }
 
@@ -41,7 +54,9 @@ public class DataCollector {
         public void handleDataSampleEvent(DataSampleEvent evt) throws Exception;
     }
 
-    EventListenerList listenerList = new EventListenerList();
+    private final Map<String, Patient> deviceUdiToPatientMRN = Collections.synchronizedMap(new HashMap<String, Patient>());
+
+    private final EventListenerList listenerList = new EventListenerList();
 
     public void addDataSampleListener(DataSampleEventListener l) {
         listenerList.add(DataSampleEventListener.class, l);
@@ -51,7 +66,7 @@ public class DataCollector {
         listenerList.remove(DataSampleEventListener.class, l);
     }
 
-    void fireDataSampleEvent(DataSampleEvent data) throws Exception{
+    void fireDataSampleEvent(DataSampleEvent data) throws Exception {
         DataSampleEventListener listeners[] = listenerList.getListeners(DataSampleEventListener.class);
         for(DataSampleEventListener l : listeners) {
             l.handleDataSampleEvent(data);
@@ -66,7 +81,8 @@ public class DataCollector {
             if (log.isTraceEnabled())
                 log.trace(dateFormats.get().format(fx.getPresentation_time()) + " " + fx.getMetric_id() + "=" + fx.getValue());
             Value v = toValue(fx);
-            DataSampleEvent ev = new DataSampleEvent(v);
+            Patient patient = resolvePatient(v.getUniqueDeviceIdentifier());
+            DataSampleEvent ev = new DataSampleEvent(v, patient);
             fireDataSampleEvent(ev);
         } catch (Exception e) {
             log.error("firing data sample event", e);
@@ -91,7 +107,8 @@ public class DataCollector {
                     log.trace(dateFormats.get().format(new Date(tm)) + " " + fx.getMetric_id() + "=" + value);
 
                 Value v = toValue(fx.getUnique_device_identifier(), fx.getMetric_id(), fx.getInstance_id(), tm, value);
-                DataSampleEvent ev = new DataSampleEvent(v);
+                Patient patient = resolvePatient(v.getUniqueDeviceIdentifier());
+                DataSampleEvent ev = new DataSampleEvent(v, patient);
                 try {
                     fireDataSampleEvent(ev);
                 } catch (Exception e) {
@@ -201,6 +218,23 @@ public class DataCollector {
         
         sampleArrayList.removeListener(sampleArrayListener);
         sampleArrayList.forEach((fx)->sampleArrayObserver.detachListener(fx));
+    }
+
+    @Override
+    public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+        ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
+
+        if(c.partition.startsWith("MRN=")) {
+            log.info("udi " + c.unique_device_identifier + " is " + c.partition.substring(4, c.partition.length()));
+
+            Patient p = new Patient();
+            p.mrn = c.partition.substring(4, c.partition.length());
+            deviceUdiToPatientMRN.put(c.unique_device_identifier, p);
+        }
+    }
+
+    Patient resolvePatient(String deviceUID) {
+        return deviceUdiToPatientMRN.get(deviceUID);
     }
 
     static Value toValue(NumericFx fx) {
