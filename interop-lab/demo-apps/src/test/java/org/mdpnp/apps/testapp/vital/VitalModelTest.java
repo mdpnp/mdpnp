@@ -4,14 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import javafx.application.Platform;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
@@ -106,4 +104,10 @@ public class VitalModelTest {
         });
     }
 
+    @Test
+    public void testVitalSignLookupTable() {
+
+        Map lookup = VitalSign.buildVitalSignLookupTable();
+        Assert.assertEquals(lookup.get(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE), VitalSign.HeartRate);
+    }
 }

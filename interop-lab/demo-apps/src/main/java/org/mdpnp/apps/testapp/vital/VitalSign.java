@@ -13,6 +13,8 @@
 package org.mdpnp.apps.testapp.vital;
 
 import java.awt.Color;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
@@ -130,6 +132,33 @@ public enum VitalSign {
                 valueMsWarningLow, valueMsWarningHigh, color);
     }
 
+    //
+    // To be a 1-to-1 lookup we can only handle more general case.
+    // So we drop vitals that are subsets of more generic ones, like SpO2PulseRate vs HeartRate
+    //
+    static Map<String, VitalSign> buildVitalSignLookupTable() {
+
+        Map<String, VitalSign> tbl = new HashMap<>();
+
+        VitalSign [] all = VitalSign.values();
+        for(VitalSign v : all) {
+            for(String s : v.metric_ids) {
+                VitalSign o = tbl.get(s);
+                if(o == null || o.metric_ids.length<v.metric_ids.length) {
+                    tbl.put(s, v);
+                }
+            }
+        }
+
+        return tbl;
+    }
+
+    private static final Map<String, VitalSign> REVERSE_LOOKUP = buildVitalSignLookupTable();
+
+    public static VitalSign lookupByMetricId(String mid) {
+        VitalSign vs = REVERSE_LOOKUP.get(mid);
+        return vs;
+    }
 
     public final String label, units;
     private final String[] metric_ids;
