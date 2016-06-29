@@ -16,12 +16,21 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
+ * Persister to route data to the mongo database. The actual saving of the value is delegated to the javascript
+ * handler which is required to implement a function 'persist' that with the following signature:
+ *
+ * var persist = function(mongoDatabase, patient, value)
+ * 1. com.mongodb.client.MongoDatabase mongoDatabase
+ * 2. ice.Patient patient
+ * 3. org.mdpnp.apps.testapp.export.Value value
+ *
+ * The function should return { "status" : "OK" } as an indication of success or a description of a failure otherwise.
  *
  */
 public class MongoPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
@@ -65,13 +74,13 @@ public class MongoPersister extends FileAdapterApplicationFactory.PersisterUICon
     }
 
     @Override
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
+    public void handleDataSampleEvent(final DataCollector.DataSampleEvent evt) throws Exception {
         Patient patient = evt.getPatient();
         Value vital = (Value)evt.getSource();
         persist(patient, vital);
     }
 
-    void persist(Patient patient, Value value) throws Exception {
+    void persist(final Patient patient, final Value value) throws Exception {
 
         try {
             if(mongoDatabase == null || value==null)
@@ -79,8 +88,9 @@ public class MongoPersister extends FileAdapterApplicationFactory.PersisterUICon
 
             ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("persist", mongoDatabase, patient, value);
             String status = (String) result.get("status");
-            if(log.isDebugEnabled())
-                log.debug(status);
+            if(!"OK".equals(status)) {
+                log.error("Failed to save:" + status);
+            }
         }
         catch(Exception ex) {
             log.error("Failed to save", ex);
@@ -89,26 +99,42 @@ public class MongoPersister extends FileAdapterApplicationFactory.PersisterUICon
 
     boolean initJSRuntime(String jsFile) throws ScriptException {
 
-        // if starts with 'file:' - its already a valid url
-        //
-        if(jsFile.contains(File.separator) && !jsFile.startsWith("file:")) {
-            File f = new File(jsFile);
-            if(!f.exists())
-                throw new ScriptException("File does not exist: " + jsFile);
-            try {
-                URL u  = f.toURI().toURL();
-                jsFile  = u.toExternalForm();
-            } catch (MalformedURLException ex) {
-                throw new ScriptException("Failed to locate script " + jsFile);
+        InputStream is = null;
+
+        if(jsFile.contains(File.separator)) {
+
+            if(!jsFile.contains(":")) {
+                File f = new File(jsFile);
+                if (!f.exists())
+                    throw new ScriptException("File does not exist: " + jsFile);
+                try {
+                    URL url = f.toURI().toURL();
+                    is = url.openStream();
+                } catch (Exception ex) {
+                    throw new ScriptException("Failed to locate script " + jsFile);
+                }
+            }
+            else {
+                try {
+                    URL url = new URL(jsFile);
+                    is = url.openStream();
+                } catch (Exception ex) {
+                    throw new ScriptException("Failed to locate script " + jsFile);
+                }
             }
         }
-
-        InputStream is = getClass().getResourceAsStream(jsFile);
+        else {
+            is = getClass().getResourceAsStream(jsFile);
+        }
 
         if(is != null) {
             ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
             engine.eval(new InputStreamReader(is));
             invocable = (Invocable) engine;
+
+            try {
+                is.close();
+            } catch (IOException toobad) {}
         }
         return invocable != null;
     }

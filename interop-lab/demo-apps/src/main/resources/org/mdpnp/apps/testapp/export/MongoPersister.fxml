@@ -24,6 +24,6 @@
       <TextField fx:id="fHost"       prefColumnCount="30" text="" GridPane.columnIndex="1" />
       <TextField fx:id="fPortNumber" prefColumnCount="30" text="27017" GridPane.columnIndex="1" GridPane.rowIndex="1" />
       <TextField fx:id="fDbName"     prefColumnCount="30" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-      <TextField fx:id="fScriptName" prefColumnCount="30" text="MongoPersister.js" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <TextField fx:id="fScriptName" prefColumnCount="30" text="" GridPane.columnIndex="1" GridPane.rowIndex="3" />
    </children>
 </GridPane>
