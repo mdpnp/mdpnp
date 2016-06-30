@@ -1,41 +1,61 @@
 package org.mdpnp.apps.testapp.patient;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.model.base.resource.BaseOperationOutcome;
-import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
-import ca.uhn.fhir.model.dstu2.resource.Patient;
-import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.model.primitive.IdDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-
-import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
 
 /**
  * @author mfeinberg
  */
 public class FhirEMRImplTest {
 
-    private static final Logger log = LoggerFactory.getLogger(PatientApplicationFactoryTest.class);
+    private static final Logger log = LoggerFactory.getLogger(FhirEMRImplTest.class);
+
+    Properties config;
+
+    @Before
+    public void setUp() throws Exception {
+
+        InputStream is = getClass().getResourceAsStream("/ice.properties");
+        config = new Properties();
+        config.load(is);
+
+        String url = config.getProperty("mdpnp.fhir.url");
+        org.junit.Assume.assumeTrue(url + " is not running", isServerThere(url));
+
+    }
+
+    private boolean isServerThere(String u) throws Exception {
+        try {
+            URL url = new URL(u);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // This will throw if server is not there.
+            InputStream is = conn.getInputStream();
+            return is != null;
+        }
+        catch(Exception ex) {
+            return false;
+        }
+    }
 
     @Test
     public void testFetchPatients() throws Exception {
 
-        InputStream is = getClass().getResourceAsStream("/ice.properties");
-        Properties p = new Properties();
-        p.load(is);
-
-        String url = p.getProperty("mdpnp.fhir.url");
+        String url = config.getProperty("mdpnp.fhir.url");
 
         FhirEMRImpl emr = new FhirEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
         emr.setUrl(url);
@@ -54,11 +74,7 @@ public class FhirEMRImplTest {
     @Test
     public void testCreatePatient() throws Exception {
 
-        InputStream is = getClass().getResourceAsStream("/ice.properties");
-        Properties p = new Properties();
-        p.load(is);
-
-        String url = p.getProperty("mdpnp.fhir.url");
+        String url = config.getProperty("mdpnp.fhir.url");
 
         FhirEMRImpl emr = new FhirEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
         emr.setUrl(url);
