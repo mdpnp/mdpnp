@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -143,6 +141,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         supportedPersisterURLs.add(CSVPersister.class.getResource("CSVPersister.fxml"));
         supportedPersisterURLs.add(JdbcPersister.class.getResource("JdbcPersister.fxml"));
         supportedPersisterURLs.add(VerilogVCDPersister.class.getResource("VerilogVCDPersister.fxml"));
+        supportedPersisterURLs.add(MongoPersister.class.getResource("MongoPersister.fxml"));
 
         final ToggleGroup group = new ToggleGroup();
         StackPane cards = new StackPane();
@@ -156,7 +155,8 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
             controller.setup();
             parent.setVisible(false);
             cards.getChildren().add(parent);
-            RadioButton btn = new RadioButton(controller.getName());
+            String name = controller.getName();
+            RadioButton btn = new RadioButton(name);
             btn.setUserData(controller);
             btns.getChildren().add(btn);
             group.getToggles().add(btn);
