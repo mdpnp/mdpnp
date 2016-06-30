@@ -34,8 +34,8 @@ var persist = function(mongoDatabase, patient, value) {
         return { "status" : "unresolved vital"};
     
     var values = new org.bson.Document();
-    values.put(vs.label + ".sum",   value.getValue());
-    values.put(vs.label + ".count", 1);
+    values.put(vs.name() + ".sum",   value.getValue());
+    values.put(vs.name() + ".count", 1);
 
     var document = new org.bson.Document();
     document.put("$inc",  values);

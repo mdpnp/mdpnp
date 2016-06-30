@@ -19,7 +19,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 /**
  * Persister to route data to the mongo database. The actual saving of the value is delegated to the javascript
@@ -51,6 +53,17 @@ public class MongoPersister extends FileAdapterApplicationFactory.PersisterUICon
 
     @Override
     public void setup() {
+        // This is a hack to ease data entry if running locally in the lab
+
+        try {
+            InetAddress address = InetAddress.getByName("arvi.jsn.mdpnp");
+            fHost.setText(address.getHostAddress());
+            fDbName.setText("warfighter");
+            fScriptName.setText("MongoPersisterWF.js");
+
+        } catch (UnknownHostException nothere) {
+            // OK, not running in the lab
+        }
 
     }
 

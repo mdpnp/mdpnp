@@ -23,10 +23,10 @@ public class MongoPersisterTest {
 
         MongoPersister mongo = new MongoPersister();
 
-        boolean cpOk=mongo.initJSRuntime("MongoPersisterWF.js");
+        boolean cpOk=mongo.initJSRuntime("MongoPersisterTest.js");
         Assert.assertTrue("Should have located resource on classpath", cpOk);
 
-        URL u = getClass().getResource("MongoPersisterWF.js");
+        URL u = getClass().getResource("MongoPersisterTest.js");
         boolean fOk1=mongo.initJSRuntime(u.getFile());
         Assert.assertTrue("Should have located resource on file system", fOk1);
 
@@ -55,18 +55,27 @@ public class MongoPersisterTest {
         Assert.assertTrue("Should have passed connection test", ok);
     }
 
-    // Simple drive top test the script
-    // 192.168.99.100 local 10
-    // 192.168.7.21 warfighter 10
+    // Simple driver to test the script
+    //
+    // you can to point it to some local database:
+    //
+    // MongoPersisterTest.js 192.168.99.100 local 10
+    //
+    // Or to test warfighter demo on arvi:
+    //
+    // MongoPersisterWF.js 192.168.7.21 warfighter 10
     //
     public static void main(String[] args) throws Exception {
 
-        String host = args.length==0?"localhost":args[0];
-        String database = args.length==1?"local":args[1];
+        if(args.length==0)
+            throw new IllegalStateException("Usage: <scriptname> host dbName [nrecords]");
+
+        String scriptName=args[0];
+        String host = args.length==1?"localhost":args[1];
+        String database = args.length==2?"local":args[2];
 
         MongoPersister mongo = new MongoPersister();
 
-        String scriptName=System.getProperty("mondo.script", "MongoPersisterWF.js");
         boolean scriptOk = mongo.initJSRuntime(scriptName);
         if(!scriptOk)
             throw new IllegalStateException("Cannot load the script");
@@ -78,7 +87,7 @@ public class MongoPersisterTest {
         Patient p = new Patient();
         p.mrn = "12345";
 
-        int sz = args.length==2?10:Integer.parseInt(args[2]);
+        int sz = args.length==3?10:Integer.parseInt(args[3]);
 
         for(int n=0; n<sz; n++) {
 

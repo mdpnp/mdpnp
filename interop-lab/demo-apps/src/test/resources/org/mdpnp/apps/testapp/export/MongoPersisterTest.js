@@ -16,7 +16,7 @@ var persist = function(mongoDatabase, patient, value) {
 
     var vital = VitalSign.lookupByMetricId(value.getMetricId());
     if(vital !== null && vital !== "undefined")
-        document.put("vital_sign",  vital.label);
+        document.put("vital_sign",  vital.name());
 
     if(patient !== null && patient !== "undefined")
         document.put("patientId",  patient.mrn);
