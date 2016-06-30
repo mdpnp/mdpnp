@@ -30,8 +30,8 @@ var persist = function(mongoDatabase, patient, value) {
 
     var vs = VitalSign.lookupByMetricId(value.getMetricId());
 
-    if(vs === null && vs === "undefined")
-        return { "status" : "unresolved vital"};
+    if(vs === null || vs === "undefined")
+        return { "status" : "unresolved " + value.getMetricId()};
     
     var values = new org.bson.Document();
     values.put(vs.name() + ".sum",   value.getValue());
