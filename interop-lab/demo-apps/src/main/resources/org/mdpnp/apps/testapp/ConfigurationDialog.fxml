@@ -26,13 +26,13 @@
      text="Start" />
    </right>
    <BorderPane.margin>
-    <Insets />
+    <Insets fx:id="insets" />
    </BorderPane.margin>
   </BorderPane>
  </bottom>
  <center>
   <fx:include fx:id="settings" source="Settings.fxml"
-   BorderPane.alignment="TOP_CENTER" BorderPane.margin="$x1" />
+   BorderPane.alignment="TOP_CENTER" BorderPane.margin="$insets" />
  </center>
  <top>
 
