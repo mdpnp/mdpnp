@@ -22,7 +22,7 @@
     
    </right>
    <bottom>
-    <HBox>
+    <HBox spacing="5.0">
        <children>
        <Label text="Add a vital sign:" />
             <ComboBox fx:id="vitalSigns" />

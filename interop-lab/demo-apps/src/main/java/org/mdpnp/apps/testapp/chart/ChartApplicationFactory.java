@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp.chart;
 
 import java.io.IOException;
-import java.net.URL;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -21,22 +20,17 @@ public class ChartApplicationFactory implements IceApplicationProvider {
     }
 
 
-    
     @Override
     public IceApplicationProvider.IceApp create(ApplicationContext parentContext) throws IOException {
 
-//        final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
-
-//        final EventLoop eventLoop = (EventLoop) parentContext.getBean("eventLoop");
-
         final VitalModel model = (VitalModel) parentContext.getBean("vitalModel");
 
-        FXMLLoader loader = new FXMLLoader(ChartApplication.class.getResource("ChartApplication.fxml"));
+        String fxml = System.getProperty("ChartApplication.fxml", "ChartApplication.fxml");
+        FXMLLoader loader = new FXMLLoader(ChartApplication.class.getResource(fxml));
 
         final Parent ui = loader.load();
 
-        final ChartApplication controller = ((ChartApplication) loader.getController());
-
+        final ChartApplicationFactory.WithVitalModel controller = loader.getController();
         controller.setModel(model);
         
         return new IceApplicationProvider.IceApp() {
@@ -64,6 +58,10 @@ public class ChartApplicationFactory implements IceApplicationProvider {
 
             }
         };
+    }
+
+    public interface WithVitalModel {
+        void setModel(VitalModel vitalModel);
     }
 
 }

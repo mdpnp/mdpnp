@@ -25,7 +25,7 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChartApplication implements ListChangeListener<Vital>, EventHandler<ActionEvent> {    
+public class ChartApplication implements ListChangeListener<Vital>, EventHandler<ActionEvent>, ChartApplicationFactory.WithVitalModel {
     protected static final Logger log = LoggerFactory.getLogger(ChartApplication.class);
     final DateAxis dateAxis = new DateAxis();
     @FXML Pane charts;
