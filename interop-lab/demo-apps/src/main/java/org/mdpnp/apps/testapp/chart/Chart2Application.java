@@ -75,7 +75,6 @@ public class Chart2Application implements Initializable, ChartApplicationFactory
         datePickUpdate.setCycleCount(Timeline.INDEFINITE);
         datePickUpdate.play();
 
-        data.operator_id= DeviceIdentityBuilder.randomUDI();
     }
 
     @Override
@@ -84,7 +83,9 @@ public class Chart2Application implements Initializable, ChartApplicationFactory
     }
 
     @Override
-    public void setPatientAssessmentWriter(PatientAssessmentDataWriter writer) {
+    public void configurePatientAssessmentWriter(String idi, PatientAssessmentDataWriter writer) {
+
+        data.operator_id= DeviceIdentityBuilder.randomUDI();
 
         if(patientAssessmentWriter != null && handle_t != null) {
             patientAssessmentWriter.unregister_instance(data, handle_t);
@@ -130,6 +131,7 @@ public class Chart2Application implements Initializable, ChartApplicationFactory
             ae.name = oc.label;
             ae.value = Integer.toString(oc.id);
 
+            data.assessments.userData.clear();
             data.assessments.userData.add(ae);
 
             Time_t t = DomainClock.toDDSTime(date.getTime());

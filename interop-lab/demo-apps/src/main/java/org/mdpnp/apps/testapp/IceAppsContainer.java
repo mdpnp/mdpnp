@@ -14,16 +14,12 @@ package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
@@ -105,8 +101,6 @@ public class IceAppsContainer extends IceApplication {
     private Parent mainMenuRoot;
 
     private PartitionChooserModel partitionChooserModel;
-
-    // private DiscoveryPeers discoveryPeers;
 
     public IceAppsContainer() {
 
@@ -290,7 +284,22 @@ public class IceAppsContainer extends IceApplication {
 
         timeManager.start();
         
-        // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
+        //
+
+        // register with partition changes so that we can broadcast mds connectivity event
+        //
+        eventBus.register(new Object () {
+            @Subscribe
+            public void onPartitionChooserChangeEvent(PartitionChooserModel.PartitionChooserChangeEvent evt) {
+                List<String> l = evt.getPartitions();
+                ice.MDSConnectivity val = new ice.MDSConnectivity();
+                val.unique_device_identifier = udi;
+                val.partition = l.isEmpty() ? "" : l.get(0);
+                mdsConnectivity.publish(val);
+        }});
+
+
+
         partitionChooserModel = new PartitionChooserModel(subscriber, publisher, eventBus);
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
@@ -299,9 +308,6 @@ public class IceAppsContainer extends IceApplication {
                 .setModel(emr.getPatients()).setDeviceListModel(nc).setMdsHandler(mdsConnectivity);
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
-        // discoveryPeers = new DiscoveryPeers(this);
-        // discoveryPeers.setSize(320, 240);
-        // discoveryPeers.set(participant);
 
         // Locate all available ice application via the service loader.
         // For documentation refer to

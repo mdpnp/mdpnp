@@ -3,18 +3,12 @@ package org.mdpnp.apps.testapp.chart;
 import java.io.IOException;
 
 import com.google.common.eventbus.EventBus;
-import com.rti.dds.subscription.Subscriber;
 import himss.PatientAssessmentDataWriter;
-import ice.MDSConnectivity;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
-import org.mdpnp.apps.fxbeans.PatientAssessmentFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
-import org.mdpnp.apps.testapp.export.PatientAssessmentDataCollector;
 import org.mdpnp.apps.testapp.vital.VitalModel;
-import org.mdpnp.devices.MDSHandler;
-import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
 public class ChartApplicationFactory implements IceApplicationProvider {
@@ -36,6 +30,7 @@ public class ChartApplicationFactory implements IceApplicationProvider {
 
         final Parent ui = loader.load();
 
+        final String udi = parentContext.getBean("supervisorUdi", String.class);
 
         final VitalModel model = (VitalModel) parentContext.getBean("vitalModel");
         final WithVitalModel controller = loader.getController();
@@ -60,14 +55,14 @@ public class ChartApplicationFactory implements IceApplicationProvider {
             public void activate(ApplicationContext context) {
                 if(controller instanceof WithPatientAssessmentDataWriter) {
                     final PatientAssessmentDataWriter writer = (PatientAssessmentDataWriter) parentContext.getBean("patientAssessmentWriter");
-                    ((WithPatientAssessmentDataWriter)controller).setPatientAssessmentWriter(writer);
+                    ((WithPatientAssessmentDataWriter)controller).configurePatientAssessmentWriter(udi, writer);
                 }
             }
 
             @Override
             public void stop() {
                 if(controller instanceof WithPatientAssessmentDataWriter) {
-                    ((WithPatientAssessmentDataWriter)controller).setPatientAssessmentWriter(null);
+                    ((WithPatientAssessmentDataWriter)controller).configurePatientAssessmentWriter(null, null);
                 }
             }
 
@@ -83,7 +78,7 @@ public class ChartApplicationFactory implements IceApplicationProvider {
     }
 
     public interface WithPatientAssessmentDataWriter {
-        void setPatientAssessmentWriter(PatientAssessmentDataWriter writer);
+        void configurePatientAssessmentWriter(String udi, PatientAssessmentDataWriter writer);
     }
 
 
