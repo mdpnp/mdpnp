@@ -15,6 +15,7 @@ package org.mdpnp.devices.simulation;
 import ice.DeviceIdentity;
 
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceIdentityBuilder;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,42 +25,9 @@ import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractSimulatedDevice extends AbstractDevice {
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedDevice.class);
-    private static final int UDI_LENGTH = 36;
-    private static final char[] UDI_CHARS = new char[26 * 2 + 10];
-
-    public static void main(String[] args) {
-        System.out.println(randomUDI());
-    }
-
-    static {
-        int x = 0;
-        for (char i = 'A'; i <= 'Z'; i++) {
-            UDI_CHARS[x++] = i;
-        }
-        for (char i = 'a'; i <= 'z'; i++) {
-            UDI_CHARS[x++] = i;
-        }
-        for (char i = '0'; i <= '9'; i++) {
-            UDI_CHARS[x++] = i;
-        }
-    }
-
-    public static String randomUDI() {
-        String udi = System.getProperty("randomUDI");
-        if (null != udi && !"".equals(udi)) {
-            return udi;
-        } else {
-            StringBuilder sb = new StringBuilder();
-            java.util.Random random = new java.util.Random(System.currentTimeMillis());
-            for (int i = 0; i < UDI_LENGTH; i++) {
-                sb.append(UDI_CHARS[random.nextInt(UDI_CHARS.length)]);
-            }
-            return sb.toString();
-        }
-    }
 
     public static void randomUDI(DeviceIdentity di) {
-        di.unique_device_identifier = randomUDI();
+        di.unique_device_identifier = DeviceIdentityBuilder.randomUDI();
         log.debug("Created Random UDI:" + di.unique_device_identifier);
     }
 
@@ -69,3 +37,5 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         writeDeviceIdentity();
     }
 }
+
+

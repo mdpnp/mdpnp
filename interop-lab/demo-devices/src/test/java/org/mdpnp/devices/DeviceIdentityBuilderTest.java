@@ -36,4 +36,12 @@ public class DeviceIdentityBuilderTest {
         Assert.assertNotNull(di.icon.image.userData);
         Assert.assertEquals(16134, di.icon.image.userData.size());
     }
+
+    @Test
+    public void testRandomUDI() {
+
+        String str = DeviceIdentityBuilder.randomUDI();
+        Assert.assertNotNull(str);
+        Assert.assertEquals(36, str.length());
+    }
 }

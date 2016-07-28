@@ -23,6 +23,7 @@ import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
+import com.google.common.eventbus.EventBus;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
@@ -280,6 +281,7 @@ public class IceAppsContainer extends IceApplication {
         final TimeManager timeManager = context.getBean("timeManager", TimeManager.class);
         final Publisher publisher = context.getBean("publisher", Publisher.class);
         final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+        final EventBus eventBus = context.getBean("eventBus", EventBus.class);
         final String udi = context.getBean("supervisorUdi", String.class);
         final MDSHandler mdsConnectivity = context.getBean("mdsConnectivity", MDSHandler.class);
 
@@ -289,7 +291,7 @@ public class IceAppsContainer extends IceApplication {
         timeManager.start();
         
         // setIconImage(ImageIO.read(getClass().getResource("icon.png")));
-        partitionChooserModel = new PartitionChooserModel(subscriber, publisher);
+        partitionChooserModel = new PartitionChooserModel(subscriber, publisher, eventBus);
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();

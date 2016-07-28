@@ -22,14 +22,17 @@
 
     <!-- ice.properties specified via import -->
     <import resource="classpath:RtConfig.xml"/>
-        
+
+    <!-- for in-application event dispatching -->
+    <bean id="eventBus" class="com.google.common.eventbus.EventBus"/>
+
     <bean id="refreshScheduler" class="java.util.concurrent.Executors"
           factory-method="newSingleThreadScheduledExecutor"
           destroy-method="shutdownNow">
     </bean>
 
     <bean id="supervisorUdi" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-        <property name="staticMethod" value="org.mdpnp.devices.simulation.AbstractSimulatedDevice.randomUDI"/>
+        <property name="staticMethod" value="org.mdpnp.devices.DeviceIdentityBuilder.randomUDI"/>
     </bean>
     
     <!-- This is only needed when PCA apps are installed -->
@@ -37,7 +40,13 @@
         <constructor-arg ref="publisher" />
         <constructor-arg ref="domainParticipant" />
     </bean>
-    
+
+    <!-- This is only needed when Charting apps are installed -->
+    <bean id="patientAssessmentWriter" class="org.mdpnp.rtiapi.data.PatientAssessmentDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+
     <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true">
       <property name="executor" ref="refreshScheduler"/>
       <property name="eventLoop" ref="eventLoop"/>

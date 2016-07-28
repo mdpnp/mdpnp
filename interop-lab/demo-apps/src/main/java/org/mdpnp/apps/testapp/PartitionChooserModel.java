@@ -1,21 +1,41 @@
 package org.mdpnp.apps.testapp;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import com.google.common.eventbus.EventBus;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
 public class PartitionChooserModel {
+
+    public static class PartitionChooserChangeEvent extends EventObject {
+        public PartitionChooserChangeEvent(PartitionChooserModel source) {
+            super(source);
+        }
+
+        public List<String> getPartitions() {
+            List<String> p = new ArrayList<>();
+            ((PartitionChooserModel)getSource()).get(p);
+            return p;
+        }
+
+        public boolean partitionIsPatient() {
+            List<String> l = getPartitions();
+            boolean b = l.size()==1&&l.get(0).startsWith("MRN");
+            return b;
+        }
+    }
+
     private final Subscriber subscriber;
     private final Publisher publisher;
-    
-    public PartitionChooserModel(Subscriber subscriber, Publisher publisher) {
+    private final EventBus eventBus;
+
+    public PartitionChooserModel(Subscriber subscriber, Publisher publisher, EventBus eventBus) {
         this.subscriber = subscriber;
         this.publisher = publisher;
+        this.eventBus = eventBus;
     }
         
     public void set(List<String> partitions) {
@@ -37,6 +57,8 @@ public class PartitionChooserModel {
             pQos.partition.name.add(s);
         }
         publisher.set_qos(pQos);
+
+        eventBus.post(new PartitionChooserChangeEvent(this));
     }
     
     public void get(List<String> list) {
