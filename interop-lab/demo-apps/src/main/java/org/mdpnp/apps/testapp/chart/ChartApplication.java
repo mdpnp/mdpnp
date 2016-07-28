@@ -71,7 +71,8 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
     
     public ChartApplication() {
     }
-    
+
+    @Override
     public void setModel(VitalModel vitalModel) {
         timeInterval.setItems(FXCollections.observableArrayList(TimeInterval.values()));
         vitalSigns.setItems(FXCollections.observableArrayList(VitalSign.values()));
@@ -91,7 +92,6 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
             timeline.setCycleCount(Animation.INDEFINITE);
             timeline.play();
         }
-
     }
 
     @Override

@@ -18,7 +18,8 @@
                     BorderPane.alignment="TOP_CENTER" BorderPane.margin="$insets"/>
     </center>
     <bottom>
-        <HBox spacing="5.0" BorderPane.margin="$insets">
+        <!-- ui starts with no patient selected, so we disable the observation controls -->
+        <HBox fx:id="observationControls" spacing="5.0" BorderPane.margin="$insets" disable="true">
             <children>
 
                 <Label text="Add an observation:"/>

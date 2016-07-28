@@ -1,8 +1,11 @@
 package org.mdpnp.apps.testapp.chart;
 
+import com.google.common.eventbus.Subscribe;
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.Time_t;
 import himss.AssessmentEntry;
 import himss.PatientAssessment;
+import himss.PatientAssessmentDataWriter;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
@@ -11,25 +14,25 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.layout.Pane;
 import javafx.util.Duration;
+import org.mdpnp.apps.testapp.PartitionChooserModel;
 import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.devices.DeviceIdentityBuilder;
 import org.mdpnp.devices.DomainClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.*;
 
-public class Chart2Application implements Initializable, ChartApplicationFactory.WithVitalModel {
+public class Chart2Application implements Initializable, ChartApplicationFactory.WithVitalModel, ChartApplicationFactory.WithPatientAssessmentDataWriter {
     protected static final Logger log = LoggerFactory.getLogger(Chart2Application.class);
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
 
     @FXML
@@ -42,15 +45,25 @@ public class Chart2Application implements Initializable, ChartApplicationFactory
     RadioButton timeNow;
     @FXML
     RadioButton timeAsOf;
+    @FXML
+    Pane observationControls;
 
     Timeline datePickUpdate;
+    PatientAssessmentDataWriter patientAssessmentWriter;
+
+    InstanceHandle_t handle_t;
+    PatientAssessment data = new PatientAssessment();
 
     public Chart2Application() {
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        datePickUpdate = new Timeline(new KeyFrame(Duration.seconds(1), new EventHandler<ActionEvent>() {
+
+        List<ObservationType> list = readObservationTypes();
+        observationCodes.setItems(FXCollections.observableArrayList(list));
+
+        datePickUpdate = new Timeline(new KeyFrame(Duration.seconds(5), new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 if(timeNow.isSelected()) {
@@ -61,15 +74,35 @@ public class Chart2Application implements Initializable, ChartApplicationFactory
         }));
         datePickUpdate.setCycleCount(Timeline.INDEFINITE);
         datePickUpdate.play();
+
+        data.operator_id= DeviceIdentityBuilder.randomUDI();
     }
 
+    @Override
     public void setModel(VitalModel vitalModel) {
-
-        List<ObservationType> list = readObservationTypes();
-
-        observationCodes.setItems(FXCollections.observableArrayList(list));
-
         vitalSignsController.setModel(vitalModel);
+    }
+
+    @Override
+    public void setPatientAssessmentWriter(PatientAssessmentDataWriter writer) {
+
+        if(patientAssessmentWriter != null && handle_t != null) {
+            patientAssessmentWriter.unregister_instance(data, handle_t);
+        }
+        patientAssessmentWriter = writer;
+        handle_t = null;
+        if(patientAssessmentWriter != null) {
+            handle_t = patientAssessmentWriter.register_instance(data);
+        }
+
+    }
+
+    // API registered with the application-wide event bus
+    //
+    @Subscribe
+    public void onPartitionChooserChangeEvent(PartitionChooserModel.PartitionChooserChangeEvent evt) {
+        boolean b = evt.partitionIsPatient();
+        observationControls.setDisable(!b);
     }
 
     @FXML
@@ -90,20 +123,24 @@ public class Chart2Application implements Initializable, ChartApplicationFactory
             observationEffectiveTime.setText(dateFormat.toPattern());
             date = null;
         }
+
         if(date != null && oc != null) {
 
             AssessmentEntry ae = new AssessmentEntry();
             ae.name = oc.label;
             ae.value = Integer.toString(oc.id);
 
-            PatientAssessment pa = new PatientAssessment();
-            pa.assessments.userData.add(ae);
+            data.assessments.userData.add(ae);
 
             Time_t t = DomainClock.toDDSTime(date.getTime());
-            pa.date_and_time.seconds = t.sec;
-            pa.date_and_time.nanoseconds = t.nanosec;
+            data.date_and_time.seconds = t.sec;
+            data.date_and_time.nanoseconds = t.nanosec;
 
-            log.info("Added new PatientAssessment " + pa);
+            log.info("Create new PatientAssessment: " + data);
+
+            if(patientAssessmentWriter != null) {
+                patientAssessmentWriter.write(data, handle_t);
+            }
         }
     }
 
