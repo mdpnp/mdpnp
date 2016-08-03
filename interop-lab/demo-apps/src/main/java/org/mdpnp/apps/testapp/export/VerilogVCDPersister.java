@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * is included with the source of the project.
  *
  **/
-public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUIController {
+public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUIController {
 
     private static final Logger log = LoggerFactory.getLogger(VerilogVCDPersister.class);
 

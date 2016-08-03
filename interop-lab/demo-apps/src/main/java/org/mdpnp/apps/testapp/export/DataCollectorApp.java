@@ -8,7 +8,6 @@ import java.net.URL;
 import java.util.*;
 
 import com.google.common.eventbus.Subscribe;
-import ice.Numeric;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -29,12 +28,9 @@ import javafx.util.Callback;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.DeviceListModel;
-import org.mdpnp.apps.testapp.IceApplicationProvider;
-import org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory.PersisterUIController;
+import org.mdpnp.apps.testapp.export.DataCollectorAppFactory.PersisterUIController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.ReflectionUtils;
 
 public class DataCollectorApp implements Initializable {
@@ -302,7 +298,7 @@ public class DataCollectorApp implements Initializable {
 
         deviceListModel.getContents().removeListener(deviceTreeModel);
 
-        for (FileAdapterApplicationFactory.PersisterUIController p : supportedPersisters) {
+        for (PersisterUIController p : supportedPersisters) {
             dataFilter.removeDataSampleListener(p);
             p.stop();
         }

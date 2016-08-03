@@ -18,10 +18,10 @@ import org.springframework.context.ApplicationContext;
 /**
  *
  */
-public class FileAdapterApplicationFactory implements IceApplicationProvider {
+public class DataCollectorAppFactory implements IceApplicationProvider {
 
     private final IceApplicationProvider.AppType FileAdapter =
-            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  FileAdapterApplicationFactory.class.getResource("database-server.png"), 0.75, false);
+            new IceApplicationProvider.AppType("Data Recorder", "NOCSV",  DataCollectorAppFactory.class.getResource("database-server.png"), 0.75, false);
 
     @Override
     public IceApplicationProvider.AppType getAppType() {

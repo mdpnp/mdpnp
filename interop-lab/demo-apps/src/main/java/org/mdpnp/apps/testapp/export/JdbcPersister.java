@@ -10,7 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUIController {
+public class JdbcPersister extends DataCollectorAppFactory.PersisterUIController {
 
     private Connection conn = null;
     private PreparedStatement ps = null;

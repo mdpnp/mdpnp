@@ -3,8 +3,6 @@ package org.mdpnp.apps.testapp.export;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import javax.swing.event.EventListenerList;
-
 public class DataFilter {
 
     private final DeviceTreeModel controller;

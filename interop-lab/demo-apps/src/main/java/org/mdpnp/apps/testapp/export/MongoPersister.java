@@ -36,7 +36,7 @@ import java.net.UnknownHostException;
  * The function should return { "status" : "OK" } as an indication of success or a description of a failure otherwise.
  *
  */
-public class MongoPersister extends FileAdapterApplicationFactory.PersisterUIController  {
+public class MongoPersister extends DataCollectorAppFactory.PersisterUIController  {
 
     private static final Logger log = LoggerFactory.getLogger(MongoPersister.class);
 

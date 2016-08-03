@@ -1,14 +1,11 @@
 package org.mdpnp.apps.testapp.export;
 
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.Main;
-import org.mdpnp.apps.testapp.chart.ChartApplication;
-import org.mdpnp.apps.testapp.chart.ChartApplicationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -18,13 +15,13 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 /**
  *
  */
-public class DataExporterAppFactoryRunner extends javafx.application.Application {
+public class DataCollectorAppFactoryRunner extends javafx.application.Application {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws Exception {
         System.setProperty("DataCollectorApp.debug", "true");
-        javafx.application.Application.launch(DataExporterAppFactoryRunner.class, args);
+        javafx.application.Application.launch(DataCollectorAppFactoryRunner.class, args);
         Platform.exit();
         log.info("This is the end, exit code=" + 0);
         System.exit(0);
@@ -38,7 +35,7 @@ public class DataExporterAppFactoryRunner extends javafx.application.Application
         context.registerShutdownHook();
 
 
-        FileAdapterApplicationFactory factory = new FileAdapterApplicationFactory();
+        DataCollectorAppFactory factory = new DataCollectorAppFactory();
         final IceApplicationProvider.IceApp app = factory.create(context);
 
         app.activate(context);

@@ -15,7 +15,7 @@ import javafx.stage.FileChooser;
 
 import org.apache.log4j.Level;
 
-public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIController {
+public class CSVPersister extends DataCollectorAppFactory.PersisterUIController {
 
     static ThreadLocal<SimpleDateFormat> dateFormats = new ThreadLocal<SimpleDateFormat>()
     {
