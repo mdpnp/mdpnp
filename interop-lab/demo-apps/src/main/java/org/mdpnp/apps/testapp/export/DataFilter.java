@@ -1,8 +1,11 @@
 package org.mdpnp.apps.testapp.export;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
 import javax.swing.event.EventListenerList;
 
-public class DataFilter implements DataCollector.DataSampleEventListener {
+public class DataFilter {
 
     private final DeviceTreeModel controller;
     private boolean enabled = true;
@@ -11,8 +14,9 @@ public class DataFilter implements DataCollector.DataSampleEventListener {
         controller = dtm;
     }
 
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
-        Value value = (Value) evt.getSource();
+    @Subscribe
+    public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
+        Value value = evt.getValue();
         if(isEnabledFor(value))
             fireDataSampleEvent(evt);
     }
@@ -29,20 +33,17 @@ public class DataFilter implements DataCollector.DataSampleEventListener {
         this.enabled = enabled;
     }
 
-    EventListenerList listenerList = new EventListenerList();
+    private final EventBus eventBus = new EventBus();
 
-    public void addDataSampleListener(DataCollector.DataSampleEventListener l) {
-        listenerList.add(DataCollector.DataSampleEventListener.class, l);
+    public void addDataSampleListener(Object l) {
+        eventBus.register(l);
     }
 
-    public void removeDataSampleListener(DataCollector.DataSampleEventListener l) {
-        listenerList.remove(DataCollector.DataSampleEventListener.class, l);
+    public void removeDataSampleListener(Object l) {
+        eventBus.unregister(l);
     }
 
-    public void fireDataSampleEvent(DataCollector.DataSampleEvent data) throws Exception{
-        DataCollector.DataSampleEventListener listeners[] = listenerList.getListeners(DataCollector.DataSampleEventListener.class);
-        for(DataCollector.DataSampleEventListener l : listeners) {
-            l.handleDataSampleEvent(data);
-        }
+    public void fireDataSampleEvent(NumericsDataCollector.NumericSampleEvent data) throws Exception{
+        eventBus.post(data);
     }
 }

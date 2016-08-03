@@ -5,11 +5,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.google.common.eventbus.Subscribe;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
+public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUIController {
 
     private Connection conn = null;
     private PreparedStatement ps = null;
@@ -32,9 +33,9 @@ public class JdbcPersister extends FileAdapterApplicationFactory.PersisterUICont
         }
     }
 
-    @Override
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
-        Value vital = (Value)evt.getSource();
+    @Subscribe
+    public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
+        Value vital = evt.getValue();
         persist(vital);
     }
 

@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.eventbus.Subscribe;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * is included with the source of the project.
  *
  **/
-public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener {
+public class VerilogVCDPersister extends FileAdapterApplicationFactory.PersisterUIController {
 
     private static final Logger log = LoggerFactory.getLogger(VerilogVCDPersister.class);
 
@@ -62,9 +63,9 @@ public class VerilogVCDPersister extends FileAdapterApplicationFactory.Persister
         filePathLabel.setText(p);        
     }
 
-    @Override
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
-        Value vital = (Value)evt.getSource();
+    @Subscribe
+    public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
+        Value vital = evt.getValue();
         controller.persist(vital);
     }
 

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import javax.swing.AbstractListModel;
 import javax.swing.JFrame;
 
+import com.google.common.eventbus.Subscribe;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.slf4j.Logger;
@@ -28,16 +29,16 @@ public class DeviceTreeTest {
 
         final DeviceListModel nc = (DeviceListModel)context.getBean("deviceListModel");
         // TODO fix this
-        final DataCollector dc = new DataCollector(null, null);
+        final NumericsDataCollector dc = new NumericsDataCollector(null);
 
         final DeviceTreeModel tm = new DeviceTreeModel();
         // TODO fix this
 //        nc.addListDataListener(tm);
         dc.addDataSampleListener(tm);
-        dc.addDataSampleListener(new DataCollector.DataSampleEventListener() {
-             @Override
-             public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
-                 Value value = (Value)evt.getSource();
+        dc.addDataSampleListener(new Object() {
+             @Subscribe
+             public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
+                 Value value = evt.getValue();
                  if(tm.isEnabled(value)) {
                      log.info("Processing is enabled for " + DeviceTreeModel.toKey(value));
                  }
@@ -131,7 +132,7 @@ public class DeviceTreeTest {
             int i = d; //n%10;
 
             Value v = DataCollector.toValue("DEVICE"+d, "METRIC"+m, i, t+now, n);
-            DataCollector.DataSampleEvent ev = new DataCollector.DataSampleEvent(v);
+            NumericsDataCollector.NumericSampleEvent ev = new NumericsDataCollector.NumericSampleEvent(v);
             dc.fireDataSampleEvent(ev);
             sleep(500);
 
@@ -176,7 +177,7 @@ public class DeviceTreeTest {
                 int i = (int) (Math.random() * 10);             // let instance range from 0 to 9
 
                 Value v = DataCollector.toValue("DEVICE"+d, "METRIC"+m, i, t+now, n);
-                DataCollector.DataSampleEvent ev = new DataCollector.DataSampleEvent(v);
+                NumericsDataCollector.NumericSampleEvent ev = new NumericsDataCollector.NumericSampleEvent(v);
                 dc.fireDataSampleEvent(ev);
                 sleep(500);
             }

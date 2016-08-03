@@ -6,6 +6,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.google.common.eventbus.Subscribe;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -14,7 +15,7 @@ import javafx.stage.FileChooser;
 
 import org.apache.log4j.Level;
 
-public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
+public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIController {
 
     static ThreadLocal<SimpleDateFormat> dateFormats = new ThreadLocal<SimpleDateFormat>()
     {
@@ -62,9 +63,9 @@ public class CSVPersister extends FileAdapterApplicationFactory.PersisterUIContr
         return sb.toString();
     }
 
-    @Override
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
-        Value vital = (Value)evt.getSource();
+    @Subscribe
+    public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
+        Value vital = evt.getValue();
 
         String s = toCSVLine(vital);
 

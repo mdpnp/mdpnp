@@ -3,9 +3,12 @@ package org.mdpnp.apps.testapp.export;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 
+import com.google.common.eventbus.Subscribe;
+import ice.Numeric;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,18 +16,10 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -32,6 +27,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.export.FileAdapterApplicationFactory.PersisterUIController;
@@ -39,8 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.util.ReflectionUtils;
 
-public class DataCollectorApp implements DataCollector.DataSampleEventListener {
+public class DataCollectorApp implements Initializable {
 
     private static final Logger log = LoggerFactory.getLogger(DataCollectorApp.class);
 
@@ -49,6 +46,7 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
     @FXML protected SplitPane masterPanel;
     @FXML protected BorderPane persisterContainer;
     @FXML protected Button startControl;
+    @FXML protected MenuButton addDataSampleControl;
     @FXML protected VBox btns;
     
     protected ObservableList<Row> tblModel = FXCollections.observableArrayList();
@@ -84,9 +82,8 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         }
     }
     
-    private DataCollector   dataCollector;
-
-    private DataFilter      dataFilter;
+    private DataCollector[]   dataCollectors;
+    private DataFilter        dataFilter;
     private final DeviceTreeModel deviceTreeModel = new DeviceTreeModel();
     private DeviceListModel deviceListModel;
 
@@ -96,33 +93,44 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
     public DataCollectorApp() {
         
     }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        boolean b = Boolean.getBoolean("DataCollectorApp.debug");
+        addDataSampleControl.setVisible(b);
+    }
     
-    
-    
-    public DataCollectorApp set(DataCollector dc, DeviceListModel deviceListModel) throws IOException {
+    public DataCollectorApp set(DeviceListModel deviceListModel, DataCollector dcs[]) throws IOException {
+
         this.deviceListModel = deviceListModel;
         table.setItems(tblModel);
+
         // hold on to the references so that we we can unhook the listeners at the end
         //
-        dataCollector   = dc;
+        dataCollectors   = dcs;
 
         // device list model maintains the list of what is out there.
         // add a listener to it so that we can dynamically build a tree representation
         // of that information.
         //
         deviceListModel.getContents().addListener(deviceTreeModel);
-        dataCollector.addDataSampleListener(deviceTreeModel);
+
+        for(DataCollector dc : dataCollectors) {
+            dc.addDataSampleListener(deviceTreeModel);
+        }
 
         // create a data filter - it will act as as proxy between the data collector and
         // actual data consumers. all internal components with register with it for data
         // events.
         dataFilter = new DataFilter(deviceTreeModel);
-//        dataCollector.addDataSampleListener(dataFilter);
 
         // add self as a listener so that we can show some busy
         // data in the central panel.
-        dataCollector.addDataSampleListener(dataFilter);
-        
+        //
+        for(DataCollector dc : dataCollectors) {
+            dc.addDataSampleListener(dataFilter);
+        }
+
         dataFilter.addDataSampleListener(this);
 
         tree.setCellFactory(new Callback<TreeView<Object>,TreeCell<Object>>() {
@@ -165,16 +173,13 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
 
                 @Override
                 public void handle(ActionEvent event) {
-                    if(null != currentPersister) {
-                        dataFilter.removeDataSampleListener(currentPersister);
-                        try {
-                            currentPersister.stop();
-                        } catch (Exception e) {
-                            log.error("Stopping persister", e);
-                        }
-                        currentPersister = null;
-                        startControl.setText("Start");
+
+                    // Is the current persister running? Stop it first.
+                    //
+                    if("Stop".equals(startControl.getText())) {
+                        clickStart(new ActionEvent());
                     }
+
                     currentPersister = controller;
                     for(Node n : cards.getChildren()) {
                         n.setVisible(false);
@@ -224,7 +229,8 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         alert.showAndWait();
     }
     
-    @FXML public void clickStart(ActionEvent evt) {
+    @FXML
+    public void clickStart(ActionEvent evt) {
         if("Start".equals(startControl.getText()) && currentPersister != null) {
             boolean v;
             try {
@@ -248,12 +254,53 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         }
 
     }
-    
-    public void stop() throws Exception {
-        dataCollector.removeDataSampleListener(dataFilter);
-        deviceListModel.getContents().removeListener(deviceTreeModel);
 
-//        startControl.putValue("mdpnp.appender", null);
+    @FXML
+    public void addDataSample(ActionEvent evt)  {
+
+        String cmd = ((MenuItem)evt.getSource()).getText();
+        Object data = getMockedSample(cmd);
+
+        try {
+            for(DataCollector dc : dataCollectors) {
+                Method m = ReflectionUtils.findMethod(dc.getClass(), "add", data.getClass());
+                if (m != null) {
+                    m.invoke(dc, data);
+                }
+            }
+        }
+        catch(Exception ex) {
+            exceptionDialog(ex);
+        }
+    }
+
+    Object getMockedSample(String dateType) {
+        Object data=null;
+        switch(dateType) {
+            case "Numeric": data = mockNumeric();
+            case "SampleArray":
+            case "Observation":
+        }
+        return data;
+    }
+
+    private Object mockNumeric() {
+        NumericFx v = new NumericFx();
+        Date now = new Date();
+        v.setDevice_time(now);
+        v.setPresentation_time(now);
+        v.setInstance_id(0);
+        v.setUnique_device_identifier("MOCK-DEVICE");
+        v.setValue((float)(10.0*Math.random()));
+        return v;
+    }
+
+    public void stop() throws Exception {
+        for(DataCollector dc : dataCollectors) {
+            dc.removeDataSampleListener(dataFilter);
+        }
+
+        deviceListModel.getContents().removeListener(deviceTreeModel);
 
         for (FileAdapterApplicationFactory.PersisterUIController p : supportedPersisters) {
             dataFilter.removeDataSampleListener(p);
@@ -261,10 +308,10 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
         }
     }
 
-    @Override
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
+    @Subscribe
+    public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
         // Add to the screen for visual.
-        Value value = (Value)evt.getSource();
+        Value value = evt.getValue();
 
 //        Numeric n = value.getNumeric();
         long ms = value.getDevTime(); // DataCollector.toMilliseconds(n.device_time);
@@ -281,40 +328,4 @@ public class DataCollectorApp implements DataCollector.DataSampleEventListener {
             }
         });
     }
-
-    public static void main(String[] args) throws Exception {
-
-        final AbstractApplicationContext context =
-                new ClassPathXmlApplicationContext(new String[]{"DriverContext.xml"});
-        context.registerShutdownHook();
-
-        FileAdapterApplicationFactory factory = new FileAdapterApplicationFactory();
-        final IceApplicationProvider.IceApp app = factory.create(context);
-
-        app.activate(context);
-//        Component component = app.getUI();
-
-//        JFrame frame = new JFrame("UITest");
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosing(WindowEvent e) {
-//                try {
-//                    app.stop();
-//                    app.destroy();
-//                    log.info("App " + app.getDescriptor().getName() + " stoped OK");
-//                } catch (Exception ex) {
-//                    log.error("Failed to stop the app", ex);
-//                }
-//                super.windowClosing(e);
-//            }
-//        });
-//
-//        frame.getContentPane().setLayout(new BorderLayout());
-//        frame.getContentPane().add(component, BorderLayout.CENTER);
-//        frame.setSize(640, 480);
-//        frame.setLocationRelativeTo(null);
-//        frame.setVisible(true);
-    }
-
 }

@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.PatientAssessmentFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
@@ -34,11 +35,16 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
         final SampleArrayFxList sampleArrayList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
         final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
         final DeviceListModel deviceListModel = parentContext.getBean("deviceListModel", DeviceListModel.class);
+        final PatientAssessmentFxList paList = parentContext.getBean("assessmentList", PatientAssessmentFxList.class);
 
         final EventLoop eventLoop = parentContext.getBean("eventLoop", EventLoop.class);
         final Subscriber subscriber = parentContext.getBean("subscriber", Subscriber.class);
 
-        final DataCollector dataCollector = new DataCollector(sampleArrayList, numericList);
+        final DataCollector[] dataCollectors = {
+                new SampleArrayDataCollector(sampleArrayList),
+                new NumericsDataCollector(numericList),
+                new PatientAssessmentDataCollector(paList)
+        };
         
         FXMLLoader loader = new FXMLLoader(DataCollectorApp.class.getResource("DataCollectorApp.fxml"));
         final Parent ui = loader.load();
@@ -46,10 +52,12 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
         final DataCollectorApp controller = loader.getController();
 
         final MDSHandler mdsHandler = new MDSHandler(eventLoop, subscriber.get_participant());
-        mdsHandler.addConnectivityListener(dataCollector);
+        for(DataCollector dc : dataCollectors) {
+            mdsHandler.addConnectivityListener(dc);
+        }
         mdsHandler.start();
 
-        controller.set(dataCollector, deviceListModel);
+        controller.set(deviceListModel, dataCollectors);
 
         return new IceApplicationProvider.IceApp() {
 
@@ -74,13 +82,16 @@ public class FileAdapterApplicationFactory implements IceApplicationProvider {
             @Override
             public void destroy() throws Exception {
                 controller.stop();
-                dataCollector.destroy();
+                for(DataCollector dc : dataCollectors) {
+                    mdsHandler.removeConnectivityListener(dc);
+                    dc.destroy();
+                }
                 mdsHandler.shutdown();
             }
         };
     }
 
-    public static abstract class PersisterUIController implements DataCollector.DataSampleEventListener  {
+    public static abstract class PersisterUIController {
 
         public abstract String getName();
         

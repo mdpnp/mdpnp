@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.export;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
 
+import com.google.common.eventbus.Subscribe;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.MapMaker;
 
-public class DeviceTreeModel extends SelectableNode implements ListChangeListener<Device>, DataCollector.DataSampleEventListener {
+public class DeviceTreeModel extends SelectableNode implements ListChangeListener<Device> {
 
     private static final Logger log = LoggerFactory.getLogger(DeviceTreeModel.class);
 
@@ -53,10 +54,10 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         }
     }
 
-    @Override
-    public void handleDataSampleEvent(DataCollector.DataSampleEvent evt) throws Exception {
+    @Subscribe
+    public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
 
-        final Value value = (Value) evt.getSource();
+        final Value value = evt.getValue();
 
         // This call back is going to happen A LOT. need fast lookup of the nodes.
         // And only of we see this for the first timer burden the FX thread with

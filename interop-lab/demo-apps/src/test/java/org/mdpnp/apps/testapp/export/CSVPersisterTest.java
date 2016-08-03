@@ -1,8 +1,6 @@
 package org.mdpnp.apps.testapp.export;
 
 
-import com.rti.dds.subscription.SampleInfo;
-import ice.Numeric;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -43,7 +41,7 @@ public class CSVPersisterTest {
 
             Value v =  DataCollector.toValue("DEVICE0", "METRIC0", 0, now,  (float)Math.sin(i));
 
-            DataCollector.DataSampleEvent evt = new DataCollector.DataSampleEvent(v);
+            NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(v);
             p.handleDataSampleEvent(evt);
 
             calendar.add(Calendar.MINUTE, 1);

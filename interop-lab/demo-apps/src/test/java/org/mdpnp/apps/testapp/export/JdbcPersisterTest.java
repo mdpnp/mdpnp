@@ -36,7 +36,7 @@ public class JdbcPersisterTest {
             long ms = calendar.getTime().getTime();
             Value v = DataCollector.toValue("DEVICE"+i, "METRIC"+i, 100+i, ms, 3.14*i);
 
-            DataCollector.DataSampleEvent evt = new DataCollector.DataSampleEvent(v);
+            NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(v);
             p.handleDataSampleEvent(evt);
 
             calendar.add(Calendar.MINUTE, 1);

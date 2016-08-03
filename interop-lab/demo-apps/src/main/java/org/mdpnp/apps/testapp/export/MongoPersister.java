@@ -1,5 +1,6 @@
 package org.mdpnp.apps.testapp.export;
 
+import com.google.common.eventbus.Subscribe;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
@@ -35,7 +36,7 @@ import java.net.UnknownHostException;
  * The function should return { "status" : "OK" } as an indication of success or a description of a failure otherwise.
  *
  */
-public class MongoPersister extends FileAdapterApplicationFactory.PersisterUIController implements DataCollector.DataSampleEventListener  {
+public class MongoPersister extends FileAdapterApplicationFactory.PersisterUIController  {
 
     private static final Logger log = LoggerFactory.getLogger(MongoPersister.class);
 
@@ -86,10 +87,10 @@ public class MongoPersister extends FileAdapterApplicationFactory.PersisterUICon
         return true;
     }
 
-    @Override
-    public void handleDataSampleEvent(final DataCollector.DataSampleEvent evt) throws Exception {
+    @Subscribe
+    public void handleDataSampleEvent(final NumericsDataCollector.NumericSampleEvent evt) throws Exception {
         Patient patient = evt.getPatient();
-        Value vital = (Value)evt.getSource();
+        Value vital = evt.getValue();
         persist(patient, vital);
     }
 

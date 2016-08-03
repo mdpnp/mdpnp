@@ -99,7 +99,7 @@ public class MongoPersisterTest {
             Value v =  DataCollector.toValue("DEVICE_"+d, N_METRICS[m], 0, now,  (float)Math.sin(n));
             log.info("Observation: " + v);
 
-            DataCollector.DataSampleEvent evt = new DataCollector.DataSampleEvent(v, p);
+            NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(p, v);
             mongo.handleDataSampleEvent(evt);
 
             Thread.sleep((long) Math.floor(Math.random()*SLEEP_MS));
