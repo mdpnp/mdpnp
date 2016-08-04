@@ -57,22 +57,20 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
 
-        final Value value = evt.getValue();
-
         // This call back is going to happen A LOT. need fast lookup of the nodes.
         // And only of we see this for the first timer burden the FX thread with
         // tree model modifications.
         //
-        final String key = toKey(value);
+        final String key = toKey(evt);
 
         if (nodeLookup.get(key) == null) {
             Iterator<TreeItem<Object>> iter = getChildren().iterator();
             while (iter.hasNext()) {
                 TreeItem<Object> dn = (TreeItem<Object>) iter.next();
                 Device d = (Device) dn.getValue();
-                if (d.getUDI().equals(value.getUniqueDeviceIdentifier())) {
-                    final TreeItem<Object> mn = ensureMetricNode(dn, value);
-                    final TreeItem<Object> in = ensureInstanceNode(mn, value);
+                if (d.getUDI().equals(evt.getUniqueDeviceIdentifier())) {
+                    final TreeItem<Object> mn = ensureNode(dn, evt.getMetricId());
+                    final TreeItem<Object> in = ensureNode(mn, evt.getInstanceId());
 
                     nodeLookup.put(key, in);
 
@@ -82,41 +80,26 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         }
     }
 
-    static String toKey(Value value) {
+    static String toKey(DataCollector.DataSampleEvent value) {
         return value.getUniqueDeviceIdentifier() + "/" + value.getMetricId() + "/" + value.getInstanceId();
     }
 
-    TreeItem<Object> ensureMetricNode(TreeItem<Object> d, Value value)
+    TreeItem<Object> ensureNode(TreeItem<Object> d, Object key)
     {
         Iterator<TreeItem<Object>> iter = d.getChildren().iterator();
         while (iter.hasNext()) {
             TreeItem<Object> tn = (TreeItem<Object>) iter.next();
-            if (tn.getValue().equals(value.getMetricId())) {
-                    return tn;
-            }
-        }
-
-        TreeItem<Object> tn = makeNewNodeFactory(d, value.getMetricId());
-        d.getChildren().add(tn);
-        return tn;
-    }
-
-    TreeItem<Object> ensureInstanceNode(TreeItem<Object> d, Value value)
-    {
-        Iterator<TreeItem<Object>> iter = d.getChildren().iterator();
-        while (iter.hasNext()) {
-            TreeItem<Object> tn = (TreeItem<Object>) iter.next();
-            if (tn.getValue().equals(value.getInstanceId())) {
+            if (tn.getValue().equals(key)) {
                 return tn;
             }
         }
 
-        TreeItem<Object> tn = makeNewNodeFactory(d, value.getInstanceId());
+        TreeItem<Object> tn = makeNewNodeFactory(d, key);
         d.getChildren().add(tn);
         return tn;
     }
 
-    public boolean isEnabled(Value value)
+    public boolean isEnabled(DataCollector.DataSampleEvent value)
     {
         // this call back is going to happen A LOT. need fast lookup of the nodes.
         //

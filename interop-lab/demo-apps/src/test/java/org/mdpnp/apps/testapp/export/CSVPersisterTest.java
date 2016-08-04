@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.export;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +21,9 @@ public class CSVPersisterTest {
         SimpleDateFormat dateFormat = DataCollector.dateFormats.get();
         Date d0 = dateFormat.parse("20150203.235809.985-0500");
 
-        Value v =  DataCollector.toValue("DEVICE0", "METRIC0", 0, d0.getTime(), 13.31);
+        NumericsDataCollector.NumericSampleEvent evt =  DataCollector.toValue("DEVICE0", "METRIC0", 0, d0.getTime(), 13.31);
 
-        String line = CSVPersister.toCSVLine(v);
+        String line = CSVPersister.toCSVLine(evt);
         Assert.assertEquals("Invalid csv line", "DEVICE0,METRIC0,0,20150203235809-0500,13.31", line);
     }
 
@@ -39,9 +40,8 @@ public class CSVPersisterTest {
 
             long now = calendar.getTime().getTime();
 
-            Value v =  DataCollector.toValue("DEVICE0", "METRIC0", 0, now,  (float)Math.sin(i));
+            NumericsDataCollector.NumericSampleEvent evt =  DataCollector.toValue("DEVICE0", "METRIC0", 0, now,  (float)Math.sin(i));
 
-            NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(v);
             p.handleDataSampleEvent(evt);
 
             calendar.add(Calendar.MINUTE, 1);

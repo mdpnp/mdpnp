@@ -18,7 +18,7 @@ public class JdbcPersister extends DataCollectorAppFactory.PersisterUIController
     @FXML TextField fDriver, fURL, fUser;
     @FXML PasswordField fPassword;
 
-    public void persist(Value value) throws Exception {
+    public void persist(NumericsDataCollector.NumericSampleEvent value) throws Exception {
 
         if(ps != null) {
             ps.setString   (1, value.getUniqueDeviceIdentifier());
@@ -35,8 +35,7 @@ public class JdbcPersister extends DataCollectorAppFactory.PersisterUIController
 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
-        Value vital = evt.getValue();
-        persist(vital);
+        persist(evt);
     }
 
     static void createSchema(Connection conn) throws SQLException {

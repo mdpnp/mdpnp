@@ -26,6 +26,19 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
 
     @Override
     public void add(SampleArrayFx fx) {
+
+        try {
+            if (log.isTraceEnabled())
+                log.trace(dateFormats.get().format(fx.getPresentation_time()) + " " + fx.getMetric_id());
+
+            Patient patient = resolvePatient(fx.getUnique_device_identifier());
+            SampleArrayEvent ev = new SampleArrayEvent(patient, fx);
+            fireDataSampleEvent(ev);
+        } catch (Exception e) {
+            log.error("firing data sample event", e);
+        }
+
+        /*
         Number[] values = fx.getValues();
         Date presentationTime = fx.getPresentation_time();
         long baseTime = presentationTime.getTime();
@@ -55,7 +68,7 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
                     " for " + fx.getUnique_device_identifier() + " " +
                     fx.getMetric_id() + " " + fx.getInstance_id());
         }
-
+        */
     }
 
     public SampleArrayDataCollector(SampleArrayFxList sampleArrayList) {
@@ -106,4 +119,39 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
             };
         }
     };
+
+    @SuppressWarnings("serial")
+    public static class SampleArrayEvent extends DataCollector.DataSampleEvent {
+
+        private final long        time;
+        private final Number[]    value;
+        private final SampleArrayFx data;
+
+        public SampleArrayEvent(SampleArrayFx data) {
+            this(UNDEFINED, data);
+        }
+
+        public SampleArrayEvent(Patient p, SampleArrayFx v) {
+            super(p);
+            data = v;
+            value = data.getValues();
+            time = data.getDevice_time().getTime();
+        }
+
+        public String getUniqueDeviceIdentifier() {
+            return data.getUnique_device_identifier();
+        }
+        public String getMetricId() {
+            return data.getMetric_id();
+        }
+        public long getDevTime() {
+            return time;
+        }
+        public int getInstanceId() {
+            return data.getInstance_id();
+        }
+        public Number[] getValue() {
+            return value;
+        }
+    }
 }

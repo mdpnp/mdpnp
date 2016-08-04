@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.export;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.fxbeans.NumericFx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,8 @@ public class VerilogVCDPersisterTest {
         long now = d.getTime();
 
         for(int n=0; n<400; n++) {
-            Value v = DataCollector.toValue("DEVICE0", "METRIC0", 0, now + n * 1000L, mockData(n));
-            p.persist(v);
+            NumericsDataCollector.NumericSampleEvent evt = DataCollector.toValue("DEVICE0", "METRIC0", 0, now + n * 1000L, mockData(n));
+            p.persist(evt);
         }
 
         p.stop();
@@ -92,8 +93,8 @@ public class VerilogVCDPersisterTest {
 
         // if no cap, the loop of 1000 values will produce a 20K bytes file
         for (int n = 0; n < 1000; n++) {
-            Value v = DataCollector.toValue("DEVICE0", "METRIC0", 0, now + n * 1000L, mockData(n));
-            p.persist(v);
+            NumericsDataCollector.NumericSampleEvent evt = DataCollector.toValue("DEVICE0", "METRIC0", 0, now + n * 1000L, mockData(n));
+            p.persist(evt);
         }
 
         p.stop();
@@ -122,8 +123,8 @@ public class VerilogVCDPersisterTest {
                 long t = (n + (int) (Math.random() * 10))*1000;
 
                 for (int m = (int) (Math.random() * 10); m > 0; m--) {
-                    Value v = DataCollector.toValue("DEVICE0", "METRIC" + m, 0, now + t, mockData(n));
-                    p.persist(v);
+                    NumericsDataCollector.NumericSampleEvent evt = DataCollector.toValue("DEVICE0", "METRIC" + m, 0, now + t, mockData(n));
+                    p.persist(evt);
                 }
             }
 

@@ -48,7 +48,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         valueFormat.setMinimumFractionDigits(2);
     }
 
-    static String toCSVLine(Value value) {
+    static String toCSVLine(NumericsDataCollector.NumericSampleEvent value) {
         StringBuilder sb = new StringBuilder();
 
         long ms = value.getDevTime();
@@ -65,11 +65,8 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
-        Value vital = evt.getValue();
 
-        String s = toCSVLine(vital);
-
-        // LoggingEvent le = new LoggingEvent("", null, Level.ALL, sb.toString(), null);
+        String s = toCSVLine(evt);
         cat.info(s);
     }
 

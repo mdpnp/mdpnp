@@ -65,8 +65,7 @@ public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUICont
 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
-        Value vital = evt.getValue();
-        controller.persist(vital);
+        controller.persist(evt);
     }
 
     @Override
@@ -115,7 +114,7 @@ public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUICont
             }
         }
 
-        public void persist(Value vital) throws Exception {
+        public void persist(NumericsDataCollector.NumericSampleEvent vital) throws Exception {
 
             String key = vital.getUniqueDeviceIdentifier() + "-" + vital.getMetricId() + "-" + vital.getInstanceId();
 
@@ -190,7 +189,7 @@ public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUICont
                 }
             }
 
-            public void persist(Value value) throws Exception {
+            public void persist(NumericsDataCollector.NumericSampleEvent value) throws Exception {
 
 //                Time_t t = value.getNumeric().device_time;
                 long baseTime = value.getDevTime();

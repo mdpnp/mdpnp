@@ -25,9 +25,9 @@ public class PatientAssessmentDataCollector extends DataCollector<PatientAssessm
         try {
             if (log.isInfoEnabled())
                 log.info(dateFormats.get().format(fx.getDate_and_time()) + " " + fx.getOperator_id() + "=" + fx.getAssessments());
-            Value v = null; //toValue(fx);
-            Patient patient = resolvePatient(v.getUniqueDeviceIdentifier());
-            NumericsDataCollector.NumericSampleEvent ev = new NumericsDataCollector.NumericSampleEvent(patient, v);
+
+            Patient patient = resolvePatient(fx.getOperator_id());
+            PatientAssessmentEvent ev = new PatientAssessmentEvent(patient, fx);
             fireDataSampleEvent(ev);
         } catch (Exception e) {
             log.error("firing data sample event", e);
@@ -69,7 +69,6 @@ public class PatientAssessmentDataCollector extends DataCollector<PatientAssessm
         }
     };
 
-
     private final Callback<PatientAssessmentFx, InvalidationListener> paListenerGenerator = new Callback<PatientAssessmentFx, InvalidationListener>() {
 
         @Override
@@ -84,4 +83,40 @@ public class PatientAssessmentDataCollector extends DataCollector<PatientAssessm
             };
         }
     };
+
+    @SuppressWarnings("serial")
+    public static class PatientAssessmentEvent extends DataCollector.DataSampleEvent {
+
+        private final long      time;
+        private final double    value;
+        private final PatientAssessmentFx data;
+
+        public PatientAssessmentEvent(PatientAssessmentFx data) {
+            this(UNDEFINED, data);
+        }
+
+        public PatientAssessmentEvent(Patient p, PatientAssessmentFx v) {
+            super(p);
+            data = v;
+            value = 0; //data.getValue();
+            time = 0; //data.getDevice_time().getTime();
+        }
+
+        public String getUniqueDeviceIdentifier() {
+            return data.getOperator_id();
+        }
+        public String getMetricId() {
+            return "";
+        }
+        public long getDevTime() {
+            return time;
+        }
+        public int getInstanceId() {
+            return 0;
+        }
+        public double getValue() {
+            return value;
+        }
+    }
+
 }

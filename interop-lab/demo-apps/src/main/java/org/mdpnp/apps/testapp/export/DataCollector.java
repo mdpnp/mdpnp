@@ -42,6 +42,10 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
         static {
             UNDEFINED.mrn="UNDEFIEND";
         }
+
+        public abstract String getUniqueDeviceIdentifier();
+        public abstract String getMetricId();
+        public abstract int getInstanceId();
     }
 
 
@@ -57,8 +61,8 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
         eventBus.unregister(l);
     }
 
-    void fireDataSampleEvent(NumericsDataCollector.NumericSampleEvent data) throws Exception {
-        eventBus.post(data);
+    void fireDataSampleEvent(DataSampleEvent evt) throws Exception {
+        eventBus.post(evt);
     }
 
 
@@ -83,15 +87,28 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
         return p == null ? DataSampleEvent.UNDEFINED : p;
     }
 
-    static Value toValue(NumericFx fx) {
-        Value v = new Value(fx.getUnique_device_identifier(), fx.getMetric_id(), fx.getInstance_id());
-        v.updateFrom(fx.getPresentation_time().getTime(), fx.getValue());
-        return v;
-    }
+
     
-    static Value toValue(String dev, String metric, int instance_id, long tMs, double val) {
-        Value v = new Value(dev, metric, instance_id);
-        v.updateFrom(tMs, (float) val);
+    static NumericFx toValue2(String dev, String metric, int instance_id, long tMs, double val) {
+        NumericFx v = new NumericFx();
+        v.setUnique_device_identifier(dev);
+        v.setMetric_id(metric);
+        v.setInstance_id(instance_id);
+        v.setSource_timestamp(new Date(tMs));
+        v.setValue((float)val);
         return v;
     }
+
+    static NumericsDataCollector.NumericSampleEvent toValue(String dev, String metric, int instance_id, long tMs, double val) {
+        NumericFx v = new NumericFx();
+        v.setUnique_device_identifier(dev);
+        v.setMetric_id(metric);
+        v.setInstance_id(instance_id);
+        v.setSource_timestamp(new Date(tMs));
+        v.setValue((float)val);
+
+        NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(v);
+        return evt;
+    }
+
 }

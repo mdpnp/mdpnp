@@ -89,18 +89,18 @@ public class MongoPersister extends DataCollectorAppFactory.PersisterUIControlle
 
     @Subscribe
     public void handleDataSampleEvent(final NumericsDataCollector.NumericSampleEvent evt) throws Exception {
-        Patient patient = evt.getPatient();
-        Value vital = evt.getValue();
-        persist(patient, vital);
+        persist(evt);
     }
 
-    void persist(final Patient patient, final Value value) throws Exception {
+    void persist(final NumericsDataCollector.NumericSampleEvent evt) throws Exception {
 
         try {
-            if(mongoDatabase == null || value==null)
+            if(mongoDatabase == null || evt==null)
                 throw new IllegalArgumentException("Mongo or value are null");
 
-            ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("persist", mongoDatabase, patient, value);
+            Patient patient = evt.getPatient();
+
+            ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("persist", mongoDatabase, patient, evt);
             String status = (String) result.get("status");
             if(!"OK".equals(status)) {
                 log.error("Failed to save:" + status);

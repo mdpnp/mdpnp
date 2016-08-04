@@ -27,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.export.DataCollectorAppFactory.PersisterUIController;
 import org.slf4j.Logger;
@@ -96,9 +97,9 @@ public class DataCollectorApp implements Initializable {
         addDataSampleControl.setVisible(b);
     }
     
-    public DataCollectorApp set(DeviceListModel deviceListModel, DataCollector dcs[]) throws IOException {
+    public DataCollectorApp set(DeviceListModel dlm, DataCollector dcs[]) throws IOException {
 
-        this.deviceListModel = deviceListModel;
+        deviceListModel = dlm;
         table.setItems(tblModel);
 
         // hold on to the references so that we we can unhook the listeners at the end
@@ -186,7 +187,11 @@ public class DataCollectorApp implements Initializable {
             });
         }
         ((RadioButton)btns.getChildren().get(0)).fire();
-        
+
+        if(addDataSampleControl.isVisible()) {
+            deviceListModel.getContents().add(new Device("MOCK-DEVICE"));
+        }
+
         return this;
     }
 
@@ -286,6 +291,7 @@ public class DataCollectorApp implements Initializable {
         v.setDevice_time(now);
         v.setPresentation_time(now);
         v.setInstance_id(0);
+        v.setMetric_id("MOCK_NUMERIC");
         v.setUnique_device_identifier("MOCK-DEVICE");
         v.setValue((float)(10.0*Math.random()));
         return v;
@@ -307,13 +313,10 @@ public class DataCollectorApp implements Initializable {
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
         // Add to the screen for visual.
-        Value value = evt.getValue();
-
-//        Numeric n = value.getNumeric();
-        long ms = value.getDevTime(); // DataCollector.toMilliseconds(n.device_time);
+        long ms = evt.getDevTime();
         String devTime = DataCollector.dateFormats.get().format(new Date(ms));
-        final Row row = new Row(value.getUniqueDeviceIdentifier(), ""+value.getInstanceId(),
-                          value.getMetricId(), devTime, (float) value.getValue());
+        final Row row = new Row(evt.getUniqueDeviceIdentifier(), ""+evt.getInstanceId(),
+                evt.getMetricId(), devTime, (float) evt.getValue());
         Platform.runLater(new Runnable() {
             public void run() {
                 tblModel.add(0, row);

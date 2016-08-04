@@ -14,12 +14,11 @@ public class DataFilter {
 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
-        Value value = evt.getValue();
-        if(isEnabledFor(value))
+        if(isEnabledFor(evt))
             fireDataSampleEvent(evt);
     }
 
-    private boolean isEnabledFor(Value value) {
+    private boolean isEnabledFor(DataCollector.DataSampleEvent value) {
         return enabled && controller.isEnabled(value);
     }
 

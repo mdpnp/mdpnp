@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.export;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.fxbeans.NumericFx;
 
 import java.sql.*;
 import java.util.Calendar;
@@ -34,9 +35,7 @@ public class JdbcPersisterTest {
         for (int i = 1; i <= 5; i++) {
 
             long ms = calendar.getTime().getTime();
-            Value v = DataCollector.toValue("DEVICE"+i, "METRIC"+i, 100+i, ms, 3.14*i);
-
-            NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(v);
+            NumericsDataCollector.NumericSampleEvent evt = DataCollector.toValue("DEVICE"+i, "METRIC"+i, 100+i, ms, 3.14*i);
             p.handleDataSampleEvent(evt);
 
             calendar.add(Calendar.MINUTE, 1);

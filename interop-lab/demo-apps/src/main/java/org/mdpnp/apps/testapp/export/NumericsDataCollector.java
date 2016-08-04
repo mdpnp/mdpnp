@@ -1,6 +1,5 @@
 package org.mdpnp.apps.testapp.export;
 
-import ice.Numeric;
 import ice.Patient;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -27,9 +26,9 @@ public class NumericsDataCollector extends DataCollector<NumericFx> {
         try {
             if (log.isTraceEnabled())
                 log.trace(dateFormats.get().format(fx.getPresentation_time()) + " " + fx.getMetric_id() + "=" + fx.getValue());
-            Value v = toValue(fx);
-            Patient patient = resolvePatient(v.getUniqueDeviceIdentifier());
-            NumericSampleEvent ev = new NumericSampleEvent(patient, v);
+
+            Patient patient = resolvePatient(fx.getUnique_device_identifier());
+            NumericSampleEvent ev = new NumericSampleEvent(patient, fx);
             fireDataSampleEvent(ev);
         } catch (Exception e) {
             log.error("firing data sample event", e);
@@ -90,19 +89,35 @@ public class NumericsDataCollector extends DataCollector<NumericFx> {
     @SuppressWarnings("serial")
     public static class NumericSampleEvent extends DataCollector.DataSampleEvent {
 
-        private final Value data;
+        private final long      time;
+        private final double    value;
+        private final NumericFx data;
 
-        public NumericSampleEvent(Value data) {
+        public NumericSampleEvent(NumericFx data) {
             this(UNDEFINED, data);
         }
 
-        public NumericSampleEvent(Patient p, Value v) {
+        public NumericSampleEvent(Patient p, NumericFx v) {
             super(p);
             data = v;
+            value = data.getValue();
+            time = data.getDevice_time().getTime();
         }
 
-        public Value getValue() {
-            return data;
+        public String getUniqueDeviceIdentifier() {
+            return data.getUnique_device_identifier();
+        }
+        public String getMetricId() {
+            return data.getMetric_id();
+        }
+        public long getDevTime() {
+            return time;
+        }
+        public int getInstanceId() {
+            return data.getInstance_id();
+        }
+        public double getValue() {
+            return value;
         }
     }
 }
