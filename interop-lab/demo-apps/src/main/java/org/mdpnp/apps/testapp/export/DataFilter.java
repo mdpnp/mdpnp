@@ -18,6 +18,18 @@ public class DataFilter {
             fireDataSampleEvent(evt);
     }
 
+    @Subscribe
+    public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+        if(isEnabledFor(evt))
+            fireDataSampleEvent(evt);
+    }
+
+    @Subscribe
+    public void handleDataSampleEvent(PatientAssessmentDataCollector.PatientAssessmentEvent evt) throws Exception {
+        if(isEnabledFor(evt))
+            fireDataSampleEvent(evt);
+    }
+
     private boolean isEnabledFor(DataCollector.DataSampleEvent value) {
         return enabled && controller.isEnabled(value);
     }
@@ -40,7 +52,7 @@ public class DataFilter {
         eventBus.unregister(l);
     }
 
-    public void fireDataSampleEvent(NumericsDataCollector.NumericSampleEvent data) throws Exception{
+    public void fireDataSampleEvent(DataCollector.DataSampleEvent data) throws Exception{
         eventBus.post(data);
     }
 }

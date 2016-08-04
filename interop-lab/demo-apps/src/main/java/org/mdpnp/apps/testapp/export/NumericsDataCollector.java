@@ -11,6 +11,8 @@ import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
+
 /**
  *
  */
@@ -120,4 +122,23 @@ public class NumericsDataCollector extends DataCollector<NumericFx> {
             return value;
         }
     }
+
+    static NumericSampleEvent toEvent(String dev, String metric, int instance_id, long tMs, double val) {
+        NumericFx v  = toValue(dev, metric, instance_id, new Date(tMs), val);
+        NumericSampleEvent evt = new NumericSampleEvent(v);
+        return evt;
+    }
+
+    static NumericFx toValue(String dev, String metric, int instance_id, Date tMs, double val) {
+        NumericFx v = new NumericFx();
+        v.setUnique_device_identifier(dev);
+        v.setMetric_id(metric);
+        v.setInstance_id(instance_id);
+        v.setSource_timestamp(tMs);
+        v.setDevice_time(tMs);
+        v.setPresentation_time(tMs);
+        v.setValue((float)val);
+        return v;
+    }
+
 }

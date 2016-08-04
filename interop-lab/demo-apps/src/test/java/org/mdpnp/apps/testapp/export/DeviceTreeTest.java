@@ -10,7 +10,6 @@ import javax.swing.AbstractListModel;
 import javax.swing.JFrame;
 
 import com.google.common.eventbus.Subscribe;
-import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.slf4j.Logger;
@@ -131,7 +130,7 @@ public class DeviceTreeTest {
             int m = d; //n%10;
             int i = d; //n%10;
 
-            NumericsDataCollector.NumericSampleEvent ev = DataCollector.toValue("DEVICE"+d, "METRIC"+m, i, t+now, n);
+            NumericsDataCollector.NumericSampleEvent ev = NumericsDataCollector.toEvent("DEVICE"+d, "METRIC"+m, i, t+now, n);
             dc.fireDataSampleEvent(ev);
             sleep(500);
 
@@ -175,7 +174,7 @@ public class DeviceTreeTest {
                 int d = (int) (Math.random() * devices.size());
                 int i = (int) (Math.random() * 10);             // let instance range from 0 to 9
 
-                NumericsDataCollector.NumericSampleEvent ev = DataCollector.toValue("DEVICE"+d, "METRIC"+m, i, t+now, n);
+                NumericsDataCollector.NumericSampleEvent ev = NumericsDataCollector.toEvent("DEVICE"+d, "METRIC"+m, i, t+now, n);
                 dc.fireDataSampleEvent(ev);
                 sleep(500);
             }

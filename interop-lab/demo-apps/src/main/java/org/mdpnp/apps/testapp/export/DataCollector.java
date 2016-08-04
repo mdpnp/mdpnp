@@ -87,28 +87,4 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
         return p == null ? DataSampleEvent.UNDEFINED : p;
     }
 
-
-    
-    static NumericFx toValue2(String dev, String metric, int instance_id, long tMs, double val) {
-        NumericFx v = new NumericFx();
-        v.setUnique_device_identifier(dev);
-        v.setMetric_id(metric);
-        v.setInstance_id(instance_id);
-        v.setSource_timestamp(new Date(tMs));
-        v.setValue((float)val);
-        return v;
-    }
-
-    static NumericsDataCollector.NumericSampleEvent toValue(String dev, String metric, int instance_id, long tMs, double val) {
-        NumericFx v = new NumericFx();
-        v.setUnique_device_identifier(dev);
-        v.setMetric_id(metric);
-        v.setInstance_id(instance_id);
-        v.setSource_timestamp(new Date(tMs));
-        v.setValue((float)val);
-
-        NumericsDataCollector.NumericSampleEvent evt = new NumericsDataCollector.NumericSampleEvent(v);
-        return evt;
-    }
-
 }

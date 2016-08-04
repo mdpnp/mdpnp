@@ -276,24 +276,16 @@ public class DataCollectorApp implements Initializable {
     }
 
     Object getMockedSample(String dateType) {
-        Object data=null;
         switch(dateType) {
-            case "Numeric": data = mockNumeric();
-            case "SampleArray":
-            case "Observation":
+            default:
+            case "Numeric":     return mockNumeric();
+            case "SampleArray": return null;
+            case "Observation": return null;
         }
-        return data;
     }
 
     private Object mockNumeric() {
-        NumericFx v = new NumericFx();
-        Date now = new Date();
-        v.setDevice_time(now);
-        v.setPresentation_time(now);
-        v.setInstance_id(0);
-        v.setMetric_id("MOCK_NUMERIC");
-        v.setUnique_device_identifier("MOCK-DEVICE");
-        v.setValue((float)(10.0*Math.random()));
+        NumericFx v =  NumericsDataCollector.toValue("MOCK-DEVICE", "MOCK_NUMERIC", 0, new Date(), 10.0*Math.random());
         return v;
     }
 

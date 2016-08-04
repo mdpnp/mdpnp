@@ -3,7 +3,6 @@ package org.mdpnp.apps.testapp.export;
 import ice.Patient;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mdpnp.apps.fxbeans.NumericFx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +96,7 @@ public class MongoPersisterTest {
 
             long now = System.currentTimeMillis();
 
-            NumericsDataCollector.NumericSampleEvent evt =  DataCollector.toValue("DEVICE_"+d, N_METRICS[m], 0, now,  (float)Math.sin(n));
+            NumericsDataCollector.NumericSampleEvent evt =  NumericsDataCollector.toEvent("DEVICE_"+d, N_METRICS[m], 0, now,  (float)Math.sin(n));
             log.info("Observation: " + evt);
 
             mongo.handleDataSampleEvent(evt);
