@@ -34,9 +34,6 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
         public DataSampleEvent(Patient p) {
             super(p);
         }
-        public Patient getPatient() {
-            return (Patient)getSource();
-        }
 
         public String getPatientId() {
             return ((Patient)getSource()).mrn;

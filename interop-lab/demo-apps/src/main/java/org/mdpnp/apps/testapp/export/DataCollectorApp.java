@@ -285,7 +285,7 @@ public class DataCollectorApp implements Initializable {
     }
 
     private Object mockNumeric() {
-        Object v =  NumericsDataCollector.toValue("MOCKED-DEVICE", "MOCK_NUMERIC", 0, new Date(), 10.0*Math.random());
+        Object v =  NumericsDataCollector.toValue("MOCKED-DEVICE", "MOCKED_NUMERIC", 0, new Date(), 10.0*Math.random());
         return v;
     }
 
@@ -294,7 +294,7 @@ public class DataCollectorApp implements Initializable {
         for(int i=0; i<arr.length; i++) {
             arr[i] = 10.0*Math.random();
         }
-        Object v =  SampleArrayDataCollector.toValue("MOCKED-DEVICE", "MOCK_NUMERIC", 0, new Date(), arr);
+        Object v =  SampleArrayDataCollector.toValue("MOCKED-DEVICE", "MOCKED_NUMERIC", 0, new Date(), arr);
         return v;
     }
 

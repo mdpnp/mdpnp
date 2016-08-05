@@ -54,8 +54,9 @@ public class MongoPersister extends DataCollectorAppFactory.PersisterUIControlle
 
     @Override
     public void setup() {
-        // This is a hack to ease data entry if running locally in the lab
 
+        // This is a hack to ease data entry if running locally in the lab
+        //
         try {
             InetAddress address = InetAddress.getByName("arvi.jsn.mdpnp");
             fHost.setText(address.getHostAddress());
@@ -98,9 +99,7 @@ public class MongoPersister extends DataCollectorAppFactory.PersisterUIControlle
             if(mongoDatabase == null || evt==null)
                 throw new IllegalArgumentException("Mongo or value are null");
 
-            Patient patient = evt.getPatient();
-
-            ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("persist", mongoDatabase, patient, evt);
+            ScriptObjectMirror result = (ScriptObjectMirror) invocable.invokeFunction("persistNumeric", mongoDatabase, evt);
             String status = (String) result.get("status");
             if(!"OK".equals(status)) {
                 log.error("Failed to save:" + status);

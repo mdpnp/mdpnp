@@ -10,14 +10,14 @@ var UpdateOptions = (new com.mongodb.client.model.UpdateOptions()).upsert(true);
 // Called for each sample to be saved with the following arguments:
 // 
 // 1. com.mongodb.client.MongoDatabase mongoDatabase
-// 2. ice.Patient patient
-// 3. org.mdpnp.apps.testapp.export.Value value
+// 2. org.mdpnp.apps.testapp.export.NumericsDataCollector.NumericSampleEvent value
 // 
 // See java object for the description of the APIs
 //
 
-var persist = function(mongoDatabase, patient, value) {
+var persistNumeric = function(mongoDatabase, value) {
 
+    var patient = value.getPatientId();
     if(patient === null && patient === "undefined")
         return { "status" : "unresolved patient"};
 
@@ -26,7 +26,7 @@ var persist = function(mongoDatabase, patient, value) {
     var filter = new org.bson.Document();
     var seconds = Math.floor(value.getDevTime()/1000);
     filter.put("timeStamp", seconds);
-    filter.put("patientID", patient.mrn);
+    filter.put("patientID", patient);
 
     var vs = VitalSign.lookupByMetricId(value.getMetricId());
 
