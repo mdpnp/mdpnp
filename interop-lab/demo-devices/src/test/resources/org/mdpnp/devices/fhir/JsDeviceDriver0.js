@@ -1,6 +1,6 @@
 var System      = java.lang.System;
 var LibC        = org.mdpnp.devices.fhir.FhirDeviceTest$LibC;
-var AbstractDev = org.mdpnp.devices.simulation.AbstractSimulatedDevice;
+var IdentityBld = org.mdpnp.devices.DeviceIdentityBuilder;
 
 var start = function (arg) {
     __dataProvider.start();
@@ -14,7 +14,7 @@ var getDeviceId = function() {
 
     var obj =
     {
-        "unique_device_identifier": AbstractDev.randomUDI(),
+        "unique_device_identifier": IdentityBld.randomUDI(),
         "manufacturer": "mdpnp",
         "model": "embedded-js",
         "serial_number": __dataProvider.getName()
