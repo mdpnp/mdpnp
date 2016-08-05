@@ -68,6 +68,11 @@ public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUICont
         controller.persist(evt);
     }
 
+    @Subscribe
+    public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+        controller.persist(evt);
+    }
+
     @Override
     public String getName() {
         return "vcd (ieee-1364)";
@@ -114,21 +119,42 @@ public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUICont
             }
         }
 
-        public void persist(NumericsDataCollector.NumericSampleEvent vital) throws Exception {
+        public void persist(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
 
-            String key = vital.getUniqueDeviceIdentifier() + "-" + vital.getMetricId() + "-" + vital.getInstanceId();
+            final VCDFileHandler fileHandler = getVcdFileHandler(evt);
+
+            if(fileHandler.getSize()<maxFileSize) {
+                long baseTime = evt.getDevTime();
+                double v =  evt.getValue();
+                fileHandler.persist(evt, baseTime, v);
+            }
+        }
+
+        public void persist(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+
+            final VCDFileHandler fileHandler = getVcdFileHandler(evt);
+
+            if(fileHandler.getSize()<maxFileSize) {
+                SampleArrayDataCollector.ArrayToNumeric.convert(evt, (DataCollector.DataSampleEvent meta, long ms, double v) -> {
+                    fileHandler.persist(meta, ms, v);
+                });
+            }
+        }
+
+
+        private VCDFileHandler getVcdFileHandler(DataCollector.DataSampleEvent evt) throws IOException {
+
+            String key = evt.getUniqueDeviceIdentifier() + "-" + evt.getMetricId() + "-" + evt.getInstanceId();
 
             VCDFileHandler fileHandler = cache.get(key);
             if (fileHandler == null) {
 
                 OutputStream os = makeStream(key);
 
-                fileHandler = new VCDFileHandler(os, key, vital.getDevTime());
+                fileHandler = new VCDFileHandler(os, key, evt.getDevTime());
                 cache.put(key, fileHandler);
             }
-
-            if(fileHandler.getSize()<maxFileSize)
-                fileHandler.persist(vital);
+            return fileHandler;
         }
 
         protected OutputStream makeStream(String key) throws IOException {
@@ -189,15 +215,11 @@ public class VerilogVCDPersister extends DataCollectorAppFactory.PersisterUICont
                 }
             }
 
-            public void persist(NumericsDataCollector.NumericSampleEvent value) throws Exception {
-
-//                Time_t t = value.getNumeric().device_time;
-                long baseTime = value.getDevTime();
+            void persist(DataCollector.DataSampleEvent evt, long ms, double v) throws Exception {
 
                 StringBuilder sb = new StringBuilder();
-                sb.append("#").append(baseTime - firstTimeTic).append("\n");
-                float f = (float) value.getValue();
-                String s = floatFormats.get().format(f);
+                sb.append("#").append(ms - firstTimeTic).append("\n");;
+                String s = floatFormats.get().format((float)v);
                 sb.append("r").append(s).append(" *").append("\n");
 
                 ps.print(sb.toString());

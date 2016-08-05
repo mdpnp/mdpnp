@@ -38,37 +38,6 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
             log.error("firing data sample event", e);
         }
 
-        /*
-        Number[] values = fx.getValues();
-        Date presentationTime = fx.getPresentation_time();
-        long baseTime = presentationTime.getTime();
-
-        final int sz = values.length;
-        if (0 < fx.getFrequency()) {
-            int msPerSample = (int) (1000 / fx.getFrequency());
-            for (int j = 0; j < sz; j++) {
-                long tm = baseTime - (sz - j) * msPerSample;
-                float value = values[j].floatValue();
-
-                if (log.isTraceEnabled())
-                    log.trace(dateFormats.get().format(new Date(tm)) + " " + fx.getMetric_id() + "=" + value);
-
-                Value v = toValue(fx.getUnique_device_identifier(), fx.getMetric_id(), fx.getInstance_id(), tm, value);
-                Patient patient = resolvePatient(v.getUniqueDeviceIdentifier());
-                NumericsDataCollector.NumericSampleEvent ev = new NumericsDataCollector.NumericSampleEvent(patient, v);
-                try {
-                    fireDataSampleEvent(ev);
-                } catch (Exception e) {
-                    log.error("firing data sample event", e);
-                }
-
-            }
-        } else {
-            log.warn("Invalid frequency " + fx.getFrequency() +
-                    " for " + fx.getUnique_device_identifier() + " " +
-                    fx.getMetric_id() + " " + fx.getInstance_id());
-        }
-        */
     }
 
     public SampleArrayDataCollector(SampleArrayFxList sampleArrayList) {
@@ -120,6 +89,37 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
         }
     };
 
+    public static class ArrayToNumeric {
+
+        public interface Handler {
+            void handle(DataCollector.DataSampleEvent evt, long ms, double v) throws Exception;
+        }
+
+        public static void convert(SampleArrayDataCollector.SampleArrayEvent evt, Handler h) throws Exception {
+
+            Number[] values = evt.getValues();
+            long baseTime = evt.getDevTime();
+
+            final int sz = values.length;
+            if (0 < evt.getFrequency()) {
+                int msPerSample = (int) (1000 / evt.getFrequency());
+                for (int j = 0; j < sz; j++) {
+                    long tm = baseTime - (sz - j) * msPerSample;
+                    float value = values[j].floatValue();
+
+                    if (log.isTraceEnabled())
+                        log.trace(DataCollector.dateFormats.get().format(new Date(tm)) + " " + evt.getMetricId() + "=" + value);
+
+                    h.handle(evt, tm, value);
+                }
+            } else {
+                log.warn("Invalid frequency " + evt.getFrequency() +
+                        " for " + evt.getUniqueDeviceIdentifier() + " " +
+                        evt.getMetricId() + " " + evt.getInstanceId());
+            }
+        }
+
+    }
     @SuppressWarnings("serial")
     public static class SampleArrayEvent extends DataCollector.DataSampleEvent {
 
@@ -150,8 +150,30 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
         public int getInstanceId() {
             return data.getInstance_id();
         }
-        public Number[] getValue() {
+        public Number[] getValues() {
             return value;
         }
+        public long getFrequency() {
+            return data.getFrequency();
+        }
+    }
+
+    static SampleArrayEvent toEvent(String dev, String metric, int instance_id, long tMs, Double[] val) {
+        SampleArrayFx v  = toValue(dev, metric, instance_id, new Date(tMs), val);
+        SampleArrayEvent evt = new SampleArrayEvent(v);
+        return evt;
+    }
+
+    static SampleArrayFx toValue(String dev, String metric, int instance_id, Date tMs, Double[] val) {
+        SampleArrayFx v = new SampleArrayFx();
+        v.setUnique_device_identifier(dev);
+        v.setMetric_id(metric);
+        v.setInstance_id(instance_id);
+        v.setSource_timestamp(tMs);
+        v.setDevice_time(tMs);
+        v.setPresentation_time(tMs);
+        v.setFrequency(val.length);
+        v.valuesProperty().setValue(val);
+        return v;
     }
 }

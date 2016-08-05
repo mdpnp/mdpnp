@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.export;
 
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -48,6 +49,28 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         valueFormat.setMinimumFractionDigits(2);
     }
 
+    // scientific notation, three decimal places, one exponent digit
+    private static DecimalFormat scientificFormat = new DecimalFormat("0.000E0");
+
+    static String toCSVLine(SampleArrayDataCollector.SampleArrayEvent value) {
+        StringBuilder sb = new StringBuilder();
+
+        long ms = value.getDevTime();
+        String devTime = dateFormats.get().format(new Date(ms));
+        Number v[] = value.getValues();
+
+        sb.append(value.getUniqueDeviceIdentifier()).append(",")
+                .append(value.getMetricId()).append(",")
+                .append(value.getInstanceId()).append(",")
+                .append(devTime).append(",").append(v.length);
+
+        for(Number n : v) {
+            sb.append(",").append(scientificFormat.format(n.doubleValue()));
+        }
+
+        return sb.toString();
+    }
+
     static String toCSVLine(NumericsDataCollector.NumericSampleEvent value) {
         StringBuilder sb = new StringBuilder();
 
@@ -57,7 +80,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         sb.append(value.getUniqueDeviceIdentifier()).append(",")
             .append(value.getMetricId()).append(",")
             .append(value.getInstanceId()).append(",")
-            .append(devTime).append(",")
+            .append(devTime).append(",").append(1).append(",")
             .append(valueFormat.format(value.getValue()));
 
         return sb.toString();
@@ -65,7 +88,12 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
+        String s = toCSVLine(evt);
+        cat.info(s);
+    }
 
+    @Subscribe
+    public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
         String s = toCSVLine(evt);
         cat.info(s);
     }

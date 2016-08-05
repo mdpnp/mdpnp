@@ -46,6 +46,7 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
         public abstract String getUniqueDeviceIdentifier();
         public abstract String getMetricId();
         public abstract int getInstanceId();
+        public abstract long getDevTime();
     }
 
 

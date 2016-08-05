@@ -4,13 +4,18 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Date;
 
 import com.google.common.eventbus.Subscribe;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbcPersister extends DataCollectorAppFactory.PersisterUIController {
+
+    private static final Logger log = LoggerFactory.getLogger(JdbcPersister.class);
 
     private Connection conn = null;
     private PreparedStatement ps = null;
@@ -18,14 +23,14 @@ public class JdbcPersister extends DataCollectorAppFactory.PersisterUIController
     @FXML TextField fDriver, fURL, fUser;
     @FXML PasswordField fPassword;
 
-    public void persist(NumericsDataCollector.NumericSampleEvent value) throws Exception {
+    public void persist(DataCollector.DataSampleEvent value, long ms, double v) throws Exception {
 
         if(ps != null) {
             ps.setString   (1, value.getUniqueDeviceIdentifier());
             ps.setString   (2, value.getMetricId());
             ps.setInt      (3, value.getInstanceId());
-            ps.setTimestamp(4, new java.sql.Timestamp(value.getDevTime()));
-            ps.setDouble   (5, value.getValue());
+            ps.setTimestamp(4, new java.sql.Timestamp(ms));
+            ps.setDouble   (5, v);
 
             ps.execute();
 
@@ -35,7 +40,14 @@ public class JdbcPersister extends DataCollectorAppFactory.PersisterUIController
 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
-        persist(evt);
+        persist(evt, evt.getDevTime(), evt.getValue());
+    }
+
+    @Subscribe
+    public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+        SampleArrayDataCollector.ArrayToNumeric.convert(evt, (DataCollector.DataSampleEvent meta, long ms, double v)->{
+            persist(meta, ms, v);
+        });
     }
 
     static void createSchema(Connection conn) throws SQLException {
