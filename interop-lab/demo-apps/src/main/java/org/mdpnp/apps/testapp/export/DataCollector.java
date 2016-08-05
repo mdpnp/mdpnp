@@ -38,9 +38,13 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
             return (Patient)getSource();
         }
 
+        public String getPatientId() {
+            return ((Patient)getSource()).mrn;
+        }
+
         protected static Patient UNDEFINED = new Patient();
         static {
-            UNDEFINED.mrn="UNDEFIEND";
+            UNDEFINED.mrn="UNDEFINED";
         }
 
         public abstract String getUniqueDeviceIdentifier();

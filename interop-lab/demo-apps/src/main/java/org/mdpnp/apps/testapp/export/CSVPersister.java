@@ -58,11 +58,12 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         long ms = value.getDevTime();
         String devTime = dateFormats.get().format(new Date(ms));
         Number v[] = value.getValues();
+        String mrn = value.getPatientId();
 
         sb.append(value.getUniqueDeviceIdentifier()).append(",")
                 .append(value.getMetricId()).append(",")
                 .append(value.getInstanceId()).append(",")
-                .append(devTime).append(",").append(v.length);
+                .append(devTime).append(",").append(mrn).append(",").append(v.length);
 
         for(Number n : v) {
             sb.append(",").append(scientificFormat.format(n.doubleValue()));
@@ -76,11 +77,12 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
         long ms = value.getDevTime();
         String devTime = dateFormats.get().format(new Date(ms));
+        String mrn = value.getPatientId();
 
         sb.append(value.getUniqueDeviceIdentifier()).append(",")
             .append(value.getMetricId()).append(",")
             .append(value.getInstanceId()).append(",")
-            .append(devTime).append(",").append(1).append(",")
+            .append(devTime).append(",").append(mrn).append(",").append(1).append(",")
             .append(valueFormat.format(value.getValue()));
 
         return sb.toString();

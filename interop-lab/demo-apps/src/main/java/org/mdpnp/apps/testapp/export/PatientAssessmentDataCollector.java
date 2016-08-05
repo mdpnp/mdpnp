@@ -1,6 +1,5 @@
 package org.mdpnp.apps.testapp.export;
 
-import himss.PatientAssessment;
 import ice.Patient;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -9,6 +8,11 @@ import javafx.util.Callback;
 import org.mdpnp.apps.fxbeans.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -88,8 +92,8 @@ public class PatientAssessmentDataCollector extends DataCollector<PatientAssessm
     public static class PatientAssessmentEvent extends DataCollector.DataSampleEvent {
 
         private final long      time;
-        private final double    value;
-        private final PatientAssessmentFx data;
+        private final Map.Entry<String,String> value;
+        private final PatientAssessmentFx   data;
 
         public PatientAssessmentEvent(PatientAssessmentFx data) {
             this(UNDEFINED, data);
@@ -98,8 +102,8 @@ public class PatientAssessmentDataCollector extends DataCollector<PatientAssessm
         public PatientAssessmentEvent(Patient p, PatientAssessmentFx v) {
             super(p);
             data = v;
-            value = 0; //data.getValue();
-            time = 0; //data.getDevice_time().getTime();
+            value = data.getAssessments().get(0);
+            time = data.getDate_and_time().getTime();
         }
 
         public String getUniqueDeviceIdentifier() {
@@ -114,9 +118,42 @@ public class PatientAssessmentDataCollector extends DataCollector<PatientAssessm
         public int getInstanceId() {
             return 0;
         }
-        public double getValue() {
+        public Map.Entry<String,String> getValue() {
             return value;
         }
     }
 
+    static PatientAssessmentEvent toEvent(String operatorId, long tMs, final String metric, final String txt) {
+        PatientAssessmentFx v  = toValue(operatorId, new Date(tMs), metric, txt);
+        PatientAssessmentEvent evt = new PatientAssessmentEvent(v);
+        return evt;
+    }
+
+    static PatientAssessmentFx toValue(String operatorId, Date tMs, final String metric, final String txt) {
+
+        PatientAssessmentFx v = new PatientAssessmentFx();
+        v.setDate_and_time(tMs);
+        v.setOperator_id(operatorId);
+
+        List<Map.Entry<String,String>> l = new ArrayList<>();
+        Map.Entry<String,String> ae = new Map.Entry<String,String>()
+        {
+            @Override
+            public String getKey() {
+                return metric;
+            }
+            @Override
+            public String getValue() {
+                return txt;
+            }
+            @Override
+            public String setValue(String value) {
+                return txt;
+            }
+        };
+
+        l.add(ae);
+        v.setAssessments(l);
+        return v;
+    }
 }
