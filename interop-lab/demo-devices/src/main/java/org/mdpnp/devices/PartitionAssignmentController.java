@@ -19,61 +19,14 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @ManagedResource(description="Partition Assignment Controller")
 public class PartitionAssignmentController implements MDSHandler.Objective.MDSListener {
 
     private static final Logger log = LoggerFactory.getLogger(PartitionAssignmentController.class);
-
-    private long lastPartitionFileTime = 0L;
-
-    @ManagedAttribute(description="Last time partition file was checked.")
-    public long getLastPartitionFileTime() {
-        return lastPartitionFileTime;
-    }
-
-    @ManagedOperation(description="Check for partition file.")
-    public void checkForPartitionFile() {
-        File f = new File("device.partition");
-        checkForPartitionFile(f);
-    }
-
-    void checkForPartitionFile(File f) {
-
-        if (f == null || !f.exists()) {
-            // File once existed
-            if (lastPartitionFileTime != 0L) {
-                setPartition(new String[0]);
-                lastPartitionFileTime = 0L;
-            } else {
-                // No file and it never existed
-            }
-        } else if (f.canRead() && f.lastModified() > lastPartitionFileTime) {
-            try {
-                List<String> partition = readPartitionFile(f);
-                setPartition(partition.toArray(new String[0]));
-            } catch (FileNotFoundException e) {
-                log.error("Reading partition info", e);
-            } catch (IOException e) {
-                log.error("Reading partition info", e);
-            }
-
-            lastPartitionFileTime = f.lastModified();
-        }
-    }
-
-    private List<String> readPartitionFile(File f) throws IOException {
-        List<String> partition = new ArrayList<>();
-        FileReader fr = new FileReader(f);
-        BufferedReader br = new BufferedReader(fr);
-        String line = null;
-        while (null != (line = br.readLine())) {
-            if (!line.startsWith("#"))
-                partition.add(line.trim());
-        }
-        br.close();
-        return partition;
-    }
 
     @ManagedAttribute(description="DDS partitions for this device")
     public String[] getPartition() {
@@ -101,6 +54,10 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
 
     @ManagedAttribute(description="DDS partitions for this device")
     public void setPartition(String[] partition) {
+        configureQosForPartition(partition);
+    }
+
+    void configureQosForPartition(String[] partition) {
         PublisherQos pQos = new PublisherQos();
         SubscriberQos sQos = new SubscriberQos();
         publisher.get_qos(pQos);
@@ -204,4 +161,115 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
             setPartition(p);
         }
     }
+
+    @ManagedResource(description="Partition Assignment Controller")
+    public static class PersistentPartitionAssignment extends PartitionAssignmentController {
+
+        private static final long HEARTBEAT_INTERVAL = 5000L;
+
+        private final ScheduledExecutorService executor;
+        private final String partitionFileName;
+
+        private ScheduledFuture<?> heartbeatTask;
+
+        public PersistentPartitionAssignment(DeviceIdentity d) {
+            super(d);
+            this.executor = null;
+            this.partitionFileName=null;
+        }
+
+        public PersistentPartitionAssignment(ScheduledExecutorService executor, String f, DeviceIdentity d, DomainParticipant dp, EventLoop e, Publisher p, Subscriber s) {
+            super(d, dp, e, p, s);
+            this.executor = executor;
+            this.partitionFileName = f;
+            if(partitionFileName==null)
+                throw new IllegalArgumentException("Partition file name cannot be null");
+        }
+
+
+        public void start() {
+            super.start();
+            checkForPartitionFile();
+            heartbeatTask = executor.scheduleAtFixedRate(() -> checkForPartitionFile(), HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
+        }
+
+        public void shutdown() {
+            heartbeatTask.cancel(true);
+        }
+
+        private long lastPartitionFileTime = 0L;
+
+        @ManagedAttribute(description="DDS partitions for this device")
+        public void setPartition(String[] partition) {
+            super.setPartition(partition);
+            try {
+                updatePartitionFile(partition);
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to update partition file", ex);
+            }
+        }
+
+        @ManagedAttribute(description="Last time partition file was checked.")
+        public long getLastPartitionFileTime() {
+            return lastPartitionFileTime;
+        }
+
+        @ManagedOperation(description="Check for partition file.")
+        public void checkForPartitionFile() {
+            File f = new File(partitionFileName);
+            checkForPartitionFile(f);
+        }
+
+        void checkForPartitionFile(File f) {
+
+            if (f == null || !f.exists()) {
+                // File once existed
+                if (lastPartitionFileTime != 0L) {
+                    setPartition(new String[0]);
+                    lastPartitionFileTime = 0L;
+                } else {
+                    // No file and it never existed
+                }
+            } else if (f.canRead() && f.lastModified() > lastPartitionFileTime) {
+                try {
+                    List<String> partition = readPartitionFile(f);
+                    configureQosForPartition(partition.toArray(new String[0]));
+                } catch (IOException e) {
+                    log.error("Reading partition info", e);
+                }
+
+                lastPartitionFileTime = f.lastModified();
+            }
+        }
+
+        private List<String> readPartitionFile(File f) throws IOException {
+            List<String> partition = new ArrayList<>();
+            FileReader fr = new FileReader(f);
+            BufferedReader br = new BufferedReader(fr);
+            String line = null;
+            while (null != (line = br.readLine())) {
+                line = line.trim();
+                if (!line.startsWith("#") && !line.isEmpty())
+                    partition.add(line.trim());
+            }
+            br.close();
+            return partition;
+        }
+
+        private void updatePartitionFile(String[] partition) throws IOException {
+            File f = new File(partitionFileName);
+            updatePartitionFile(f, partition);
+        }
+
+        private void updatePartitionFile(File f, String[] partition) throws IOException {
+            FileOutputStream fos = new FileOutputStream(f, false);
+            PrintStream ps = new PrintStream(fos);
+            for(String p : partition) {
+                ps.println(p);
+            }
+            fos.flush();
+            fos.close();
+        }
+    }
+
 }

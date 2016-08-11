@@ -94,7 +94,7 @@ public class ConfigurationTest {
     @Test
     public void testCreateContext() throws Exception {
 
-        Configuration c = new Configuration(false, null, 1234, null, null, "");
+        Configuration c = new Configuration(false, Configuration.Application.ICE_Device_Interface, 1234, null, null, "");
 
         ApplicationContext ctx =
                 c.createContext("classpath*:/org/mdpnp/apps/testapp/ConfigurationTestContext.0.xml");

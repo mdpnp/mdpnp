@@ -163,6 +163,8 @@ public class Configuration {
         ClassPathXmlApplicationContext ctx =
                 new ClassPathXmlApplicationContext(new String[] { path }, false);
 
+        ctx.setDisplayName(getApplication().name());
+
         Properties props = getCmdLineEnv();
 
         PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();

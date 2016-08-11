@@ -94,10 +94,14 @@ public class PartitionAssignmentControllerTest {
     @Test
     public void testCheckForNoPartitionFile() {
 
-        PartitionAssignmentController controller = new PartitionAssignmentController(deviceIdentity) {
+        PartitionAssignmentController.PersistentPartitionAssignment controller = new PartitionAssignmentController.PersistentPartitionAssignment(deviceIdentity) {
+            @Override
             public void setPartition(String[] partition) {
                 Assert.assertEquals(0, partition.length);
             }
+            @Override
+            void configureQosForPartition(String[] partition) {}
+
         };
 
         controller.checkForPartitionFile(null);
@@ -109,12 +113,15 @@ public class PartitionAssignmentControllerTest {
         URL u = getClass().getResource("device.partition.0.txt");
         String f = u.getFile();
 
-        PartitionAssignmentController controller = new PartitionAssignmentController(deviceIdentity) {
+        PartitionAssignmentController.PersistentPartitionAssignment controller = new PartitionAssignmentController.PersistentPartitionAssignment(deviceIdentity) {
+            @Override
             public void setPartition(String[] partition) {
                 Assert.assertEquals(2, partition.length);
                 Assert.assertEquals("foo", partition[0]);
                 Assert.assertEquals("bar", partition[1]);
             }
+            @Override
+            void configureQosForPartition(String[] partition) {}
         };
 
         controller.checkForPartitionFile(new File(f));

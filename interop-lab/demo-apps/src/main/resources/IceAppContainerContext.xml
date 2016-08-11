@@ -8,8 +8,8 @@
                            http://www.springframework.org/schema/util
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
 
-    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="order"                         value="1"/>
+    <bean id="propertyResolver" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order"                          value="1"/>
         <property name="ignoreResourceNotFound"         value="true"/>
         <property name="ignoreUnresolvablePlaceholders" value="true"/>
         <property name="systemPropertiesModeName"       value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
@@ -17,6 +17,11 @@
             <list>
                 <value>classpath:/ice.properties</value>
             </list>
+        </property>
+        <property name="properties">
+            <util:properties>
+                <prop key="mdpnp.partition.file"></prop>
+            </util:properties>
         </property>
     </bean>    
 

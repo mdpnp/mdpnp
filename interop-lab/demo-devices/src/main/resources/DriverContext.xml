@@ -21,6 +21,16 @@
     <property name="threadGroupName" value="driverTaskExecutor"/>
   </bean>
 
+  <!--
+  This is probably the most spring-involved part of codebase: we want to have one spring configuration
+  for all devices - all components are the same with the exception of the driver itself. The
+  driver is being created via the factory pattern. The factory has a setDriverProvider
+  API that will get called from the bootstap handler of the standalone application or from the
+  gui drop down when user selects the proper device type. The trick is to take the
+  DeviceDriverProvider object that is passed down and inject it into this instance of
+  AbstractDeviceFactory. See org.mdpnp.devices.SpringLoadedDriver for more info on initialization
+  steps.
+  -->
   <bean id="driver"
         class="org.mdpnp.devices.DeviceDriverProvider.AbstractDeviceFactory"
         destroy-method="shutdown">
@@ -32,53 +42,26 @@
     <property name="targetMethod" value="getDeviceIdentity"/>
   </bean>
 
-
-  <bean id="partition" class="org.mdpnp.devices.PartitionAssignmentController"
-        init-method="start"
-        destroy-method="shutdown">
-    <constructor-arg ref="deviceIdentity"></constructor-arg>
-    <constructor-arg ref="domainParticipant"></constructor-arg>
-    <constructor-arg ref="eventLoop"></constructor-arg>
-    <constructor-arg ref="publisher"></constructor-arg>
-    <constructor-arg ref="subscriber"></constructor-arg>
+  <bean id="partition" class="org.mdpnp.devices.PartitionAssignmentControllerFactory">
+    <constructor-arg ref="taskExecutor"/>
+    <constructor-arg ref="deviceIdentity"/>
+    <constructor-arg ref="domainParticipant"/>
+    <constructor-arg ref="eventLoop"/>
+    <constructor-arg ref="publisher"/>
+    <constructor-arg ref="subscriber"/>
+    <constructor-arg value="${mdpnp.partition.file}"/>
   </bean>
 
-  <!--  TODO this could use the TimeManagerFactory bean -->
-  <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
-        init-method="start"
-        destroy-method="stop">
-    <constructor-arg ref="taskExecutor"></constructor-arg>
-    <constructor-arg ref="eventLoop"></constructor-arg>
-    <constructor-arg ref="publisher"></constructor-arg>
-    <constructor-arg ref="subscriber"></constructor-arg>
-    <constructor-arg ref="deviceIdentity"></constructor-arg>
-    <!--  The last argument here puts the TimeManager into emitting mode; otherwise it is passive -->
-    <constructor-arg type="java.lang.String"><value>Device</value></constructor-arg>
-  </bean>
-
-  <!-- ================================================================================================- -->
-
-  <bean id="checkForPartitionFileInvoker" class="org.springframework.scheduling.support.MethodInvokingRunnable">
-    <property name="targetObject" ref="partition" />
-    <property name="targetMethod" value="checkForPartitionFile" />
-  </bean>
-
-  <bean id="checkForPartitionFileSchedule" class="org.springframework.scheduling.concurrent.ScheduledExecutorTask">
-    <property name="runnable" ref="checkForPartitionFileInvoker" />
-    <property name="period"   value="60000" />
-    <property name="delay"    value="60000" />
-  </bean>
-
-  <!-- ================================================================================================- -->
-
-  <bean id="timerFactory" class="org.springframework.scheduling.concurrent.ScheduledExecutorFactoryBean">
-    <property name="scheduledExecutorTasks">
-      <list>
-        <ref bean="checkForPartitionFileSchedule" />
-      </list>
+  <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true">
+    <property name="executor"   ref="taskExecutor"/>
+    <property name="eventLoop"  ref="eventLoop"/>
+    <property name="publisher"  ref="publisher" />
+    <property name="subscriber" ref="subscriber" />
+    <property name="uniqueDeviceIdentifier" value="#{deviceIdentity.unique_device_identifier}"/>
+    <property name="type">
+      <value type="java.lang.String">Device</value>
     </property>
   </bean>
-
 
   <!-- ================================================================================================- -->
 
