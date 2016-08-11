@@ -218,11 +218,7 @@ public class DemoPanel implements Runnable {
                                 da.init();
                                 da.connect();
                                 Platform.runLater(()->deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da));
-                                
-                                ice.MDSConnectivityObjective obj = new ice.MDSConnectivityObjective();
-                                obj.unique_device_identifier = da.getDevice().getUniqueDeviceIdentifier();
-                                obj.partition = partition.isEmpty() ? "" : partition.get(0);
-                                mdsHandler.publish(obj);
+
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);
                             }
