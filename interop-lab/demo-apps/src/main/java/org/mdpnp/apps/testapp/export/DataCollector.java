@@ -11,6 +11,7 @@ import javax.swing.event.EventListenerList;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,11 +76,14 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
     public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
 
-        if(c.partition.startsWith("MRN=")) {
-            log.info("udi " + c.unique_device_identifier + " is " + c.partition.substring(4, c.partition.length()));
+        if(PartitionAssignmentController.isMRNPartition(c.partition)) {
+
+            String mrn=PartitionAssignmentController.toMRN(c.partition);
+
+            log.info("udi " + c.unique_device_identifier + " is " + mrn);
 
             Patient p = new Patient();
-            p.mrn = c.partition.substring(4, c.partition.length());
+            p.mrn = mrn;
             deviceUdiToPatientMRN.put(c.unique_device_identifier, p);
         }
     }

@@ -32,6 +32,7 @@ import org.mdpnp.apps.testapp.validate.ValidationOracle;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.ListenerList;
 import org.slf4j.Logger;
@@ -478,10 +479,11 @@ public class HL7Emitter implements MDSListener, Runnable {
     @Override
     public void handleDataSampleEvent(MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
-        
-        if(c.partition.startsWith("MRN=")) {
-            log.info("udi " + c.unique_device_identifier + " is " + c.partition.substring(4, c.partition.length()));
-            deviceUdiToPatientMRN.put(c.unique_device_identifier, c.partition.substring(4, c.partition.length()));
+
+        if(PartitionAssignmentController.isMRNPartition(c.partition)) {
+            String mrn=PartitionAssignmentController.toMRN(c.partition);
+            log.info("udi " + c.unique_device_identifier + " is " + mrn);
+            deviceUdiToPatientMRN.put(c.unique_device_identifier, mrn);
         }
     }
     

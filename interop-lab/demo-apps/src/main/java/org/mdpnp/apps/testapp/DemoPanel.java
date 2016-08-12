@@ -37,6 +37,7 @@ import javafx.scene.layout.BorderPane;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -85,9 +86,9 @@ public class DemoPanel implements Runnable {
 
     public DemoPanel setModel(final ObservableList<PatientInfo> patients) {
         final ObservableList<PatientInfo> combined = FXCollections.observableArrayList();
-        PatientInfo nobody = new PatientInfo("", "", "<Unassigned>", PatientInfo.Gender.M, new Date());
+        PatientInfo nobody = new PatientInfo("", "", "<Unassigned>", PatientInfo.Gender.U, new Date());
         combined.add(nobody);
-        combined.add(new PatientInfo("*", "", "<Anybody>", PatientInfo.Gender.M, new Date()));
+        combined.add(new PatientInfo("*", "", "<Anybody>", PatientInfo.Gender.U, new Date()));
         patients.forEach((x)->combined.add(x));
         
         patients.addListener(new ListChangeListener<PatientInfo>() {
@@ -245,7 +246,8 @@ public class DemoPanel implements Runnable {
             if("".equals(pi.getMrn())||"*".equals(pi.getMrn())) {
                 partitions.add(pi.getMrn());
             } else {
-                partitions.add("MRN="+pi.getMrn());
+                String s = PartitionAssignmentController.toPartition(pi.getMrn());
+                partitions.add(s);
             }
             partitionChooserModel.set(partitions);
         }
