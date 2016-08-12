@@ -80,7 +80,7 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
 
             String mrn=PartitionAssignmentController.toMRN(c.partition);
 
-            log.info("udi " + c.unique_device_identifier + " is " + mrn);
+            log.info("udi " + c.unique_device_identifier + " is MRN=" + mrn);
 
             Patient p = new Patient();
             p.mrn = mrn;

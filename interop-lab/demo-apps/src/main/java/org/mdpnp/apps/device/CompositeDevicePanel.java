@@ -28,6 +28,7 @@ import javafx.scene.layout.Priority;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
+import org.mdpnp.apps.testapp.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,14 +229,17 @@ public class CompositeDevicePanel extends BorderPane {
         this.deviceMonitor = deviceMonitor;
         reset();
         if (null != this.deviceMonitor) {
-            manufacturer.textProperty().bind(deviceMonitor.getDevice().manufacturerProperty());
-            model.textProperty().bind(deviceMonitor.getDevice().modelProperty());
-            serial_number.textProperty().bind(deviceMonitor.getDevice().serial_numberProperty());
-            unique_device_identifier.textProperty().set(deviceMonitor.getDevice().getUDI());
-            connectionState.textProperty().bind(Bindings.concat(deviceMonitor.getDevice().connectivityStateProperty()).concat(" (").concat(deviceMonitor.getDevice().connectivityInfoProperty()).concat(")"));
-            operating_system.textProperty().bind(deviceMonitor.getDevice().operating_systemProperty());
-            build.textProperty().bind(deviceMonitor.getDevice().buildProperty());
-            host_name.textProperty().bind(deviceMonitor.getDevice().hostnameProperty());
+
+            Device d = deviceMonitor.getDevice();
+
+            manufacturer.textProperty().bind(d.manufacturerProperty());
+            model.textProperty().bind(d.modelProperty());
+            serial_number.textProperty().bind(d.serial_numberProperty());
+            unique_device_identifier.textProperty().set(d.getUDI());
+            connectionState.textProperty().bind(Bindings.concat(d.connectivityStateProperty()).concat(" (").concat(d.connectivityInfoProperty()).concat(")"));
+            operating_system.textProperty().bind(d.operating_systemProperty());
+            build.textProperty().bind(d.buildProperty());
+            host_name.textProperty().bind(d.hostnameProperty());
 
             deviceMonitor.getNumericModel().addListener(numericListener);
             deviceMonitor.getNumericModel().forEach((fx)->numeric(fx));
