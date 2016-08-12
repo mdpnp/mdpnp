@@ -28,6 +28,16 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
 
     private static final Logger log = LoggerFactory.getLogger(PartitionAssignmentController.class);
 
+    public static String toPartition(String s) {
+        return s.startsWith("MRN=") ? s : ("MRN=" + s);
+    }
+    public static String toMRN(String s) {
+        return s.startsWith("MRN=") ? s.substring(4, s.length()) : s;
+    }
+    public static boolean isMRNPartition(String s) {
+        return s.startsWith("MRN=");
+    }
+
     @ManagedAttribute(description="DDS partitions for this device")
     public String[] getPartition() {
         PublisherQos pQos = new PublisherQos();

@@ -33,7 +33,14 @@
         <constructor-arg ref="eventLoop" />
         <constructor-arg ref="wildcardSubscriber" />
         <constructor-arg ref="wildcardTimeManager" />
-    </bean>    
+    </bean>
+
+    <bean id="wildcardMdsConnectivity"
+          class="org.mdpnp.devices.MDSHandler"
+          destroy-method="shutdown">
+        <constructor-arg ref="eventLoop"/>
+        <constructor-arg ref="wildcardDomainParticipant" />
+    </bean>
 
     <!--
     Controller that would know which beans from the contest to lookup when
@@ -55,7 +62,7 @@
 
         <property name="emr"                 ref="emr"/>
         <property name="deviceListDataModel" ref="wildcardDeviceListModel"/>
-        <property name="mdsConnectivity"     ref="mdsConnectivity"/>
+        <property name="mdsConnectivity"     ref="wildcardMdsConnectivity"/>
     </bean>
 
     <!--

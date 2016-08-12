@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp.patient;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import ice.MDSConnectivity;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -25,10 +27,13 @@ import javafx.util.Callback;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public class PatientInfoController implements ListChangeListener<Device>, MDSHandler.Connectivity.MDSListener {
@@ -50,6 +55,8 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
     protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
+
+    private   Cache<String, String> pendingAssociations = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build();
 
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
@@ -108,13 +115,31 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         deviceListModel.remove(d);
     }
 
+    void addDeviceAssociation(Device d, String p) {
+
+        if(d==null) throw new IllegalArgumentException("Null device passed for association");
+        if(p==null) throw new IllegalArgumentException("Null partition passed for association");
+
+        String mrn = PartitionAssignmentController.toMRN(p);
+
+        // passing device as 3rd argument will create transient patient info objects based on the
+        // device information. Passing null will only lookup existing patients
+        // and will not handle devices assigned to unknown partitions.
+        //
+        PatientInfo pi = findPatient(mrn, patientView.getItems(), d);
+        if (pi != null)
+            addDeviceAssociation(d, pi);
+        else
+            log.warn("No patient found for " + p);
+    }
+
     private DevicePatientAssociation associate(Device d, PatientInfo p)  {
 
         DevicePatientAssociation dpa = emr.updateDevicePatientAssociation(new DevicePatientAssociation(d, p));
 
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = "MRN="+p.getMrn();
+        mds.partition = PartitionAssignmentController.toPartition(p.getMrn());
         mdsConnectivity.publish(mds);
 
         return dpa;
@@ -122,10 +147,18 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     public void handleDeviceLifecycleEvent(Device d, boolean added)  {
 
-        if(added && !inUse(d))
+        if(added && !inUse(d)) {
             deviceListModel.add(d);
-        else
+            String p = pendingAssociations.getIfPresent(d.getUDI());
+            if(p != null) {
+                pendingAssociations.invalidate(d.getUDI());
+                addDeviceAssociation(d, p);
+            }
+        }
+        else {
+            pendingAssociations.invalidate(d.getUDI());
             deviceListModel.remove(d);
+        }
     }
 
     /**
@@ -288,7 +321,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     public void proposeDeviceAssociation(Device d, PatientInfo p) {
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = "MRN="+p.getMrn();
+        mds.partition = PartitionAssignmentController.toPartition(p.getMrn());
         mdsConnectivity.publish(mds);
     }
 
@@ -308,18 +341,21 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         deviceListDataModel.getContents().removeListener(this);
     }
 
+    /**
+     * The app will listen for all devices advertise their patient association.
+     * @param evt
+     */
     @Override
     public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
 
         MDSConnectivity state = (MDSConnectivity)evt.getSource();
         Device d = findDevice(state.unique_device_identifier, deviceView.getItems());
-        PatientInfo p = findPatient(state.partition, patientView.getItems());
-        if(d != null && p != null)
-            addDeviceAssociation(d, p);
-        else if (d == null) 
-            log.warn("No device found for " + state.unique_device_identifier);
-        else if (p == null)
-            log.warn("No patient found for " + state.partition);
+        if(d == null) {
+            pendingAssociations.put(state.unique_device_identifier, state.partition);
+        }
+        else {
+            addDeviceAssociation(d, state.partition);
+        }
     }
 
     private static Device findDevice(String uid, ObservableList<Device> items) {
@@ -330,11 +366,20 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         return null;
     }
 
-    private static PatientInfo findPatient(String partition, ObservableList<PatientInfo> items) {
+
+
+    private static PatientInfo findPatient(String mrn, ObservableList<PatientInfo> items, Device d) {
         for (PatientInfo item : items) {
-            if(("MRN="+item.getMrn()).equals(partition))
+            if(mrn.equals(item.getMrn()))
                 return item;
         }
+
+        if(d != null) {
+            PatientInfo pi = new PatientInfo(mrn, d.getHostname(), "Unknown to EMR", PatientInfo.Gender.U, new Date());
+            items.add(pi);
+            return pi;
+        }
+
         return null;
     }
 
