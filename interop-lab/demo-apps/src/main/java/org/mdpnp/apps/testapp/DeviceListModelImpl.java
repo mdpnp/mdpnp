@@ -16,10 +16,9 @@ import ice.DeviceConnectivity;
 import ice.DeviceConnectivityDataReader;
 import ice.DeviceIdentity;
 import ice.DeviceIdentityDataReader;
-import ice.HeartBeat;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -54,65 +53,30 @@ import com.rti.dds.subscription.Subscriber;
  * instances of DeviceIdentity and DeviceConnectivity do not generate a new ALIVE notification
  * when connection to a remote participant is re-established.  Devices continually re-publishing
  * this information would add even more bandwidth consumption over and above participant assertion
- * @author Jeff Plourde 
+ *
+ * That said, if we never get DeviceIdentity message, there is not much we can do with the
+ * broken/half filled device object so we might as well not know about it. So, if we cannot
+ * look up the device, ALL important messages that are not heart-beats are kept around until (and
+ * if) we get a real identity update. Once that happens, the pending data is applied to the device
+ * object. The heart-beats for unresolved devices are dropped as they will come again at some
+ * point in the future. We loose a bit on memory footprint, but the external interactions are much
+ * more strait-forward.
+ *
+ * @author Jeff Plourde, Mike Feinberg
  *
  */
-public class DeviceListModelImpl 
-    implements TimeManagerListener, DeviceListModel {
+public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel {
     
     @Override
     public Device getByUniqueDeviceIdentifier(String udi) {
-        return getByUniqueDeviceIdentifier(udi, false);
+        return findDevice(udi);
     }
-    
-    private Device getByUniqueDeviceIdentifier(String udi, boolean create) {
-        if(!Platform.isFxApplicationThread()) {
-            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
-        }
-        
-        if(null == udi) {
-            return null;
-        }
-        for(Device d : contents) {
-            if(udi.equals(d.getUDI())) {
-                return d;
-            }
-        }
-        for(Device d : recycledContents) {
-            if(udi.equals(d.getUDI())) {
-                if(create) {
-                    log.debug("Resurrected " + udi);
-                    contents.add(0, d);
-                }
-                return d;
-            }
-        }
-        // Add an inactive placeholder
-        Device d = new Device(udi);
-        if(create) {
-            contents.add(d);
-        } else {
-            recycledContents.add(d);
-        }
-        return d;
-    }
-    
+
     @Override
     public ObservableList<Device> getContents() {
         return contents;
     }
-    
-    private final Device getDevice(final String udi, final boolean create) {
-        if(!Platform.isFxApplicationThread()) {
-            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
-        }
-        if(null == udi) {
-            log.warn("Cannot create device with null udi");
-            return null;
-        }
-        return getByUniqueDeviceIdentifier(udi, create);
-    }
-    
+
     protected void notADevice(String unique_device_identifier, boolean alive) {
         
     }
@@ -122,7 +86,9 @@ public class DeviceListModelImpl
         if("Device".equals(type)) {
             Platform.runLater(new Runnable() {
                 public void run() {
-                      getDevice(unique_device_identifier, true).setHostname(host_name);
+                    Device d = findDevice(unique_device_identifier);
+                    if(d != null)
+                        d.setHostname(host_name);
                 }
             });
       } else {
@@ -137,7 +103,9 @@ public class DeviceListModelImpl
             log.debug(unique_device_identifier + " IS NO LONGER ALIVE");
             Platform.runLater(new Runnable() {
                 public void run() {
-                    remove(getDevice(unique_device_identifier, false));
+                    Device d = findDevice(unique_device_identifier);
+                    if(d != null)
+                        deactivateDevice(d);
                 }
             });
             
@@ -149,54 +117,66 @@ public class DeviceListModelImpl
     
     @Override
     public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
-//        log.trace(remote_udi + " has latency="+latency+" and clockDifference="+clockDifference);
-        final long clockDifference1 = 1000L * clockDifference.sec + clockDifference.nanosec / 1000000L;
-        final long roundtripLatency1 = 1000L * latency.sec + latency.nanosec / 1000000L;
+        final long clockDifferenceMs = 1000L * clockDifference.sec + clockDifference.nanosec / 1000000L;
+        final long roundtripLatencyMs = 1000L * latency.sec + latency.nanosec / 1000000L;
         Platform.runLater(new Runnable() {
             public void run() {
-                Device device = getDevice(remote_udi, false);
+                Device device = findDevice(remote_udi);
                 if(null != device) {
-                    device.setClockDifference(clockDifference1);
-                    device.setRoundtripLatency(roundtripLatency1);
+                    device.setClockDifference(clockDifferenceMs);
+                    device.setRoundtripLatency(roundtripLatencyMs);
                 }
+                else
+                    pendingSynchronization.put(remote_udi, new SynchronizationData(clockDifferenceMs, roundtripLatencyMs));
             }
         });
 
     }
-    
-    private final void update(final DeviceConnectivity dc) {
+
+    private static class SynchronizationData {
+        final long clockDifference;
+        final long roundtripLatency;
+
+        public SynchronizationData(long clockDifference, long roundtripLatency) {
+            this.clockDifference = clockDifference;
+            this.roundtripLatency = roundtripLatency;
+        }
+    }
+
+    private void update(final DeviceConnectivity deviceConnectivity) {
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
-        final ice.DeviceConnectivity dc1 = new ice.DeviceConnectivity(dc);
+        final ice.DeviceConnectivity dc = new ice.DeviceConnectivity(deviceConnectivity);
         Platform.runLater(new Runnable() {
             public void run() {
-                Device device = getDevice(dc1.unique_device_identifier, true);
-                device.setDeviceConnectivity(dc1);
+                Device device = findDevice(dc.unique_device_identifier);
+                if(device != null)
+                    device.setDeviceConnectivity(dc);
+                else
+                    pendingDeviceConnectivity.put(dc.unique_device_identifier, dc);
             }
         });
     }
 
-    private final void update(final DeviceIdentity di, final ParticipantBuiltinTopicData data) {
+    private void update(final DeviceIdentity di, final ParticipantBuiltinTopicData data) {
         
         if (!eventLoop.isCurrentServiceThread()) {
             throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
         }
-        final ice.DeviceIdentity di1 = new ice.DeviceIdentity(di);
-        final ParticipantBuiltinTopicData data1 = new ParticipantBuiltinTopicData();
-        data1.copy_from(data);
-        
+        final ice.DeviceIdentity identity = new ice.DeviceIdentity(di);
+        final String hostname = TimeManager.getHostname(data);
+
         Platform.runLater(new Runnable() {
             public void run() {
-                Device device = getDevice(di1.unique_device_identifier, true); 
-                device.setDeviceIdentity(di1, data1);
+                createOrUpdateDevice(identity.unique_device_identifier, identity, hostname);
             }
         });
     }
 
     
     
-    private final void remove(final Device device) {
+    private void deactivateDevice(final Device device) {
         if(!Platform.isFxApplicationThread()) {
             throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
         }
@@ -207,13 +187,89 @@ public class DeviceListModelImpl
         }
         
         contents.remove(device);
-        recycledContents.add(device);
+        recycledContents.put(device.getUDI(), device);
     }
-    
+
+    private Device findDevice(final String udi) {
+
+        if(!Platform.isFxApplicationThread()) {
+            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
+        }
+
+        if(null == udi) {
+            throw new IllegalArgumentException("Missing devive id");
+        }
+
+        for(Device d : contents) {
+            if(udi.equals(d.getUDI())) {
+                return d;
+            }
+        }
+
+        Device d = recycledContents.get(udi);
+        return d;
+    }
+
+    private Device createOrUpdateDevice(String udi, ice.DeviceIdentity data, String hostName) {
+
+        if(!Platform.isFxApplicationThread()) {
+            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
+        }
+
+        // first look for the device on the list of active entities.
+        //
+        boolean isActiveContent=false;
+        Device device = null;
+        for(Device d : contents) {
+            if(udi.equals(d.getUDI())) {
+                device=d;
+                isActiveContent=true;
+                break;
+            }
+        }
+
+        // maybe it was deactivated?
+        //
+        if(device==null)
+            device = recycledContents.remove(udi);
+
+        // must be a new one
+        //
+        if(device == null)
+            device = new Device(udi);
+
+        // now fill in all the available information about the entity
+        //
+        device.setDeviceIdentity(data, hostName);
+
+        DeviceConnectivity dc = pendingDeviceConnectivity.remove(udi);
+        if (dc != null) {
+            device.setDeviceConnectivity(dc);
+        }
+
+        SynchronizationData sd = pendingSynchronization.remove(udi);
+        if(sd != null) {
+            device.setClockDifference(sd.clockDifference);
+            device.setRoundtripLatency(sd.roundtripLatency);
+        }
+
+        // at the very end we can add the fully populated object to the observable list
+        //
+        if(!isActiveContent)
+            contents.add(0, device);
+
+        return device;
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DeviceListModelImpl.class);
 
-    protected final List<Device> recycledContents = new ArrayList<Device>();
-    protected final ObservableList<Device> contents = FXCollections.observableArrayList(new Callback<Device, Observable[]>() {
+
+    private final Map<String, SynchronizationData> pendingSynchronization = new HashMap<>();
+    private final Map<String, DeviceConnectivity> pendingDeviceConnectivity = new HashMap<>();
+
+    private final Map<String, Device> recycledContents = new HashMap<>();
+
+    private final ObservableList<Device> contents = FXCollections.observableArrayList(new Callback<Device, Observable[]>() {
 
         @Override
         public Observable[] call(Device param) {
@@ -224,9 +280,9 @@ public class DeviceListModelImpl
 
     private final Subscriber subscriber;
     private final EventLoop eventLoop;
-    protected DeviceIdentityInstanceModel idModel;
-    protected DeviceConnectivityInstanceModel connModel;
-    protected final TimeManager timeManager;
+    private DeviceIdentityInstanceModel idModel;
+    private DeviceConnectivityInstanceModel connModel;
+    private final TimeManager timeManager;
 
     @Override
     public void start() {

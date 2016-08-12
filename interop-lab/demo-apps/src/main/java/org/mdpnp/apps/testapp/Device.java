@@ -30,7 +30,6 @@ import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 
 import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
-import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,7 +211,7 @@ public class Device {
         return udi;
     }
 
-    public void setDeviceIdentity(final DeviceIdentity deviceIdentity, ParticipantBuiltinTopicData participantData) {
+    public void setDeviceIdentity(final DeviceIdentity deviceIdentity, final String hostName) {
         if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
             manufacturerProperty().set(deviceIdentity.manufacturer);
@@ -223,7 +222,7 @@ public class Device {
             } else {
                 makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
-            hostnameProperty().set(TimeManager.getHostname(participantData));
+            hostnameProperty().set(hostName);
             operating_systemProperty().set(deviceIdentity.operating_system);
             buildProperty().set(deviceIdentity.build);
             serial_numberProperty().set(deviceIdentity.serial_number);
