@@ -33,8 +33,6 @@ import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rti.dds.domain.builtin.ParticipantBuiltinTopicData;
-
 /**
  * Convenience class for storing DeviceIdentity and DeviceConnectivity instances
  * DeviceIdentity is required, DeviceConnectivity is only relevant for
