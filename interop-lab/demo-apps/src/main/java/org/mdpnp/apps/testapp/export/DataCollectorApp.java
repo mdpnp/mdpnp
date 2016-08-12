@@ -310,9 +310,15 @@ public class DataCollectorApp implements Initializable {
 
         deviceListModel.getContents().removeListener(deviceTreeModel);
 
-        for (PersisterUIController p : supportedPersisters) {
-            dataFilter.removeDataSampleListener(p);
-            p.stop();
+        // if current persister is running, stop it now.
+        //
+        if("Stop".equals(startControl.getText()) && currentPersister != null) {
+            dataFilter.removeDataSampleListener(currentPersister);
+            try {
+                currentPersister.stop();
+            } catch (Exception e) {
+                log.error("Failed to stop active persister " +  currentPersister.getName());
+            }
         }
     }
 
