@@ -66,10 +66,19 @@ import com.rti.dds.subscription.Subscriber;
  *
  */
 public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel {
-    
+
+    /**
+     * @param udi
+     * @return device stub - will never be null, but is not guaranteed to be properly populated.
+     */
     @Override
     public Device getByUniqueDeviceIdentifier(String udi) {
-        return findDevice(udi);
+        Device device = findDevice(udi);
+        if(device==null) {
+            device = new Device(udi);
+            pendingContents.put(udi, device);
+        }
+        return device;
     }
 
     @Override
@@ -233,6 +242,9 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
         if(device==null)
             device = recycledContents.remove(udi);
 
+        if(device==null)
+            device = pendingContents.remove(udi);
+
         // must be a new one
         //
         if(device == null)
@@ -267,6 +279,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
     private final Map<String, SynchronizationData> pendingSynchronization = new HashMap<>();
     private final Map<String, DeviceConnectivity> pendingDeviceConnectivity = new HashMap<>();
 
+    private final Map<String, Device> pendingContents = new HashMap<>();
     private final Map<String, Device> recycledContents = new HashMap<>();
 
     private final ObservableList<Device> contents = FXCollections.observableArrayList(new Callback<Device, Observable[]>() {
