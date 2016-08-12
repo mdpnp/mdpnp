@@ -401,7 +401,7 @@ public interface DeviceDriverProvider {
             if(device == null)
                 throw new IllegalStateException("Cannot connect - null device");
             if (device instanceof AbstractConnectedDevice) {
-                log.info("Connecting to >" + address + "<");
+                log.info("Connecting device to address: >" + address + "<");
                 boolean b = ((AbstractConnectedDevice) device).connect(address);
                 if(b) {
                     setChanged();
