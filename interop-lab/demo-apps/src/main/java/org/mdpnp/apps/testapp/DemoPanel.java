@@ -204,8 +204,9 @@ public class DemoPanel implements Runnable {
                             }
             
                             try {
-                                // TODO this must not use the same context as the app as it messes up DDS
-                                final AbstractApplicationContext context = c.createContext("DeviceAdapterContext.xml");
+                                // This must not use the same context as the app as it messes up DDS
+                                //
+                                final AbstractApplicationContext context = c.createContext("EmbeddedDeviceAdapterContext.xml");
                                 final DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(c.getDeviceFactory(), context, false) {
                                     // intercept stop to destroy the context specific to this device
                                     public void stop() {

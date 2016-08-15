@@ -18,11 +18,6 @@
                 <value>classpath:/ice.properties</value>
             </list>
         </property>
-        <property name="properties">
-            <util:properties>
-                <prop key="mdpnp.partition.file"></prop>
-            </util:properties>
-        </property>
     </bean>    
 
     <!-- ice.properties specified via import -->
