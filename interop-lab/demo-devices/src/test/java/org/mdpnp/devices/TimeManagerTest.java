@@ -20,7 +20,6 @@ import org.mdpnp.rtiapi.qos.IceQos;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
-import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
@@ -57,36 +56,36 @@ public class TimeManagerTest {
         // Creates a heartbeating "Device" in partition A
         s1 = new SubscriberFactory(dpf1.getObject(), "A");
         p1 = new PublisherFactory(dpf1.getObject(), "A");
-        t1 = new TimeManagerFactory(executor, eventLoop, p1.getObject(), s1.getObject(), "123", "Device");
+        t1 = new TimeManager(executor, eventLoop, p1.getObject(), s1.getObject(), "123", "Device");
         
-     // Creates a TimeManager in "A" partition
+        // Creates a TimeManager in "A" partition
         s2 = new SubscriberFactory(dpf2.getObject(), "A");
         p2 = new PublisherFactory(dpf2.getObject(), "A");
-        t2 = new TimeManagerFactory(executor, eventLoop, p2.getObject(), s2.getObject(), "456", "Supervisor");
+        t2 = new TimeManager(executor, eventLoop, p2.getObject(), s2.getObject(), "456", "Supervisor");
 
         liveUdis1 = new HashSet<String>();
-        t2.getObject().addListener(listener);
+        t2.addListener(listener);
 
         
         // in wildcard partition for listen only (No Type)
         s3 = new SubscriberFactory(dpf3.getObject(), "*");
         p3 = new PublisherFactory(dpf3.getObject(), "*");
-        t3 = new TimeManagerFactory(executor, eventLoop, p3.getObject(), s3.getObject(), "456", null);
+        t3 = new TimeManager(executor, eventLoop, p3.getObject(), s3.getObject(), "456", null);
 
-        t1.getObject().start();
-        t2.getObject().start();
-        t3.getObject().start();
+        t1.start();
+        t2.start();
+        t3.start();
     }
 
     @After
     public void tearDown() throws Exception {
         
         
-        t3.destroy();
-        t2.destroy();
-        t1.destroy();
+        t3.stop();
+        t2.stop();
+        t1.stop();
         
-        t2.getObject().removeListener(listener);
+        t2.removeListener(listener);
         
         p3.destroy();
         s3.destroy();
@@ -110,7 +109,7 @@ public class TimeManagerTest {
     private DomainParticipantFactory dpf1, dpf2, dpf3;
     private SubscriberFactory s1, s2, s3;
     private PublisherFactory  p1, p2, p3;
-    private TimeManagerFactory t1, t2, t3;
+    private TimeManager t1, t2, t3;
     private Set<String> liveUdis1;
     
     private EventLoop eventLoop;
@@ -169,7 +168,7 @@ public class TimeManagerTest {
     @Test
     public void testDetectNoDevice() throws Exception {
         waitForSizeOrTimeout(1, DEFAULT_TIMEOUT, () -> assertEquals("device never found", 1, liveUdis1.size()));
-        t1.getObject().stop();
+        t1.stop();
         waitForSizeOrTimeout(0, DEFAULT_TIMEOUT, () -> assertEquals("device didn't go away", 0, liveUdis1.size()));
     }
     

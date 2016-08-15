@@ -52,15 +52,15 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
 
-    <bean id="timeManager" class="org.mdpnp.devices.TimeManagerFactory" lazy-init="true">
-      <property name="executor" ref="refreshScheduler"/>
-      <property name="eventLoop" ref="eventLoop"/>
-      <property name="publisher" ref="publisher" />
-      <property name="subscriber" ref="subscriber" />
-      <property name="uniqueDeviceIdentifier" ref="supervisorUdi" />
-      <property name="type">
-        <value type="java.lang.String">Supervisor</value>
-      </property>
+    <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
+          init-method="start"
+          destroy-method="stop">
+        <constructor-arg ref="refreshScheduler"></constructor-arg>
+        <constructor-arg ref="eventLoop"></constructor-arg>
+        <constructor-arg ref="publisher"></constructor-arg>
+        <constructor-arg ref="subscriber"></constructor-arg>
+        <constructor-arg ref="supervisorUdi"></constructor-arg>
+        <constructor-arg type="java.lang.String"><value>Supervisor</value></constructor-arg>
     </bean>
 
     <bean id="patientAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory" lazy-init="false">

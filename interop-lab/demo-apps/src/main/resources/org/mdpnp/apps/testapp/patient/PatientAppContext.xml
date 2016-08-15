@@ -19,16 +19,18 @@
         <constructor-arg ref="wildcardDomainParticipant"></constructor-arg>
         <constructor-arg><value>*</value></constructor-arg>
     </bean>
-    
-    <bean id="wildcardTimeManager" class="org.mdpnp.devices.TimeManagerFactory">
-      <property name="executor" ref="refreshScheduler"/>
-      <property name="eventLoop" ref="eventLoop"/>
-      <property name="publisher" ref="wildcardPublisher"/>
-      <property name="subscriber" ref="wildcardSubscriber"/>
-      <property name="uniqueDeviceIdentifier" ref="supervisorUdi" />
-      <!-- Omitting the type means this TimeManager will only passively monitor heartbeats -->
+
+    <bean id="wildcardTimeManager" class="org.mdpnp.devices.TimeManager"
+          init-method="start"
+          destroy-method="stop">
+        <constructor-arg ref="refreshScheduler"></constructor-arg>
+        <constructor-arg ref="eventLoop"></constructor-arg>
+        <constructor-arg ref="wildcardPublisher"></constructor-arg>
+        <constructor-arg ref="wildcardSubscriber"></constructor-arg>
+        <constructor-arg ref="supervisorUdi"></constructor-arg>
+        <!-- Omitting the type means this TimeManager will only passively monitor heartbeats -->
     </bean>
-    
+
     <bean id="wildcardDeviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory">
         <constructor-arg ref="eventLoop" />
         <constructor-arg ref="wildcardSubscriber" />
