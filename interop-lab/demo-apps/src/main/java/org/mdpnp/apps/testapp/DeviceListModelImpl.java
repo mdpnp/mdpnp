@@ -93,7 +93,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
     @Override
     public void aliveHeartbeat(final String unique_device_identifier, final String type, final String host_name) {
         if("Device".equals(type)) {
-            Platform.runLater(new Runnable() {
+            runLaterOnPlatform(new Runnable() {
                 public void run() {
                     createOrUpdateDevice(unique_device_identifier, null, host_name);
                 }
@@ -108,7 +108,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
     public void notAliveHeartbeat(final String unique_device_identifier, final String type) {
         if("Device".equals(type)) {
             log.debug(unique_device_identifier + " IS NO LONGER ALIVE");
-            Platform.runLater(new Runnable() {
+            runLaterOnPlatform(new Runnable() {
                 public void run() {
                     Device d = findDevice(unique_device_identifier);
                     if(d != null)
@@ -126,7 +126,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
     public void synchronization(String remote_udi, Duration_t latency, Duration_t clockDifference) {
         final long clockDifferenceMs = 1000L * clockDifference.sec + clockDifference.nanosec / 1000000L;
         final long roundtripLatencyMs = 1000L * latency.sec + latency.nanosec / 1000000L;
-        Platform.runLater(new Runnable() {
+        runLaterOnPlatform(new Runnable() {
             public void run() {
                 Device device = findDevice(remote_udi);
                 if(null != device) {
@@ -150,12 +150,12 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
         }
     }
 
-    private void update(final DeviceConnectivity deviceConnectivity) {
-        if (!eventLoop.isCurrentServiceThread()) {
-            throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
-        }
+    protected void update(final DeviceConnectivity deviceConnectivity) {
+
+        assertEventLoopThread();
+
         final ice.DeviceConnectivity dc = new ice.DeviceConnectivity(deviceConnectivity);
-        Platform.runLater(new Runnable() {
+        runLaterOnPlatform(new Runnable() {
             public void run() {
                 Device device = findDevice(dc.unique_device_identifier);
                 if(device != null)
@@ -167,27 +167,23 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
     }
 
     private void update(final DeviceIdentity di, final ParticipantBuiltinTopicData data) {
-        
-        if (!eventLoop.isCurrentServiceThread()) {
-            throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
-        }
+
+        assertEventLoopThread();
+
         final ice.DeviceIdentity identity = new ice.DeviceIdentity(di);
         final String hostname = TimeManager.getHostname(data);
 
-        Platform.runLater(new Runnable() {
+        runLaterOnPlatform(new Runnable() {
             public void run() {
                 createOrUpdateDevice(identity.unique_device_identifier, identity, hostname);
             }
         });
     }
 
-    
-    
     private void deactivateDevice(final Device device) {
-        if(!Platform.isFxApplicationThread()) {
-            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
-        }
-        
+
+        assertPlatformThread();
+
         if(null == device) {
             log.debug("Tried to remove a null device");
             return;
@@ -197,11 +193,9 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
         recycledContents.put(device.getUDI(), device);
     }
 
-    private Device findDevice(final String udi) {
+    final Device findDevice(final String udi) {
 
-        if(!Platform.isFxApplicationThread()) {
-            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
-        }
+        assertPlatformThread();
 
         if(null == udi) {
             throw new IllegalArgumentException("Missing devive id");
@@ -219,9 +213,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
 
     private Device createOrUpdateDevice(String udi, ice.DeviceIdentity data, String hostName) {
 
-        if(!Platform.isFxApplicationThread()) {
-            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
-        }
+        assertPlatformThread();
 
         // first look for the device on the list of active entities.
         //
@@ -271,6 +263,26 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
         return device;
     }
 
+    /**
+     * APIs to be overridden in tests.
+     */
+
+    protected void assertPlatformThread() {
+        if(!Platform.isFxApplicationThread()) {
+            throw new IllegalThreadStateException("call getDevice only from the FX App Thread");
+        }
+    }
+
+    protected void assertEventLoopThread() {
+        if (!eventLoop.isCurrentServiceThread()) {
+            throw new IllegalStateException("Not called from EventLoop service thread, instead:" + Thread.currentThread());
+        }
+    }
+
+    protected void runLaterOnPlatform(Runnable r) {
+        Platform.runLater(r);
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DeviceListModelImpl.class);
 
 
@@ -291,12 +303,13 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
 
     private final Subscriber subscriber;
     private final EventLoop eventLoop;
-    private DeviceIdentityInstanceModel idModel;
-    private DeviceConnectivityInstanceModel connModel;
+    private final DeviceIdentityInstanceModel idModel;
+    private final DeviceConnectivityInstanceModel connModel;
     private final TimeManager timeManager;
 
     @Override
     public void start() {
+        timeManager.addListener(this);
         idModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.device_identity);
         connModel.startReader(subscriber, eventLoop, QosProfiles.ice_library, QosProfiles.state);
     }
@@ -305,7 +318,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
         this.eventLoop = eventLoop;
         this.subscriber = subscriber;
         this.timeManager = timeManager;
-        timeManager.addListener(this);
+
         idModel = new DeviceIdentityInstanceModelImpl(ice.DeviceIdentityTopic.VALUE);
         connModel = new DeviceConnectivityInstanceModelImpl(ice.DeviceConnectivityTopic.VALUE);
         
@@ -315,6 +328,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
 
     @Override
     public void tearDown() {
+        timeManager.removeListener(this);
         idModel.stopReader();
         connModel.stopReader();
     }
