@@ -272,7 +272,6 @@ public class IceAppsContainer extends IceApplication {
         stopOk = new CountDownLatch(1);
         context = getConfiguration().createContext("IceAppContainerContext.xml");
         context.registerShutdownHook();
-        final TimeManager timeManager = context.getBean("timeManager", TimeManager.class);
         final Publisher publisher = context.getBean("publisher", Publisher.class);
         final Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
         final EventBus eventBus = context.getBean("eventBus", EventBus.class);
@@ -281,10 +280,6 @@ public class IceAppsContainer extends IceApplication {
 
         final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
         final EMRFacade emr = context.getBean("emr", EMRFacade.class);
-
-        timeManager.start();
-        
-        //
 
         // register with partition changes so that we can broadcast mds connectivity event
         //
