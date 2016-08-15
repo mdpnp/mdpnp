@@ -95,9 +95,7 @@ public class DeviceListModelImpl implements TimeManagerListener, DeviceListModel
         if("Device".equals(type)) {
             Platform.runLater(new Runnable() {
                 public void run() {
-                    Device d = findDevice(unique_device_identifier);
-                    if(d != null)
-                        d.setHostname(host_name);
+                    createOrUpdateDevice(unique_device_identifier, null, host_name);
                 }
             });
       } else {

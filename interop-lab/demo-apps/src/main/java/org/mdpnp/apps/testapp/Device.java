@@ -210,17 +210,23 @@ public class Device {
     }
 
     public void setDeviceIdentity(final DeviceIdentity deviceIdentity, final String hostName) {
+
+        if(null != hostName) {
+            hostnameProperty().set(hostName);
+        }
+
         if (null != deviceIdentity) {
             changeUdi(deviceIdentity.unique_device_identifier);
             manufacturerProperty().set(deviceIdentity.manufacturer);
             modelProperty().set(deviceIdentity.model);
+
             if (null == deviceIdentity.manufacturer || deviceIdentity.manufacturer.equals(deviceIdentity.model)
                     || "".equals(deviceIdentity.manufacturer)) {
                 makeAndModelProperty().set(deviceIdentity.model);
             } else {
                 makeAndModelProperty().set(deviceIdentity.manufacturer + " " + deviceIdentity.model);
             }
-            hostnameProperty().set(hostName);
+
             operating_systemProperty().set(deviceIdentity.operating_system);
             buildProperty().set(deviceIdentity.build);
             serial_numberProperty().set(deviceIdentity.serial_number);
