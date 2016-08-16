@@ -1,7 +1,5 @@
 package org.mdpnp.apps.testapp.patient;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import ice.MDSConnectivity;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -32,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class PatientInfoController implements ListChangeListener<Device>, MDSHandler.Connectivity.MDSListener {
@@ -54,9 +52,9 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     @FXML TableColumn<DevicePatientAssociation, String> associationTableActionColumn;
 
     protected ObservableList<DevicePatientAssociation> associationModel = FXCollections.observableArrayList();
-    protected ObservableList<Device> deviceListModel = FXCollections.observableArrayList();
+    protected ObservableList<Device> unassignedDevices = FXCollections.observableArrayList();
 
-    private   Cache<String, String> pendingAssociations = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build();
+    private Map<String, String> deviceAssignments = new HashMap<>();
 
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
@@ -89,30 +87,23 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
      */
     void onAssociationSelected(DevicePatientAssociation oldValue, DevicePatientAssociation newValue)
     {
-        /*
-        if(oldValue != null) {
-            uniqueDeviceIdentifier.textProperty().unbindBidirectional(oldValue.deviceIdentifierProperty());
-            patientIdentifier.textProperty().unbindBidirectional(oldValue.lastNameProperty());
-            patientName.textProperty().unbindBidirectional(oldValue.patientIdentifierProperty());
-        }
-        
-        uniqueDeviceIdentifier.textProperty().bindBidirectional(newValue.deviceIdentifierProperty());
-        patientIdentifier.textProperty().bindBidirectional(newValue.lastNameProperty());
-        patientName.textProperty().bindBidirectional(newValue.patientIdentifierProperty());
-        */
+
     }
 
 
     public void removeDeviceAssociation(DevicePatientAssociation assoc)  {
         emr.deleteDevicePatientAssociation(assoc);
         associationModel.remove(assoc);
-        deviceListModel.add(assoc.getDevice());
+
+        Device d = assoc.getDevice();
+        unassignedDevices.add(d);
+        proposeDeviceAssociation(d, null);
     }
 
     void addDeviceAssociation(Device d, PatientInfo p) {
-        DevicePatientAssociation assoc = associate(d, p);
+        DevicePatientAssociation assoc = associateEMR(d, p);
         associationModel.add(assoc);
-        deviceListModel.remove(d);
+        unassignedDevices.remove(d);
     }
 
     void addDeviceAssociation(Device d, String p) {
@@ -133,45 +124,54 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
             log.warn("No patient found for " + p);
     }
 
-    private DevicePatientAssociation associate(Device d, PatientInfo p)  {
+    private DevicePatientAssociation associateEMR(Device d, PatientInfo p)  {
 
         DevicePatientAssociation dpa = emr.updateDevicePatientAssociation(new DevicePatientAssociation(d, p));
-
-        ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
-        mds.unique_device_identifier = d.getUDI();
-        mds.partition = PartitionAssignmentController.toPartition(p.getMrn());
-        mdsConnectivity.publish(mds);
-
         return dpa;
     }
 
     public void handleDeviceLifecycleEvent(Device d, boolean added)  {
 
-        if(added && !inUse(d)) {
-            deviceListModel.add(d);
-            String p = pendingAssociations.getIfPresent(d.getUDI());
-            if(p != null) {
-                pendingAssociations.invalidate(d.getUDI());
+        // deviceAssignments get populated listening to the MDS assignments;
+        // those notification could arrive before the list of devices is build.
+        //
+        // As device connectivity flickers, it will rebroadcast its availability, but
+        // the patient assignment will not be repeated. So we do not remove it from the
+        // pendingAssociation list as it will be consulted every time device reconnects to
+        // the network.
+        //
+        DevicePatientAssociation assoc = findAssociation(d);
+
+        if(added) {
+            String p = deviceAssignments.get(d.getUDI());
+            if(p == null) {
+                unassignedDevices.add(d);
+            }
+            else if(assoc == null) {
                 addDeviceAssociation(d, p);
             }
         }
         else {
-            pendingAssociations.invalidate(d.getUDI());
-            deviceListModel.remove(d);
+            unassignedDevices.remove(d);
+
+            if(assoc != null) {
+                emr.deleteDevicePatientAssociation(assoc);
+                associationModel.remove(assoc);
+            }
         }
     }
 
     /**
-     * @return true if device already associated with the patient.
+     * @return current device association or null
      */
-    private boolean inUse(final Device d) {
+    private DevicePatientAssociation findAssociation(final Device d) {
         FilteredList<DevicePatientAssociation> l = associationModel.filtered(new Predicate<DevicePatientAssociation>() {
             @Override
             public boolean test(DevicePatientAssociation devicePatientAssociation) {
                 return devicePatientAssociation.isForDevice(d);
             }
         });
-        return l.size()!=0;
+        return l.isEmpty()?null:l.get(0);
     }
 
     /**
@@ -245,7 +245,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         associationTableActionColumn.setCellFactory(columnFac);
 
         associationTableView.setItems(associationModel);
-        deviceView.setItems(deviceListModel);
+        deviceView.setItems(unassignedDevices);
         patientView.setItems(emr.getPatients());
 
         associationTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DevicePatientAssociation>() {
@@ -321,7 +321,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     public void proposeDeviceAssociation(Device d, PatientInfo p) {
         ice.MDSConnectivityObjective mds=new ice.MDSConnectivityObjective();
         mds.unique_device_identifier = d.getUDI();
-        mds.partition = PartitionAssignmentController.toPartition(p.getMrn());
+        mds.partition = p==null? "" : PartitionAssignmentController.toPartition(p.getMrn());
         mdsConnectivity.publish(mds);
     }
 
@@ -349,11 +349,14 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
 
         MDSConnectivity state = (MDSConnectivity)evt.getSource();
-        Device d = findDevice(state.unique_device_identifier, deviceView.getItems());
-        if(d == null) {
-            pendingAssociations.put(state.unique_device_identifier, state.partition);
-        }
-        else {
+
+        if(!PartitionAssignmentController.isMRNPartition(state.partition))
+            return;
+
+        deviceAssignments.put(state.unique_device_identifier, state.partition);
+
+        Device d = findDevice(state.unique_device_identifier, unassignedDevices);
+        if(d != null) {
             addDeviceAssociation(d, state.partition);
         }
     }
