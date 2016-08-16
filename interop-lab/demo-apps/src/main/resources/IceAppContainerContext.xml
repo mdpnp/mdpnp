@@ -47,8 +47,11 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
 
+    <!--
+    Do not start right away. Delegate to the LifecycleController to do it at the very end avter all beans
+    are up so that we do not skip any DDS events
+    -->
     <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
-          init-method="start"
           destroy-method="stop">
         <constructor-arg ref="refreshScheduler"></constructor-arg>
         <constructor-arg ref="eventLoop"></constructor-arg>
@@ -182,7 +185,6 @@
     
     <bean id="mdsConnectivity"
           class="org.mdpnp.devices.MDSHandler"
-          init-method="start"
           destroy-method="shutdown">
         <constructor-arg ref="eventLoop"/>
         <constructor-arg ref="domainParticipant" />
@@ -220,4 +222,15 @@
         <property name="subscriber" ref="himssSubscriber"/>
     </bean>
    -->
+
+    <bean id="lifecycleController" class="org.mdpnp.devices.LifecycleController">
+        <property name="startMethod" value="start"/>
+        <property name="managedBeans">
+            <list>
+                <ref bean="timeManager" />
+                <ref bean="mdsConnectivity" />
+            </list>
+        </property>
+    </bean>
+
 </beans>

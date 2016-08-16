@@ -52,8 +52,11 @@
     <constructor-arg value="${mdpnp.partition.file}"/>
   </bean>
 
+  <!--
+  Do not start right away. Delegate to the LifecycleController to do it at the very end avter all beans
+  are up so that we do not skip any DDS events
+  -->
   <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
-        init-method="start"
         destroy-method="stop">
     <constructor-arg ref="taskExecutor"></constructor-arg>
     <constructor-arg ref="eventLoop"></constructor-arg>
@@ -87,6 +90,15 @@
     <property name="assembler" ref="jmx.assembler"/>
     <property name="autodetect" value="true"/>
     <property name="namingStrategy" ref="jmx.namingStrategy"/>
+  </bean>
+
+  <bean id="lifecycleController" class="org.mdpnp.devices.LifecycleController">
+    <property name="startMethod" value="start"/>
+    <property name="managedBeans">
+      <list>
+        <ref bean="timeManager" />
+      </list>
+    </property>
   </bean>
 
 </beans>
