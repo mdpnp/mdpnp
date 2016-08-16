@@ -67,7 +67,7 @@ public class PartitionAssignmentControllerTest {
             MDSHandler mdsHandler = controller.getConnectivityAdapter();
             mdsHandler.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {
                 @Override
-                public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+                public void handleConnectivityChange(MDSHandler.Connectivity.MDSEvent evt) {
                     MDSConnectivity v = (MDSConnectivity) evt.getSource();
                     if (deviceIdentity.unique_device_identifier.equals(v.unique_device_identifier))
                         stopOk.countDown();

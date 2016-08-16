@@ -192,9 +192,7 @@ public class MDSHandler {
             publisher.delete_datawriter(mdsoWriter);
 
             participant.delete_topic(msdoConnectivityTopic);
-            // TODO Where a participant is shared it is not safe to unregister types
-//            ice.MDSConnectivityTypeSupport.unregister_type(participant, ice.MDSConnectivityTypeSupport.get_type_name());
-        }
+         }
 
 
         public Connectivity(EventLoop eventLoop, Publisher publisher, Subscriber subscriber) {
@@ -239,7 +237,7 @@ public class MDSHandler {
         }
 
         public interface MDSListener extends EventListener {
-            public void handleDataSampleEvent(MDSEvent evt) ;
+            void handleConnectivityChange(MDSEvent evt) ;
         }
 
         EventListenerList listenerList = new EventListenerList();
@@ -255,7 +253,7 @@ public class MDSHandler {
         void fireMDSConnectivityEvent(MDSEvent data) {
             MDSListener listeners[] = listenerList.getListeners(MDSListener.class);
             for(MDSListener l : listeners) {
-                l.handleDataSampleEvent(data);
+                l.handleConnectivityChange(data);
             }
         }
     }
@@ -326,8 +324,6 @@ public class MDSHandler {
             publisher.delete_datawriter(mdsoWriter);
 
             participant.delete_topic(msdoConnectivityTopic);
-            // TODO Where a participant is shared it is not safe to unregister types
-//            ice.MDSConnectivityObjectiveTypeSupport.unregister_type(participant, ice.MDSConnectivityObjectiveTypeSupport.get_type_name());
         }
 
 
@@ -373,7 +369,7 @@ public class MDSHandler {
         }
 
         public interface MDSListener extends EventListener {
-            public void handleDataSampleEvent(MDSEvent evt) ;
+            public void handleConnectivityObjective(MDSEvent evt) ;
         }
 
         EventListenerList listenerList = new EventListenerList();
@@ -389,7 +385,7 @@ public class MDSHandler {
         void fireMDSConnectivityObjectiveEvent(MDSEvent data) {
             MDSListener listeners[] = listenerList.getListeners(MDSListener.class);
             for(MDSListener l : listeners) {
-                l.handleDataSampleEvent(data);
+                l.handleConnectivityObjective(data);
             }
         }
     }

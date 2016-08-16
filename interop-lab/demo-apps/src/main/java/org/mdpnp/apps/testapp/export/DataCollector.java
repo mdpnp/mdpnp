@@ -73,7 +73,7 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
     }
 
     @Override
-    public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+    public void handleConnectivityChange(MDSHandler.Connectivity.MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
 
         if(PartitionAssignmentController.isMRNPartition(c.partition)) {

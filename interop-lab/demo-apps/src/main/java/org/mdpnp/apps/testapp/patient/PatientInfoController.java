@@ -346,7 +346,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
      * @param evt
      */
     @Override
-    public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+    public void handleConnectivityChange(MDSHandler.Connectivity.MDSEvent evt) {
 
         MDSConnectivity state = (MDSConnectivity)evt.getSource();
 

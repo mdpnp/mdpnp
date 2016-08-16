@@ -56,7 +56,7 @@ public class MDSHandlerTest {
 
             handler.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {
                 @Override
-                public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+                public void handleConnectivityChange(MDSHandler.Connectivity.MDSEvent evt) {
                     MDSConnectivity v = (MDSConnectivity)evt.getSource();
                     if(sample.unique_device_identifier.equals(v.unique_device_identifier))
                         stopOk.countDown();
@@ -103,7 +103,7 @@ public class MDSHandlerTest {
 
             c.addConnectivityListener(new MDSHandler.Connectivity.MDSListener() {
                 @Override
-                public void handleDataSampleEvent(MDSHandler.Connectivity.MDSEvent evt) {
+                public void handleConnectivityChange(MDSHandler.Connectivity.MDSEvent evt) {
                     MDSConnectivity v = (MDSConnectivity)evt.getSource();
                     if(sample.unique_device_identifier.equals(v.unique_device_identifier))
                         stopOk.countDown();
@@ -150,7 +150,7 @@ public class MDSHandlerTest {
 
             c.addConnectivityListener(new MDSHandler.Objective.MDSListener() {
                 @Override
-                public void handleDataSampleEvent(MDSHandler.Objective.MDSEvent evt) {
+                public void handleConnectivityObjective(MDSHandler.Objective.MDSEvent evt) {
                     MDSConnectivityObjective v = (MDSConnectivityObjective) evt.getSource();
                     if (sample.unique_device_identifier.equals(v.unique_device_identifier))
                         stopOk.countDown();

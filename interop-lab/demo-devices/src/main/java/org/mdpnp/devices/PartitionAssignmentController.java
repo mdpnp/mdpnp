@@ -165,7 +165,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
     }
 
     @Override
-    public void handleDataSampleEvent(MDSHandler.Objective.MDSEvent evt) {
+    public void handleConnectivityObjective(MDSHandler.Objective.MDSEvent evt) {
         ice.MDSConnectivityObjective  o = (ice.MDSConnectivityObjective )evt.getSource();
         if(deviceIdentity.unique_device_identifier.equals(o.unique_device_identifier)) {
             String p[] = {o.partition};

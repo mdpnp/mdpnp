@@ -477,7 +477,7 @@ public class HL7Emitter implements MDSListener, Runnable {
     }
 
     @Override
-    public void handleDataSampleEvent(MDSEvent evt) {
+    public void handleConnectivityChange(MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
 
         if(PartitionAssignmentController.isMRNPartition(c.partition)) {
