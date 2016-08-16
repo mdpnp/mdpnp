@@ -112,9 +112,27 @@ public class Main {
 
                 if(o instanceof IceApplication) {
                     app = (IceApplication) o;
-                    app.setConfiguration(runConf);
-                    app.init();
-                    app.start(primaryStage);
+
+                    try {
+                        app.setConfiguration(runConf);
+                        app.init();
+                        app.start(primaryStage);
+                    }
+                    catch (Throwable ex) {
+
+                        // Print to both stderr and log - stderr shows up on the
+                        // gradle console.
+                        //
+                        System.err.println("Failed to start application " + ex.getMessage());
+                        ex.printStackTrace(System.err);
+
+                        log.error("Failed to start application", ex);
+                        
+                        if(ex instanceof RuntimeException)
+                            throw (RuntimeException)ex;
+                        else
+                            throw new RuntimeException(ex);
+                    }
                 }
                 else {
                     throw new IllegalStateException("Invalid FX application request " + o);
