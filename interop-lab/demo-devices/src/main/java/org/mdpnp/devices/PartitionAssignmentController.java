@@ -18,6 +18,7 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -274,6 +275,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         private void updatePartitionFile(File f, String[] partition) throws IOException {
             FileOutputStream fos = new FileOutputStream(f, false);
             PrintStream ps = new PrintStream(fos);
+            ps.println("# Created on " + (new Date()).toString());
             for(String p : partition) {
                 ps.println(p);
             }
