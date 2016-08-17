@@ -1,8 +1,6 @@
 package org.mdpnp.apps.testapp.export;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -18,14 +16,12 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
+import org.mdpnp.apps.ErrorDialog;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.export.DataCollectorAppFactory.PersisterUIController;
@@ -195,41 +191,6 @@ public class DataCollectorApp implements Initializable {
         return this;
     }
 
-    public static void exceptionDialog(Throwable t) {
-        log.warn("Exception displayed to user", t);
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("An Exception has occurred");
-        alert.setContentText(t.getMessage());
-
-        // Create expandable Exception.
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        t.printStackTrace(pw);
-        String exceptionText = sw.toString();
-
-        Label label = new Label("The exception stacktrace was:");
-
-        TextArea textArea = new TextArea(exceptionText);
-        textArea.setEditable(false);
-        textArea.setWrapText(true);
-
-        textArea.setMaxWidth(Double.MAX_VALUE);
-        textArea.setMaxHeight(Double.MAX_VALUE);
-        GridPane.setVgrow(textArea, Priority.ALWAYS);
-        GridPane.setHgrow(textArea, Priority.ALWAYS);
-
-        GridPane expContent = new GridPane();
-        expContent.setMaxWidth(Double.MAX_VALUE);
-        expContent.add(label, 0, 0);
-        expContent.add(textArea, 0, 1);
-
-        // Set expandable Exception into the dialog pane.
-        alert.getDialogPane().setExpandableContent(expContent);
-
-        alert.showAndWait();
-    }
-    
     @FXML
     public void clickStart(ActionEvent evt) {
         if("Start".equals(startControl.getText()) && currentPersister != null) {
@@ -241,7 +202,8 @@ public class DataCollectorApp implements Initializable {
                     startControl.setText("Stop");
                 }
             } catch (Exception e) {
-                exceptionDialog(e);
+                log.warn("Exception displayed to user", e);
+                ErrorDialog.exceptionDialog(e);
             }
 
         } else if("Stop".equals(startControl.getText()) && currentPersister != null) {
@@ -249,7 +211,8 @@ public class DataCollectorApp implements Initializable {
             try {
                 currentPersister.stop();
             } catch (Exception e) {
-                exceptionDialog(e);
+                log.warn("Exception displayed to user", e);
+                ErrorDialog.exceptionDialog(e);
             }
             startControl.setText("Start");
         }
@@ -271,7 +234,7 @@ public class DataCollectorApp implements Initializable {
             }
         }
         catch(Exception ex) {
-            exceptionDialog(ex);
+            ErrorDialog.exceptionDialog(ex);
         }
     }
 

@@ -22,6 +22,7 @@ import java.net.URL;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import org.mdpnp.apps.ErrorDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,18 +121,14 @@ public class Main {
                     }
                     catch (Throwable ex) {
 
-                        // Print to both stderr and log - stderr shows up on the
-                        // gradle console.
-                        //
-                        System.err.println("Failed to start application " + ex.getMessage());
-                        ex.printStackTrace(System.err);
-
                         log.error("Failed to start application", ex);
-                        
-                        if(ex instanceof RuntimeException)
-                            throw (RuntimeException)ex;
-                        else
-                            throw new RuntimeException(ex);
+                        ErrorDialog.exceptionDialog("Click OK to terminate application", ex);
+
+                        // Any exception here would kill the FX thread - there is no
+                        // point in attempting to recover as the state of the app is unknown.
+                        // Just exit out of the VM.
+                        //
+                        System.exit(-1);
                     }
                 }
                 else {
