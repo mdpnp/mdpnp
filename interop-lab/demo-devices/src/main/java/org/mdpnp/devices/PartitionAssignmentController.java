@@ -38,6 +38,13 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
     public static boolean isMRNPartition(String s) {
         return s.startsWith("MRN=");
     }
+    public static String toMRN(List<String> p) {
+        for(String s : p) {
+            if(isMRNPartition(s))
+                return toMRN(s);
+        }
+        return null;
+    }
 
     @ManagedAttribute(description="DDS partitions for this device")
     public String[] getPartition() {
@@ -253,17 +260,32 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
             }
         }
 
-        private List<String> readPartitionFile(File f) throws IOException {
-            List<String> partition = new ArrayList<>();
+        List<String> readPartitionFile(File f) throws IOException {
             FileReader fr = new FileReader(f);
             BufferedReader br = new BufferedReader(fr);
-            String line = null;
+            List<String> l = readPartitionFile(br);
+            return l;
+        }
+
+        List<String> readPartitionFile(BufferedReader br) throws IOException {
+
+            List<String> partition = new ArrayList<>();
+            int mrnCnt=0;
+            String line;
             while (null != (line = br.readLine())) {
                 line = line.trim();
-                if (!line.startsWith("#") && !line.isEmpty())
-                    partition.add(line.trim());
+                if (!line.startsWith("#") && !line.isEmpty()) {
+                    boolean isMRN = isMRNPartition(line);
+                    if(!isMRN || mrnCnt==0)
+                        partition.add(line);
+                    mrnCnt += (isMRN?1:0);
+                }
             }
             br.close();
+
+            if(mrnCnt>1)
+                log.warn("Partition file had more than one MRN record (ignored).");
+
             return partition;
         }
 

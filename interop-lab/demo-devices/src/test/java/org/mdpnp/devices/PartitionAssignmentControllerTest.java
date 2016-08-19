@@ -2,8 +2,10 @@ package org.mdpnp.devices;
 
 import ice.MDSConnectivity;
 
-import java.io.File;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +45,28 @@ public class PartitionAssignmentControllerTest {
         String[] partitions = { "A", "B", "C"};
         String s = PartitionAssignmentController.toString(partitions);
         Assert.assertEquals("A,B,C", s);
+    }
+
+    @Test
+    public void testParsePartitions() throws Exception {
+
+        String input =
+                "# A comment \n" +
+                "   device-group  \n" +
+                "MRN=joe\n" +
+                "MRN=should be ignored\n";
+
+        InputStream stream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+
+        PartitionAssignmentController.PersistentPartitionAssignment c =
+                new PartitionAssignmentController.PersistentPartitionAssignment(null);
+
+        List<String> l = c.readPartitionFile(br);
+
+        Assert.assertEquals(2, l.size());
+        Assert.assertEquals("joe", PartitionAssignmentController.toMRN(l));
+
     }
 
     @Test
