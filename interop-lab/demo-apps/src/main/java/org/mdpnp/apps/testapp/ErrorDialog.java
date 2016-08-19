@@ -1,4 +1,4 @@
-package org.mdpnp.apps;
+package org.mdpnp.apps.testapp;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;

@@ -21,7 +21,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
-import org.mdpnp.apps.ErrorDialog;
+import org.mdpnp.apps.testapp.ErrorDialog;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.export.DataCollectorAppFactory.PersisterUIController;
