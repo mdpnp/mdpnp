@@ -350,14 +350,16 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
         MDSConnectivity state = (MDSConnectivity)evt.getSource();
 
-        if(!PartitionAssignmentController.isMRNPartition(state.partition))
+        String mrnPartition = PartitionAssignmentController.findMRNPartition(state.partition);
+
+        if(mrnPartition==null)
             return;
 
-        deviceAssignments.put(state.unique_device_identifier, state.partition);
+        deviceAssignments.put(state.unique_device_identifier, mrnPartition);
 
         Device d = findDevice(state.unique_device_identifier, unassignedDevices);
         if(d != null) {
-            addDeviceAssociation(d, state.partition);
+            addDeviceAssociation(d, mrnPartition);
         }
     }
 

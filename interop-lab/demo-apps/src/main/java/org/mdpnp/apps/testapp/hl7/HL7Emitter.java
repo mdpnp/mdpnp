@@ -480,10 +480,10 @@ public class HL7Emitter implements MDSListener, Runnable {
     public void handleConnectivityChange(MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
 
-        if(PartitionAssignmentController.isMRNPartition(c.partition)) {
-            String mrn=PartitionAssignmentController.toMRN(c.partition);
-            log.info("udi " + c.unique_device_identifier + " is " + mrn);
-            deviceUdiToPatientMRN.put(c.unique_device_identifier, mrn);
+        String mrnPartition = PartitionAssignmentController.findMRNPartition(c.partition);
+        if(mrnPartition != null) {
+            log.info("udi " + c.unique_device_identifier + " is " + mrnPartition);
+            deviceUdiToPatientMRN.put(c.unique_device_identifier, PartitionAssignmentController.toMRN(mrnPartition));
         }
     }
     

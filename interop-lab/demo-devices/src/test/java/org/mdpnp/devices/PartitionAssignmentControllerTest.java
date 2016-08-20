@@ -65,7 +65,7 @@ public class PartitionAssignmentControllerTest {
         List<String> l = c.readPartitionFile(br);
 
         Assert.assertEquals(2, l.size());
-        Assert.assertEquals("joe", PartitionAssignmentController.toMRN(l));
+        Assert.assertEquals("MRN=joe", PartitionAssignmentController.findMRNPartition(l));
 
     }
 

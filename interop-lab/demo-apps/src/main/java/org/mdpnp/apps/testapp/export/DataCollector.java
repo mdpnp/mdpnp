@@ -76,14 +76,13 @@ abstract class DataCollector<T> implements MDSHandler.Connectivity.MDSListener {
     public void handleConnectivityChange(MDSHandler.Connectivity.MDSEvent evt) {
         ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
 
-        if(PartitionAssignmentController.isMRNPartition(c.partition)) {
+        String mrnPartition = PartitionAssignmentController.findMRNPartition(c.partition);
 
-            String mrn=PartitionAssignmentController.toMRN(c.partition);
-
-            log.info("udi " + c.unique_device_identifier + " is MRN=" + mrn);
+        if(mrnPartition != null) {
+            log.info("udi " + c.unique_device_identifier + " is MRN=" + mrnPartition);
 
             Patient p = new Patient();
-            p.mrn = mrn;
+            p.mrn = PartitionAssignmentController.toMRN(mrnPartition);
             deviceUdiToPatientMRN.put(c.unique_device_identifier, p);
         }
     }

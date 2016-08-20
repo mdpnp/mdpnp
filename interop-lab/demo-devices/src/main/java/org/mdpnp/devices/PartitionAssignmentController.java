@@ -38,10 +38,19 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
     public static boolean isMRNPartition(String s) {
         return s.startsWith("MRN=");
     }
-    public static String toMRN(List<String> p) {
+
+    public static String findMRNPartition(String p) {
+        return findMRNPartition(fromString(p));
+    }
+
+    public static String findMRNPartition(String[] p) {
+        return findMRNPartition(Arrays.asList(p));
+    }
+
+    public static String findMRNPartition(Iterable<String> p) {
         for(String s : p) {
             if(isMRNPartition(s))
-                return toMRN(s);
+                return s;
         }
         return null;
     }
@@ -123,7 +132,7 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
      * @param partition
      * @return comma-separated list of partitions.
      */
-    static String toString(String [] partition) {
+    public static String toString(String [] partition) {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < partition.length; i++) {
             if(b.length()!=0)
@@ -132,6 +141,12 @@ public class PartitionAssignmentController implements MDSHandler.Objective.MDSLi
         }
         return b.toString();
     }
+
+    public static String[] fromString(String partitions) {
+        String arr[] = partitions.split("[,]", 0);
+        return arr;
+    }
+
 
     MDSHandler getConnectivityAdapter() {
         return connectivityAdapter;
