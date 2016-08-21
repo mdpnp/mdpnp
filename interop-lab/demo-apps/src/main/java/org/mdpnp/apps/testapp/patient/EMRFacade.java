@@ -16,15 +16,24 @@ public interface EMRFacade {
     void refresh();
     ObservableList<PatientInfo> getPatients();
     boolean createPatient(PatientInfo p);
+    boolean deletePatient(PatientInfo p);
 
     void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
     DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
 
     public static class EMRFacadeFactory implements FactoryBean<EMRFacade> {
 
+        private EMRType     facadeType;
         private DataSource  jdbcDB;
         private String      fhirEMRUrl;
         private FhirContext fhirContext;
+
+        public EMRType getFacadeType() {
+            return facadeType;
+        }
+        public void setFacadeType(EMRType facadeType) {
+            this.facadeType = facadeType;
+        }
 
         public String getUrl() {
             return fhirEMRUrl;
@@ -49,18 +58,28 @@ public interface EMRFacade {
 
         EMRFacade instance = null;
 
+        public enum EMRType { FHIR, JDBC, Combined }
+
         @Override
         public EMRFacade getObject() throws Exception {
             if(instance == null) {
-                if(fhirEMRUrl == null || "".equals(fhirEMRUrl)) {
-                    instance = new JdbcEMRImpl(new ExecutorFx());
-                    ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
-                }
-                else {
-                    instance = new FhirEMRImpl(new ExecutorFx());
-                    ((FhirEMRImpl)instance).setDataSource(jdbcDB);
-                    ((FhirEMRImpl)instance).setUrl(fhirEMRUrl);
-                    ((FhirEMRImpl)instance).setFhirContext(fhirContext);
+                switch (facadeType) {
+                    default:
+                    case JDBC:
+                        instance = new JdbcEMRImpl(new ExecutorFx());
+                        ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
+                        break;
+                    case FHIR:
+                        instance = new FhirEMRImpl(new ExecutorFx());
+                        ((FhirEMRImpl)instance).setUrl(fhirEMRUrl);
+                        ((FhirEMRImpl)instance).setFhirContext(fhirContext);
+                        break;
+                    case Combined:
+                        instance = new JdbcFhirEMRImpl(new ExecutorFx());
+                        ((JdbcFhirEMRImpl)instance).setDataSource(jdbcDB);
+                        ((JdbcFhirEMRImpl)instance).setUrl(fhirEMRUrl);
+                        ((JdbcFhirEMRImpl)instance).setFhirContext(fhirContext);
+                        break;
                 }
             }
             new Thread( () -> instance.refresh(), "EMRFacade refresh").start();

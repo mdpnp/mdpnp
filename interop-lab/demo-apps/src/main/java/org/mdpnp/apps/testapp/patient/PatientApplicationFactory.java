@@ -20,9 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.List;
 
 
@@ -136,7 +134,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
         private String dataDef;
 
         public EmbeddedDB() {
-            super.setUrl("jdbc:hsqldb:mem:test");
+            super.setUrl("jdbc:hsqldb:mem:test"); // jdbc:hsqldb:file:testdb
             super.setUser("sa");
             super.setPassword("");
         }
@@ -157,10 +155,40 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
         public void init() throws Exception
         {
-            load(schemaDef);
-            load(dataDef);
+            int v=getSchemaVersion();
+            if(v<1) {
+                load(schemaDef);
+                load(dataDef);
+            }
 
         }
+
+        int getSchemaVersion() {
+            Connection conn=null;
+            try {
+                conn = getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT VERSION FROM SCHEMA_INFO");
+                if(!rs.next())
+                    return -1;
+                int v = rs.getInt("VERSION");
+                log.info("Detected schema version " + v + " for " + getUrl());
+                return v;
+            }
+            catch (Exception ex) {
+                return -1;
+            }
+            finally {
+                try {
+                    if (conn != null)
+                        conn.close();
+                }
+                catch (Exception ex) {
+                    throw new IllegalStateException((ex));
+                }
+            }
+        }
+
         void load(String file) throws Exception
         {
             if(file != null) {

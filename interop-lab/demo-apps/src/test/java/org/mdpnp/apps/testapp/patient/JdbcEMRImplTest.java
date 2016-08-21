@@ -79,4 +79,42 @@ public class JdbcEMRImplTest {
             ds.shutdown();
         }
     }
+
+    @Test
+    public void testUpdateDeletePatient() throws Exception {
+
+        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
+        ds.setSchemaDef("DbSchema.sql");
+        ds.init();
+
+        try {
+            JdbcEMRImpl emr = new JdbcEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
+            emr.setDataSource(ds);
+
+            String id = Long.toHexString(System.currentTimeMillis());
+
+            PatientInfo pi0 = new PatientInfo(id+"-0", "F0", "L0", PatientInfo.Gender.F, new Date(0));
+            emr.createPatient(pi0);
+            PatientInfo pi1 = new PatientInfo(id+"-1", "F1", "L1", PatientInfo.Gender.F, new Date(0));
+            emr.createPatient(pi1);
+
+            PatientInfo pi2 = new PatientInfo(id+"-0", "F2", "L2", PatientInfo.Gender.F, new Date(0));
+            emr.updatePatient(pi2);
+
+            List<PatientInfo> l0 = JdbcEMRImpl.queryAll(ds);
+            Assert.assertEquals("Failed to load patients", 2, l0.size());
+
+            emr.deletePatient(pi1);
+            List<PatientInfo> l1 = JdbcEMRImpl.queryAll(ds);
+            Assert.assertEquals("Failed to load patients", 1, l1.size());
+
+            PatientInfo db=l1.get(0);
+            Assert.assertEquals("Failed to load patient", "F2", db.getFirstName());
+            Assert.assertEquals("Failed to load patient", "L2", db.getLastName());
+        }
+        finally {
+            ds.shutdown();
+        }
+    }
+
 }

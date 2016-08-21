@@ -17,8 +17,6 @@ import ca.uhn.fhir.rest.client.IGenericClient;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import javax.sql.DataSource;
-
 import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.FEMALE;
 import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
 import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
@@ -31,14 +29,12 @@ class FhirEMRImpl implements EMRFacade {
     private static final String HL7_ICE_URN_OID = "urn:oid:2.16.840.1.113883.3.1974";
     private FhirContext       fhirContext;
     private String            fhirURL;
-    private final JdbcEMRImpl jdbcEMR;
     private final Executor collectionUpdateHandler;
 
     private final ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
 
     public FhirEMRImpl(Executor executor) {
         this.collectionUpdateHandler = executor;
-        this.jdbcEMR = new JdbcEMRImpl(executor);
     }
 
     public String getUrl() {
@@ -54,21 +50,16 @@ class FhirEMRImpl implements EMRFacade {
         this.fhirContext = fhirContext;
     }
 
-    public DataSource getDataSource() {
-        return jdbcEMR.getDataSource();
-    }
-    public void setDataSource(DataSource ds) {
-        jdbcEMR.setDataSource(ds);
-    }
 
     @Override
     public void deleteDevicePatientAssociation(DevicePatientAssociation assoc) {
-        jdbcEMR.deleteDevicePatientAssociation(assoc);
+        // NO-OP
     }
 
     @Override
     public DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc) {
-        return jdbcEMR.updateDevicePatientAssociation(assoc);
+        // NO-OP
+        return assoc;
     }
 
     @Override
@@ -76,8 +67,7 @@ class FhirEMRImpl implements EMRFacade {
         return patients;
     }
 
-    @Override
-    public void refresh() {
+    List<PatientInfo> queryServer() {
 
         IGenericClient fhirClient = getFhirClient();
 
@@ -88,30 +78,41 @@ class FhirEMRImpl implements EMRFacade {
 
         final List<PatientInfo> toRet = new ArrayList<>();
         List<Patient> patients = bundle.getResources(Patient.class);
+
         String official = ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL.getCode();
-        for(Patient p : patients) {
+        for (Patient p : patients) {
             IdentifierDt id = p.getIdentifierFirstRep();
-            if(!HL7_ICE_URN_OID.equals(id.getSystem()))
+            if (!HL7_ICE_URN_OID.equals(id.getSystem()))
                 continue;
             String mrn = p.getIdentifierFirstRep().getValue();
 
             // now find the official name used on the record.
-            for(HumanNameDt n : p.getName()) {
-                if(official.equals(n.getUse()) || null == n.getUse()) {
+            for (HumanNameDt n : p.getName()) {
+                if (official.equals(n.getUse()) || null == n.getUse()) {
                     String lName = n.getFamilyAsSingleString();
                     String fName = n.getGivenAsSingleString();
                     Date bDay = p.getBirthDate();
                     String g = p.getGender();
-                    if(lName != null && fName != null && bDay != null && g != null) {
-                        PatientInfo pi = new PatientInfo(mrn,fName,lName,fromFhire(g),bDay);
+                    if (lName != null && fName != null && bDay != null && g != null) {
+                        PatientInfo pi = new PatientInfo(mrn, fName, lName, fromFhire(g), bDay);
                         toRet.add(pi);
                         break;
                     }
                 }
             }
         }
+
+        patients.retainAll(toRet);
+
+        return toRet;
+    }
+
+    @Override
+    public void refresh() {
+
+        List<PatientInfo> toRet = queryServer();
+
         collectionUpdateHandler.execute(() -> {
-            patients.retainAll(toRet);
             Iterator<PatientInfo> itr = toRet.iterator();
             while (itr.hasNext()) {
                 PatientInfo pi = itr.next();
@@ -125,6 +126,10 @@ class FhirEMRImpl implements EMRFacade {
     public boolean createPatient(final PatientInfo p) {
         MethodOutcome mo = createPatientImpl(p);
         return mo.getCreated();
+    }
+
+    public boolean deletePatient(PatientInfo p) {
+        return false;
     }
 
     MethodOutcome createPatientImpl(final PatientInfo p) {

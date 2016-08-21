@@ -2,6 +2,9 @@
 # Add sql here to be inserted at database create time.
 #
 
+INSERT INTO SCHEMA_INFO (VERSION) VALUES (1);
+
+
 INSERT INTO PATIENT_INFO (MRN,FIRST_NAME,LAST_NAME,DOB,GENDER) VALUES  ('10101','Randall',          'Jones','1980-01-01', 'M');
 INSERT INTO PATIENT_INFO (MRN,FIRST_NAME,LAST_NAME,DOB,GENDER) VALUES  ('14c89b52fb7','John',          'Sullivan','1964-07-04', 'M');
 INSERT INTO PATIENT_INFO (MRN,FIRST_NAME,LAST_NAME,DOB,GENDER) VALUES  ('55555','Mary',           'Williams','1972-05-16', 'F');

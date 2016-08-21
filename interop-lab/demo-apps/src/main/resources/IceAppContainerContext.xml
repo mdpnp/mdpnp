@@ -167,6 +167,7 @@
           class="org.mdpnp.apps.testapp.patient.PatientApplicationFactory.EmbeddedDB"
           init-method="init"
           destroy-method="shutdown">
+        <property name="url"       value="${mdpnp.apps.patient.database}"/>
         <property name="schemaDef" value="DbSchema.sql"/>
         <property name="dataDef"   value="DataBootstrap.sql"/>
     </bean>
@@ -178,6 +179,7 @@
     -->
     <bean id="emr"
           class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
+        <property name="facadeType"  value="JDBC"/>
         <property name="url"         value="${mdpnp.fhir.url}"/>
         <property name="jdbcDB"      ref="jdbcDB"/>
         <property name="fhirContext" ref="fhirContext"/>

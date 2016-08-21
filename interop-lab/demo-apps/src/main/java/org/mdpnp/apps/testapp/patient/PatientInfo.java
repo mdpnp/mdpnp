@@ -5,15 +5,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
-import javax.sql.DataSource;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Date;
-import java.util.List;
+
 
 public class PatientInfo {
 
@@ -94,46 +87,6 @@ public class PatientInfo {
                 return firstName.getValue() + " " + lastName.getValue();
             }
         }
-        
-
-    }
-
-    static class PatientInfoRowMapper implements RowMapper<PatientInfo> {
-        public PatientInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
-            PatientInfo p = new PatientInfo(
-                    rs.getString("MRN"),
-                    rs.getString("FIRST_NAME"),
-                    rs.getString("LAST_NAME"),
-                    PatientInfo.Gender.valueOf(rs.getString("GENDER")),
-                    rs.getDate("DOB"));
-            return p;
-        }
-    }
-
-    //
-    // DAO APIs
-    //
-    private static final String CREATE_SQL=
-            "INSERT INTO PATIENT_INFO (MRN,FIRST_NAME,LAST_NAME,DOB,GENDER) VALUES  (?,?,?,?,?)";
-
-    static boolean createPatient(DataSource dataSource, PatientInfo p) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.update(CREATE_SQL,
-                            new Object[]{
-                                    p.getMrn(),
-                                    p.getFirstName(),
-                                    p.getLastName(),
-                                    p.getDob(),
-                                    p.getGender().name()
-                            });
-
-        return true;
-    }
-
-    static List<PatientInfo> queryAll(DataSource dataSource) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        List<PatientInfo> l = jdbcTemplate.query("select * from PATIENT_INFO", new PatientInfoRowMapper());
-        return l;
     }
 
     @Override
