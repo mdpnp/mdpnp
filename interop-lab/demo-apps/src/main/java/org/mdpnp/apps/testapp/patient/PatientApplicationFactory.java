@@ -134,7 +134,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
         private String dataDef;
 
         public EmbeddedDB() {
-            super.setUrl("jdbc:hsqldb:mem:test"); // jdbc:hsqldb:file:testdb
+            super.setUrl("jdbc:hsqldb:mem:icepatientdb"); // jdbc:hsqldb:file:icepatientdb
             super.setUser("sa");
             super.setPassword("");
         }
