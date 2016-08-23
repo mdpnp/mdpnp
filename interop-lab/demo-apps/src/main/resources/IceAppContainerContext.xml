@@ -179,7 +179,7 @@
     -->
     <bean id="emr"
           class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
-        <property name="facadeType"  value="JDBC"/>
+        <property name="facadeType"  value="COMBINED"/>
         <property name="url"         value="${mdpnp.fhir.url}"/>
         <property name="jdbcDB"      ref="jdbcDB"/>
         <property name="fhirContext" ref="fhirContext"/>
