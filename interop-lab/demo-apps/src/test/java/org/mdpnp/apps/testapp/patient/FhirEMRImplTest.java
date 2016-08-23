@@ -34,23 +34,10 @@ public class FhirEMRImplTest {
         config.load(is);
 
         String url = config.getProperty("mdpnp.fhir.url");
-        org.junit.Assume.assumeTrue(url + " is not running", isServerThere(url));
+        org.junit.Assume.assumeTrue(url + " is not running", FhirEMRImpl.isServerThere(url));
 
     }
 
-    private boolean isServerThere(String u) throws Exception {
-        try {
-            URL url = new URL(u + "/metadata");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            // This will throw if server is not there.
-            InputStream is = conn.getInputStream();
-            return is != null;
-        }
-        catch(Exception ex) {
-            return false;
-        }
-    }
 
     @Test
     public void testFetchPatients() throws Exception {

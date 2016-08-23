@@ -1,5 +1,8 @@
 package org.mdpnp.apps.testapp.patient;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Date;
@@ -50,6 +53,19 @@ class FhirEMRImpl implements EMRFacade {
         this.fhirContext = fhirContext;
     }
 
+    public static boolean isServerThere(String u) throws Exception {
+        try {
+            URL url = new URL(u + "/metadata");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // This will throw if server is not there.
+            InputStream is = conn.getInputStream();
+            return is != null;
+        }
+        catch(Exception ex) {
+            return false;
+        }
+    }
 
     @Override
     public void deleteDevicePatientAssociation(DevicePatientAssociation assoc) {
