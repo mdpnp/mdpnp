@@ -92,14 +92,14 @@ public class PatientInfo {
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof PatientInfo) {
-            return mrn.equals(((PatientInfo)obj).mrn);
+            return getMrn().equals(((PatientInfo)obj).getMrn());
         } else {
             return false;
         }
     }
     @Override
     public int hashCode() {
-        return mrn.hashCode();
+        return getMrn().hashCode();
     }
 
 }
