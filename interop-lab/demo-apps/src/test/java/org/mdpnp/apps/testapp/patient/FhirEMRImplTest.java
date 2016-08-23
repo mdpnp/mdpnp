@@ -40,7 +40,7 @@ public class FhirEMRImplTest {
 
     private boolean isServerThere(String u) throws Exception {
         try {
-            URL url = new URL(u);
+            URL url = new URL(u + "/metadata");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             // This will throw if server is not there.
@@ -67,9 +67,56 @@ public class FhirEMRImplTest {
         for (PatientInfo pi : l) {
             log.info(pi.toString());
         }
-
     }
 
+    @Test
+    public void testMergePatients() throws Exception {
+
+        String url = config.getProperty("mdpnp.fhir.url");
+
+        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
+        ds.setSchemaDef("DbSchema.sql");
+        ds.setDataDef("DataBootstrap.sql");
+        ds.init();
+
+        try {
+            JdbcFhirEMRImpl emr = new JdbcFhirEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
+            emr.setUrl(url);
+            emr.setFhirContext(ca.uhn.fhir.context.FhirContext.forDstu2());
+            emr.setDataSource(ds);
+
+            List<PatientInfo> listdb = emr.queryDatabase();
+            Assert.assertTrue("Database had no patients", listdb.size() != 0);
+
+            List<PatientInfo> listfhir = emr.queryServer();
+            Assert.assertTrue("Fhir server had no patients", listfhir.size() != 0);
+
+            // Create a new record with the same MRN as in the fhir server in the local
+            // database.
+            PatientInfo pi = new PatientInfo(listfhir.get(0).getMrn(), "", "", PatientInfo.Gender.U, new Date());
+            Assert.assertFalse("Database should not have patient with this MRN", listdb.contains(pi));
+
+            boolean created = emr.createPatient(pi);
+            Assert.assertTrue("Failed to create patients", created);
+
+            emr.updateLocal(listfhir);
+
+            List<PatientInfo> finalList = emr.queryDatabase();
+            Assert.assertEquals("Database does not have updated record", listdb.size()+1, finalList.size());
+
+            int idx = finalList.indexOf(pi);
+            Assert.assertTrue("Database should have patient with this MRN", idx>0);
+            pi = finalList.get(idx);
+
+            // Confirm that name had been filled in from the fhir record.
+            //
+            Assert.assertTrue("Invalid data", pi.getLastName().length() != 0);
+            Assert.assertTrue("Invalid data", pi.getFirstName().length() != 0);
+        }
+        finally {
+            ds.shutdown();
+        }
+    }
 
     @Test
     public void testCreatePatient() throws Exception {

@@ -37,8 +37,6 @@ public class JdbcEMRImplTest {
             for (PatientInfo pi : l) {
                 log.info(pi.toString());
             }
-
-            ds.shutdown();
         }
         finally {
             ds.shutdown();

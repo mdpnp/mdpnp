@@ -78,7 +78,7 @@ class JdbcFhirEMRImpl implements EMRFacade {
         });
     }
 
-    private List<PatientInfo> updateLocal(List<PatientInfo> fhir) {
+    List<PatientInfo> updateLocal(List<PatientInfo> fhir) {
 
         List<PatientInfo> jdbc = jdbcEMR.queryAll();
         for(PatientInfo p : fhir) {
@@ -89,6 +89,14 @@ class JdbcFhirEMRImpl implements EMRFacade {
             }
         }
         return jdbc;
+    }
+
+    List<PatientInfo> queryServer() {
+        return fhirEMRImpl.queryServer();
+    }
+
+    List<PatientInfo> queryDatabase() {
+        return jdbcEMR.queryAll();
     }
 
     public boolean createPatient(final PatientInfo p) {
