@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.export;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.testapp.EmbeddedDB;
 
 import java.sql.*;
 import java.util.Calendar;
@@ -11,7 +12,7 @@ public class JdbcPersisterTest {
     @Test
     public void testVitalUpdate() throws Exception {
 
-        JdbcPersister p = getJdbcPersister();
+        JdbcPersister p = new JdbcPersisterExt();
         p.start();
 
 
@@ -56,17 +57,15 @@ public class JdbcPersisterTest {
 
 
         } finally {
-            conn.createStatement().execute("SHUTDOWN");
+            p.stop();
         }
-
-        p.stop();
     }
 
 
     @Test
     public void testObservationUpdate() throws Exception {
 
-        JdbcPersister p = getJdbcPersister();
+        JdbcPersister p = new JdbcPersisterExt();
         p.start();
 
 
@@ -84,7 +83,6 @@ public class JdbcPersisterTest {
 
             calendar.add(Calendar.MINUTE, 1);
         }
-
 
         Connection conn = p.getConnection();
 
@@ -109,23 +107,30 @@ public class JdbcPersisterTest {
 
 
         } finally {
-            conn.createStatement().execute("SHUTDOWN");
+            p.stop();
         }
-
-        p.stop();
     }
 
-    private JdbcPersister getJdbcPersister() {
-        return new JdbcPersister() {
-                @Override
-                Connection createConnection() throws Exception {
-                    Connection c = createConnection("org.hsqldb.jdbcDriver",
-                            "jdbc:hsqldb:mem:test",
-                            "sa", "");
-                    JdbcPersister.createSchema(c);
-                    return c;
-                }
-            };
+    class JdbcPersisterExt extends JdbcPersister {
+
+        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:test");
+
+        JdbcPersisterExt() throws Exception {
+            super();
+            ds.setSchemaDef("/org/mdpnp/apps/testapp/export/DbSchema.sql");
+            ds.init();
+        }
+
+        @Override
+        Connection createConnection() throws Exception {
+            return ds.getConnection();
+        }
+
+        @Override
+        public void stop() throws Exception {
+            super.stop();
+            ds.shutdown();
+        }
     }
 }
 
