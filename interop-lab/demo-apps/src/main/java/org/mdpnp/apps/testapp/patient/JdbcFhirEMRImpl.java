@@ -5,38 +5,34 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import javax.sql.DataSource;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
  * @author mfeinberg
  */
-class JdbcFhirEMRImpl implements EMRFacade {
+class JdbcFhirEMRImpl extends EMRFacade {
 
-    private final FhirEMRImpl fhirEMRImpl;
+    private final FhirEMRImpl fhirEMR;
     private final JdbcEMRImpl jdbcEMR;
-    private final Executor    collectionUpdateHandler;
-
-    private final ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
 
     public JdbcFhirEMRImpl(Executor executor) {
-        this.collectionUpdateHandler = executor;
-        this.jdbcEMR = new JdbcEMRImpl(executor);
-        this.fhirEMRImpl = new FhirEMRImpl(executor);
+        super(executor);
+        this.jdbcEMR = new JdbcEMRImpl();
+        this.fhirEMR = new FhirEMRImpl();
     }
 
     public String getUrl() {
-        return fhirEMRImpl.getUrl();
+        return fhirEMR.getUrl();
     }
     public void setUrl(String url) {
-        fhirEMRImpl.setUrl(url);
+        fhirEMR.setUrl(url);
     }
     public FhirContext getFhirContext() {
-        return fhirEMRImpl.getFhirContext();
+        return fhirEMR.getFhirContext();
     }
     public void setFhirContext(FhirContext fhirContext) {
-        fhirEMRImpl.setFhirContext(fhirContext);
+        fhirEMR.setFhirContext(fhirContext);
     }
 
     public DataSource getDataSource() {
@@ -48,7 +44,7 @@ class JdbcFhirEMRImpl implements EMRFacade {
 
     @Override
     public void deleteDevicePatientAssociation(DevicePatientAssociation assoc) {
-        // NO-OP
+        jdbcEMR.deleteDevicePatientAssociation(assoc);
     }
 
     @Override
@@ -57,30 +53,15 @@ class JdbcFhirEMRImpl implements EMRFacade {
     }
 
     @Override
-    public ObservableList<PatientInfo> getPatients() {
-        return patients;
-    }
-
-    @Override
-    public void refresh() {
-
-        List<PatientInfo> fhir = fhirEMRImpl.queryServer();
-        final List<PatientInfo> data = updateLocal(fhir);
-
-        collectionUpdateHandler.execute(() -> {
-            Iterator<PatientInfo> itr = data.iterator();
-            while (itr.hasNext()) {
-                PatientInfo pi = itr.next();
-                if (!patients.contains(pi)) {
-                    this.patients.add(pi);
-                }
-            }
-        });
+    public List<PatientInfo> fetchAllPatients() {
+        List<PatientInfo> fhir = fhirEMR.fetchAllPatients();
+        final List<PatientInfo> currentPatients = updateLocal(fhir);
+        return currentPatients;
     }
 
     List<PatientInfo> updateLocal(List<PatientInfo> fhir) {
 
-        List<PatientInfo> jdbc = jdbcEMR.queryAll();
+        List<PatientInfo> jdbc = jdbcEMR.fetchAllPatients();
         for(PatientInfo p : fhir) {
             int i = jdbc.indexOf(p);
             if(i>=0) {
@@ -91,20 +72,30 @@ class JdbcFhirEMRImpl implements EMRFacade {
         return jdbc;
     }
 
-    List<PatientInfo> queryServer() {
-        return fhirEMRImpl.queryServer();
-    }
-
-    List<PatientInfo> queryDatabase() {
-        return jdbcEMR.queryAll();
-    }
-
     public boolean createPatient(final PatientInfo p) {
-        return jdbcEMR.createPatient(p);
+        boolean ok1 = jdbcEMR.createPatient(p);
+        // Do not create patient records from the information that is incomplete -
+        // this could be a case of a device being assigned to a patient partition that
+        // fhir server does not know about. We would create a local jdbc entry for it,
+        // but will not push it out to the master server.
+        boolean ok2 = PatientInfo.UNKNOWN_NAME.equals(p.getLastName()) || fhirEMR.createPatient(p);
+        return ok1 && ok2 && super.createPatient(p);
+
     }
 
     public boolean deletePatient(PatientInfo p) {
-        return jdbcEMR.deletePatient(p);
+        boolean ok1 = jdbcEMR.deletePatient(p);
+        boolean ok2 = fhirEMR.deletePatient(p);
+        return ok1 && ok2 && super.deletePatient(p);
+    }
 
+    // package-protected to be used in tests
+    //
+    EMRFacade getFhirHandle() {
+        return fhirEMR;
+    }
+
+    EMRFacade getDatabaseHandle() {
+        return jdbcEMR;
     }
 }

@@ -380,7 +380,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         }
 
         if(d != null) {
-            PatientInfo pi = new PatientInfo(mrn, d.getHostname(), "Unknown to EMR", PatientInfo.Gender.U, new Date());
+            PatientInfo pi = new PatientInfo(mrn, d.getHostname(), PatientInfo.UNKNOWN_NAME, PatientInfo.Gender.U, new Date());
             items.add(pi);
             return pi;
         }

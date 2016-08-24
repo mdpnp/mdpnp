@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp.patient;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -9,21 +10,112 @@ import ca.uhn.fhir.context.FhirContext;
 import javafx.collections.ObservableList;
 
 import javax.sql.DataSource;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
  * @author mfeinberg
  */
-public interface EMRFacade {
-    void refresh();
-    ObservableList<PatientInfo> getPatients();
-    boolean createPatient(PatientInfo p);
-    boolean deletePatient(PatientInfo p);
+public abstract class EMRFacade {
 
-    void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
-    DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
+    private final ListHandler listHandler;
 
-    class EMRFacadeFactory implements FactoryBean<EMRFacade> {
+    public EMRFacade(Executor executor) {
+        listHandler = new ListHandler(FXCollections.observableArrayList(), executor);
+
+    }
+
+    public EMRFacade(ListHandler handler) {
+        listHandler = handler;
+    }
+
+    public void refresh() {
+        List<PatientInfo> currentPatients = fetchAllPatients();
+        listHandler.refresh(currentPatients);
+    }
+
+    public ObservableList<PatientInfo> getPatients() {
+        return listHandler.getPatients();
+    }
+
+    abstract List<PatientInfo> fetchAllPatients();
+
+    public boolean createPatient(PatientInfo p) {
+        listHandler.createPatient(p);
+        return true;
+    }
+
+    public boolean deletePatient(PatientInfo p) {
+        listHandler.deletePatient(p);
+        return true;
+    }
+
+    public abstract void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
+    public abstract DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
+
+    static class ListHandler {
+
+        private final ObservableList<PatientInfo> patientList; //  = FXCollections.observableArrayList();
+        private final Executor collectionUpdateHandler;
+
+        private ListHandler(ObservableList<PatientInfo> patients, Executor executor) {
+            patientList = patients;
+            collectionUpdateHandler = executor;
+        }
+
+        public void refresh(List<PatientInfo> currentPatients) {
+
+            collectionUpdateHandler.execute(() -> {
+                patientList.retainAll(currentPatients);
+                Iterator<PatientInfo> itr = currentPatients.iterator();
+                while (itr.hasNext()) {
+                    PatientInfo pi = itr.next();
+                    if (!patientList.contains(pi)) {
+                        patientList.add(pi);
+                    }
+                }
+            });
+        }
+
+        public ObservableList<PatientInfo> getPatients() {
+            return patientList;
+        }
+
+        public void createPatient(PatientInfo p) {
+            collectionUpdateHandler.execute(() -> {
+                patientList.add(p);
+            });
+        }
+
+        public void deletePatient(PatientInfo p) {
+            collectionUpdateHandler.execute(() -> {
+                patientList.remove(p);
+            });
+        }
+    }
+
+    static final ListHandler NOOP_HANDLER = new ListHandler(null, null)
+    {
+        @Override
+        public void createPatient(PatientInfo p) {
+        }
+
+        @Override
+        public void deletePatient(PatientInfo p) {
+        }
+
+        @Override
+        public ObservableList<PatientInfo> getPatients() {
+            throw new UnsupportedOperationException("UNDEFINED");
+        }
+
+        @Override
+        public void refresh(List<PatientInfo> currentPatients) {
+        }
+    };
+
+    public static class EMRFacadeFactory implements FactoryBean<EMRFacade> {
 
         private static final Logger log = LoggerFactory.getLogger(EMRFacade.class);
 

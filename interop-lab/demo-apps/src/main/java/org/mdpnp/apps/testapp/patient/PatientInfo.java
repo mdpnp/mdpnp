@@ -10,6 +10,8 @@ import java.util.Date;
 
 public class PatientInfo {
 
+    public static final String UNKNOWN_NAME="Unknown to EMR";
+
     public enum Gender { M, F, U };
 
     private final StringProperty lastName = new SimpleStringProperty();

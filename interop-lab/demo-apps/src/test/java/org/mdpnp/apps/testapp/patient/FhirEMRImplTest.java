@@ -71,10 +71,10 @@ public class FhirEMRImplTest {
             emr.setFhirContext(ca.uhn.fhir.context.FhirContext.forDstu2());
             emr.setDataSource(ds);
 
-            List<PatientInfo> listdb = emr.queryDatabase();
+            List<PatientInfo> listdb = emr.getDatabaseHandle().fetchAllPatients();
             Assert.assertTrue("Database had no patients", listdb.size() != 0);
 
-            List<PatientInfo> listfhir = emr.queryServer();
+            List<PatientInfo> listfhir = emr.getFhirHandle().fetchAllPatients();
             Assert.assertTrue("Fhir server had no patients", listfhir.size() != 0);
 
             // Create a new record with the same MRN as in the fhir server in the local
@@ -82,12 +82,12 @@ public class FhirEMRImplTest {
             PatientInfo pi = new PatientInfo(listfhir.get(0).getMrn(), "", "", PatientInfo.Gender.U, new Date());
             Assert.assertFalse("Database should not have patient with this MRN", listdb.contains(pi));
 
-            boolean created = emr.createPatient(pi);
+            boolean created = emr.getDatabaseHandle().createPatient(pi);
             Assert.assertTrue("Failed to create patients", created);
 
             emr.updateLocal(listfhir);
 
-            List<PatientInfo> finalList = emr.queryDatabase();
+            List<PatientInfo> finalList = emr.getDatabaseHandle().fetchAllPatients();
             Assert.assertEquals("Database does not have updated record", listdb.size()+1, finalList.size());
 
             int idx = finalList.indexOf(pi);

@@ -97,11 +97,11 @@ public class JdbcEMRImplTest {
             PatientInfo pi2 = new PatientInfo(id+"-0", "F2", "L2", PatientInfo.Gender.F, new Date(0));
             emr.updatePatient(pi2);
 
-            List<PatientInfo> l0 = JdbcEMRImpl.queryAll(ds);
+            List<PatientInfo> l0 = JdbcEMRImpl.fetchAllPatients(ds);
             Assert.assertEquals("Failed to load patients", 2, l0.size());
 
             emr.deletePatient(pi1);
-            List<PatientInfo> l1 = JdbcEMRImpl.queryAll(ds);
+            List<PatientInfo> l1 = JdbcEMRImpl.fetchAllPatients(ds);
             Assert.assertEquals("Failed to load patients", 1, l1.size());
 
             PatientInfo db=l1.get(0);

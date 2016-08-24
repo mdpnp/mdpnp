@@ -12,25 +12,26 @@ import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
  * @author mfeinberg
  */
-class JdbcEMRImpl implements EMRFacade {
+class JdbcEMRImpl extends EMRFacade {
 
     private static final Logger log = LoggerFactory.getLogger(JdbcEMRImpl.class);
 
-
     private DataSource dataSource;
-    private ObservableList<PatientInfo> patients = FXCollections.observableArrayList();
-    private final Executor collectionUpdateHandler;
 
     public JdbcEMRImpl(Executor executor) {
-        this.collectionUpdateHandler = executor;
+        super(executor);
     }
+
+    public JdbcEMRImpl() {
+        super(NOOP_HANDLER);
+    }
+
     public DataSource getDataSource() {
         return dataSource;
     }
@@ -39,55 +40,35 @@ class JdbcEMRImpl implements EMRFacade {
     }
 
 
+    @Override
     public void deleteDevicePatientAssociation(DevicePatientAssociation assoc) {
         // NO-OP
     }
 
+    @Override
     public DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc) {
         // NO-OP
         return assoc;
     }
 
+    @Override
     public boolean createPatient(PatientInfo p) {
-        collectionUpdateHandler.execute(() -> {
-            patients.add(p);
-        });
-        return createPatient(dataSource, p);
+        return createPatient(dataSource, p) && super.createPatient(p);
     }
 
+    @Override
     public boolean deletePatient(PatientInfo p) {
-        collectionUpdateHandler.execute(() -> {
-            patients.remove(p);
-        });
-        return deletePatient(dataSource, p);
+        return deletePatient(dataSource, p) && super.deletePatient(p);
     }
 
     public boolean updatePatient(PatientInfo p) {
         return updatePatient(dataSource, p);
     }
 
-    @Override
-    public ObservableList<PatientInfo> getPatients() {
-        return patients;
-    }
-    
-    @Override
-    public void refresh() {
-        final List<PatientInfo> currentPatients = queryAll(dataSource);
-        collectionUpdateHandler.execute(() -> {
-            patients.retainAll(currentPatients);
-            Iterator<PatientInfo> itr = currentPatients.iterator();
-            while (itr.hasNext()) {
-                PatientInfo pi = itr.next();
-                if (!patients.contains(pi)) {
-                    patients.add(pi);
-                }
-            }
-        });
-    }
 
-    List<PatientInfo> queryAll() {
-        return queryAll(dataSource);
+    @Override
+    public List<PatientInfo> fetchAllPatients() {
+        return fetchAllPatients(dataSource);
     }
 
     static class PatientInfoRowMapper implements RowMapper<PatientInfo> {
@@ -122,7 +103,7 @@ class JdbcEMRImpl implements EMRFacade {
         return true;
     }
 
-    static List<PatientInfo> queryAll(DataSource dataSource) {
+    static List<PatientInfo> fetchAllPatients(DataSource dataSource) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         List<PatientInfo> l = jdbcTemplate.query("select * from PATIENT_INFO", new PatientInfoRowMapper());
         return l;

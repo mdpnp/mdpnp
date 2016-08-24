@@ -3,7 +3,9 @@ package org.mdpnp.apps.testapp.patient;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TableView;
 import javafx.stage.Stage;
 import org.junit.Assert;
 import org.junit.Test;
@@ -134,8 +136,26 @@ public class PatientApplicationFactoryTest {
                     }
                 });
             }
+
+            // Now that the lists are populated, fake the assignment event
+            //
+            Thread.sleep(500);
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    Parent ui = app.app.getUI();
+                    ((TableView)ui.lookup("#patientView")).getSelectionModel().select(0);
+                    ((TableView)ui.lookup("#deviceView")).getSelectionModel().select(0);
+                    ui.lookup("#connectBtn").fireEvent(new ActionEvent());
+                }
+            });
+            Thread.sleep(500);
+
+
         } catch (Exception ex) {
         }
+
+
         return wait;
     }
 
@@ -157,6 +177,11 @@ public class PatientApplicationFactoryTest {
 
             app.activate(context);
 
+            // 'real' controller will send out the 'proposed device association event', wait for the
+            // device to respond, and only after that update the database and ui. For the
+            // purpose of testing, we do not want to sent events out as there as the devices
+            // are faked and go directly to handling the event as if the response came back.
+            //
             EventHandler<ActionEvent> ae = new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
