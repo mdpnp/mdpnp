@@ -2,15 +2,13 @@ package org.mdpnp.apps.testapp.patient;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mdpnp.apps.testapp.EmbeddedDB;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
-import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author mfeinberg
@@ -22,9 +20,9 @@ public class JdbcEMRImplTest {
     @Test
     public void testFetchPatients() throws Exception {
 
-        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
-        ds.setSchemaDef("DbSchema.sql");
-        ds.setDataDef("DbData.0.sql");
+        EmbeddedDB ds = new EmbeddedDB();
+        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
+        ds.setDataDef("/org/mdpnp/apps/testapp/patient/DbData.0.sql");
         ds.init();
 
         try {
@@ -47,8 +45,8 @@ public class JdbcEMRImplTest {
     @Test
     public void testCreatePatient() throws Exception {
 
-        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
-        ds.setSchemaDef("DbSchema.sql");
+        EmbeddedDB ds = new EmbeddedDB();
+        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
         ds.init();
 
         try {
@@ -81,8 +79,8 @@ public class JdbcEMRImplTest {
     @Test
     public void testUpdateDeletePatient() throws Exception {
 
-        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
-        ds.setSchemaDef("DbSchema.sql");
+        EmbeddedDB ds = new EmbeddedDB();
+        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
         ds.init();
 
         try {

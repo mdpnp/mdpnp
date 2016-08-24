@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.EmbeddedDB;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.mdpnp.apps.testapp.IceApplication;
 import org.slf4j.Logger;
@@ -30,14 +31,14 @@ public class PatientApplicationFactoryTest {
     @Test
     public void testDbCreate() throws Exception {
 
-        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
+        EmbeddedDB ds = new EmbeddedDB();
 
         try {
             Connection conn = ds.getConnection();
             InputStream is0 = getClass().getResourceAsStream("DbSchema.sql");
-            PatientApplicationFactory.EmbeddedDB.applySchemaFile(conn, is0);
+            EmbeddedDB.applySchemaFile(conn, is0);
             InputStream is1 = getClass().getResourceAsStream("DbData.0.sql");
-            PatientApplicationFactory.EmbeddedDB.applySchemaFile(conn, is1);
+            EmbeddedDB.applySchemaFile(conn, is1);
 
             ResultSet rs = conn.createStatement().executeQuery("SELECT COUNT(*) FROM  PATIENT_INFO");
             rs.next();

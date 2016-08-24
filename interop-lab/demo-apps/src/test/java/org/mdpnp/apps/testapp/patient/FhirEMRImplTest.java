@@ -6,13 +6,12 @@ import ca.uhn.fhir.rest.client.IGenericClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mdpnp.apps.testapp.EmbeddedDB;
 import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -61,9 +60,9 @@ public class FhirEMRImplTest {
 
         String url = config.getProperty("mdpnp.fhir.url");
 
-        PatientApplicationFactory.EmbeddedDB ds = new PatientApplicationFactory.EmbeddedDB();
-        ds.setSchemaDef("DbSchema.sql");
-        ds.setDataDef("DataBootstrap.sql");
+        EmbeddedDB ds = new EmbeddedDB();
+        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
+        ds.setDataDef("/org/mdpnp/apps/testapp/patient/DataBootstrap.sql");
         ds.init();
 
         try {
