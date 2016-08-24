@@ -60,7 +60,7 @@ public class FhirEMRImplTest {
 
         String url = config.getProperty("mdpnp.fhir.url");
 
-        EmbeddedDB ds = new EmbeddedDB();
+        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
         ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
         ds.setDataDef("/org/mdpnp/apps/testapp/patient/DataBootstrap.sql");
         ds.init();

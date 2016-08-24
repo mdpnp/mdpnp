@@ -24,9 +24,17 @@ public class EmbeddedDB extends JDBCDataSource {
     private String dataDef;
 
     public EmbeddedDB() {
-        super.setUrl("jdbc:hsqldb:mem:icepatientdb"); // jdbc:hsqldb:file:icepatientdb
         super.setUser("sa");
         super.setPassword("");
+    }
+
+    // jdbc:hsqldb:mem:icepatientdb
+    // jdbc:hsqldb:file:icepatientdb
+    //
+
+    public EmbeddedDB(String url) {
+        this();
+        super.setUrl(url);
     }
 
     public String getSchemaDef() {

@@ -20,7 +20,7 @@ public class JdbcEMRImplTest {
     @Test
     public void testFetchPatients() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB();
+        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
         ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
         ds.setDataDef("/org/mdpnp/apps/testapp/patient/DbData.0.sql");
         ds.init();
@@ -45,7 +45,7 @@ public class JdbcEMRImplTest {
     @Test
     public void testCreatePatient() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB();
+        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
         ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
         ds.init();
 
@@ -79,7 +79,7 @@ public class JdbcEMRImplTest {
     @Test
     public void testUpdateDeletePatient() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB();
+        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
         ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
         ds.init();
 

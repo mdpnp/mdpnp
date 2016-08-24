@@ -31,7 +31,7 @@ public class PatientApplicationFactoryTest {
     @Test
     public void testDbCreate() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB();
+        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
 
         try {
             Connection conn = ds.getConnection();
