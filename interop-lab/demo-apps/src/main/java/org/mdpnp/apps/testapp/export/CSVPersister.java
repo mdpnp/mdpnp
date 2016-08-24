@@ -52,6 +52,21 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     // scientific notation, three decimal places, one exponent digit
     private static DecimalFormat scientificFormat = new DecimalFormat("0.000E0");
 
+    static String toCSVLine(PatientAssessmentDataCollector.PatientAssessmentEvent value) {
+        StringBuilder sb = new StringBuilder();
+
+        long ms = value.getDevTime();
+        String devTime = dateFormats.get().format(new Date(ms));
+        String mrn = value.getPatientId();
+
+        sb.append(3).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
+                .append(devTime).append(",").append(mrn).append(",").append(1).append(",")
+                .append(value.getValue().getKey()).append(",")
+                .append(value.getValue().getValue());
+
+        return sb.toString();
+    }
+
     static String toCSVLine(SampleArrayDataCollector.SampleArrayEvent value) {
         StringBuilder sb = new StringBuilder();
 
@@ -60,7 +75,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         Number v[] = value.getValues();
         String mrn = value.getPatientId();
 
-        sb.append(value.getUniqueDeviceIdentifier()).append(",")
+        sb.append(2).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
                 .append(value.getMetricId()).append(",")
                 .append(value.getInstanceId()).append(",")
                 .append(devTime).append(",").append(mrn).append(",").append(v.length);
@@ -79,7 +94,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         String devTime = dateFormats.get().format(new Date(ms));
         String mrn = value.getPatientId();
 
-        sb.append(value.getUniqueDeviceIdentifier()).append(",")
+        sb.append(1).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
             .append(value.getMetricId()).append(",")
             .append(value.getInstanceId()).append(",")
             .append(devTime).append(",").append(mrn).append(",").append(1).append(",")
@@ -96,6 +111,12 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
     @Subscribe
     public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+        String s = toCSVLine(evt);
+        cat.info(s);
+    }
+
+    @Subscribe
+    public void handleDataSampleEvent(PatientAssessmentDataCollector.PatientAssessmentEvent evt) throws Exception {
         String s = toCSVLine(evt);
         cat.info(s);
     }
