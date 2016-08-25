@@ -4,7 +4,6 @@
 <?import java.lang.*?>
 <?import javafx.collections.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.layout.GridPane?>
 
 <GridPane fx:controller="org.mdpnp.apps.testapp.export.CSVPersister" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <columnConstraints>
@@ -15,14 +14,14 @@
       <RowConstraints minHeight="10.0" />
    </rowConstraints>
    <children>
-      <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="0">
+      <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="0" hgap="10.0">
          <children>
             <Label text="Logging to: " />
             <Label fx:id="filePathLabel" text="Label" />
             <Button mnemonicParsing="false" onAction="#clickChange" text="Change" />
          </children>
       </FlowPane>
-      <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="1">
+      <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="1" hgap="10.0">
          <children>
             <Label text="Number of files to keep around:" />
             <ComboBox fx:id="backupIndex" onAction="#clickBackupIndex">

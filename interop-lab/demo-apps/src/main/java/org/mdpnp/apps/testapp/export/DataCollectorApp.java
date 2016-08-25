@@ -14,6 +14,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -146,7 +147,7 @@ public class DataCollectorApp implements Initializable {
         final ToggleGroup group = new ToggleGroup();
         StackPane cards = new StackPane();
         persisterContainer.setCenter(cards);
-        
+
 
         for (URL u : supportedPersisterURLs) {
             FXMLLoader loader = new FXMLLoader(u);
@@ -157,6 +158,7 @@ public class DataCollectorApp implements Initializable {
             cards.getChildren().add(parent);
             String name = controller.getName();
             RadioButton btn = new RadioButton(name);
+            btn.setPadding(new Insets(5, 5, 0, 0));
             btn.setUserData(controller);
             btns.getChildren().add(btn);
             group.getToggles().add(btn);

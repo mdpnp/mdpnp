@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.control.cell.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.layout.BorderPane?>
 
-<BorderPane prefHeight="480.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.export.DataCollectorApp">
+<?import javafx.geometry.Insets?>
+
+<BorderPane prefHeight="480.0" prefWidth="640.0"
+            xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.mdpnp.apps.testapp.export.DataCollectorApp">
+
  <center>
   <SplitPane fx:id="masterPanel" dividerPositions="0.29797979797979796" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
    <items>
@@ -69,6 +73,9 @@
  </center>
  <bottom>
   <BorderPane fx:id="persisterContainer" BorderPane.alignment="CENTER">
+   <padding>
+    <Insets bottom="5.0" top="5.0" left="5.0" right="5.0"/>
+   </padding>
    <right>
     <VBox BorderPane.alignment="CENTER" >
      <Button fx:id="startControl" mnemonicParsing="false" onAction="#clickStart" text="Start" BorderPane.alignment="CENTER" />
@@ -82,7 +89,11 @@
     </VBox>
    </right>
    <left>
-    <VBox fx:id="btns" BorderPane.alignment="CENTER" />
+    <VBox fx:id="btns" BorderPane.alignment="CENTER" >
+     <padding>
+     <Insets bottom="5.0" top="5.0" left="5.0" right="10.0"/>
+    </padding>
+    </VBox>
    </left>
    <center>
     <StackPane BorderPane.alignment="CENTER" />
