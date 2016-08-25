@@ -35,12 +35,19 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
     @Override
     public boolean start() throws Exception {
+        appender.activateOptions();
+        final File f = new File(appender.getFile());
+        if(f.exists() && f.length() != 0)
+            appender.rollOver();
         return true;
     }
 
     @Override
     public void stop() throws Exception {
-        appender.rollOver();
+        final File f = new File(appender.getFile());
+        // test for canWrite just to be safe in case delete fails for whatever reason
+        if(f.exists() && f.length()==0 && f.canWrite())
+            f.delete();
     }
     
     private static NumberFormat valueFormat = NumberFormat.getNumberInstance();
@@ -154,7 +161,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         }
     }
     
-    private File defaultLogFileName = new File("openice.csv");
+    private File defaultLogFileName = new File("openicedataexport.csv");
     
     public void setup() {
         backupIndex.getSelectionModel().select(0);
@@ -205,7 +212,6 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         appender.setAppend(true);
         appender.setLayout(new org.apache.log4j.PatternLayout("%m%n"));
         appender.setThreshold(Level.ALL);
-        appender.activateOptions();
         cat.setAdditivity(false);
         cat.setLevel(Level.ALL);
         cat.addAppender(appender);
@@ -213,5 +219,5 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     }
 
     private org.apache.log4j.RollingFileAppender appender = null;
-    private org.apache.log4j.Category cat = org.apache.log4j.Logger.getLogger("VitalSimpleTable.CVS");
+    private org.apache.log4j.Category cat = org.apache.log4j.Logger.getLogger("OpenICEDataExport.CVS");
 }

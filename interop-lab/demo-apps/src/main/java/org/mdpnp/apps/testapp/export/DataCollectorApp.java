@@ -93,7 +93,7 @@ public class DataCollectorApp implements Initializable {
         addDataSampleControl.setVisible(b);
     }
     
-    public DataCollectorApp set(DeviceListModel dlm, DataCollector dcs[]) throws IOException {
+    public DataCollectorApp set(DeviceListModel dlm, DataCollector dcs[], URL persist[]) throws IOException {
 
         deviceListModel = dlm;
         table.setItems(tblModel);
@@ -138,18 +138,12 @@ public class DataCollectorApp implements Initializable {
         tree.setShowRoot(false);
         tree.setRoot(deviceTreeModel);
 
-        List<URL> supportedPersisterURLs = new ArrayList<URL>();
-        supportedPersisterURLs.add(CSVPersister.class.getResource("CSVPersister.fxml"));
-        supportedPersisterURLs.add(JdbcPersister.class.getResource("JdbcPersister.fxml"));
-        supportedPersisterURLs.add(VerilogVCDPersister.class.getResource("VerilogVCDPersister.fxml"));
-        supportedPersisterURLs.add(MongoPersister.class.getResource("MongoPersister.fxml"));
-
         final ToggleGroup group = new ToggleGroup();
         StackPane cards = new StackPane();
         persisterContainer.setCenter(cards);
 
 
-        for (URL u : supportedPersisterURLs) {
+        for (URL u : persist) {
             FXMLLoader loader = new FXMLLoader(u);
             Node parent = loader.load();
             final PersisterUIController controller = loader.getController();
@@ -245,7 +239,7 @@ public class DataCollectorApp implements Initializable {
             default:
             case "Numeric":     return mockNumeric();
             case "SampleArray": return mockSampleArray();
-            case "Observation": return null;
+            case "Observation": return mockPatientAssessment();
         }
     }
 

@@ -1,6 +1,9 @@
 package org.mdpnp.apps.testapp.export;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.rti.dds.subscription.Subscriber;
 import javafx.fxml.FXMLLoader;
@@ -45,7 +48,14 @@ public class DataCollectorAppFactory implements IceApplicationProvider {
                 new NumericsDataCollector(numericList),
                 new PatientAssessmentDataCollector(paList)
         };
-        
+
+        final URL[] persisters = {
+                CSVPersister.class.getResource("CSVPersister.fxml"),
+                JdbcPersister.class.getResource("JdbcPersister.fxml"),
+                VerilogVCDPersister.class.getResource("VerilogVCDPersister.fxml"),
+                MongoPersister.class.getResource("MongoPersister.fxml")
+        };
+
         FXMLLoader loader = new FXMLLoader(DataCollectorApp.class.getResource("DataCollectorApp.fxml"));
         final Parent ui = loader.load();
         
@@ -57,7 +67,7 @@ public class DataCollectorAppFactory implements IceApplicationProvider {
         }
         mdsHandler.start();
 
-        controller.set(deviceListModel, dataCollectors);
+        controller.set(deviceListModel, dataCollectors, persisters);
 
         return new IceApplicationProvider.IceApp() {
 
