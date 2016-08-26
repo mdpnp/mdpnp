@@ -1,11 +1,14 @@
 package org.mdpnp.apps.testapp.patient;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -17,14 +20,16 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.ResourceBundle;
 
 /**
  * @author mfeinberg
  */
-public class AddNewPatientController {
+public class AddNewPatientController implements Initializable {
 
     @FXML
     Button createNewPatient;
@@ -57,6 +62,27 @@ public class AddNewPatientController {
         dialogStage.close();
     }
 
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+
+        newPatientGender.setValue(PatientInfo.Gender.M);
+        newPatientDOB.setPromptText("MM/dd/yyyy");
+
+        // From
+        // http://stackoverflow.com/questions/32346893/javafx-datepicker-not-updating-value
+        // This deals with the bug located here where the datepicker value is not updated on focus lost
+        // https://bugs.openjdk.java.net/browse/JDK-8092295?page=com.atlassian.jira.plugin.system.issuetabpanels:all-tabpanel
+
+        newPatientDOB.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if (!newValue){
+                    newPatientDOB.setValue(newPatientDOB.getConverter().fromString(newPatientDOB.getEditor().getText()));
+                }
+            }
+        });
+    }
+
     @FXML
     void cancelHandler(ActionEvent actionEvent) {
         dialogStage.close();
@@ -83,7 +109,6 @@ public class AddNewPatientController {
         newPatientGender.setItems(genderListModel);
         String mrn = Long.toHexString(System.currentTimeMillis());
         newPatientMRN.setText(mrn);
-
     }
 }
 
