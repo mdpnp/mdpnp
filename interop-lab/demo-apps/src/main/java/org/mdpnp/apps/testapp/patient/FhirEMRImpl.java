@@ -16,6 +16,8 @@ import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.FEMALE;
 import static ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum.MALE;
@@ -25,6 +27,8 @@ import static ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum.OFFICIAL;
  * @author mfeinberg
  */
 class FhirEMRImpl extends EMRFacade {
+
+    private static final Logger log = LoggerFactory.getLogger(FhirEMRImpl.class);
 
     private static final String HL7_ICE_URN_OID = "urn:oid:2.16.840.1.113883.3.1974";
     private FhirContext       fhirContext;
@@ -121,6 +125,7 @@ class FhirEMRImpl extends EMRFacade {
     public boolean createPatient(final PatientInfo p) {
         boolean ok = super.createPatient(p);
         MethodOutcome mo = createPatientImpl(p);
+        log.info("Created new patient; id=" + mo.getId());
         return ok && mo.getCreated();
     }
 
