@@ -67,6 +67,7 @@ public class CSVPersisterTest {
     public void testPersistValue() throws Exception {
 
         CSVPersister p = new CSVPersister();
+        p.setup(1, "1MB");
         p.start();
 
         Calendar calendar = Calendar.getInstance();

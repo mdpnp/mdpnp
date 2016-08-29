@@ -2,21 +2,24 @@ package org.mdpnp.apps.testapp.export;
 
 
 import java.io.File;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.ResourceBundle;
 
 import com.google.common.eventbus.Subscribe;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.stage.FileChooser;
 
 import org.apache.log4j.Level;
 
-public class CSVPersister extends DataCollectorAppFactory.PersisterUIController {
+public class CSVPersister extends DataCollectorAppFactory.PersisterUIController implements Initializable {
 
     static ThreadLocal<SimpleDateFormat> dateFormats = new ThreadLocal<SimpleDateFormat>()
     {
@@ -162,12 +165,21 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     }
     
     private File defaultLogFileName = new File("openicedataexport.csv");
-    
-    public void setup() {
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
         backupIndex.getSelectionModel().select(0);
         fSize.getSelectionModel().select(1);
-
         filePathLabel.setText(defaultLogFileName.getAbsolutePath());
+    }
+
+    public void setup() {
+        int maxBackupIndex = Integer.parseInt(backupIndex.getSelectionModel().getSelectedItem());
+        String maxFileSize = fSize.getSelectionModel().getSelectedItem();
+        setup(maxBackupIndex, maxFileSize);
+    }
+
+    void setup(int maxBackupIndex, String maxFileSize) {
 
 
         // Help me here. How do I get JFileChooser have  'new file name' text box on mac os?
@@ -207,8 +219,8 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         // add file size controls.
         appender = new org.apache.log4j.RollingFileAppender();
         appender.setFile(defaultLogFileName.getAbsolutePath());
-        appender.setMaxBackupIndex(Integer.parseInt(backupIndex.getSelectionModel().getSelectedItem()));
-        appender.setMaxFileSize(fSize.getSelectionModel().getSelectedItem());
+        appender.setMaxBackupIndex(maxBackupIndex);
+        appender.setMaxFileSize(maxFileSize);
         appender.setAppend(true);
         appender.setLayout(new org.apache.log4j.PatternLayout("%m%n"));
         appender.setThreshold(Level.ALL);
