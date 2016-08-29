@@ -1,6 +1,7 @@
 package org.mdpnp.apps.testapp;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
@@ -8,17 +9,18 @@ import javafx.scene.layout.Priority;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Optional;
 
 /**
  *
  */
-public class ErrorDialog {
+public class DialogUtils {
 
-    public static void exceptionDialog(Throwable t) {
-        exceptionDialog(null, t);
+    public static void ExceptionDialog(Throwable t) {
+        ExceptionDialog(null, t);
     }
 
-    public static void exceptionDialog(String msg, Throwable t) {
+    public static void ExceptionDialog(String msg, Throwable t) {
 
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -53,6 +55,18 @@ public class ErrorDialog {
         alert.getDialogPane().setExpandableContent(expContent);
 
         alert.showAndWait();
+    }
+
+    public static boolean OkCancelDialog(String header, String msg) {
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Attention");
+
+        alert.setHeaderText(header);
+        alert.setContentText(msg);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
     }
 
 }

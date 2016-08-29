@@ -22,7 +22,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
-import org.mdpnp.apps.testapp.ErrorDialog;
+import org.mdpnp.apps.testapp.DialogUtils;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.export.DataCollectorAppFactory.PersisterUIController;
@@ -199,7 +199,7 @@ public class DataCollectorApp implements Initializable {
                 }
             } catch (Exception e) {
                 log.warn("Exception displayed to user", e);
-                ErrorDialog.exceptionDialog(e);
+                DialogUtils.ExceptionDialog(e);
             }
 
         } else if("Stop".equals(startControl.getText()) && currentPersister != null) {
@@ -208,7 +208,7 @@ public class DataCollectorApp implements Initializable {
                 currentPersister.stop();
             } catch (Exception e) {
                 log.warn("Exception displayed to user", e);
-                ErrorDialog.exceptionDialog(e);
+                DialogUtils.ExceptionDialog(e);
             }
             startControl.setText("Start");
         }
@@ -230,7 +230,7 @@ public class DataCollectorApp implements Initializable {
             }
         }
         catch(Exception ex) {
-            ErrorDialog.exceptionDialog(ex);
+            DialogUtils.ExceptionDialog(ex);
         }
     }
 

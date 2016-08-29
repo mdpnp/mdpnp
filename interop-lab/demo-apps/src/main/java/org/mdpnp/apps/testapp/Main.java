@@ -117,7 +117,7 @@ public class Main {
                     catch (Throwable ex) {
 
                         log.error("Failed to start application", ex);
-                        ErrorDialog.exceptionDialog("Click OK to terminate application", ex);
+                        DialogUtils.ExceptionDialog("Click OK to terminate application", ex);
 
                         // Any exception here would kill the FX thread - there is no
                         // point in attempting to recover as the state of the app is unknown.
