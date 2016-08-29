@@ -11,6 +11,7 @@ import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
@@ -60,10 +61,10 @@ public class FhirEMRImplTest {
 
         String url = config.getProperty("mdpnp.fhir.url");
 
-        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
-        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
-        ds.setDataDef("/org/mdpnp/apps/testapp/patient/DataBootstrap.sql");
-        ds.init();
+        EmbeddedDB db = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
+        db.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
+        db.setDataDef("/org/mdpnp/apps/testapp/patient/DataBootstrap.sql");
+        DataSource ds = db.getDataSource();
 
         try {
             JdbcFhirEMRImpl emr = new JdbcFhirEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
@@ -100,7 +101,7 @@ public class FhirEMRImplTest {
             Assert.assertTrue("Invalid data", pi.getFirstName().length() != 0);
         }
         finally {
-            ds.shutdown();
+            db.destroy();
         }
     }
 

@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mdpnp.apps.testapp.EmbeddedDB;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.Calendar;
 
@@ -113,12 +114,13 @@ public class JdbcPersisterTest {
 
     class JdbcPersisterExt extends JdbcPersister {
 
-        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:test");
+        final EmbeddedDB db = new EmbeddedDB("jdbc:hsqldb:mem:test");
+        final DataSource ds;
 
         JdbcPersisterExt() throws Exception {
             super();
-            ds.setSchemaDef("/org/mdpnp/apps/testapp/export/DbSchema.sql");
-            ds.init();
+            db.setSchemaDef("/org/mdpnp/apps/testapp/export/DbSchema.sql");
+            ds = db.getDataSource();
         }
 
         @Override
@@ -129,7 +131,7 @@ public class JdbcPersisterTest {
         @Override
         public void stop() throws Exception {
             super.stop();
-            ds.shutdown();
+            db.destroy();
         }
     }
 }

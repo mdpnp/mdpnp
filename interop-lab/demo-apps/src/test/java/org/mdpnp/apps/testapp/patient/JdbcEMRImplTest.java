@@ -7,6 +7,7 @@ import org.mdpnp.apps.testapp.FxRuntimeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.util.Date;
 import java.util.List;
 
@@ -20,10 +21,10 @@ public class JdbcEMRImplTest {
     @Test
     public void testFetchPatients() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
-        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
-        ds.setDataDef("/org/mdpnp/apps/testapp/patient/DbData.0.sql");
-        ds.init();
+        EmbeddedDB db = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
+        db.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
+        db.setDataDef("/org/mdpnp/apps/testapp/patient/DbData.0.sql");
+        DataSource ds = db.getDataSource();
 
         try {
             JdbcEMRImpl emr = new JdbcEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
@@ -37,7 +38,7 @@ public class JdbcEMRImplTest {
             }
         }
         finally {
-            ds.shutdown();
+            db.destroy();
         }
     }
 
@@ -45,9 +46,9 @@ public class JdbcEMRImplTest {
     @Test
     public void testCreatePatient() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
-        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
-        ds.init();
+        EmbeddedDB db = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
+        db.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
+        DataSource ds = db.getDataSource();
 
         try {
             JdbcEMRImpl emr = new JdbcEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
@@ -65,23 +66,23 @@ public class JdbcEMRImplTest {
             List<PatientInfo> l = emr.getPatients();
             Assert.assertEquals("Failed to load patients", 1, l.size());
 
-            PatientInfo db=l.get(0);
-            Assert.assertEquals("Failed to load patient", id, db.getMrn());
-            Assert.assertEquals("Failed to load patient", fn, db.getFirstName());
-            Assert.assertEquals("Failed to load patient", ln, db.getLastName());
-            Assert.assertEquals("Failed to load patient", PatientInfo.Gender.F, db.getGender());
+            PatientInfo frmDb=l.get(0);
+            Assert.assertEquals("Failed to load patient", id, frmDb.getMrn());
+            Assert.assertEquals("Failed to load patient", fn, frmDb.getFirstName());
+            Assert.assertEquals("Failed to load patient", ln, frmDb.getLastName());
+            Assert.assertEquals("Failed to load patient", PatientInfo.Gender.F, frmDb.getGender());
         }
         finally {
-            ds.shutdown();
+            db.destroy();
         }
     }
 
     @Test
     public void testUpdateDeletePatient() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
-        ds.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
-        ds.init();
+        EmbeddedDB db = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
+        db.setSchemaDef("/org/mdpnp/apps/testapp/patient/DbSchema.sql");
+        DataSource ds = db.getDataSource();
 
         try {
             JdbcEMRImpl emr = new JdbcEMRImpl(new FxRuntimeSupport.CurrentThreadExecutor());
@@ -104,12 +105,12 @@ public class JdbcEMRImplTest {
             List<PatientInfo> l1 = JdbcEMRImpl.fetchAllPatients(ds);
             Assert.assertEquals("Failed to load patients", 1, l1.size());
 
-            PatientInfo db=l1.get(0);
-            Assert.assertEquals("Failed to load patient", "F2", db.getFirstName());
-            Assert.assertEquals("Failed to load patient", "L2", db.getLastName());
+            PatientInfo frmDb =l1.get(0);
+            Assert.assertEquals("Failed to load patient", "F2", frmDb.getFirstName());
+            Assert.assertEquals("Failed to load patient", "L2", frmDb.getLastName());
         }
         finally {
-            ds.shutdown();
+            db.destroy();
         }
     }
 

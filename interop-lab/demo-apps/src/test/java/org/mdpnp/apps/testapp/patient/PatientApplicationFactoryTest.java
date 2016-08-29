@@ -33,10 +33,10 @@ public class PatientApplicationFactoryTest {
     @Test
     public void testDbCreate() throws Exception {
 
-        EmbeddedDB ds = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
+        EmbeddedDB db = new EmbeddedDB("jdbc:hsqldb:mem:icepatientdb");
 
         try {
-            Connection conn = ds.getConnection();
+            Connection conn = db.getDataSource().getConnection();
             InputStream is0 = getClass().getResourceAsStream("DbSchema.sql");
             EmbeddedDB.applySchemaFile(conn, is0);
             InputStream is1 = getClass().getResourceAsStream("DbData.0.sql");
@@ -48,7 +48,7 @@ public class PatientApplicationFactoryTest {
             Assert.assertEquals("Could not get size of Simpsons' family", 5, sz);
 
         } finally {
-            ds.shutdown();
+            db.destroy();
         }
     }
 

@@ -3,6 +3,8 @@ package org.mdpnp.apps.testapp;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -16,16 +18,16 @@ import java.sql.Statement;
  *
  */
 @SuppressWarnings("serial")
-public class EmbeddedDB extends JDBCDataSource {
+public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddedDB.class);
 
     private String schemaDef;
     private String dataDef;
+    private String dbURL;
+    private JDBCDataSource     instance = null;
 
     public EmbeddedDB() {
-        super.setUser("sa");
-        super.setPassword("");
     }
 
     // jdbc:hsqldb:mem:icepatientdb
@@ -34,7 +36,7 @@ public class EmbeddedDB extends JDBCDataSource {
 
     public EmbeddedDB(String url) {
         this();
-        super.setUrl(url);
+        this.setUrl(url);
     }
 
     public String getSchemaDef() {
@@ -53,7 +55,52 @@ public class EmbeddedDB extends JDBCDataSource {
         this.dataDef = dataDef;
     }
 
-    public void init() throws Exception {
+    public String getUrl() {
+        return dbURL;
+    }
+
+    public void setUrl(String dbURL) {
+        this.dbURL = dbURL;
+    }
+
+    @Override
+    public JDBCDataSource getObject() throws Exception {
+        if(null == instance) {
+            init();
+        }
+        return instance;
+    }
+
+    public JDBCDataSource getDataSource() throws Exception {
+        return getObject();
+    }
+
+    @Override
+    public Class<JDBCDataSource> getObjectType() {
+        return JDBCDataSource.class;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if(instance != null) {
+            Connection conn = instance.getConnection();
+            conn.createStatement().execute("SHUTDOWN");
+        }
+    }
+
+    private void init() throws Exception {
+
+        instance = new JDBCDataSource();
+        instance.setUser("sa");
+        instance.setPassword("");
+        instance.setUrl(dbURL);
+
+
         int v = getSchemaVersion();
         if (v < 1) {
             load(schemaDef);
@@ -63,6 +110,7 @@ public class EmbeddedDB extends JDBCDataSource {
     }
 
     int getSchemaVersion() {
+
         Connection conn = null;
         try {
             conn = getConnection();
@@ -99,9 +147,9 @@ public class EmbeddedDB extends JDBCDataSource {
         }
     }
 
-    public void shutdown() throws Exception {
-        Connection conn = super.getConnection();
-        conn.createStatement().execute("SHUTDOWN");
+    Connection getConnection() throws Exception {
+        return instance.getConnection();
+
     }
 
     public static boolean applySchemaFile(Connection conn, InputStream is) throws Exception {
