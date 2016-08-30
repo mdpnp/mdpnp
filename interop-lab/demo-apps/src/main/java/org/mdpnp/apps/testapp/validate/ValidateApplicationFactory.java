@@ -11,7 +11,7 @@ import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.springframework.context.ApplicationContext;
 
 public class ValidateApplicationFactory implements IceApplicationProvider {
-    private final IceApplicationProvider.AppType ValidateApplication = new IceApplicationProvider.AppType("Auto Validate", "NOCHART",
+    private final IceApplicationProvider.AppType ValidateApplication = new IceApplicationProvider.AppType("Auto Validate", "NOVALIDATE",
             ValidateApplicationFactory.class.getResource("checkbox.png"), 0.75, false);
 
     @Override
