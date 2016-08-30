@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.IllegalFormatCodePointException;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -117,7 +118,10 @@ public class Main {
                     catch (Throwable ex) {
 
                         log.error("Failed to start application", ex);
-                        DialogUtils.ExceptionDialog("Click OK to terminate application", ex);
+
+                        ex = unwind(ex, ControlFlowHandler.ConfirmedError.class);
+                        if(!(ex instanceof ControlFlowHandler.ConfirmedError))
+                            DialogUtils.ExceptionDialog("Click OK to terminate application", ex);
 
                         // Any exception here would kill the FX thread - there is no
                         // point in attempting to recover as the state of the app is unknown.
@@ -140,5 +144,13 @@ public class Main {
                 app = null;
             }
         }
+    }
+
+    private static Throwable unwind(Throwable t, Class<? extends Throwable> clazz) {
+
+        while(!clazz.isAssignableFrom(t.getClass()) && t.getCause() != null) {
+            t = t.getCause();
+        }
+        return t;
     }
 }

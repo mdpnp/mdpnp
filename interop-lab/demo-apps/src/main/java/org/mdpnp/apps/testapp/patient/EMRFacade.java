@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.patient;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import org.mdpnp.apps.testapp.ControlFlowHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -119,17 +120,10 @@ public abstract class EMRFacade {
 
         private static final Logger log = LoggerFactory.getLogger(EMRFacade.class);
 
-        private EMRType     facadeType;
         private DataSource  jdbcDB;
         private String      fhirEMRUrl;
         private FhirContext fhirContext;
-
-        public EMRType getFacadeType() {
-            return facadeType;
-        }
-        public void setFacadeType(EMRType facadeType) {
-            this.facadeType = facadeType;
-        }
+        private ControlFlowHandler controlFlowHandler;
 
         public String getUrl() {
             return fhirEMRUrl;
@@ -152,48 +146,54 @@ public abstract class EMRFacade {
             this.jdbcDB = jdbcDB;
         }
 
-        EMRFacade instance = null;
+        public void setControlFlowHandler(ControlFlowHandler controlFlowHandler) {
+            this.controlFlowHandler = controlFlowHandler;
+        }
+        public ControlFlowHandler getControlFlowHandler() {
+            return controlFlowHandler;
+        }
 
-        public enum EMRType { FHIR, JDBC, COMBINED }
+        EMRFacade instance = null;
 
         @Override
         public EMRFacade getObject() throws Exception {
             if(instance == null) {
-                switch (facadeType) {
-                    default:
-                    case JDBC:
-                        if(jdbcDB == null)
-                            throw new IllegalStateException("JDBC for EMR cannot be null");
+
+                if(fhirEMRUrl == null || fhirEMRUrl.isEmpty()) {
+                    if(jdbcDB == null)
+                        throw new IllegalStateException("JDBC database cannot be null");
+                    instance = new JdbcEMRImpl(new ExecutorFx());
+                    ((JdbcEMRImpl) instance).setDataSource(jdbcDB);
+                }
+                else if(jdbcDB == null) { // but there is a non-empty fhir url...
+                    if (!FhirEMRImpl.isServerThere(fhirEMRUrl))
+                        throw new IllegalStateException("No fhir server at >" + fhirEMRUrl + "< url");
+                    instance = new FhirEMRImpl(new ExecutorFx());
+                    ((FhirEMRImpl) instance).setUrl(fhirEMRUrl);
+                    ((FhirEMRImpl) instance).setFhirContext(fhirContext);
+                }
+                else { // both are listed
+                    if(FhirEMRImpl.isServerThere(fhirEMRUrl)) {
+                        instance = new JdbcFhirEMRImpl(new ExecutorFx());
+                        ((JdbcFhirEMRImpl) instance).setDataSource(jdbcDB);
+                        ((JdbcFhirEMRImpl) instance).setUrl(fhirEMRUrl);
+                        ((JdbcFhirEMRImpl) instance).setFhirContext(fhirContext);
+                    }
+                    else {
+                        boolean ok = controlFlowHandler.confirmError(
+                                "FHIR server not found",
+                                "Requested jdbc/fhir-backed EMR, but there is no server at >" +
+                                fhirEMRUrl + "< url; " + "defaulting to jdbc-only",
+                                true);
+                        if(!ok)
+                            throw new ControlFlowHandler.ConfirmedError("No fhir server at " + fhirEMRUrl);
+
                         instance = new JdbcEMRImpl(new ExecutorFx());
                         ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
-                        break;
-                    case FHIR:
-                        if(!FhirEMRImpl.isServerThere(fhirEMRUrl))
-                            throw new IllegalStateException("No fhir server at >" + fhirEMRUrl +"< url");
-                        instance = new FhirEMRImpl(new ExecutorFx());
-                        ((FhirEMRImpl)instance).setUrl(fhirEMRUrl);
-                        ((FhirEMRImpl)instance).setFhirContext(fhirContext);
-                        break;
-                    case COMBINED:
-                        if(jdbcDB == null)
-                            throw new IllegalStateException("JDBC for EMR cannot be null");
-
-                        if(FhirEMRImpl.isServerThere(fhirEMRUrl)) {
-                            instance = new JdbcFhirEMRImpl(new ExecutorFx());
-                            ((JdbcFhirEMRImpl) instance).setDataSource(jdbcDB);
-                            ((JdbcFhirEMRImpl) instance).setUrl(fhirEMRUrl);
-                            ((JdbcFhirEMRImpl) instance).setFhirContext(fhirContext);
-                        }
-                        else {
-                            log.error("Take it easy cowboy... Requested jdbc/fhir-backed EMR, but there is no server at >" +
-                                      fhirEMRUrl + "< url; defaulting to jdbc-only");
-
-                            instance = new JdbcEMRImpl(new ExecutorFx());
-                            ((JdbcEMRImpl)instance).setDataSource(jdbcDB);
-                        }
-                        break;
+                    }
                 }
             }
+
             new Thread( () -> instance.refresh(), "EMRFacade refresh").start();
 
             return instance;

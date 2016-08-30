@@ -7,6 +7,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -25,6 +26,7 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
     private String schemaDef;
     private String dataDef;
     private String dbURL;
+    private ControlFlowHandler controlFlowHandler;
     private JDBCDataSource     instance = null;
 
     public EmbeddedDB() {
@@ -63,6 +65,15 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
         this.dbURL = dbURL;
     }
 
+    public void setControlFlowHandler(ControlFlowHandler controlFlowHandler) {
+        this.controlFlowHandler = controlFlowHandler;
+    }
+
+    public ControlFlowHandler getControlFlowHandler() {
+        return controlFlowHandler;
+    }
+
+
     @Override
     public JDBCDataSource getObject() throws Exception {
         if(null == instance) {
@@ -95,6 +106,10 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
 
     private void init() throws Exception {
 
+        if(!verifyInstance()) {
+            throw new ControlFlowHandler.ConfirmedError("Failed to initialize database.");
+        }
+
         instance = new JDBCDataSource();
         instance.setUser("sa");
         instance.setPassword("");
@@ -107,6 +122,38 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
             load(dataDef);
         }
 
+    }
+
+    private boolean verifyInstance() {
+
+        // assume url is of the following format:
+        //
+        // jdbc:hsqldb:file:icepatientdb
+        //
+        String t[] = getUrl().split("[:]");
+        switch(t[2]) {
+            case "file":
+                File f = new File(t[3] + ".lck");
+                if(f.exists()) {
+                    boolean ok = controlFlowHandler.confirmError(
+                            "Multiple Instances of ICE Supervisor detected.",
+                            "It appears that another instance of ICE supervisor is already running on this computer." +
+                            "You can run a new instance, but patient management app will be disabled.",
+                            false);
+
+                    if(ok) {
+                        dbURL = dbURL.replace(":file:", ":mem:");
+                        // Disable the app.
+                        System.setProperty("NOPATIENT", "true");
+                    }
+                    return ok;
+                }
+                else
+                    return true;
+            case "mem":
+            default:
+                return true;
+        }
     }
 
     int getSchemaVersion() {

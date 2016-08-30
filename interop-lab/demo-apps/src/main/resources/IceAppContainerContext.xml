@@ -23,6 +23,12 @@
     <!-- ice.properties specified via import -->
     <import resource="classpath:RtConfig.xml"/>
 
+    <!--
+     Utility that would work as a bridge between the worlds of headless controllers like database engines and
+     a need for user feedback when running in interactive mode.
+    -->
+    <bean id="controlFlowHandler" class="org.mdpnp.apps.testapp.ControlFlowHandler.UIControlFlowHandler"/>
+
     <!-- for in-application event dispatching -->
     <bean id="eventBus" class="com.google.common.eventbus.EventBus"/>
 
@@ -164,6 +170,7 @@
     </bean>
     
     <bean id="jdbcDB" class="org.mdpnp.apps.testapp.EmbeddedDB">
+        <property name="controlFlowHandler" ref="controlFlowHandler"/>
         <property name="url"                value="${mdpnp.apps.patient.database}"/>
         <property name="schemaDef"          value="/org/mdpnp/apps/testapp/patient/DbSchema.sql"/>
         <property name="dataDef"            value="/org/mdpnp/apps/testapp/patient/DataBootstrap.sql"/>
@@ -171,17 +178,15 @@
 
     <!--
         Create a handle to EMR system. Passing fhir url will make it talk to a
-        real server; if not specified, will create a in-memory SQL-based
-        implementation.
-
-        facadeType: FHIR, JDBC, COMBINED
+        real server; if not specified, will create a SQL-based implementation; if both are there
+        will merge two sources.
     -->
     <bean id="emr"
           class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
-        <property name="facadeType"  value="COMBINED"/>
-        <property name="url"         value="${mdpnp.fhir.url}"/>
-        <property name="jdbcDB"      ref="jdbcDB"/>
-        <property name="fhirContext" ref="fhirContext"/>
+        <property name="controlFlowHandler" ref="controlFlowHandler"/>
+        <property name="url"                value="${mdpnp.fhir.url}"/>
+        <property name="jdbcDB"             ref="jdbcDB"/>
+        <property name="fhirContext"        ref="fhirContext"/>
     </bean>       
     
     <bean id="mdsConnectivity"
