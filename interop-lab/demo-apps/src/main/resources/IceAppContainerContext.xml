@@ -164,7 +164,14 @@
         </constructor-arg>
 
     </bean>
-    
+
+    <bean id="mdsConnectivity"
+          class="org.mdpnp.devices.MDSHandler"
+          destroy-method="shutdown">
+        <constructor-arg ref="eventLoop"/>
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+
     <bean id="fhirContext" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
         <property name="staticMethod" value="ca.uhn.fhir.context.FhirContext.forDstu2"/>
     </bean>
@@ -184,17 +191,12 @@
     <bean id="emr"
           class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
         <property name="controlFlowHandler" ref="controlFlowHandler"/>
+        <property name="mdsHandler"         ref="mdsConnectivity"/>
         <property name="url"                value="${mdpnp.fhir.url}"/>
         <property name="jdbcDB"             ref="jdbcDB"/>
         <property name="fhirContext"        ref="fhirContext"/>
     </bean>       
-    
-    <bean id="mdsConnectivity"
-          class="org.mdpnp.devices.MDSHandler"
-          destroy-method="shutdown">
-        <constructor-arg ref="eventLoop"/>
-        <constructor-arg ref="domainParticipant" />
-    </bean>
+
     
     <!-- Components from HIMSS'15
     

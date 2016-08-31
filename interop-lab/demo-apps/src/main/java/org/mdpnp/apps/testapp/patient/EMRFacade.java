@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.patient;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import org.mdpnp.apps.testapp.ControlFlowHandler;
+import org.mdpnp.devices.MDSHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -11,6 +12,7 @@ import ca.uhn.fhir.context.FhirContext;
 import javafx.collections.ObservableList;
 
 import javax.sql.DataSource;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -24,7 +26,6 @@ public abstract class EMRFacade {
 
     public EMRFacade(Executor executor) {
         listHandler = new ListHandler(FXCollections.observableArrayList(), executor);
-
     }
 
     public EMRFacade(ListHandler handler) {
@@ -52,12 +53,17 @@ public abstract class EMRFacade {
         return true;
     }
 
+    public boolean addPatient(PatientInfo p) {
+        listHandler.add(p);
+        return true;
+    }
+
     public abstract void deleteDevicePatientAssociation(DevicePatientAssociation assoc);
     public abstract DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc);
 
     static class ListHandler {
 
-        private final ObservableList<PatientInfo> patientList; //  = FXCollections.observableArrayList();
+        private final ObservableList<PatientInfo> patientList;
         private final Executor collectionUpdateHandler;
 
         private ListHandler(ObservableList<PatientInfo> patients, Executor executor) {
@@ -94,6 +100,14 @@ public abstract class EMRFacade {
                 patientList.remove(p);
             });
         }
+
+        public void add(PatientInfo p) {
+            collectionUpdateHandler.execute(() -> {
+                if (!patientList.contains(p)) {
+                    patientList.add(p);
+                }
+            });
+        }
     }
 
     static final ListHandler NOOP_HANDLER = new ListHandler(null, null)
@@ -114,16 +128,21 @@ public abstract class EMRFacade {
         @Override
         public void refresh(List<PatientInfo> currentPatients) {
         }
+
+        @Override
+        public void add(PatientInfo p) {
+        }
     };
 
     public static class EMRFacadeFactory implements FactoryBean<EMRFacade> {
 
         private static final Logger log = LoggerFactory.getLogger(EMRFacade.class);
 
-        private DataSource  jdbcDB;
-        private String      fhirEMRUrl;
-        private FhirContext fhirContext;
+        private DataSource         jdbcDB;
+        private String             fhirEMRUrl;
+        private FhirContext        fhirContext;
         private ControlFlowHandler controlFlowHandler;
+        private MDSHandler         mdsHandler;
 
         public String getUrl() {
             return fhirEMRUrl;
@@ -151,6 +170,13 @@ public abstract class EMRFacade {
         }
         public ControlFlowHandler getControlFlowHandler() {
             return controlFlowHandler;
+        }
+
+        public MDSHandler getMdsHandler() {
+            return mdsHandler;
+        }
+        public void setMdsHandler(MDSHandler mdsHandler) {
+            this.mdsHandler = mdsHandler;
         }
 
         EMRFacade instance = null;
@@ -195,6 +221,21 @@ public abstract class EMRFacade {
             }
 
             new Thread( () -> instance.refresh(), "EMRFacade refresh").start();
+
+            // If factory is configured with MDS handler to listen to external
+            // events, register a listener to sync the list with changes made by other
+            // supervisors
+            //
+            if(mdsHandler != null) {
+                mdsHandler.addPatientListener(new MDSHandler.Patient.PatientListener() {
+                    public void handlePatientChange(MDSHandler.Patient.PatientEvent evt) {
+
+                        ice.Patient state = (ice.Patient) evt.getSource();
+                        PatientInfo pi = new PatientInfo(state.mrn, state.given_name, state.family_name, PatientInfo.Gender.U, new Date());
+                        instance.addPatient(pi);
+                    }
+                });
+            }
 
             return instance;
         }

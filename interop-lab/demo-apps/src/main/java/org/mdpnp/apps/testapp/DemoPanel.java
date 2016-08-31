@@ -33,7 +33,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
-import org.mdpnp.devices.PartitionAssignmentController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -45,7 +44,7 @@ import com.rti.dds.subscription.SubscriberQos;
  * @author Jeff Plourde
  *
  */
-public class DemoPanel implements Runnable {
+public class DemoPanel {
     private final static Logger log = LoggerFactory.getLogger(DemoPanel.class);
 
     @FXML
@@ -72,8 +71,8 @@ public class DemoPanel implements Runnable {
         return back;
     }
 
-    public ComboBox<PatientInfo> getPatients() {
-        return patients;
+    public ComboBox<PatientInfo> getPatientSelector() {
+        return patientSelector;
     }
 
     public Button getCreateAdapter() {
@@ -83,8 +82,8 @@ public class DemoPanel implements Runnable {
     public DemoPanel setModel(PartitionChooserModel partitionChooserModel) {
         this.partitionChooserModel = partitionChooserModel;
 
-        this.patients.setItems(partitionChooserModel.getPatients());
-        this.patients.setValue(PartitionChooserModel.NOBODY);
+        this.patientSelector.setItems(partitionChooserModel.getPatients());
+        this.patientSelector.setValue(PartitionChooserModel.NOBODY);
         return this;
     }
 
@@ -114,7 +113,16 @@ public class DemoPanel implements Runnable {
     }
 
     public DemoPanel() throws IOException {
-        this.timeFuture = executor.scheduleAtFixedRate(this, 1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L, TimeUnit.MILLISECONDS);
+        this.timeFuture =
+                executor.scheduleAtFixedRate(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                Platform.runLater(updateTimeUI);
+                            }
+                        },
+                        1000L - (System.currentTimeMillis() % 1000L) + 10L, 1000L,
+                        TimeUnit.MILLISECONDS);
     }
 
     public void stop() {
@@ -135,16 +143,11 @@ public class DemoPanel implements Runnable {
         }
     };
 
-    @Override
-    public void run() {
-        Platform.runLater(updateTimeUI);
-    }
-
     @FXML
     BorderPane demoPanel;
 
     @FXML
-    ComboBox<PatientInfo> patients;
+    ComboBox<PatientInfo> patientSelector;
     
     @FXML
     Label patientsLabel;
@@ -204,18 +207,8 @@ public class DemoPanel implements Runnable {
 
     @FXML
     public void changePatient(ActionEvent event) {
-        PatientInfo pi = this.patients.getSelectionModel().getSelectedItem();
-        if(null != pi) {
-            final List<String> partitions = new ArrayList<String>(1);
-            if("".equals(pi.getMrn())||"*".equals(pi.getMrn())) {
-                partitions.add(pi.getMrn());
-            } else {
-                String s = PartitionAssignmentController.toPartition(pi.getMrn());
-                partitions.add(s);
-            }
-            partitionChooserModel.activate(partitions);
-        }
-        
+        PatientInfo pi = patientSelector.getSelectionModel().getSelectedItem();
+        partitionChooserModel.changePartition(pi);
     }
 
 }

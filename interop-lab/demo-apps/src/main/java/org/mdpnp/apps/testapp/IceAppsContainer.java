@@ -113,7 +113,7 @@ public class IceAppsContainer extends IceApplication {
                 try {
                     panelController.appTitle.setText("");
                     app.stop();
-                    panelController.patients.setVisible(true);
+                    panelController.patientSelector.setVisible(true);
                     panelController.patientsLabel.setVisible(true);
                 } catch (Exception ex) {
                     log.error("Failed to stop " + appName, ex);
@@ -122,7 +122,7 @@ public class IceAppsContainer extends IceApplication {
         };
         if(app.getDescriptor().isCoordinatorApp()) {
             panelController.patientsLabel.setVisible(false);
-            panelController.patients.setVisible(false);
+            panelController.patientSelector.setVisible(false);
         }
         panelController.back.setVisible(true);
         panelController.content.setCenter(app.getUI());
@@ -327,7 +327,7 @@ public class IceAppsContainer extends IceApplication {
         mainMenuRoot = loader.load();
         final MainMenu mainMenuController = loader.getController();
         
-        final SingleSelectionModel<PatientInfo> selectionModel = panelController.getPatients().getSelectionModel();
+        final SingleSelectionModel<PatientInfo> selectionModel = panelController.getPatientSelector().getSelectionModel();
         StringProperty patientNameProperty = new SimpleStringProperty("");
         patientNameProperty.bind(
                 Bindings.when(selectionModel.selectedItemProperty().isNotNull())

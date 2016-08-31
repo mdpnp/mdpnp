@@ -18,8 +18,8 @@
      GridPane.rowIndex="0" />
     <FlowPane GridPane.columnIndex="1">
      <Label fx:id="patientsLabel" text="Select a patient:" />
-     <ComboBox fx:id="patients" onAction="#changePatient"
-      prefWidth="150.0"/>
+     <ComboBox fx:id="patientSelector" onAction="#changePatient"
+               prefWidth="150.0"/>
     </FlowPane>
     <Button fx:id="createAdapter" mnemonicParsing="false"
      onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..."

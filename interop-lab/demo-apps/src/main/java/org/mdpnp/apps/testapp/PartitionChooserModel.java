@@ -3,17 +3,16 @@ package org.mdpnp.apps.testapp;
 import java.util.*;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.publication.PublisherQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.PartitionAssignmentController;
 
 public class PartitionChooserModel {
 
@@ -72,8 +71,25 @@ public class PartitionChooserModel {
         publisher.set_qos(pQos);
 
         eventBus.post(new PartitionChooserChangeEvent(this));
+
+        // now broadcast to the external world
+        announceNewAssociation(partitions);
     }
-    
+
+    private void announceNewAssociation(List<String> l) {
+
+        if(mdsHandler != null) {
+
+            String p = PartitionAssignmentController.findMRNPartition(l);
+            if(p == null) p = l.isEmpty() ? "" : l.get(0);
+
+            ice.MDSConnectivity val = new ice.MDSConnectivity();
+            val.unique_device_identifier = udi;
+            val.partition = p;
+            mdsHandler.publish(val);
+        }
+    }
+
     public void get(List<String> list) {
         list.clear();
         Set<String> parts = new HashSet<String>();
@@ -137,35 +153,19 @@ public class PartitionChooserModel {
 
     public PartitionChooserModel setMdsHandler(MDSHandler mdsHandler) {
         this.mdsHandler = mdsHandler;
-        this.mdsHandler.addPatientListener(new MDSHandler.Patient.PatientListener() {
-            public void handlePatientChange(MDSHandler.Patient.PatientEvent evt) {
-
-                ice.Patient state = (ice.Patient)evt.getSource();
-
-                final PatientInfo pi = new PatientInfo(state.mrn, state.family_name, state.given_name, PatientInfo.Gender.U, new Date());
-
-                Platform.runLater(() -> {
-                    int idx = patients.indexOf(pi);
-                    if(idx<0)
-                        patients.add(pi);
-                });
-
-
-            }
-        });
-
-        // register with partition changes so that we can broadcast mds connectivity event
-        //
-        eventBus.register(new Object () {
-            @Subscribe
-            public void onPartitionChooserChangeEvent(PartitionChooserModel.PartitionChooserChangeEvent evt) {
-                List<String> l = evt.getPartitions();
-                ice.MDSConnectivity val = new ice.MDSConnectivity();
-                val.unique_device_identifier = udi;
-                val.partition = l.isEmpty() ? "" : l.get(0);
-                mdsHandler.publish(val);
-            }});
-
         return this;
+    }
+
+    public void changePartition(PatientInfo pi) {
+        if(null != pi) {
+            final List<String> partitions = new ArrayList<String>(1);
+            if(PartitionChooserModel.NOBODY.equals(pi)||PartitionChooserModel.ANYBODY.equals(pi)) {
+                partitions.add(pi.getMrn());
+            } else {
+                String s = PartitionAssignmentController.toPartition(pi.getMrn());
+                partitions.add(s);
+            }
+            activate(partitions);
+        }
     }
 }
