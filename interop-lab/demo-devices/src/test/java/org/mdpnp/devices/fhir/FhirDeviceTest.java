@@ -40,16 +40,27 @@ public class FhirDeviceTest {
 
     private static final long   HASHORN_UPTIME=Long.parseLong(System.getProperty("org.mdpnp.devices.HashornDevice.uptimeMs", "5000"));
 
-    ConfigurableApplicationContext ctx;
+    ConfigurableApplicationContext ctx=null;
 
     @Before
     public void setUp() throws Exception {
+
+        String os = System.getProperty("os.name").toLowerCase();
+        org.junit.Assume.assumeTrue("No gonna look for libc on windows", !isWindows(os));
+
         ctx = createContext();
+    }
+
+    private static boolean isWindows(String os) {
+        return (os.indexOf("win") >= 0);
     }
 
     @After
     public void tearDown() {
-        ctx.close();
+        if(ctx != null) {
+            ctx.close();
+            ctx = null;
+        }
     }
 
     @Test
