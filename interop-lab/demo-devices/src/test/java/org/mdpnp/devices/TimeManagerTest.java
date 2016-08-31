@@ -194,9 +194,11 @@ public class TimeManagerTest {
         pQos.partition.name.add("B");
         subscriberTarget.set_qos(sQos);
         publisherTarget.set_qos(pQos);
-        
-        if(!liveUdis1.isEmpty()) {
-            System.err.println(liveUdis1);
+
+        synchronized(liveUdis1) {
+            if (!liveUdis1.isEmpty()) {
+                System.err.println(liveUdis1);
+            }
         }
         waitForSizeOrTimeout(0, DEFAULT_TIMEOUT, () -> assertEquals("TimeManager not unregistered on partition switch", 0, liveUdis1.size()));
         
