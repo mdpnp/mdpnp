@@ -64,7 +64,7 @@ public class PartitionChooser {
             list.getItems().add(value);
             field.setText("");
         }
-        model.set(list.getItems());
+        model.activate(list.getItems());
         if(null != hide) {
             hide.run();
         }

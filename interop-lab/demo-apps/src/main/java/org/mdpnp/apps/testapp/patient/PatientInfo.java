@@ -99,6 +99,15 @@ public class PatientInfo {
             return false;
         }
     }
+
+    ice.Patient asIcePatient() {
+        ice.Patient p = new ice.Patient();
+        p.mrn = getMrn();
+        p.family_name = getLastName();
+        p.given_name = getFirstName();
+        return p;
+    }
+
     @Override
     public int hashCode() {
         return getMrn().hashCode();

@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 /**
  *
@@ -26,6 +27,8 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
     private String schemaDef;
     private String dataDef;
     private String dbURL;
+    private Properties properties = new Properties();
+
     private ControlFlowHandler controlFlowHandler;
     private JDBCDataSource     instance = null;
 
@@ -114,6 +117,7 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
         instance.setUser("sa");
         instance.setPassword("");
         instance.setUrl(dbURL);
+        instance.setProperties(properties);
 
 
         int v = getSchemaVersion();
@@ -142,7 +146,7 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
                             false);
 
                     if(ok) {
-                        dbURL = dbURL.replace(":file:", ":mem:");
+                        properties.put("readonly", "true");
                         // Disable the app.
                         System.setProperty("NOPATIENT", "true");
                     }

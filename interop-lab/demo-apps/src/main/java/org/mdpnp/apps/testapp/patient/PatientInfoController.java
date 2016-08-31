@@ -327,6 +327,7 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     private boolean addPatient(PatientInfo pi) {
         if(emr.createPatient(pi)) {
+            mdsConnectivity.publish(pi.asIcePatient());
             return true;
         }
         return false;

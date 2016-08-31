@@ -24,9 +24,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -36,7 +33,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
-import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.PartitionAssignmentController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,43 +80,17 @@ public class DemoPanel implements Runnable {
         return createAdapter;
     }
 
-    public DemoPanel setModel(final ObservableList<PatientInfo> patients) {
-        final ObservableList<PatientInfo> combined = FXCollections.observableArrayList();
-        PatientInfo nobody = new PatientInfo("", "", "<Unassigned>", PatientInfo.Gender.U, new Date());
-        combined.add(nobody);
-        combined.add(new PatientInfo("*", "", "<Anybody>", PatientInfo.Gender.U, new Date()));
-        patients.forEach((x)->combined.add(x));
-        
-        patients.addListener(new ListChangeListener<PatientInfo>() {
-
-            @Override
-            public void onChanged(javafx.collections.ListChangeListener.Change<? extends PatientInfo> c) {
-                while(c.next()) {
-                    if(c.wasAdded()) {
-                        c.getAddedSubList().forEach((x)->combined.add(x));
-                    }
-                    if(c.wasRemoved()) {
-                        c.getRemoved().forEach((x)->combined.remove(x));
-                    }
-                }
-            }
-            
-        });
-        this.patients.setItems(combined);
-        this.patients.setValue(nobody);
-        
-        return this;
-    }
-
     public DemoPanel setModel(PartitionChooserModel partitionChooserModel) {
         this.partitionChooserModel = partitionChooserModel;
+
+        this.patients.setItems(partitionChooserModel.getPatients());
+        this.patients.setValue(PartitionChooserModel.NOBODY);
         return this;
     }
 
     private String udiText = "";
     private String versionText = "";
     private DeviceListModel deviceListModel;
-    protected MDSHandler mdsHandler;
 
     private void setTooltip() {
         clock.setTooltip(new Tooltip(udiText + "\n" + versionText));
@@ -137,12 +107,7 @@ public class DemoPanel implements Runnable {
         setTooltip();
         return this;
     }
-    
-    public DemoPanel setMdsHandler(MDSHandler mdsHandler) {
-        this.mdsHandler = mdsHandler;
-        return this;
-    }
-    
+
     public DemoPanel setDeviceListModel(DeviceListModel deviceListModel) {
         this.deviceListModel = deviceListModel;
         return this;
@@ -183,8 +148,6 @@ public class DemoPanel implements Runnable {
     
     @FXML
     Label patientsLabel;
-    
-    
 
     @FXML
     public void clickCreateAdapter(ActionEvent evt) {
@@ -250,7 +213,7 @@ public class DemoPanel implements Runnable {
                 String s = PartitionAssignmentController.toPartition(pi.getMrn());
                 partitions.add(s);
             }
-            partitionChooserModel.set(partitions);
+            partitionChooserModel.activate(partitions);
         }
         
     }

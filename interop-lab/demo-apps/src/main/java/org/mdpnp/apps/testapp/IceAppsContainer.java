@@ -19,7 +19,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
@@ -47,7 +46,6 @@ import org.mdpnp.apps.testapp.patient.EMRFacade;
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.BuildInfo;
 import org.mdpnp.devices.MDSHandler;
-import org.mdpnp.devices.TimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -281,26 +279,15 @@ public class IceAppsContainer extends IceApplication {
         final DeviceListModel nc = context.getBean("deviceListModel", DeviceListModel.class);
         final EMRFacade emr = context.getBean("emr", EMRFacade.class);
 
-        // register with partition changes so that we can broadcast mds connectivity event
-        //
-        eventBus.register(new Object () {
-            @Subscribe
-            public void onPartitionChooserChangeEvent(PartitionChooserModel.PartitionChooserChangeEvent evt) {
-                List<String> l = evt.getPartitions();
-                ice.MDSConnectivity val = new ice.MDSConnectivity();
-                val.unique_device_identifier = udi;
-                val.partition = l.isEmpty() ? "" : l.get(0);
-                mdsConnectivity.publish(val);
-        }});
 
-
-
-        partitionChooserModel = new PartitionChooserModel(subscriber, publisher, eventBus);
+        partitionChooserModel = new PartitionChooserModel(udi, subscriber, publisher, eventBus);
+        partitionChooserModel.setMdsHandler(mdsConnectivity).initModel(emr.getPatients());
 
         FXMLLoader loader = new FXMLLoader(DemoPanel.class.getResource("DemoPanel.fxml"));
         panelRoot = loader.load();
-        panelController = ((DemoPanel)loader.getController()).setModel(partitionChooserModel).setUdi(udi).setVersion(BuildInfo.getDescriptor())
-                .setModel(emr.getPatients()).setDeviceListModel(nc).setMdsHandler(mdsConnectivity);
+        panelController = loader.getController();
+        panelController.setUdi(udi).setVersion(BuildInfo.getDescriptor()).setModel(partitionChooserModel).setDeviceListModel(nc);
+
         panelRoot.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
 
