@@ -18,7 +18,7 @@ var UpdateOptions = (new com.mongodb.client.model.UpdateOptions()).upsert(true);
 var persistNumeric = function(mongoDatabase, value) {
 
     var patient = value.getPatientId();
-    if(patient === null && patient === "undefined")
+    if(patient === null || patient === "undefined" || patient == 'UNDEFINED')
         return { "status" : "unresolved patient"};
 
     var collection = mongoDatabase.getCollection("datasample_second");
@@ -28,14 +28,13 @@ var persistNumeric = function(mongoDatabase, value) {
     filter.put("timeStamp", seconds);
     filter.put("patientID", patient);
 
-    var vs = VitalSign.lookupByMetricId(value.getMetricId());
-
+    var vs = lookupVitalByMDC(value.getMetricId());
     if(vs === null || vs === "undefined")
         return { "status" : "unresolved " + value.getMetricId()};
     
     var values = new org.bson.Document();
-    values.put(vs.name() + ".sum",   value.getValue());
-    values.put(vs.name() + ".count", 1);
+    values.put(vs + ".sum",   value.getValue());
+    values.put(vs + ".count", 1);
 
     var document = new org.bson.Document();
     document.put("$inc",  values);
@@ -50,3 +49,29 @@ var persistNumeric = function(mongoDatabase, value) {
     return ret;
 };
 
+var lookupVitalByMetricId = function(metricId) {
+
+    var vs = VitalSign.lookupByMetricId(metricId);
+    if(vs === null || vs === "undefined")
+        return null;
+    else
+        return vs.name();
+};
+
+
+var MDCLOOKUP = {};
+MDCLOOKUP['MDC_TEMP_BLD']            = 'Temperature';
+MDCLOOKUP['MDC_PRESS_CUFF_SYS']      = 'NIBPSystolic';
+MDCLOOKUP['MDC_PRESS_CUFF_DIA']      = 'NIBPDiastolic';
+MDCLOOKUP['MDC_ECG_HEART_RATE']      = 'ECGHeartRate';
+MDCLOOKUP['MDC_PULS_OXIM_SAT_O2']    = 'SpO2';
+MDCLOOKUP['MDC_PULS_OXIM_PULS_RATE'] = 'SpO2PulseRate';
+
+var lookupVitalByMDC = function(metricId) {
+
+    var vs = MDCLOOKUP[metricId];
+    if(vs === null || vs === "undefined")
+        return null;
+    else
+        return vs;
+};
