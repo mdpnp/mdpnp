@@ -1,9 +1,10 @@
 package org.mdpnp.apps.testapp.export;
 
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.eventbus.Subscribe;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
@@ -12,8 +13,6 @@ import javafx.scene.control.TreeItem;
 import org.mdpnp.apps.testapp.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.MapMaker;
 
 public class DeviceTreeModel extends SelectableNode implements ListChangeListener<Device> {
 
@@ -64,19 +63,22 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         final String key = toKey(evt);
 
         if (nodeLookup.get(key) == null) {
-            Iterator<TreeItem<Object>> iter = getChildren().iterator();
-            while (iter.hasNext()) {
-                TreeItem<Object> dn = (TreeItem<Object>) iter.next();
-                Device d = (Device) dn.getValue();
-                if (d.getUDI().equals(evt.getUniqueDeviceIdentifier())) {
-                    final TreeItem<Object> mn = ensureNode(dn, evt.getMetricId());
-                    final TreeItem<Object> in = ensureNode(mn, evt.getInstanceId());
+            Platform.runLater(() ->
+            {
+                Iterator<TreeItem<Object>> iter = getChildren().iterator();
+                while (iter.hasNext()) {
+                    TreeItem<Object> deviceNode = (TreeItem<Object>) iter.next();
+                    Device d = (Device) deviceNode.getValue();
+                    if (d.getUDI().equals(evt.getUniqueDeviceIdentifier())) {
+                        final TreeItem<Object> metricNode = ensureNode(deviceNode, evt.getMetricId());
+                        final TreeItem<Object> instanceNode = ensureNode(metricNode, evt.getInstanceId());
 
-                    nodeLookup.put(key, in);
+                        nodeLookup.put(key, instanceNode);
 
-                    log.debug("adding to the tree: {}", key);
+                        log.debug("adding to the tree: {}", key);
+                    }
                 }
-            }
+            });
         }
     }
 
@@ -111,7 +113,7 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         return false;
     }
 
-    ConcurrentMap<String, TreeItem<Object>> nodeLookup = new MapMaker().weakValues().makeMap();
+    ConcurrentHashMap<String, TreeItem<Object>> nodeLookup =new ConcurrentHashMap();
 
     @Override
     public void onChanged(javafx.collections.ListChangeListener.Change<? extends Device> c) {
@@ -119,9 +121,15 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
             for(Device d : c.getRemoved()) {
                 log.info("Device Removed", d.toString());
 
+                for (String key : nodeLookup.keySet()) {
+                    if(key.startsWith(d.getUDI()))
+                        nodeLookup.remove(key);
+                }
+
                 Iterator<TreeItem<Object>> itr = getChildren().iterator();
                 while(itr.hasNext()) {
-                    if(d.equals(itr.next().getValue())) {
+                    final TreeItem<Object> node = itr.next();
+                    if(d.equals(node.getValue())) {
                         itr.remove();
                     }
                 }
