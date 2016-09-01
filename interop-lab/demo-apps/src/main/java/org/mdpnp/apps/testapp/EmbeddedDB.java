@@ -142,7 +142,10 @@ public class EmbeddedDB implements FactoryBean<JDBCDataSource>, DisposableBean {
                     boolean ok = controlFlowHandler.confirmError(
                             "Multiple Instances of ICE Supervisor detected.",
                             "It appears that another instance of ICE supervisor is already running on this computer." +
-                            "You can run a new instance, but patient management app will be disabled.",
+                            "You can run a new instance, but patient management app will be disabled." +
+                            "This could also be caused by inconsistent state of environment due to a system crash. " +
+                            "If you suspect this could be a case, remove " + f.getAbsolutePath() +
+                            " and restart the application",
                             false);
 
                     if(ok) {
