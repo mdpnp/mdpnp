@@ -121,7 +121,7 @@ dependencies {
     
     compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
     
-    compile group: 'org.controlsfx', name: 'controlsfx', version: '8.20.9' , classifier: 'MDPNP0001'
+    compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12'
 
     compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
 
