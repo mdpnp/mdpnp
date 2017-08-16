@@ -110,6 +110,7 @@ public class Main {
 			try {
 				runConf = Configuration.searchAndLoadSettings(searchPath);
 				d = ConfigurationDialog.showDialog(runConf, this);
+				return;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -118,7 +119,7 @@ public class Main {
 		@Override
 		public void start(Stage primaryStage) throws Exception {
 			// this is kind of janky, but it'll prove the concept... definitely try to fix it up a bit
-			
+
 			primaryStage.setTitle("Login Screen");
 			GridPane grid = new GridPane();
 
@@ -176,76 +177,7 @@ public class Main {
 			final Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent actionEvent) {
-					// String[] args = {};
 
-					// new Thread() {
-					// @Override
-					// public void run() {
-					// try {
-					// Platform.exit();
-					// // System.exit(0);
-					// // Main.main(args);
-					// } catch (Exception e) {
-					// e.printStackTrace();
-					// }
-					// }
-					// }.start();
-
-					EventQueue.invokeLater(new Runnable() {
-						public void run() {
-							try {
-								try {
-
-									// It's nice to be able to change settings even without running
-									// Even if the user presses 'quit' save the state so that it can be used
-									// to boot strap the dialog later.
-									if (d.getQuitPressed()) {
-										Configuration c = d.getLastConfiguration();
-										Configuration.searchAndSaveSettings(c, searchPath);
-										runConf = null;
-									} else {
-										runConf = d.getLastConfiguration();
-										Object o = runConf.getApplication().getAppClass().newInstance();
-
-										if (o instanceof Configuration.GUICommand) {
-											o = ((Configuration.GUICommand) o).create(runConf);
-										}
-
-										if (o instanceof IceApplication) {
-											app = (IceApplication) o;
-
-											try {
-												app.setConfiguration(runConf);
-												app.init();
-												app.start(primaryStage);
-											} catch (Throwable ex) {
-
-												log.error("Failed to start application", ex);
-
-												ex = unwind(ex, ControlFlowHandler.ConfirmedError.class);
-												if (!(ex instanceof ControlFlowHandler.ConfirmedError))
-													DialogUtils.ExceptionDialog("Click OK to terminate application",
-															ex);
-
-												// Any exception here would kill the FX thread - there is no
-												// point in attempting to recover as the state of the app is unknown.
-												// Just exit out of the VM.
-
-												System.exit(-1);
-											}
-										} else {
-											throw new IllegalStateException("Invalid FX application request " + o);
-										}
-									}
-								} catch (Exception e) {
-									System.out.println("this didn't work...");
-									e.printStackTrace();
-								}
-							} catch (Throwable t) {
-								t.printStackTrace();
-							}
-						}
-					});
 				}
 			}));
 
@@ -259,9 +191,53 @@ public class Main {
 						scenetitle.setId("welcome-text");
 						scene.getWindow().hide();
 						show();
-						timeline.play();
-						// String[] args = {};
+						// timeline.play();
 
+						try {
+							// It's nice to be able to change settings even without running
+							// Even if the user presses 'quit' save the state so that it can be used
+							// to boot strap the dialog later.
+							if (d.getQuitPressed()) {
+								Configuration c = d.getLastConfiguration();
+								Configuration.searchAndSaveSettings(c, searchPath);
+								runConf = null;
+							} else {
+								runConf = d.getLastConfiguration();
+								Object o = runConf.getApplication().getAppClass().newInstance();
+
+								if (o instanceof Configuration.GUICommand) {
+									o = ((Configuration.GUICommand) o).create(runConf);
+								}
+
+								if (o instanceof IceApplication) {
+									app = (IceApplication) o;
+
+									try {
+										app.setConfiguration(runConf);
+										app.init();
+										app.start(primaryStage);
+									} catch (Throwable ex) {
+
+										log.error("Failed to start application", ex);
+
+										ex = unwind(ex, ControlFlowHandler.ConfirmedError.class);
+										if (!(ex instanceof ControlFlowHandler.ConfirmedError))
+											DialogUtils.ExceptionDialog("Click OK to terminate application", ex);
+
+										// Any exception here would kill the FX thread - there is no
+										// point in attempting to recover as the state of the app is unknown.
+										// Just exit out of the VM.
+
+										System.exit(-1);
+									}
+								} else {
+									throw new IllegalStateException("Invalid FX application request " + o);
+								}
+							}
+						} catch (Exception e) {
+							System.out.println("this didn't work...");
+							e.printStackTrace();
+						}
 					} else {
 						scenetitle.setText("Invalid");
 						scenetitle.setId("reject-text");
