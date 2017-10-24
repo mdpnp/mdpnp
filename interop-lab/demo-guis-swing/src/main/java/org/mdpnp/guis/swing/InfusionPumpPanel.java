@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, MD PnP Program
+ * Copyright (c) 2017, MD PnP Program
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -32,71 +32,69 @@ import com.rti.dds.subscription.SampleInfo;
  */
 public class InfusionPumpPanel extends DevicePanel {
 
-    private final JLabel active = new JLabel(), drugName = new JLabel(), drugMass = new JLabel(), solutionVolume = new JLabel(),
-            vtbiMl = new JLabel(), durationSec = new JLabel(), fracComplete = new JLabel();
+	private final JLabel active = new JLabel(), drugName = new JLabel(), drugMass = new JLabel(),
+			solutionVolume = new JLabel(), vtbiMl = new JLabel(), durationSec = new JLabel(),
+			fracComplete = new JLabel();
 
-    public InfusionPumpPanel() {
-        super(new GridLayout(7, 2));
-        add(new JLabel("Active"));
-        add(active);
-        add(new JLabel("Drug Name"));
-        add(drugName);
-        add(new JLabel("Drug Mass (mcg)"));
-        add(drugMass);
-        add(new JLabel("Solution Volume (mL)"));
-        add(solutionVolume);
-        add(new JLabel("VTBI (mL)"));
-        add(vtbiMl);
-        add(new JLabel("Duration (seconds)"));
-        add(durationSec);
-        add(new JLabel("Percent complete"));
-        add(fracComplete);
-    }
+	public InfusionPumpPanel() {
+		super(new GridLayout(7, 2));
+		add(new JLabel("Active"));
+		add(active);
+		add(new JLabel("Drug Name"));
+		add(drugName);
+		add(new JLabel("Drug Mass (mcg)"));
+		add(drugMass);
+		add(new JLabel("Solution Volume (mL)"));
+		add(solutionVolume);
+		add(new JLabel("VTBI (mL)"));
+		add(vtbiMl);
+		add(new JLabel("Duration (seconds)"));
+		add(durationSec);
+		add(new JLabel("Percent complete"));
+		add(fracComplete);
+	}
 
+	public static boolean supported(Set<String> numerics) {
+		return false;
+	}
 
+	@Override
+	public void set(DeviceDataMonitor deviceMonitor) {
+		super.set(deviceMonitor);
+		deviceMonitor.getInfusionStatusModel().iterateAndAddListener(infusionStatusListener);
+	}
 
-    public static boolean supported(Set<String> numerics) {
-        return false;
-    }
+	@Override
+	public void destroy() {
+		super.destroy();
+		deviceMonitor.getInfusionStatusModel().removeListener(infusionStatusListener);
+	}
 
-    @Override
-    public void set(DeviceDataMonitor deviceMonitor) {
-        super.set(deviceMonitor);
-        deviceMonitor.getInfusionStatusModel().iterateAndAddListener(infusionStatusListener);
-    }
-    
-    @Override
-    public void destroy() {
-        super.destroy();
-        deviceMonitor.getInfusionStatusModel().removeListener(infusionStatusListener);
-    }
-    
-    private final InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader> infusionStatusListener = new InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader>() {
+	private final InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader> infusionStatusListener = new InstanceModelListener<ice.InfusionStatus, ice.InfusionStatusDataReader>() {
 
-        @Override
-        public void instanceAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
-                InfusionStatus data, SampleInfo sampleInfo) {
-            
-        }
+		@Override
+		public void instanceAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model,
+				InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
 
-        @Override
-        public void instanceNotAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
-                InfusionStatus keyHolder, SampleInfo sampleInfo) {
-            
-        }
+		}
 
-        @Override
-        public void instanceSample(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model, InfusionStatusDataReader reader,
-                InfusionStatus data, SampleInfo sampleInfo) {
-            active.setText(Boolean.toString(data.infusionActive));
-            drugMass.setText(Integer.toString(data.drug_mass_mcg) + " mcg");
-            drugName.setText(data.drug_name);
-            durationSec.setText(Integer.toString(data.infusion_duration_seconds) + " seconds");
-            fracComplete.setText(Integer.toString((int) (100f * data.infusion_fraction_complete)) + "%");
-            solutionVolume.setText(Integer.toString(data.solution_volume_ml) + " mL");
-            vtbiMl.setText(Integer.toString(data.volume_to_be_infused_ml) + " mL");
-        }
-    };
+		@Override
+		public void instanceNotAlive(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model,
+				InfusionStatusDataReader reader, InfusionStatus keyHolder, SampleInfo sampleInfo) {
 
+		}
+
+		@Override
+		public void instanceSample(ReaderInstanceModel<InfusionStatus, InfusionStatusDataReader> model,
+				InfusionStatusDataReader reader, InfusionStatus data, SampleInfo sampleInfo) {
+			active.setText(Boolean.toString(data.infusionActive));
+			drugMass.setText(Integer.toString(data.drug_mass_mcg) + " mcg");
+			drugName.setText(data.drug_name);
+			durationSec.setText(Integer.toString(data.infusion_duration_seconds) + " seconds");
+			fracComplete.setText(Integer.toString((int) (data.infusion_fraction_complete)) + "%");
+			solutionVolume.setText(Integer.toString(data.solution_volume_ml) + " mL");
+			vtbiMl.setText(Integer.toString(data.volume_to_be_infused_ml) + " mL");
+		}
+	};
 
 }

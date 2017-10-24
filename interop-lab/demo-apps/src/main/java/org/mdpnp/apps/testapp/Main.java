@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, MD PnP Program
+ * Copyright (c) 2017, MD PnP Program
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -30,49 +30,47 @@ import org.slf4j.LoggerFactory;
  */
 public class Main {
 
-    private static final Logger log = LoggerFactory.getLogger(Main.class);
+	private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-    private final static File[] searchPath = new File [] {
-            new File(".JumpStartSettings"),
-            new File(System.getProperty("user.home"), ".JumpStartSettings")
-    };
+	private final static File[] searchPath = new File[] { new File(".JumpStartSettings"),
+			new File(System.getProperty("user.home"), ".JumpStartSettings") };
 
-    public static void main(final String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 
 		loadSystemProps();
 
-        Configuration runConf;
-        if(args.length > 0) {
-            runConf = Configuration.read(args);
+		Configuration runConf;
+		if (args.length > 0) {
+			runConf = Configuration.read(args);
 
-            if(null == runConf) {
-                return;
-            } else {
-                Configuration.searchAndSaveSettings(runConf, searchPath);
-            }
-            Configuration.HeadlessCommand cmd = runConf.getCommand();
-            int retCode = cmd.execute(runConf);
-            log.info("This is the end, exit code=" + retCode);
-            System.exit(retCode);
-            
-        } else {
-            javafx.application.Application.launch(Main.FxApplication.class, args);
-            Platform.exit();
-            log.info("This is the end, exit code=" + 0);
-            System.exit(0);
-        }
-    }
+			if (null == runConf) {
+				return;
+			} else {
+				Configuration.searchAndSaveSettings(runConf, searchPath);
+			}
+			Configuration.HeadlessCommand cmd = runConf.getCommand();
+			int retCode = cmd.execute(runConf);
+			log.info("This is the end, exit code=" + retCode);
+			System.exit(retCode);
+
+		} else {
+			javafx.application.Application.launch(Main.FxApplication.class, args);
+			Platform.exit();
+			log.info("This is the end, exit code=" + 0);
+			System.exit(0);
+		}
+	}
 
 	static void loadSystemProps() throws IOException {
 		URL u = Main.class.getResource("/ice.system.properties");
-		if(u != null) {
+		if (u != null) {
 			log.info("Loading base system configuration from " + u.toExternalForm());
 			InputStream is = u.openStream();
 			System.getProperties().load(is);
 			is.close();
 		}
 		File f = new File("ice.system.properties");
-		if(f.exists()) {
+		if (f.exists()) {
 			log.info("Loading user overrides configuration from " + f.getAbsolutePath());
 			InputStream is = new FileInputStream(f);
 			System.getProperties().load(is);
@@ -82,75 +80,73 @@ public class Main {
 
 	public static class FxApplication extends javafx.application.Application {
 
-        private Configuration runConf;
-        private IceApplication app;
+		private Configuration runConf;
+		private IceApplication app;
 
-        @Override
-        public void start(Stage primaryStage) throws Exception {
-            runConf = Configuration.searchAndLoadSettings(searchPath);
+		@Override
+		public void start(Stage primaryStage) throws Exception {
+			runConf = Configuration.searchAndLoadSettings(searchPath);
 
-            ConfigurationDialog d = ConfigurationDialog.showDialog(runConf, this);
+			ConfigurationDialog d = ConfigurationDialog.showDialog(runConf, this);
 
-            // It's nice to be able to change settings even without running
-            // Even if the user presses 'quit' save the state so that it can be used
-            // to boot strap the dialog later.
-            //
-            if (d.getQuitPressed()) {
-                Configuration c = d.getLastConfiguration();
-                Configuration.searchAndSaveSettings(c, searchPath);
-                runConf = null;
-            } else {
-                runConf = d.getLastConfiguration();
-                Object o = runConf.getApplication().getAppClass().newInstance();
+			// It's nice to be able to change settings even without running
+			// Even if the user presses 'quit' save the state so that it can be used
+			// to boot strap the dialog later.
+			//
+			if (d.getQuitPressed()) {
+				Configuration c = d.getLastConfiguration();
+				Configuration.searchAndSaveSettings(c, searchPath);
+				runConf = null;
+			} else {
+				runConf = d.getLastConfiguration();
+				Object o = runConf.getApplication().getAppClass().newInstance();
 
-                if(o instanceof Configuration.GUICommand) {
-                    o = ((Configuration.GUICommand)o).create(runConf);
-                }
+				if (o instanceof Configuration.GUICommand) {
+					o = ((Configuration.GUICommand) o).create(runConf);
+				}
 
-                if(o instanceof IceApplication) {
-                    app = (IceApplication) o;
+				if (o instanceof IceApplication) {
+					app = (IceApplication) o;
 
-                    try {
-                        app.setConfiguration(runConf);
-                        app.init();
-                        app.start(primaryStage);
-                    }
-                    catch (Throwable ex) {
+					try {
+						app.setConfiguration(runConf);
+						app.init();
+						app.start(primaryStage);
+					} catch (Throwable ex) {
 
-                        log.error("Failed to start application", ex);
+						log.error("Failed to start application", ex);
 
-                        ex = unwind(ex, ControlFlowHandler.ConfirmedError.class);
-                        if(!(ex instanceof ControlFlowHandler.ConfirmedError))
-                            DialogUtils.ExceptionDialog("Click OK to terminate application", ex);
+						ex = unwind(ex, ControlFlowHandler.ConfirmedError.class);
+						if (!(ex instanceof ControlFlowHandler.ConfirmedError))
+							DialogUtils.ExceptionDialog("Click OK to terminate application", ex);
 
-                        // Any exception here would kill the FX thread - there is no
-                        // point in attempting to recover as the state of the app is unknown.
-                        // Just exit out of the VM.
-                        //
-                        System.exit(-1);
-                    }
-                }
-                else {
-                    throw new IllegalStateException("Invalid FX application request " + o);
-                }
-            }
-        }
+						// Any exception here would kill the FX thread - there is no
+						// point in attempting to recover as the state of the app is unknown.
+						// Just exit out of the VM.
+						//
+						System.exit(-1);
+					}
+				} else {
+					throw new IllegalStateException("Invalid FX application request " + o);
+				}
+			}
+		}
 
-        @Override
-        public void stop() throws Exception {
-            super.stop();
-            if(null != app) {
-                app.stop();
-                app = null;
-            }
-        }
-    }
+		@Override
+		public void stop() throws Exception {
+			super.stop();
+			if (null != app) {
+				app.stop();
+				app = null;
+			}
+		}
+	}
 
-    private static Throwable unwind(Throwable t, Class<? extends Throwable> clazz) {
+	private static Throwable unwind(Throwable t, Class<? extends Throwable> clazz) {
 
-        while(!clazz.isAssignableFrom(t.getClass()) && t.getCause() != null) {
-            t = t.getCause();
-        }
-        return t;
-    }
+		while (!clazz.isAssignableFrom(t.getClass()) && t.getCause() != null) {
+			t = t.getCause();
+		}
+		return t;
+	}
 }
