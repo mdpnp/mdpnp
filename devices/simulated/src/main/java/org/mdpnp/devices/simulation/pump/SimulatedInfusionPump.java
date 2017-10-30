@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, MD PnP Program
+ * Copyright (c) 2017, MD PnP Program
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -42,8 +42,8 @@ public class SimulatedInfusionPump {
                     // we're under an interlock stop
                     infusionActive = false;
                 } else {
-                    infusionFractionComplete += 1.0f / infusionDurationSeconds;
-                    if (infusionFractionComplete >= 1.0f) {
+                    infusionFractionComplete += 100.0f / infusionDurationSeconds;
+                    if (infusionFractionComplete >= 100.0f) {
                         infusionActive = false;
                         resumeTime = System.currentTimeMillis() + WAITING_PERIOD;
                     } else {
