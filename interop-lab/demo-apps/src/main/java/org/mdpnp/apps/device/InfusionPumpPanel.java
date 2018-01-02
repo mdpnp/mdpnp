@@ -69,7 +69,7 @@ public class InfusionPumpPanel extends DevicePanel {
 		drugMass.textProperty().bind(data.drug_mass_mcgProperty().asString().concat(" mcg"));
 		drugName.textProperty().bind(data.drug_nameProperty());
 		durationSec.textProperty().bind(data.infusion_duration_secondsProperty().asString().concat(" seconds"));
-		fracComplete.textProperty().bind(data.infusion_fraction_completeProperty().asString("%.0f").concat("%"));
+		fracComplete.textProperty().bind(data.infusion_fraction_completeProperty().asString("%.2f").concat("%"));
 		solutionVolume.textProperty().bind(data.solution_volume_mlProperty().asString().concat(" mL"));
 		vtbiMl.textProperty().bind(data.volume_to_be_infused_mlProperty().asString().concat(" mL"));
 	}
