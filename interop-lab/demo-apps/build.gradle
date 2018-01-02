@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, MD PnP Program
+ * Copyright (c) 2014, MD PnP Program
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -31,9 +31,7 @@ javafx {
 
     profiles {
         macosx {
-        	// comment this line out so you don't have to use jdk 1.8 update 60
-        	// this hasn't been tested completely and may cause errors
-			// javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/'
+            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/'
 
             bundleArguments = [
                 // for mac apps
