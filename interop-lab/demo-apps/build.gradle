@@ -152,3 +152,7 @@ jar {
         "Build-Number": project.version)
     }
 }
+
+test {
+	systemProperty 'user.timezone' , 'EST'
+}
