@@ -17,6 +17,19 @@
     <MultiRangeSlider fx:id="slider" maxWidth="250.0"
      prefWidth="250.0" minWidth="250.0" showTickLabels="true"
      showTickMarks="true" BorderPane.alignment="CENTER_LEFT" />
+    <GridPane fx:id="spinners" BorderPane.alignment="CENTER"
+     hgap="5.0">
+     <children>
+       <Spinner fx:id="lowestSpinner" prefWidth="75" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+       <Spinner fx:id="lowerSpinner" prefWidth="75" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+       <Spinner fx:id="higherSpinner" prefWidth="75" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+       <Spinner fx:id="highestSpinner" prefWidth="75" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+       <Label fx:id="lowestLabel" text="Lowest" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+       <Label fx:id="lowestLabel" text="Lower" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+       <Label fx:id="lowestLabel" text="Higher" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+       <Label fx:id="lowestLabel" text="Highest" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+     </children>
+    </GridPane>		<!--End of labels-->
     <FlowPane fx:id="controls" BorderPane.alignment="CENTER"
      hgap="5.0">
      <children>
