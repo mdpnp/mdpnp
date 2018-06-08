@@ -104,8 +104,6 @@ public final class VitalView implements ListChangeListener<Value> {
     
     private void bindSpinnersToSlider() {
     	
-    	System.err.println("slider values are\n\t"+slider.dump());
-    	
     	lowestSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(slider.minProperty().doubleValue(), slider.maxProperty().doubleValue()));
     	lowestSpinner.setEditable(true);
     	lowerSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(slider.minProperty().doubleValue(), slider.maxProperty().doubleValue()));
