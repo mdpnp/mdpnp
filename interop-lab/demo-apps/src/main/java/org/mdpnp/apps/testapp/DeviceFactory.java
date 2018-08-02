@@ -32,6 +32,11 @@ import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.ibp.SimInvasivePressure;
 import org.mdpnp.devices.simulation.multi.SimMultiparameter;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
+import org.mdpnp.devices.simulation.pulseox.EightSecFixedAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.FourSecFixedAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.FourSecNoSoftAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.InitialEightSecIceSettableAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.InitialEightSecOperSettableAvgSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
@@ -81,7 +86,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter", "PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Legacy Pulse Oximeter", "PO_Simulator", 1);
         }
 
         @Override
@@ -91,6 +96,124 @@ public class DeviceFactory {
             Publisher publisher = context.getBean("publisher", Publisher.class);
 
             return new SimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+     * by the operator, or through software
+     * 
+     * @author Simon
+     *
+     */
+    public static class FourSecFullyFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "4s Fixed Average Pulse Oximeter", "4S_FF_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new FourSecFixedAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+     * by the operator, or through software
+     * 
+     * @author Simon
+     *
+     */
+    public static class FourSecFullyFixedNoSoftAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "4s Fixed Average Pulse Oximeter No Soft Avg", "4S_FF_NO_SOFT_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new FourSecNoSoftAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+     * by the operator, or through software
+     * 
+     * @author Simon
+     *
+     */
+    public static class EightSecFullyFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "8s Fixed Average Pulse Oximeter", "8S_FF_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new EightSecFixedAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter has a software configurable averaging rate
+     *  
+     * @author Simon
+     *
+     */
+    public static class EightSecIceSettableFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "8s ICE Settable Average Pulse Oximeter", "8S_IS_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new InitialEightSecIceSettableAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter has a software configurable averaging rate
+     *  
+     * @author Simon
+     *
+     */
+    public static class EightSecOperSettableFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "8s Oper Settable Average Pulse Oximeter", "8S_OS_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new InitialEightSecOperSettableAvgSimPulseOximeter(subscriber, publisher, eventLoop);
         }
     }
 

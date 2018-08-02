@@ -14,6 +14,7 @@ package org.mdpnp.apps.device;
 
 import java.util.Set;
 
+import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
@@ -24,11 +25,19 @@ import javafx.scene.paint.Paint;
 public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
     private final static String[] PLETH_WAVEFORMS = new String[] { rosetta.MDC_PULS_OXIM_PLETH.VALUE };
 
-    private final static String[][] PARAMS = new String[][] { { rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE }, { rosetta.MDC_PULS_OXIM_SAT_O2.VALUE } };
+//    private final static String[][] PARAMS = new String[][] { { rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE }, { rosetta.MDC_PULS_OXIM_SAT_O2.VALUE } };
+    private final static String[][] PARAMS = new String[][] { 
+    	{ rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE }, 
+    	{ rosetta.MDC_PULS_OXIM_SAT_O2.VALUE },
+    	{ ice.SP02_SOFT_CAN_GET_AVERAGING_RATE.VALUE },
+    	{ ice.SP02_AVERAGING_RATE.VALUE },
+    	{ ice.SP02_OPER_CAN_SET_AVERAGING_RATE.VALUE },
+    	{ ice.SP02_SOFT_CAN_SET_AVERAGING_RATE.VALUE }
+    };
 
-    private final static String[] PARAM_LABELS = new String[] { "Pulse", "SpO\u2082" };
+    private final static String[] PARAM_LABELS = new String[] { "Pulse", "SpO\u2082", "Get Avg?", "Avg", "Oper set", "Soft set" };
 
-    private final static String[] PARAM_UNITS = new String[] { "BPM", "%" };
+    private final static String[] PARAM_UNITS = new String[] { "BPM", "%" , "", "", "", ""};
 
     private final static String[] PLETH_LABELS = new String[] { "Plethysmogram" };
 
@@ -39,7 +48,7 @@ public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
 
     @Override
     public int getParameterCount() {
-        return 2;
+        return 6;
     }
 
     @Override
@@ -80,5 +89,57 @@ public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
         }
         return false;
     }
+    
+    @Override
+    protected void customiseLabels() {
+    	System.err.println("customiseLabel called in PulseOximiterPanel");
+    	System.err.println("there are "+params.length+" parameter labels here");
+    	/*
+    	 * We can refer directly to our labels by index here, because we control
+    	 * what order they appear in from our own PARAMS array here.
+    	 */
+    	Label canGetLabel=params[2];
+    	if(canGetLabel.textProperty().isBound()) {
+    		//Let's get the bound value
+    		String value=canGetLabel.textProperty().getValue();
+    		if(value.equals("0")) {
+    			canGetLabel.textProperty().unbind();
+    			canGetLabel.setText("No");
+    			Label actualAverage=params[3];
+    			actualAverage.textProperty().unbind();
+    			actualAverage.setVisible(false);
+    			paramLabelBorders[3].setVisible(false);
+    		} else {
+    			canGetLabel.textProperty().unbind();
+    			canGetLabel.setText("Yes");
+    		}
+    	}
+    	Label operCanSetLabel=params[4];
+    	if(operCanSetLabel.textProperty().isBound()) {
+    		String value=operCanSetLabel.textProperty().getValue();
+    		if(value.equals("0")) {
+    			operCanSetLabel.textProperty().unbind();
+    			operCanSetLabel.setText("No");
+    		} else {
+    			operCanSetLabel.textProperty().unbind();
+    			operCanSetLabel.setText("Yes");
+    		}
+    	} else {
+    		System.err.println("operCanSetLabel is not bound...");
+    	}
+    	Label softCanSetLabel=params[5];
+    	if(softCanSetLabel.textProperty().isBound()) {
+    		String value=softCanSetLabel.textProperty().getValue();
+    		if(value.equals("0")) {
+    			softCanSetLabel.textProperty().unbind();
+    			softCanSetLabel.setText("No");
+    		} else {
+    			softCanSetLabel.textProperty().unbind();
+    			softCanSetLabel.setText("Yes");
+    		}
+    	}
+    	
+    }
+    
 
 }
