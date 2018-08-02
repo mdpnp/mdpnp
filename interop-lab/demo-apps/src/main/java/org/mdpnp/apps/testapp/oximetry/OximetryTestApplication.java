@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.prefs.Preferences;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.Device;
@@ -81,6 +82,8 @@ public class OximetryTestApplication {
 	private final String OPER_CAN_GET_AVE=ice.SP02_OPER_CAN_GET_AVERAGING_RATE.VALUE;
 	private final String OPER_CAN_SET_AVE=ice.SP02_OPER_CAN_SET_AVERAGING_RATE.VALUE;
 	private final String AVE_RATE=ice.SP02_AVERAGING_RATE.VALUE;
+
+	private static final String SAMPLE_FILE_DIR="sample_file_dir";
 	/**
 	 * The max average rate that is "OK" to use in this app.  Should be configurable elsewhere?
 	 */
@@ -164,12 +167,20 @@ public class OximetryTestApplication {
 	}
 	
 	private void chooseCSVFile() throws IOException {
+
+		Preferences prefs=Preferences.userNodeForPackage(OximetryTestApplication.class);
+		String baseDir=prefs.get(SAMPLE_FILE_DIR, System.getProperty("user.home"));
+
 		FileChooser chooser=new FileChooser();
 		ExtensionFilter ef=new ExtensionFilter("CSV Files", "*.csv");
 		chooser.getExtensionFilters().add(ef);
 		chooser.setSelectedExtensionFilter(ef);
+		chooser.setInitialDirectory(new File(baseDir));
 		File selected=chooser.showOpenDialog(oximeters.getParent().getScene().getWindow());
-		setInputFile(selected);
+		if(selected!=null) {
+			prefs.put(SAMPLE_FILE_DIR, selected.getParent());
+			setInputFile(selected);
+		} //else, cancelled...
 	}
 	
 	private void setInputFile(File input) throws IOException {
