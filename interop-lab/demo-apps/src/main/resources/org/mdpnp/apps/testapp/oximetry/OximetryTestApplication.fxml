@@ -25,6 +25,9 @@
 	    <Label text="Simple alarm threshold"/>
 	    <TextField fx:id="simpleAlarmThreshold"/>
 	    <Button fx:id="chooseFile" text="Select file"/>
+	    <Label text="File"/>
+	    <TextField fx:id="selectedFile"/>
+	    <Button fx:id="runSequence" text="Run"/>
 	</children>
   </VBox>
 </right>

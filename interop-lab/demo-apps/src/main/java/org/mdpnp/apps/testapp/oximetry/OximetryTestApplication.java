@@ -69,6 +69,8 @@ public class OximetryTestApplication {
 	@FXML private TextField simpleAlarmThreshold;
 	@FXML private Button setButton;
 	@FXML private Button chooseFile;
+	@FXML private Button runSequence;
+	@FXML private TextField selectedFile;
 	@FXML private BorderPane main;
 	
 	private Background nonAlarmBackground;
@@ -158,15 +160,19 @@ public class OximetryTestApplication {
 		});
 		
 		chooseFile.setOnAction(e-> {
+			chooseCSVFile();
+		});
+		
+		runSequence.setOnAction(e-> {
 			try {
-				chooseCSVFile();
+				startSequence();
 			} catch (IOException ioe) {
 				Alert exceptionAlert=new Alert(AlertType.ERROR, "Could not open the selected file", ButtonType.OK);
 			}
 		});
 	}
 	
-	private void chooseCSVFile() throws IOException {
+	private void chooseCSVFile() {
 
 		Preferences prefs=Preferences.userNodeForPackage(OximetryTestApplication.class);
 		String baseDir=prefs.get(SAMPLE_FILE_DIR, System.getProperty("user.home"));
@@ -179,15 +185,16 @@ public class OximetryTestApplication {
 		File selected=chooser.showOpenDialog(oximeters.getParent().getScene().getWindow());
 		if(selected!=null) {
 			prefs.put(SAMPLE_FILE_DIR, selected.getParent());
-			setInputFile(selected);
+			selectedFile.setText(selected.getAbsolutePath());
+			//setInputFile(selected);
 		} //else, cancelled...
 	}
 	
-	private void setInputFile(File input) throws IOException {
+	private void startSequence() throws IOException {
 		ArrayList<Integer> times=new ArrayList<>();
 		ArrayList<Float> values=new ArrayList<>();
 		String s;
-		try(BufferedReader br=Files.newBufferedReader(input.toPath())) {
+		try(BufferedReader br=Files.newBufferedReader(new File(selectedFile.getText()).toPath())) {
 			while( (s=br.readLine()) != null) {
 				String[] split=s.split(",");
 				try {
