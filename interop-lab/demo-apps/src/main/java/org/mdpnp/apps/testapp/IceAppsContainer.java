@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, MD PnP Program
+ * Copyright (c) 2018, MD PnP Program
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -37,6 +37,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import org.mdpnp.apps.device.DeviceDataMonitor;
+import org.mdpnp.apps.fxbeans.BypassStatusFxList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
@@ -186,6 +187,7 @@ public class IceAppsContainer extends IceApplication {
             final NumericFxList numericList = context.getBean("numericList", NumericFxList.class);
             final SampleArrayFxList sampleArrayList = context.getBean("sampleArrayList", SampleArrayFxList.class);
             final InfusionStatusFxList infusionStatusList = context.getBean("infusionStatusList", InfusionStatusFxList.class);
+            final BypassStatusFxList bypassStatusList = context.getBean("bypassStatusList", BypassStatusFxList.class);
             final DeviceListModel deviceListModel = context.getBean("deviceListModel", DeviceListModel.class);
             
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
@@ -196,7 +198,7 @@ public class IceAppsContainer extends IceApplication {
             if (null != deviceMonitor) {
                 deviceMonitor.stop();
             }
-            deviceMonitor = new DeviceDataMonitor(device.getUDI(), deviceListModel, numericList, sampleArrayList, infusionStatusList);
+            deviceMonitor = new DeviceDataMonitor(device.getUDI(), deviceListModel, numericList, sampleArrayList, infusionStatusList, bypassStatusList);
             devicePanel.set(deviceMonitor);
         }
 

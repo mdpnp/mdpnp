@@ -289,6 +289,7 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
         NumericFxListFactory nFact;
         SampleArrayFxListFactory saFact;
         InfusionStatusFxListFactory isFact;
+        BypassStatusFxListFactory bsFact;
         DeviceListModelFactory deFact;
         
         
@@ -331,6 +332,14 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
             isFact.setQosProfile(QosProfiles.waveform_data);
             isFact.setTopicName(ice.InfusionStatusTopic.VALUE);
             final InfusionStatusFxList infusionStatusList = isFact.getObject();
+            
+            bsFact = new BypassStatusFxListFactory();
+            bsFact.setEventLoop(eventLoop);
+            bsFact.setSubscriber(subscriber);
+            bsFact.setQosLibrary(QosProfiles.ice_library);
+            bsFact.setQosProfile(QosProfiles.waveform_data);
+            bsFact.setTopicName(ice.BypassStatusTopic.VALUE);
+            final BypassStatusFxList bypassStatusList = bsFact.getObject();
 
             org.mdpnp.devices.TimeManager tm=controller.getComponent(org.mdpnp.devices.TimeManager.class);
             deFact = new DeviceListModelFactory(eventLoop, subscriber, tm);
@@ -350,7 +359,7 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
 
             
             Platform.runLater( () -> {
-                deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList);
+                deviceMonitor = new DeviceDataMonitor(device.getDeviceIdentity().unique_device_identifier, deviceListModel, numericList, sampleArrayList, infusionStatusList, bypassStatusList);
     
                 deviceViewController.set(deviceMonitor);
     

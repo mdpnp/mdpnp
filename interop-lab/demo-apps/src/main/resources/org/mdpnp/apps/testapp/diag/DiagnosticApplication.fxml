@@ -8,383 +8,493 @@
 <?import javafx.scene.control.ScrollPane?>
 
 <BorderPane prefHeight="386.0" prefWidth="377.0"
- xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
- fx:controller="org.mdpnp.apps.testapp.diag.DiagnosticApplication">
- <center>
-  <TabPane tabClosingPolicy="UNAVAILABLE">
-    <tabs>
-      <Tab text="Numerics">
-         <content>
-               <TableView fx:id="numericTable" prefWidth="-1.0"
-       prefHeight="200.0" GridPane.rowIndex="1">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Instance">
-         <cellValueFactory>
-          <PropertyValueFactory property="instance_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Value">
-         <cellValueFactory>
-          <PropertyValueFactory property="value" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Device Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="device_time" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Presentation Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="presentation_time" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="150.0" text="Vendor Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="vendor_metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Units">
-         <cellValueFactory>
-          <PropertyValueFactory property="unit_id" />
-         </cellValueFactory>
-        </TableColumn>
+	xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="org.mdpnp.apps.testapp.diag.DiagnosticApplication">
+	<center>
+		<TabPane tabClosingPolicy="UNAVAILABLE">
+			<tabs>
+				<Tab text="Numerics">
+					<content>
+						<TableView fx:id="numericTable" prefWidth="-1.0"
+							prefHeight="200.0" GridPane.rowIndex="1">
+							<columns>
+								<TableColumn prefWidth="200.0" text="Source Time">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="source_timestamp" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="250.0" text="UDI">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="unique_device_identifier" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Metric">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="metric_id" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Instance">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="instance_id" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Value">
+									<cellValueFactory>
+										<PropertyValueFactory property="value" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Device Time">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="device_time" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0"
+									text="Presentation Time">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="presentation_time" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="150.0" text="Vendor Metric">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="vendor_metric_id" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Units">
+									<cellValueFactory>
+										<PropertyValueFactory property="unit_id" />
+									</cellValueFactory>
+								</TableColumn>
 
-       </columns>
-      </TableView>
-         
-         </content>
-      </Tab>
-      <Tab text="Waveform Traces">
-            <TableView fx:id="sampleArrayTable" prefWidth="-1.0"
-       prefHeight="200" GridPane.rowIndex="3">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200" text="Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Instance">
-         <cellValueFactory>
-          <PropertyValueFactory property="instance_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Frequency">
-         <cellValueFactory>
-          <PropertyValueFactory property="frequency" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Values">
-         <cellValueFactory>
-          <PropertyValueFactory property="values" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Device Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="device_time" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Presentation Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="presentation_time" />
-         </cellValueFactory>
-        </TableColumn>        
-        <TableColumn prefWidth="150" text="Vendor Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="vendor_metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Units">
-         <cellValueFactory>
-          <PropertyValueFactory property="unit_id" />
-         </cellValueFactory>
-        </TableColumn>
+							</columns>
+						</TableView>
 
-       </columns>
-      </TableView>
-      
-      </Tab>
-      <Tab text="Patient Alerts">
-            <TableView fx:id="patientAlertTable" prefWidth="-1.0"
-       prefHeight="200" GridPane.rowIndex="5">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Identifier">
-         <cellValueFactory>
-          <PropertyValueFactory property="identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Text">
-         <cellValueFactory>
-          <PropertyValueFactory property="text" />
-         </cellValueFactory>
-        </TableColumn>
-       </columns>
-      </TableView>
-      
-      </Tab>
-      <Tab text="Technical Alerts">
-            <TableView fx:id="technicalAlertTable" prefWidth="-1.0"
-       prefHeight="200" GridPane.rowIndex="7">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Identifier">
-         <cellValueFactory>
-          <PropertyValueFactory property="identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Text">
-         <cellValueFactory>
-          <PropertyValueFactory property="text" />
-         </cellValueFactory>
-        </TableColumn>
-       </columns>
-      </TableView>
-      
-      </Tab>
-      <Tab text="Validations">
-            <TableView fx:id="validationTable" prefWidth="-1.0"
-       prefHeight="200.0" GridPane.rowIndex="8">
-       <columns>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Instance">
-         <cellValueFactory>
-          <PropertyValueFactory property="instance_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Value">
-         <cellValueFactory>
-          <PropertyValueFactory property="value" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Validated">
-         <cellValueFactory>
-          <PropertyValueFactory property="validated" />
-         </cellValueFactory>
-        </TableColumn>
+					</content>
+				</Tab>
+				<Tab text="Waveform Traces">
+					<TableView fx:id="sampleArrayTable" prefWidth="-1.0"
+						prefHeight="200" GridPane.rowIndex="3">
+						<columns>
+							<TableColumn prefWidth="200.0" text="Source Time">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="source_timestamp" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="250.0" text="UDI">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="unique_device_identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200" text="Metric">
+								<cellValueFactory>
+									<PropertyValueFactory property="metric_id" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Instance">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="instance_id" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Frequency">
+								<cellValueFactory>
+									<PropertyValueFactory property="frequency" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Values">
+								<cellValueFactory>
+									<PropertyValueFactory property="values" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Device Time">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="device_time" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0"
+								text="Presentation Time">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="presentation_time" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="150" text="Vendor Metric">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="vendor_metric_id" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Units">
+								<cellValueFactory>
+									<PropertyValueFactory property="unit_id" />
+								</cellValueFactory>
+							</TableColumn>
 
-       </columns>
-      </TableView>
-      
-      </Tab>
-            <Tab text="Infusions">
-            <TableView fx:id="infusionStatusTable" prefWidth="-1.0"
-       prefHeight="200.0" GridPane.rowIndex="8">
-       <columns>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="100.0" text="Drug Name">
-         <cellValueFactory>
-          <PropertyValueFactory property="drug_name" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="125.0" text="Drug Mass (mcg)">
-         <cellValueFactory>
-          <PropertyValueFactory property="drug_mass_mcg" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="150.0" text="Solution Volume (mL)">
-         <cellValueFactory>
-          <PropertyValueFactory property="solution_volume_ml" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="100.0" text="Duration (s)">
-         <cellValueFactory>
-          <PropertyValueFactory property="infusion_duration_seconds" />
-         </cellValueFactory>
-        </TableColumn>
-                <TableColumn prefWidth="75.0" text="VTBI (mL)">
-         <cellValueFactory>
-          <PropertyValueFactory property="volume_to_be_infused_ml" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="150.0" text="Fraction Complete (%)">
-         <cellValueFactory>
-          <PropertyValueFactory property="infusion_fraction_complete" />
-         </cellValueFactory>
-        </TableColumn>        
-        <TableColumn prefWidth="75.0" text="Active">
-         <cellValueFactory>
-          <PropertyValueFactory property="infusionActive" />
-         </cellValueFactory>
-        </TableColumn>
+						</columns>
+					</TableView>
 
-       </columns>
-      </TableView>
-      
-      </Tab>
-      <Tab text="Alarm Limits">
-         <content>
-               <TableView fx:id="alarmLimitTable" prefWidth="-1.0"
-       prefHeight="200.0" GridPane.rowIndex="1">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Type">
-         <cellValueFactory>
-          <PropertyValueFactory property="limit_type" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Units">
-         <cellValueFactory>
-          <PropertyValueFactory property="unit_identifier" />
-         </cellValueFactory>
-        </TableColumn>        
-        <TableColumn prefWidth="75.0" text="Value">
-         <cellValueFactory>
-          <PropertyValueFactory property="value" />
-         </cellValueFactory>
-        </TableColumn>
-       </columns>
-      </TableView>
-         
-         </content>
-      </Tab>
-            <Tab text="Global Alarm Obj">
-         <content>
-               <TableView fx:id="globalAlarmLimitObjectiveTable" prefWidth="-1.0"
-       prefHeight="200.0" GridPane.rowIndex="1">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>       
-        <TableColumn prefWidth="200.0" text="Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Type">
-         <cellValueFactory>
-          <PropertyValueFactory property="limit_type" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Units">
-         <cellValueFactory>
-          <PropertyValueFactory property="unit_identifier" />
-         </cellValueFactory>
-        </TableColumn>        
-        <TableColumn prefWidth="75.0" text="Value">
-         <cellValueFactory>
-          <PropertyValueFactory property="value" />
-         </cellValueFactory>
-        </TableColumn>
-       </columns>
-      </TableView>
-         
-         </content>
-      </Tab>      
-                  <Tab text="Local Limit Obj ">
-         <content>
-               <TableView fx:id="localAlarmLimitObjectiveTable" prefWidth="-1.0"
-       prefHeight="200.0" GridPane.rowIndex="1">
-       <columns>
-        <TableColumn prefWidth="200.0" text="Source Time">
-         <cellValueFactory>
-          <PropertyValueFactory property="source_timestamp" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="UDI">
-         <cellValueFactory>
-          <PropertyValueFactory property="unique_device_identifier" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Metric">
-         <cellValueFactory>
-          <PropertyValueFactory property="metric_id" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="75.0" text="Type">
-         <cellValueFactory>
-          <PropertyValueFactory property="limit_type" />
-         </cellValueFactory>
-        </TableColumn>
-        <TableColumn prefWidth="200.0" text="Units">
-         <cellValueFactory>
-          <PropertyValueFactory property="unit_identifier" />
-         </cellValueFactory>
-        </TableColumn>        
-        <TableColumn prefWidth="75.0" text="Value">
-         <cellValueFactory>
-          <PropertyValueFactory property="value" />
-         </cellValueFactory>
-        </TableColumn>
-       </columns>
-      </TableView>
-         
-         </content>
-      </Tab>      
-            
-    </tabs>
-  </TabPane>
+				</Tab>
+				<Tab text="Patient Alerts">
+					<TableView fx:id="patientAlertTable" prefWidth="-1.0"
+						prefHeight="200" GridPane.rowIndex="5">
+						<columns>
+							<TableColumn prefWidth="200.0" text="Source Time">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="source_timestamp" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="250.0" text="UDI">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="unique_device_identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Identifier">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Text">
+								<cellValueFactory>
+									<PropertyValueFactory property="text" />
+								</cellValueFactory>
+							</TableColumn>
+						</columns>
+					</TableView>
 
- </center>
+				</Tab>
+				<Tab text="Technical Alerts">
+					<TableView fx:id="technicalAlertTable" prefWidth="-1.0"
+						prefHeight="200" GridPane.rowIndex="7">
+						<columns>
+							<TableColumn prefWidth="200.0" text="Source Time">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="source_timestamp" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="250.0" text="UDI">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="unique_device_identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Identifier">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Text">
+								<cellValueFactory>
+									<PropertyValueFactory property="text" />
+								</cellValueFactory>
+							</TableColumn>
+						</columns>
+					</TableView>
+
+				</Tab>
+				<Tab text="Validations">
+					<TableView fx:id="validationTable" prefWidth="-1.0"
+						prefHeight="200.0" GridPane.rowIndex="8">
+						<columns>
+							<TableColumn prefWidth="250.0" text="UDI">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="unique_device_identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="200.0" text="Metric">
+								<cellValueFactory>
+									<PropertyValueFactory property="metric_id" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Instance">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="instance_id" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Value">
+								<cellValueFactory>
+									<PropertyValueFactory property="value" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Validated">
+								<cellValueFactory>
+									<PropertyValueFactory property="validated" />
+								</cellValueFactory>
+							</TableColumn>
+
+						</columns>
+					</TableView>
+
+				</Tab>
+				<Tab text="Infusions">
+					<TableView fx:id="infusionStatusTable" prefWidth="-1.0"
+						prefHeight="200.0" GridPane.rowIndex="8">
+						<columns>
+							<TableColumn prefWidth="250.0" text="UDI">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="unique_device_identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="100.0" text="Drug Name">
+								<cellValueFactory>
+									<PropertyValueFactory property="drug_name" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="125.0" text="Drug Mass (mcg)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="drug_mass_mcg" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="150.0"
+								text="Solution Volume (mL)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="solution_volume_ml" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="100.0" text="Duration (s)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="infusion_duration_seconds" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="VTBI (mL)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="volume_to_be_infused_ml" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="150.0"
+								text="Fraction Complete (%)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="infusion_fraction_complete" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Active">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="infusionActive" />
+								</cellValueFactory>
+							</TableColumn>
+
+						</columns>
+					</TableView>
+
+				</Tab>
+
+				<Tab text="Bypass Pumps">
+					<TableView fx:id="bypassStatusTable" prefWidth="-1.0"
+						prefHeight="200.0" GridPane.rowIndex="8">
+						<columns>
+							<TableColumn prefWidth="250.0" text="UDI">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="unique_device_identifier" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="100.0" text="Flow Rate">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="bypass_flow_lmin" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="125.0"
+								text="Pump Speed (rpms)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="bypass_speed_rpm" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="150.0"
+								text="Blood Temperature (C)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="blood_temp_celsius" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="175.0"
+								text="Blood Pressure (mmHg)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="blood_press_mmhg" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="150.0"
+								text="Volume Bypassed (L)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="volume_bypassed_ml" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="150.0"
+								text="Time on Bypass (s)">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="bypass_duration_seconds" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn prefWidth="75.0" text="Active">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="bypassActive" />
+								</cellValueFactory>
+							</TableColumn>
+
+						</columns>
+					</TableView>
+
+				</Tab>
+
+				<Tab text="Alarm Limits">
+					<content>
+						<TableView fx:id="alarmLimitTable" prefWidth="-1.0"
+							prefHeight="200.0" GridPane.rowIndex="1">
+							<columns>
+								<TableColumn prefWidth="200.0" text="Source Time">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="source_timestamp" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="250.0" text="UDI">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="unique_device_identifier" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Metric">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="metric_id" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Type">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="limit_type" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Units">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="unit_identifier" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Value">
+									<cellValueFactory>
+										<PropertyValueFactory property="value" />
+									</cellValueFactory>
+								</TableColumn>
+							</columns>
+						</TableView>
+
+					</content>
+				</Tab>
+				<Tab text="Global Alarm Obj">
+					<content>
+						<TableView fx:id="globalAlarmLimitObjectiveTable"
+							prefWidth="-1.0" prefHeight="200.0" GridPane.rowIndex="1">
+							<columns>
+								<TableColumn prefWidth="200.0" text="Source Time">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="source_timestamp" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Metric">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="metric_id" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Type">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="limit_type" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Units">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="unit_identifier" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Value">
+									<cellValueFactory>
+										<PropertyValueFactory property="value" />
+									</cellValueFactory>
+								</TableColumn>
+							</columns>
+						</TableView>
+
+					</content>
+				</Tab>
+				<Tab text="Local Limit Obj ">
+					<content>
+						<TableView fx:id="localAlarmLimitObjectiveTable"
+							prefWidth="-1.0" prefHeight="200.0" GridPane.rowIndex="1">
+							<columns>
+								<TableColumn prefWidth="200.0" text="Source Time">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="source_timestamp" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="250.0" text="UDI">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="unique_device_identifier" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Metric">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="metric_id" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Type">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="limit_type" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="200.0" text="Units">
+									<cellValueFactory>
+										<PropertyValueFactory
+											property="unit_identifier" />
+									</cellValueFactory>
+								</TableColumn>
+								<TableColumn prefWidth="75.0" text="Value">
+									<cellValueFactory>
+										<PropertyValueFactory property="value" />
+									</cellValueFactory>
+								</TableColumn>
+							</columns>
+						</TableView>
+
+					</content>
+				</Tab>
+
+			</tabs>
+		</TabPane>
+
+	</center>
 </BorderPane>

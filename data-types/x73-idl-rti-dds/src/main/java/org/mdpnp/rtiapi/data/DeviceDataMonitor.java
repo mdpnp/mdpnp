@@ -19,6 +19,9 @@ import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.Subscriber;
+
+import ice.InfusionStatus;
+import ice.InfusionStatusDataReader;
 /**
  * Tracks the data instances associated with one device.
  * 
@@ -31,6 +34,7 @@ public class DeviceDataMonitor {
     private final NumericInstanceModel numModel;
     private final SampleArrayInstanceModel saModel;
     private final InfusionStatusInstanceModel isModel;
+    private final BypassStatusInstanceModel bsModel;
 
     private static final Logger log = LoggerFactory.getLogger(DeviceDataMonitor.class);
     private final String udi; 
@@ -59,6 +63,7 @@ public class DeviceDataMonitor {
         startAndWait(numModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.numeric_data);
         startAndWait(saModel, subscriber, eventLoop, identity_exp, identity, waitTime, QosProfiles.waveform_data);
         startAndWait(isModel, subscriber, eventLoop, identity_exp, identity,waitTime, QosProfiles.state);
+        startAndWait(bsModel, subscriber, eventLoop, identity_exp, identity,waitTime, QosProfiles.state);
     }
     
     
@@ -69,6 +74,7 @@ public class DeviceDataMonitor {
         this.numModel = new NumericInstanceModelImpl(ice.NumericTopic.VALUE);
         this.saModel = new SampleArrayInstanceModelImpl(ice.SampleArrayTopic.VALUE);
         this.isModel = new InfusionStatusInstanceModelImpl(ice.InfusionStatusTopic.VALUE);
+        this.bsModel = new BypassStatusInstanceModelImpl(ice.BypassStatusTopic.VALUE);
     }
 
     
@@ -78,6 +84,7 @@ public class DeviceDataMonitor {
         numModel.stopReader();
         saModel.stopReader();
         isModel.stopReader();
+        bsModel.stopReader();
     }
     
     public DeviceConnectivityInstanceModel getDeviceConnectivityModel() {
@@ -99,5 +106,9 @@ public class DeviceDataMonitor {
     public InfusionStatusInstanceModel getInfusionStatusModel() {
         return isModel;
     }
+
+	public BypassStatusInstanceModel getBypassStatusModel() {
+		return bsModel;
+	}
 
 }

@@ -37,6 +37,7 @@ public class DevicePanelFactory {
         BloodPressurePanel.class, 
         VentilatorPanel.class, 
         InfusionPumpPanel.class, 
+        BypassPumpPanel.class, 
         InvasiveBloodPressurePanel.class,
         TemperatureProbePanel.class,
     };
@@ -53,7 +54,7 @@ public class DevicePanelFactory {
         }
     }
 
-    public static <T extends Node> void resolvePanels(Set<String> tags, Collection<T> container, Set<String> pumps) {
+    public static <T extends Node> void resolvePanels(Set<String> tags, Collection<T> container, Set<String> pumps, Set<String> cardioPumps) {
         log.trace("resolvePanels tags=" + tags + " container=" + container);
         Map<Class<?>, T> byClass = new HashMap<Class<?>, T>();
 
@@ -68,6 +69,18 @@ public class DevicePanelFactory {
                     container.add(byClass.remove(InfusionPumpPanel.class));
                 } else {
                     container.add((T) InfusionPumpPanel.class.getConstructor().newInstance());
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        
+        try {
+            if (!cardioPumps.isEmpty()) {
+                if (byClass.containsKey(BypassPumpPanel.class)) {
+                    container.add(byClass.remove(BypassPumpPanel.class));
+                } else {
+                    container.add((T) BypassPumpPanel.class.getConstructor().newInstance());
                 }
             }
         } catch (Exception e) {

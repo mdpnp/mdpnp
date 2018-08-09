@@ -52,7 +52,7 @@ public class DevicePanelFactory {
         }
     }
 
-    public static <T extends Component> void resolvePanels(Set<String> tags, Collection<T> container, Set<String> pumps) {
+    public static <T extends Component> void resolvePanels(Set<String> tags, Collection<T> container, Set<String> pumps, Set<String> cardioPumps) {
         log.trace("resolvePanels tags=" + tags + " container=" + container);
         Map<Class<?>, T> byClass = new HashMap<Class<?>, T>();
 
@@ -72,6 +72,19 @@ public class DevicePanelFactory {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        
+        // new for bypass
+        try {
+			if (!cardioPumps.isEmpty()) {
+				if (byClass.containsKey(BypassPumpPanel.class)) {
+					container.add(byClass.remove(BypassPumpPanel.class));
+				} else {
+					container.add((T) BypassPumpPanel.class.getConstructor().newInstance());
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 
         for (int i = 0; i < PANELS.length; i++) {
             try {

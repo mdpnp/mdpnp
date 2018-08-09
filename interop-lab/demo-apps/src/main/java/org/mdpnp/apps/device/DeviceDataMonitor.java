@@ -17,6 +17,8 @@ import java.util.function.Predicate;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
+import org.mdpnp.apps.fxbeans.BypassStatusFx;
+import org.mdpnp.apps.fxbeans.BypassStatusFxList;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFx;
@@ -38,11 +40,13 @@ public class DeviceDataMonitor {
     private final NumericFxList numericList;
     private final SampleArrayFxList sampleArrayList;
     private final InfusionStatusFxList infusionStatusList;
+    private final BypassStatusFxList bypassStatusList;
     
     private final Device device;
     private final ObservableList<NumericFx> numeric;
     private final ObservableList<SampleArrayFx> sampleArray;
     private final ObservableList<InfusionStatusFx> infusionStatus;
+    private final ObservableList<BypassStatusFx> bypassStatus;
 
     private static final Logger log = LoggerFactory.getLogger(DeviceDataMonitor.class);
     private final String udi; 
@@ -53,13 +57,14 @@ public class DeviceDataMonitor {
 
     public DeviceDataMonitor(final String udi, final DeviceListModel deviceListModel,
             final NumericFxList numericList, final SampleArrayFxList sampleArrayList,
-            final InfusionStatusFxList infusionStatusList) {
+            final InfusionStatusFxList infusionStatusList, final BypassStatusFxList bypassStatusList) {
         this.udi = udi;
         this.deviceListModel = deviceListModel;
         this.device = deviceListModel.getByUniqueDeviceIdentifier(udi);
         this.numericList = numericList;
         this.sampleArrayList = sampleArrayList;
         this.infusionStatusList = infusionStatusList;
+        this.bypassStatusList = bypassStatusList;
         this.numeric = new FilteredList<>(numericList, new Predicate<NumericFx>() {
             @Override
             public boolean test(NumericFx t) {
@@ -76,6 +81,15 @@ public class DeviceDataMonitor {
 
             @Override
             public boolean test(InfusionStatusFx t) {
+                return udi.equals(t.getUnique_device_identifier());
+            }
+            
+        });
+        
+        this.bypassStatus = new FilteredList<>(bypassStatusList, new Predicate<BypassStatusFx>() {
+
+            @Override
+            public boolean test(BypassStatusFx t) {
                 return udi.equals(t.getUnique_device_identifier());
             }
             
@@ -109,6 +123,10 @@ public class DeviceDataMonitor {
     
     public ObservableList<InfusionStatusFx> getInfusionStatusModel() {
         return infusionStatus;
+    }
+    
+    public ObservableList<BypassStatusFx> getBypassStatusModel() {
+        return bypassStatus;
     }
 
 }

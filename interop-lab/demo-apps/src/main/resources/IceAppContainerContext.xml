@@ -1,244 +1,316 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:util="http://www.springframework.org/schema/util"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
                            http://www.springframework.org/schema/util
                            http://www.springframework.org/schema/util/spring-util-4.1.xsd">
 
-    <bean id="propertyResolver" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="order"                          value="1"/>
-        <property name="ignoreResourceNotFound"         value="true"/>
-        <property name="ignoreUnresolvablePlaceholders" value="true"/>
-        <property name="systemPropertiesModeName"       value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
-        <property name="locations">
-            <list>
-                <value>classpath:/ice.properties</value>
-            </list>
-        </property>
-    </bean>    
+	<bean id="propertyResolver"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="order" value="1" />
+		<property name="ignoreResourceNotFound" value="true" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+		<property name="locations">
+			<list>
+				<value>classpath:/ice.properties</value>
+			</list>
+		</property>
+	</bean>
 
-    <!-- ice.properties specified via import -->
-    <import resource="classpath:RtConfig.xml"/>
+	<!-- ice.properties specified via import -->
+	<import resource="classpath:RtConfig.xml" />
 
-    <!--
-     Utility that would work as a bridge between the worlds of headless controllers like database engines and
-     a need for user feedback when running in interactive mode.
-    -->
-    <bean id="controlFlowHandler" class="org.mdpnp.apps.testapp.ControlFlowHandler.UIControlFlowHandler"/>
+	<!-- Utility that would work as a bridge between the worlds of headless 
+		controllers like database engines and a need for user feedback when running 
+		in interactive mode. -->
+	<bean id="controlFlowHandler"
+		class="org.mdpnp.apps.testapp.ControlFlowHandler.UIControlFlowHandler" />
 
-    <!-- for in-application event dispatching -->
-    <bean id="eventBus" class="com.google.common.eventbus.EventBus"/>
+	<!-- for in-application event dispatching -->
+	<bean id="eventBus" class="com.google.common.eventbus.EventBus" />
 
-    <bean id="refreshScheduler" class="java.util.concurrent.Executors"
-          factory-method="newSingleThreadScheduledExecutor"
-          destroy-method="shutdownNow">
-    </bean>
+	<bean id="refreshScheduler" class="java.util.concurrent.Executors"
+		factory-method="newSingleThreadScheduledExecutor" destroy-method="shutdownNow">
+	</bean>
 
-    <bean id="supervisorUdi" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-        <property name="staticMethod" value="org.mdpnp.devices.DeviceIdentityBuilder.randomUDI"/>
-    </bean>
-    
-    <!-- This is only needed when PCA apps are installed -->
-    <bean id="objectiveWriter" class="org.mdpnp.rtiapi.data.InfusionObjectiveDataWriterFactory" lazy-init="true">
-        <constructor-arg ref="publisher" />
-        <constructor-arg ref="domainParticipant" />
-    </bean>
+	<bean id="supervisorUdi"
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="staticMethod"
+			value="org.mdpnp.devices.DeviceIdentityBuilder.randomUDI" />
+	</bean>
 
-    <!-- This is only needed when Charting apps are installed -->
-    <bean id="patientAssessmentWriter" class="org.mdpnp.rtiapi.data.PatientAssessmentDataWriterFactory" lazy-init="true">
-        <constructor-arg ref="publisher" />
-        <constructor-arg ref="domainParticipant" />
-    </bean>
+	<!-- This is only needed when PCA apps are installed -->
+	<bean id="objectiveWriter"
+		class="org.mdpnp.rtiapi.data.InfusionObjectiveDataWriterFactory"
+		lazy-init="true">
+		<constructor-arg ref="publisher" />
+		<constructor-arg ref="domainParticipant" />
+	</bean>
 
-    <!--
-    Do not start right away. Delegate to the LifecycleController to do it at the very end avter all beans
-    are up so that we do not skip any DDS events
-    -->
-    <bean id="timeManager" class="org.mdpnp.devices.TimeManager"
-          destroy-method="stop">
-        <constructor-arg ref="refreshScheduler"></constructor-arg>
-        <constructor-arg ref="eventLoop"></constructor-arg>
-        <constructor-arg ref="publisher"></constructor-arg>
-        <constructor-arg ref="subscriber"></constructor-arg>
-        <constructor-arg ref="supervisorUdi"></constructor-arg>
-        <constructor-arg type="java.lang.String"><value>Supervisor</value></constructor-arg>
-    </bean>
+	<!-- This is only needed when Charting apps are installed -->
+	<bean id="patientAssessmentWriter"
+		class="org.mdpnp.rtiapi.data.PatientAssessmentDataWriterFactory"
+		lazy-init="true">
+		<constructor-arg ref="publisher" />
+		<constructor-arg ref="domainParticipant" />
+	</bean>
 
-    <bean id="patientAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.PatientAlertTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>
-    
-    <bean id="technicalAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.TechnicalAlertTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>        
-    
-    <bean id="numericList" class="org.mdpnp.apps.fxbeans.NumericFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.NumericTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>numeric_data</value></property>
-    </bean>
+	<!-- Do not start right away. Delegate to the LifecycleController to do 
+		it at the very end avter all beans are up so that we do not skip any DDS 
+		events -->
+	<bean id="timeManager" class="org.mdpnp.devices.TimeManager"
+		destroy-method="stop">
+		<constructor-arg ref="refreshScheduler"></constructor-arg>
+		<constructor-arg ref="eventLoop"></constructor-arg>
+		<constructor-arg ref="publisher"></constructor-arg>
+		<constructor-arg ref="subscriber"></constructor-arg>
+		<constructor-arg ref="supervisorUdi"></constructor-arg>
+		<constructor-arg type="java.lang.String">
+			<value>Supervisor</value>
+		</constructor-arg>
+	</bean>
 
-    <bean id="alarmLimitList" class="org.mdpnp.apps.fxbeans.AlarmLimitFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.AlarmLimitTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>
-    
-    <bean id="localAlarmLimitObjectiveList" class="org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.LocalAlarmLimitObjectiveTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>
-    
-    <bean id="globalAlarmLimitObjectiveList" class="org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.GlobalAlarmLimitObjectiveTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>    
-    
-    <!-- This wrapper adds a validation flag to each numeric by containment -->
-    <bean id="validationOracle" class="org.mdpnp.apps.testapp.validate.ValidationOracleFactory" lazy-init="false">
-        <property name="numericList" ref="numericList"/>
-    </bean>
-    
-    <bean id="sampleArrayList" class="org.mdpnp.apps.fxbeans.SampleArrayFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.SampleArrayTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>waveform_data</value></property>
-    </bean>    
-    
-    <bean id="infusionStatusList" class="org.mdpnp.apps.fxbeans.InfusionStatusFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="ice.InfusionStatusTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>
+	<bean id="patientAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.PatientAlertTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    <bean id="assessmentList" class="org.mdpnp.apps.fxbeans.PatientAssessmentFxListFactory" lazy-init="false">
-        <property name="topicName"><util:constant static-field="himss.PatientAssessmentTopic.VALUE"/></property>
-        <property name="subscriber" ref="subscriber"/>
-        <property name="eventLoop" ref="eventLoop"/>
-        <property name="qosLibrary"><value>ice_library</value></property>
-        <property name="qosProfile"><value>state</value></property>
-    </bean>
+	<bean id="technicalAlertList" class="org.mdpnp.apps.fxbeans.AlertFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.TechnicalAlertTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    <bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory" lazy-init="true">
-        <constructor-arg ref="eventLoop" />
-        <constructor-arg ref="subscriber" />
-        <constructor-arg ref="timeManager" />
-    </bean>    
+	<bean id="numericList" class="org.mdpnp.apps.fxbeans.NumericFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.NumericTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>numeric_data</value>
+		</property>
+	</bean>
 
-    <bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory" lazy-init="true">
-        <constructor-arg name="deviceListModel" ref="deviceListModel" />
-        <constructor-arg name="publisher"       ref="publisher" />
-        <constructor-arg name="eventLoop"       ref="eventLoop" />
-        <constructor-arg name="numericList"     ref="numericList"/>
-        <constructor-arg name="defaultVitals">
-            <array>
-                <value type="org.mdpnp.apps.testapp.vital.VitalSign">RespiratoryRate</value>
-                <value type="org.mdpnp.apps.testapp.vital.VitalSign">HeartRate</value>
-                <value type="org.mdpnp.apps.testapp.vital.VitalSign">SpO2</value>
-            </array>
-        </constructor-arg>
+	<bean id="alarmLimitList" class="org.mdpnp.apps.fxbeans.AlarmLimitFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.AlarmLimitTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    </bean>
+	<bean id="localAlarmLimitObjectiveList"
+		class="org.mdpnp.apps.fxbeans.LocalAlarmLimitObjectiveFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.LocalAlarmLimitObjectiveTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    <bean id="mdsConnectivity"
-          class="org.mdpnp.devices.MDSHandler"
-          destroy-method="shutdown">
-        <constructor-arg ref="eventLoop"/>
-        <constructor-arg ref="domainParticipant" />
-    </bean>
+	<bean id="globalAlarmLimitObjectiveList"
+		class="org.mdpnp.apps.fxbeans.GlobalAlarmLimitObjectiveFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.GlobalAlarmLimitObjectiveTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    <bean id="fhirContext" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-        <property name="staticMethod" value="ca.uhn.fhir.context.FhirContext.forDstu2"/>
-    </bean>
-    
-    <bean id="jdbcDB" class="org.mdpnp.apps.testapp.EmbeddedDB">
-        <property name="controlFlowHandler" ref="controlFlowHandler"/>
-        <property name="url"                value="${mdpnp.apps.patient.database}"/>
-        <property name="schemaDef"          value="/org/mdpnp/apps/testapp/patient/DbSchema.sql"/>
-        <property name="dataDef"            value="/org/mdpnp/apps/testapp/patient/DataBootstrap.sql"/>
-    </bean>
+	<!-- This wrapper adds a validation flag to each numeric by containment -->
+	<bean id="validationOracle" class="org.mdpnp.apps.testapp.validate.ValidationOracleFactory"
+		lazy-init="false">
+		<property name="numericList" ref="numericList" />
+	</bean>
 
-    <!--
-        Create a handle to EMR system. Passing fhir url will make it talk to a
-        real server; if not specified, will create a SQL-based implementation; if both are there
-        will merge two sources.
-    -->
-    <bean id="emr"
-          class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
-        <property name="controlFlowHandler" ref="controlFlowHandler"/>
-        <property name="mdsHandler"         ref="mdsConnectivity"/>
-        <property name="url"                value="${mdpnp.fhir.url}"/>
-        <property name="jdbcDB"             ref="jdbcDB"/>
-        <property name="fhirContext"        ref="fhirContext"/>
-    </bean>       
+	<bean id="sampleArrayList" class="org.mdpnp.apps.fxbeans.SampleArrayFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.SampleArrayTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>waveform_data</value>
+		</property>
+	</bean>
 
-    
-    <!-- Components from HIMSS'15
-    
-    <bean id="himssDomainParticipant" class="org.mdpnp.devices.DomainParticipantFactory">
-        <constructor-arg value="${himss.domain}"/>
-    </bean>
-    
-    <bean id="himssSubscriber" class="org.mdpnp.devices.SubscriberFactory">
-        <constructor-arg ref="himssDomainParticipant"></constructor-arg>
-    </bean>
+	<bean id="infusionStatusList" class="org.mdpnp.apps.fxbeans.InfusionStatusFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.InfusionStatusTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    <bean id="himssPublisher" class="org.mdpnp.devices.PublisherFactory">
-        <constructor-arg ref="himssDomainParticipant"></constructor-arg>
-    </bean>
+	<bean id="bypassStatusList" class="org.mdpnp.apps.fxbeans.BypassStatusFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="ice.BypassStatusTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
 
-    <bean id="assessmentList" class="org.mdpnp.apps.fxbeans.PatientAssessmentFxListFactory" lazy-init="false">
-      <property name="topicName"><util:constant static-field="himss.PatientAssessmentTopic.VALUE"/></property>
-      <property name="subscriber" ref="himssSubscriber"/>
-      <property name="eventLoop" ref="eventLoop"/>
-      <property name="qosLibrary"><value>ice_library</value></property>
-      <property name="qosProfile"><value>himss</value></property>
-    </bean>
+	<bean id="assessmentList" class="org.mdpnp.apps.fxbeans.PatientAssessmentFxListFactory"
+		lazy-init="false">
+		<property name="topicName">
+			<util:constant static-field="himss.PatientAssessmentTopic.VALUE" />
+		</property>
+		<property name="subscriber" ref="subscriber" />
+		<property name="eventLoop" ref="eventLoop" />
+		<property name="qosLibrary">
+			<value>ice_library</value>
+		</property>
+		<property name="qosProfile">
+			<value>state</value>
+		</property>
+	</bean>
 
-    <bean id="himssEmitter" class="org.mdpnp.apps.testapp.HimssEmitter" init-method="start" destroy-method="stop">
-        <property name="validationOracle" ref="validationOracle"/>
-        <property name="publisher" ref="himssPublisher"/>
-    </bean>
-    
-    <bean id="himssIntaker" class="org.mdpnp.apps.testapp.HimssIntaker" init-method="start" destroy-method="stop">
-        <property name="subscriber" ref="himssSubscriber"/>
-    </bean>
-   -->
+	<bean id="deviceListModel" class="org.mdpnp.apps.testapp.DeviceListModelFactory"
+		lazy-init="true">
+		<constructor-arg ref="eventLoop" />
+		<constructor-arg ref="subscriber" />
+		<constructor-arg ref="timeManager" />
+	</bean>
 
-    <bean id="lifecycleController" class="org.mdpnp.devices.LifecycleController">
-        <property name="startMethod" value="start"/>
-        <property name="managedBeans">
-            <list>
-                <ref bean="timeManager" />
-                <ref bean="mdsConnectivity" />
-            </list>
-        </property>
-    </bean>
+	<bean id="vitalModel" class="org.mdpnp.apps.testapp.vital.VitalModelFactory"
+		lazy-init="true">
+		<constructor-arg name="deviceListModel" ref="deviceListModel" />
+		<constructor-arg name="publisher" ref="publisher" />
+		<constructor-arg name="eventLoop" ref="eventLoop" />
+		<constructor-arg name="numericList" ref="numericList" />
+		<constructor-arg name="defaultVitals">
+			<array>
+				<value type="org.mdpnp.apps.testapp.vital.VitalSign">RespiratoryRate</value>
+				<value type="org.mdpnp.apps.testapp.vital.VitalSign">HeartRate</value>
+				<value type="org.mdpnp.apps.testapp.vital.VitalSign">SpO2</value>
+			</array>
+		</constructor-arg>
+
+	</bean>
+
+	<bean id="mdsConnectivity" class="org.mdpnp.devices.MDSHandler"
+		destroy-method="shutdown">
+		<constructor-arg ref="eventLoop" />
+		<constructor-arg ref="domainParticipant" />
+	</bean>
+
+	<bean id="fhirContext"
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="staticMethod" value="ca.uhn.fhir.context.FhirContext.forDstu2" />
+	</bean>
+
+	<bean id="jdbcDB" class="org.mdpnp.apps.testapp.EmbeddedDB">
+		<property name="controlFlowHandler" ref="controlFlowHandler" />
+		<property name="url" value="${mdpnp.apps.patient.database}" />
+		<property name="schemaDef" value="/org/mdpnp/apps/testapp/patient/DbSchema.sql" />
+		<property name="dataDef"
+			value="/org/mdpnp/apps/testapp/patient/DataBootstrap.sql" />
+	</bean>
+
+	<!-- Create a handle to EMR system. Passing fhir url will make it talk to 
+		a real server; if not specified, will create a SQL-based implementation; 
+		if both are there will merge two sources. -->
+	<bean id="emr"
+		class="org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory">
+		<property name="controlFlowHandler" ref="controlFlowHandler" />
+		<property name="mdsHandler" ref="mdsConnectivity" />
+		<property name="url" value="${mdpnp.fhir.url}" />
+		<property name="jdbcDB" ref="jdbcDB" />
+		<property name="fhirContext" ref="fhirContext" />
+	</bean>
+
+
+	<!-- Components from HIMSS'15 <bean id="himssDomainParticipant" class="org.mdpnp.devices.DomainParticipantFactory"> 
+		<constructor-arg value="${himss.domain}"/> </bean> <bean id="himssSubscriber" 
+		class="org.mdpnp.devices.SubscriberFactory"> <constructor-arg ref="himssDomainParticipant"></constructor-arg> 
+		</bean> <bean id="himssPublisher" class="org.mdpnp.devices.PublisherFactory"> 
+		<constructor-arg ref="himssDomainParticipant"></constructor-arg> </bean> 
+		<bean id="assessmentList" class="org.mdpnp.apps.fxbeans.PatientAssessmentFxListFactory" 
+		lazy-init="false"> <property name="topicName"><util:constant static-field="himss.PatientAssessmentTopic.VALUE"/></property> 
+		<property name="subscriber" ref="himssSubscriber"/> <property name="eventLoop" 
+		ref="eventLoop"/> <property name="qosLibrary"><value>ice_library</value></property> 
+		<property name="qosProfile"><value>himss</value></property> </bean> <bean 
+		id="himssEmitter" class="org.mdpnp.apps.testapp.HimssEmitter" init-method="start" 
+		destroy-method="stop"> <property name="validationOracle" ref="validationOracle"/> 
+		<property name="publisher" ref="himssPublisher"/> </bean> <bean id="himssIntaker" 
+		class="org.mdpnp.apps.testapp.HimssIntaker" init-method="start" destroy-method="stop"> 
+		<property name="subscriber" ref="himssSubscriber"/> </bean> -->
+
+	<bean id="lifecycleController" class="org.mdpnp.devices.LifecycleController">
+		<property name="startMethod" value="start" />
+		<property name="managedBeans">
+			<list>
+				<ref bean="timeManager" />
+				<ref bean="mdsConnectivity" />
+			</list>
+		</property>
+	</bean>
 
 </beans>

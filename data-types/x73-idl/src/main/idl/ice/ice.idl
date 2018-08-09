@@ -389,6 +389,69 @@ module ice {
   #pragma keylist InfusionStatus unique_device_identifier
   const string InfusionStatusTopic = "InfusionStatus";
   
+  
+  /************************************************************************************************
+   *
+   * Trying something new by adding data points for a cardiopulmonary bypass machine.
+   *
+   */
+   
+   /**
+   * Speculative topic used for the PCA demonstration. The supervisory safety app 
+   * publishes a sample with stopInfusion=1 to indicate the infusion pump may not 
+   * infuse. Currently a third topic, indicating that the pump has acknowledged 
+   * the safety interlock, has not yet been included. We should also explore the 
+   * possibility of a setup whereby the pump receives periodic 'ok to infuse' 
+   * information and stops when that information is not received.
+   * 
+   * Stability: 1 - Experimental
+   */
+  struct BypassObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString requestor;
+    boolean stopBypass;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist BypassObjective unique_device_identifier
+  const string BypassObjectiveTopic = "BypassObjective";
+  
+  /**
+   * Speculative topic used for the CPM demonstration. Only currently used by bypass 
+   * pump simulators. But this is meant to represent the current state of a bypass 
+   * pump holistically and coherently. While this is an early guess at some appropriate 
+   * fields it does make it evident that many of these fields are not safely 
+   * separable and should be part of the same data sample.
+   * 
+   */
+  struct BypassStatus {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    // is the bypass pump actively pumping?
+    boolean bypassActive;
+
+    // it's entirely unclear if patient id, care area, BSA, etc. should be here
+
+    // measurement units are standardized to avoid inconsistent states
+    // derived values are omitted to avoid inconsistent states
+
+    // wstring<128> drug_name;
+    double bypass_flow_lmin;
+    double bypass_speed_rpm;
+	double blood_temp_celsius;
+	double blood_press_mmhg;
+
+    // what's the program
+    double volume_bypassed_ml;
+    long bypass_duration_seconds;
+
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist BypassStatus unique_device_identifier
+  const string BypassStatusTopic = "BypassStatus";
+  
+  /************************************************************************************************
+   *
+   *
+   *
+   */
+  
   /**
    * Type of alarm limit for the settings of Alarms 
    */

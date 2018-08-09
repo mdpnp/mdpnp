@@ -25,6 +25,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 
+import org.mdpnp.apps.fxbeans.BypassStatusFx;
 import org.mdpnp.apps.fxbeans.InfusionStatusFx;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
@@ -56,6 +57,7 @@ public class CompositeDevicePanel extends BorderPane {
 
     private final Set<String> knownIdentifiers = new HashSet<String>();
     private final Set<String> knownPumps = new HashSet<String>();
+    private final Set<String> knownCardioPumps = new HashSet<String>();
 
 
     public CompositeDevicePanel()  {
@@ -148,6 +150,13 @@ public class CompositeDevicePanel extends BorderPane {
         }
     }
     
+    protected void bypassStatus(BypassStatusFx data) {
+    	if (!knownCardioPumps.contains(data.getUnique_device_identifier())) {
+            knownCardioPumps.add(data.getUnique_device_identifier());
+            replaceDataPanels();
+        }
+    }
+    
     private final ListChangeListener<InfusionStatusFx> infusionStatusListener = new ListChangeListener<InfusionStatusFx>() {
         @Override
         public void onChanged(javafx.collections.ListChangeListener.Change<? extends InfusionStatusFx> c) {
@@ -163,12 +172,27 @@ public class CompositeDevicePanel extends BorderPane {
         
     };
     
+    private final ListChangeListener<BypassStatusFx> bypassStatusListener = new ListChangeListener<BypassStatusFx>() {
+        @Override
+        public void onChanged(javafx.collections.ListChangeListener.Change<? extends BypassStatusFx> c) {
+            while(c.next()) {
+                if(c.wasAdded()) {
+                    c.getAddedSubList().forEach((fx) -> bypassStatus(fx));
+                }
+                if(c.wasUpdated()) {
+                    c.getList().subList(c.getFrom(), c.getTo()).forEach((fx)->bypassStatus(fx));
+                }
+            }
+        }
+        
+    };
+    
 
     private void replaceDataPanels() {
         DevicePanel[] _dataComponents;
         synchronized (dataComponents) {
             // Destroys unused panels
-            DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents, knownPumps);
+            DevicePanelFactory.resolvePanels(knownIdentifiers, dataComponents, knownPumps, knownCardioPumps);
             _dataComponents = dataComponents.toArray(new DevicePanel[0]);
         }
         final DevicePanel[] __dataComponents = _dataComponents;
@@ -205,6 +229,7 @@ public class CompositeDevicePanel extends BorderPane {
     public void reset() {
         knownIdentifiers.clear();
         knownPumps.clear();
+        knownCardioPumps.clear();
         replaceDataPanels();
     }
     
@@ -225,6 +250,7 @@ public class CompositeDevicePanel extends BorderPane {
             this.deviceMonitor.getNumericModel().removeListener(numericListener);
             this.deviceMonitor.getSampleArrayModel().removeListener(sampleArrayListener);
             this.deviceMonitor.getInfusionStatusModel().removeListener(infusionStatusListener);
+            this.deviceMonitor.getBypassStatusModel().removeListener(bypassStatusListener);
         }
         this.deviceMonitor = deviceMonitor;
         reset();
@@ -249,6 +275,9 @@ public class CompositeDevicePanel extends BorderPane {
             
             deviceMonitor.getInfusionStatusModel().addListener(infusionStatusListener);
             deviceMonitor.getInfusionStatusModel().forEach((fx)->infusionStatus(fx));
+            
+            deviceMonitor.getBypassStatusModel().addListener(bypassStatusListener);
+            deviceMonitor.getBypassStatusModel().forEach((fx)->bypassStatus(fx));
         }
     }
 
