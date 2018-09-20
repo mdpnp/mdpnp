@@ -3,6 +3,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.layout.BorderPane?>
 <?import org.controlsfx.control.GridView?>
@@ -16,7 +17,13 @@
    <children>
     <BorderPane GridPane.columnIndex="0" GridPane.rowIndex="0">
      <top>
-      <Label text="Applications" alignment="CENTER" />
+      <HBox alignment="CENTER">
+        <Label text="ICE Applications" alignment="CENTER">
+          <font>
+            <Font size="18.0"/>
+          </font>
+        </Label>
+      </HBox>
      </top>
      <center>
       <ScrollPane fitToHeight="true" fitToWidth="true"
@@ -40,7 +47,13 @@
     </BorderPane>
     <BorderPane GridPane.columnIndex="1" GridPane.rowIndex="0">
      <top>
-      <Label fx:id="devicesLabel" text="Devices" alignment="CENTER" />
+      <HBox alignment="CENTER">
+       <Label fx:id="devicesLabel" text="Devices" alignment="CENTER">
+        <font>
+         <Font size="18.0"/>
+        </font>
+       </Label>
+      </HBox>
      </top>
      <center>
       <StackPane>

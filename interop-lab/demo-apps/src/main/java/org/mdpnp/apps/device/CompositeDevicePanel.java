@@ -20,8 +20,11 @@ import java.util.Set;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
+import javafx.geometry.Orientation;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.FlowPaneBuilder;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 
@@ -56,6 +59,13 @@ public class CompositeDevicePanel extends BorderPane {
 
     private final Set<String> knownIdentifiers = new HashSet<String>();
     private final Set<String> knownPumps = new HashSet<String>();
+    
+    /**
+     * A FlowPane that occupies the top of the BorderPane.  This will be created in the constructor
+     * for CompositeDevicePanel, after which its only child will be the device information.  Subclasses
+     * can therefore use it to add another child that will appear to the right of the device information.
+     */
+    private FlowPane topFlowPane;
 
 
     public CompositeDevicePanel()  {
@@ -90,7 +100,18 @@ public class CompositeDevicePanel extends BorderPane {
         header.add(host_name, 1, 7);        
 
         header.add(icon, 2, 0, 1, 8);
-        setTop(header);
+        
+        /*
+         * In order to keep "header" as it was in this code, but to make use of the space
+         * on the right hand side, put "header" in a FlowPane, and then add the FlowPane
+         * as the top of the BorderPane.  Then we can add another GridPane or any other
+         * component to the FlowPane to use the rest of the space in BorderPane.top
+         */
+        
+        topFlowPane=new FlowPane(Orientation.HORIZONTAL);
+        topFlowPane.getChildren().add(header);
+        
+        setTop(topFlowPane);
         data.setCenter(WAITING);
         setCenter(data);
     }
@@ -183,6 +204,7 @@ public class CompositeDevicePanel extends BorderPane {
                     data.setCenter(gridPane);
                     int i = 0;
                     for (DevicePanel d : __dataComponents) {
+                    	d.setFlowPane(topFlowPane);
                         // TODO this is getting to be a mess
                         if(deviceMonitor != null) {
                             d.set(deviceMonitor);
@@ -254,5 +276,9 @@ public class CompositeDevicePanel extends BorderPane {
 
     public DeviceDataMonitor getModel() {
         return deviceMonitor;
+    }
+    
+    public FlowPane getTopFlowPane() {
+    	return topFlowPane;
     }
 }

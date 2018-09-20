@@ -32,6 +32,11 @@ import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.ibp.SimInvasivePressure;
 import org.mdpnp.devices.simulation.multi.SimMultiparameter;
 import org.mdpnp.devices.simulation.nibp.DemoSimulatedBloodPressure;
+import org.mdpnp.devices.simulation.pulseox.EightSecFixedAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.FourSecFixedAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.FourSecNoSoftAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.InitialEightSecIceSettableAvgSimPulseOximeter;
+import org.mdpnp.devices.simulation.pulseox.InitialEightSecOperSettableAvgSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
@@ -81,7 +86,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Pulse Oximeter", "PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (Legacy)", "PO_Simulator", 1);
         }
 
         @Override
@@ -93,12 +98,130 @@ public class DeviceFactory {
             return new SimPulseOximeter(subscriber, publisher, eventLoop);
         }
     }
+    
+    /**
+     * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+     * by the operator, or through software
+     * 
+     * @author Simon
+     *
+     */
+    public static class FourSecFullyFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (4s Fixed Average)", "4S_FF_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new FourSecFixedAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+     * by the operator, or through software
+     * 
+     * @author Simon
+     *
+     */
+    public static class FourSecFullyFixedNoSoftAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (4s Fixed Average No Soft Avg)", "4S_FF_NO_SOFT_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new FourSecNoSoftAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+     * by the operator, or through software
+     * 
+     * @author Simon
+     *
+     */
+    public static class EightSecFullyFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (8s Fixed Average)", "8S_FF_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new EightSecFixedAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter has a software configurable averaging rate
+     *  
+     * @author Simon
+     *
+     */
+    public static class EightSecIceSettableFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (8s ICE Settable Average)", "8S_IS_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new InitialEightSecIceSettableAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    /**
+     * This pulse oximeter has a software configurable averaging rate
+     *  
+     * @author Simon
+     *
+     */
+    public static class EightSecOperSettableFixedAvePO_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (8s Oper Settable Average)", "8S_OS_AVG_PO_Simulator", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+
+            return new InitialEightSecOperSettableAvgSimPulseOximeter(subscriber, publisher, eventLoop);
+        }
+    }
 
     public static class NIBP_SimulatorProvider extends SpringLoadedDriver {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure", "NIBP_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Noninvasive Blood Pressure", "NIBP_Simulator", 1);
         }
 
         @Override
@@ -114,7 +237,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Invasive Blood Pressure", "IBP_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Invasive Blood Pressure", "IBP_Simulator", 1);
         }
 
         @Override
@@ -130,7 +253,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram", "ECG_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "ElectroCardioGram", "ECG_Simulator", 1);
         }
 
         @Override
@@ -146,7 +269,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Capnometer", "CO2_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Capnometer", "CO2_Simulator", 1);
         }
 
         @Override
@@ -162,7 +285,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe", "Temp_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Temperature Probe", "Temp_Simulator", 1);
         }
 
         @Override
@@ -178,7 +301,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump", "Pump_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Infusion Pump", "Pump_Simulator", 1);
         }
 
         @Override
@@ -355,7 +478,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor", "Multiparameter", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Multiparameter Monitor", "Multiparameter", 1);
         }
 
         @Override

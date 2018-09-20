@@ -5,6 +5,7 @@ import org.mdpnp.apps.device.DeviceDataMonitor;
 
 import javafx.fxml.FXML;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 
 public class DeviceView {
     @FXML BorderPane main;
@@ -15,5 +16,9 @@ public class DeviceView {
     }
     public DeviceDataMonitor getModel() {
         return cdp.getModel();
+    }
+    
+    public FlowPane getTopFlowPane() {
+    	return cdp.getTopFlowPane();
     }
 }

@@ -23,20 +23,27 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 /**
- * @author Jeff Plourde
+ * @author Simon Kelly
+ * 
+ * This pulse oximeter is "fully fixed" - the averaging time cannot be set either
+ * by the operator, or through software.  ICE cannot determine the average time
+ * through software - it must be confirmed by the operator
  *
  */
-public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
-
+public class FourSecNoSoftAvgSimPulseOximeter extends AbstractSimulatedConnectedDevice {
+	
+	//Need to do something in here about setting an alarm limit...
+	//AbstractSimulatedConnectedDevice.setAlarmLimit will be a starting point.
+	
     private final InstanceHolder<ice.Numeric> pulse;
     private final InstanceHolder<ice.Numeric> SpO2;
     private InstanceHolder<ice.SampleArray> pleth;
     private final SimulatedPulseOximeter pulseox;
-
+    
     private final InstanceHolder<ice.Numeric> canGetAveragingTime;
-    private final InstanceHolder<ice.Numeric> operCanSetAveragingTime;
-    private final InstanceHolder<ice.Numeric> softCanSetAveragingTime;
     private final InstanceHolder<ice.Numeric> averagingTime;
+	private final InstanceHolder<ice.Numeric> operCanSetAveragingTime;
+	private final InstanceHolder<ice.Numeric> softCanSetAveragingTime;
 
 
     private class SimulatedPulseOximeterExt extends SimulatedPulseOximeter {
@@ -48,7 +55,7 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
         @Override
         protected void receivePulseOx(DeviceClock.Reading sampleTime, int heartRate, int SpO2, Number[] plethValues, int frequency) {
             numericSample(pulse, heartRate, sampleTime);
-            numericSample(SimPulseOximeter.this.SpO2, SpO2, sampleTime);
+            numericSample(FourSecNoSoftAvgSimPulseOximeter.this.SpO2, SpO2, sampleTime);
             //Indicate that we cannot supply the averaging time.
             //System.err.println("Doing 0 for canGetAveragingTime");
             numericSample(canGetAveragingTime, 0, sampleTime);
@@ -59,7 +66,8 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
             //remembering that when returning 0 for "canGet", this should not
             //be used anyway.
             //System.err.println("Doing 0 for averagingTime");
-//            numericSample(averagingTime, 0, sampleTime);
+            //ICE Software should not use this value as canGetAveragingTimes is 0
+            numericSample(averagingTime, 0, sampleTime);
             pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
@@ -77,7 +85,7 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
         super.disconnect();
     }
 
-    public SimPulseOximeter(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+    public FourSecNoSoftAvgSimPulseOximeter(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
         super(subscriber, publisher, eventLoop);
 
         DeviceClock referenceClock = super.getClockProvider();
@@ -85,12 +93,12 @@ public class SimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
         pulse = createNumericInstance(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "");
         SpO2 = createNumericInstance(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "");
-        canGetAveragingTime = createNumericInstance(ice.SP02_SOFT_CAN_GET_AVERAGING_RATE.VALUE, "");
         operCanSetAveragingTime = createNumericInstance(ice.SP02_OPER_CAN_SET_AVERAGING_RATE.VALUE, "");
         softCanSetAveragingTime = createNumericInstance(ice.SP02_SOFT_CAN_SET_AVERAGING_RATE.VALUE, "");
+        canGetAveragingTime = createNumericInstance(ice.SP02_SOFT_CAN_GET_AVERAGING_RATE.VALUE, "");
         averagingTime = createNumericInstance(ice.SP02_AVERAGING_RATE.VALUE, "");
 
-        deviceIdentity.model = "Legacy Pulse Ox (Simulated)";
+        deviceIdentity.model = "4s Fully Fixed Average Pulse Ox No Averaging (Simulated)";
         writeDeviceIdentity();
     }
 

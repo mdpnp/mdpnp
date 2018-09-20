@@ -118,7 +118,8 @@ public class SettingsController {
 
             ice.ConnectionType selected = null;
             if (dt != null) {
-                start.set("Start " + dt.getDeviceType().getAlias());
+            	//SK - For August 18 demo, drop the alias so button just says start
+                start.set("Start");
                 ready.set(true);
                 selected = dt.getDeviceType().getConnectionType();
             } else {

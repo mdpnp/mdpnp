@@ -277,6 +277,31 @@ module ice {
   const string MDC_ECG_LEAD_AVF = "MDC_ECG_LEAD_AVF";
   const string MDC_ECG_LEAD_AVL = "MDC_ECG_LEAD_AVL";
   
+  // These are some things for Sp02 device information
+  // and control.
+
+  /**
+   * Can the device return the averaging rate through the software interface?
+   * 0 denoted no, 1 denotes yes
+   */
+  const string SP02_SOFT_CAN_GET_AVERAGING_RATE = "SP02_SOFT_CAN_GET_AVERAGING_RATE";
+  /**
+   * Can the operator get the device averaging rate?
+   */
+  const string SP02_OPER_CAN_GET_AVERAGING_RATE = "SPO2_OPER_CAN_GET_AVERAGING_RATE";
+  /**
+   * What is the current device averaging rate?
+   */
+  const string SP02_AVERAGING_RATE = "SP02_AVERAGING_RATE";
+  /**
+   * Can the operator set the device averaging rate?
+   */
+  const string SP02_OPER_CAN_SET_AVERAGING_RATE = "SP02_OPER_CAN_SET_AVERAGING_RATE";
+  /**
+   * Can the device averaging rate be set through the software interface
+   */
+  const string SP02_SOFT_CAN_SET_AVERAGING_RATE = "SP02_SOFT_CAN_SET_AVERAGING_RATE";
+
   /**
    * Numerics are values observed by sensors at a relatively slow rate; generally <=3Hz. 
    * Multiple sensors may exist for the same metric so the instance_id serves to 
@@ -353,6 +378,24 @@ module ice {
   #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "InfusionObjective";
   
+  /**
+   * SK - Topic for setting the averaging rate of a pulse oximetry device.
+   * The "Oximetry Devices" app will publish a sample with averageTime=N to
+   * indicate that that is the desired averaging time.  ICE compliant devices
+   * that can have their timing set will already be publishing their current
+   * averaging rate, and so the acknowledgement will come from that parameter
+   * changing
+   *
+   * Stability: 1 - Experimental
+   */
+  struct OximetryAveragingObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString requestor;
+    long newAverageTime;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist OximetryAveragingObjective unique_device_identifier
+  const string OximetryAveragingObjectiveTopic = "OximetryAveragingObjective";
+
   /**
    * Speculative topic used for the PCA demonstration. Only currently used by infusion 
    * pump simulators. But this is meant to represent the current state of an infusion 

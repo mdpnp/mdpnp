@@ -3,6 +3,11 @@ org.mdpnp.apps.testapp.DeviceFactory$NoninProvider
 org.mdpnp.apps.testapp.DeviceFactory$NellcorN595Provider
 org.mdpnp.apps.testapp.DeviceFactory$MasimoRadical7Provider
 org.mdpnp.apps.testapp.DeviceFactory$PO_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$FourSecFullyFixedAvePO_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$EightSecFullyFixedAvePO_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$FourSecFullyFixedNoSoftAvePO_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$EightSecIceSettableFixedAvePO_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$EightSecOperSettableFixedAvePO_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$NIBP_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$IBP_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$IntellivueEthernetProvider

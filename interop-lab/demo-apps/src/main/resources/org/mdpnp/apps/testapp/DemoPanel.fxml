@@ -16,7 +16,8 @@
      text="Exit App" textAlignment="LEFT" visible="false"
      GridPane.columnIndex="0" GridPane.halignment="LEFT"
      GridPane.rowIndex="0" />
-    <FlowPane GridPane.columnIndex="1">
+    <FlowPane GridPane.columnIndex="1" hgap="20">
+     <Label fx:id="iceVersionLabel" text="OpenICE Version : 0.8.0" />
      <Label fx:id="patientsLabel" text="Select a patient:" />
      <ComboBox fx:id="patientSelector" onAction="#changePatient"
                prefWidth="150.0"/>
