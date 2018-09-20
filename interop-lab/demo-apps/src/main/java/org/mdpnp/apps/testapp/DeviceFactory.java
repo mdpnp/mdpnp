@@ -86,7 +86,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Legacy Pulse Oximeter", "PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (Legacy)", "PO_Simulator", 1);
         }
 
         @Override
@@ -110,7 +110,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "4s Fixed Average Pulse Oximeter", "4S_FF_AVG_PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (4s Fixed Average)", "4S_FF_AVG_PO_Simulator", 1);
         }
 
         @Override
@@ -134,7 +134,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "4s Fixed Average Pulse Oximeter No Soft Avg", "4S_FF_NO_SOFT_AVG_PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (4s Fixed Average No Soft Avg)", "4S_FF_NO_SOFT_AVG_PO_Simulator", 1);
         }
 
         @Override
@@ -158,7 +158,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "8s Fixed Average Pulse Oximeter", "8S_FF_AVG_PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (8s Fixed Average)", "8S_FF_AVG_PO_Simulator", 1);
         }
 
         @Override
@@ -181,7 +181,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "8s ICE Settable Average Pulse Oximeter", "8S_IS_AVG_PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (8s ICE Settable Average)", "8S_IS_AVG_PO_Simulator", 1);
         }
 
         @Override
@@ -204,7 +204,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "8s Oper Settable Average Pulse Oximeter", "8S_OS_AVG_PO_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "PO (8s Oper Settable Average)", "8S_OS_AVG_PO_Simulator", 1);
         }
 
         @Override
@@ -221,7 +221,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Noninvasive Blood Pressure", "NIBP_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Noninvasive Blood Pressure", "NIBP_Simulator", 1);
         }
 
         @Override
@@ -237,7 +237,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Invasive Blood Pressure", "IBP_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Invasive Blood Pressure", "IBP_Simulator", 1);
         }
 
         @Override
@@ -253,7 +253,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "ElectroCardioGram", "ECG_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "ElectroCardioGram", "ECG_Simulator", 1);
         }
 
         @Override
@@ -269,7 +269,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Capnometer", "CO2_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Capnometer", "CO2_Simulator", 1);
         }
 
         @Override
@@ -285,7 +285,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Temperature Probe", "Temp_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Temperature Probe", "Temp_Simulator", 1);
         }
 
         @Override
@@ -301,7 +301,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Infusion Pump", "Pump_Simulator", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Infusion Pump", "Pump_Simulator", 1);
         }
 
         @Override
@@ -478,7 +478,7 @@ public class DeviceFactory {
 
         @Override
         public DeviceType getDeviceType(){
-            return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "Multiparameter Monitor", "Multiparameter", 1);
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Multiparameter Monitor", "Multiparameter", 1);
         }
 
         @Override
