@@ -6,11 +6,13 @@ import java.net.URL;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;
 
+import ice.MDSConnectivity;
 import ice.OximetryAveragingObjectiveDataWriter;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -40,6 +42,9 @@ public class OximetryTestApplicationFactory implements IceApplicationProvider {
         
         //"oximetryObjectiveWriter" is a new bean in IceAppContainerContext.xml
         final OximetryAveragingObjectiveDataWriter objectiveWriter=(OximetryAveragingObjectiveDataWriter) parentContext.getBean("oximetryObjectiveWriter");
+        
+        final MDSHandler mdsHandler=(MDSHandler)parentContext.getBean("mdsConnectivity",MDSHandler.class);
+        mdsHandler.start();
 
         FXMLLoader loader = new FXMLLoader(OximetryTestApplication.class.getResource("OximetryTestApplication.fxml"));
 
@@ -47,7 +52,7 @@ public class OximetryTestApplicationFactory implements IceApplicationProvider {
 
         final OximetryTestApplication controller = ((OximetryTestApplication) loader.getController());
         
-        controller.set(deviceListModel, numericList, objectiveWriter);
+        controller.set(deviceListModel, numericList, objectiveWriter, mdsHandler);
 
         controller.start(eventLoop, subscriber);
 		

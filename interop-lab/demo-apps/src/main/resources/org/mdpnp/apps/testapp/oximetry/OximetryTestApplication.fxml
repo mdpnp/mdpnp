@@ -5,13 +5,14 @@
 <?import javafx.scene.control.cell.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
 
 <BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.oximetry.OximetryTestApplication">
 <center>
       
 </center>
 <right>
-  <VBox>
+  <VBox spacing="2">
     <children>
 	    <Label>Please select an oximeter</Label>
 	    <ComboBox fx:id="oximeters" promptText="choose"/>
@@ -20,14 +21,22 @@
 	    <Button fx:id="setButton" text="Set"/>
 	    <Label text="Current Average"/>
 	    <TextField fx:id="currentAverage"/>
-	    <Label text="Graph delay (ms)"/>
-	    <TextField fx:id="graphDelay"/>
+	    <Label text="Run Speed (ms)"/>
+	    <TextField fx:id="graphDelay" text="10"/>
 	    <Label text="Simple alarm threshold"/>
-	    <TextField fx:id="simpleAlarmThreshold"/>
+	    <TextField fx:id="simpleAlarmThreshold" text="90"/>
+	    <Label text="Smart Alarm Count"/>
+	    <TextField fx:id="smartAlarmCount"/>
 	    <Button fx:id="chooseFile" text="Select file"/>
 	    <Label text="File"/>
 	    <TextField fx:id="selectedFile"/>
 	    <Button fx:id="runSequence" text="Run"/>
+	    <Button fx:id="clearGraph" text="Clear">
+	    	<VBox.margin>
+	    		<Insets top="30"/>
+	    	</VBox.margin>
+	    </Button>
+	    	
 	</children>
   </VBox>
 </right>

@@ -1,27 +1,41 @@
 package org.mdpnp.apps.testapp.oximetry;
 
+import java.awt.Dialog;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.apps.testapp.PartitionChooserModel;
 import org.mdpnp.apps.testapp.vital.Value;
+import org.mdpnp.devices.MDSHandler;
+import org.mdpnp.devices.PartitionAssignmentController;
+import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
+import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
+import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
+import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.google.common.eventbus.Subscribe;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.MDSConnectivity;
 import ice.OximetryAveragingObjectiveDataWriter;
+import ice.Patient;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -31,6 +45,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -46,7 +61,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Callback;
@@ -58,6 +75,7 @@ public class OximetryTestApplication {
 	private DeviceListModel dlm;
 	private NumericFxList numeric;
 	private OximetryAveragingObjectiveDataWriter writer;
+	private MDSHandler mdsHandler;
 	
 	@FXML protected LineChart<Number, Number> lineChart;
 	final ObservableList<XYChart.Series<Number, Number>> series = FXCollections.observableArrayList();
@@ -67,9 +85,11 @@ public class OximetryTestApplication {
 	@FXML private TextField currentAverage;
 	@FXML private TextField graphDelay;
 	@FXML private TextField simpleAlarmThreshold;
+	@FXML private TextField smartAlarmCount;
 	@FXML private Button setButton;
 	@FXML private Button chooseFile;
 	@FXML private Button runSequence;
+	@FXML private Button clearGraph;
 	@FXML private TextField selectedFile;
 	@FXML private BorderPane main;
 	
@@ -78,6 +98,7 @@ public class OximetryTestApplication {
 	
 	private boolean listenerPresent;
 	
+	private boolean inAlarm;
 	
 	private final String SOFT_CAN_GET_AVE=ice.SP02_SOFT_CAN_GET_AVERAGING_RATE.VALUE;
 	private final String SOFT_CAN_SET_AVE=ice.SP02_SOFT_CAN_SET_AVERAGING_RATE.VALUE;
@@ -91,10 +112,17 @@ public class OximetryTestApplication {
 	 */
 	private final int MAX_AVE_RATE=4;
 	
-	public void set(DeviceListModel dlm, NumericFxList numeric, OximetryAveragingObjectiveDataWriter writer) {
+	/**
+	 * The "current" patient, used to determine if the patient has changed
+	 */
+	private Patient currentPatient;
+	
+	
+	public void set(DeviceListModel dlm, NumericFxList numeric, OximetryAveragingObjectiveDataWriter writer, MDSHandler mdsHandler) {
 		this.dlm=dlm;
 		this.numeric=numeric;
 		this.writer=writer;
+		this.mdsHandler=mdsHandler;
 	}
 	
 	class DeviceChangeListener implements ChangeListener<Device> {
@@ -170,6 +198,84 @@ public class OximetryTestApplication {
 				Alert exceptionAlert=new Alert(AlertType.ERROR, "Could not open the selected file", ButtonType.OK);
 			}
 		});
+		
+		clearGraph.setOnAction(e-> {
+			clearGraph();
+		});
+		
+		mdsHandler.addPatientListener(new PatientListener() {
+
+			@Override
+			public void handlePatientChange(PatientEvent evt) {
+				System.err.println("OTA.handlePatientChanged...");
+				
+			}
+			
+		});
+		System.err.println("Definitely added the PatientListener to mdsHandler");
+		
+		mdsHandler.addConnectivityListener(new MDSListener() {
+
+			@Override
+			public void handleConnectivityChange(MDSEvent evt) {
+		        ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
+
+		        String mrnPartition = PartitionAssignmentController.findMRNPartition(c.partition);
+
+		        if(mrnPartition != null) {
+		            //log.info("udi " + c.unique_device_identifier + " is MRN=" + mrnPartition);
+
+		            Patient p = new Patient();
+		            p.mrn = PartitionAssignmentController.toMRN(mrnPartition);
+		            
+		            if(currentPatient==null) {
+		            	/*
+		            	 * The patient has definitely changed - even if the selected patient is "Unassigned",
+		            	 * then that "Patient" has an ID
+		            	 */
+		            	currentPatient=p;
+		            	clearGraph();
+		            	return;	//Nothing else to do.
+		            }
+		            if( ! currentPatient.mrn.equals(p.mrn) ) {
+		            	//Patient has changed
+		            	currentPatient=p;
+		            	clearGraph();
+		            }
+		            
+		            //deviceUdiToPatientMRN.put(c.unique_device_identifier, p);
+		        }
+		    }
+			
+		});
+		
+	}
+	
+	/**
+	 * Clear the current graph.  Refactored to allow invocation from a different event handler thread,
+	 * using the standard check.  Which is possibly overkill (as we could likely just always call runLater
+	 * even if we were on the GUI thread, but it does the job.
+	 */
+	private void clearGraph() {
+		if(Platform.isFxApplicationThread()) {
+			reallyClearGraph();
+		} else {
+			Platform.runLater(new Runnable() {
+				public void run() {
+					reallyClearGraph();
+				}
+			});
+		}
+	}
+	
+	private void reallyClearGraph() {
+		if(lineChart==null || lineChart.getData()==null) {
+			//No chart yet - possibly/probably from an MDSEvent invocation.  Just return to avoid any exceptions.
+			return;
+		}
+		lineChart.getData().remove(0, lineChart.getData().size());
+		//Also reset the background
+		unsetAlarmCondition();
 	}
 	
 	private void chooseCSVFile() {
@@ -210,6 +316,54 @@ public class OximetryTestApplication {
 	
 	private void createAndRunChart(ArrayList<Integer> x, ArrayList<Float> y) {
 		//Mostly copied, to start with, from org.mdpnp.apps.testapps.chart.Chart
+		//Moved validation to the top, so we can avoid creating series etc. that we then don't use
+        int delay;
+        try {
+        	delay=Integer.parseInt(graphDelay.getText());
+        } catch (NumberFormatException nfe) {
+        	delay=1000;
+        }
+        if(delay<1) {
+        	Alert alert=new Alert(AlertType.ERROR, "Run speed must be a positive value",ButtonType.OK);
+        	alert.showAndWait();
+        	return;
+        }
+        
+        //Validate the alarm threshold
+        String thresholdString=simpleAlarmThreshold.getText();
+        int simpleThreshold;
+        try {
+        	simpleThreshold=Integer.parseInt(thresholdString);
+        } catch (NumberFormatException nfe) {
+        	Alert alert=new Alert(AlertType.ERROR,"Alarm Threshold must be a valid number", ButtonType.OK);
+        	alert.showAndWait();
+        	return;
+        }
+        if(simpleThreshold<1 || simpleThreshold>100) {
+        	Alert alert=new Alert(AlertType.ERROR,"Alarm Threshold must be between 1 and 100", ButtonType.OK);
+        	alert.showAndWait();
+        	return;
+        }
+        
+        //Validate the smart alarm count
+        String smartString=smartAlarmCount.getText();
+        //Slightly different validation here, as this is not required.
+        int smartCount;
+        if(smartString.trim().isEmpty()) {
+        	smartCount=0;	//We will treat empty string as 0 and smartCount=0 as disabled.
+        } else {
+        	try {
+        		smartCount=Integer.parseInt(smartString);
+        	} catch (NumberFormatException nfe) {
+        		Alert alert=new Alert(AlertType.ERROR,"Smart Alarm Count must be a valid number", ButtonType.OK);
+            	alert.showAndWait();
+            	return;
+        	}
+        	//Any more validation?
+        }
+        
+        //At start of run, reset and alarm condition from end of previous run
+        unsetAlarmCondition();
 		NumberAxis xAxis = new NumberAxis();
 		NumberAxis yAxis = new NumberAxis();
         lineChart = new LineChart<>(xAxis, yAxis);
@@ -217,7 +371,7 @@ public class OximetryTestApplication {
         lineChart.setAnimated(false);
         lineChart.setCreateSymbols(false);
         
-        lineChart.setTitle("Respiratory depression detection");
+        lineChart.setTitle("Pulse Oximeter Analysis");
         lineChart.setData(series);
         BorderPane.setAlignment(lineChart, Pos.CENTER);
 //        v.addListener(valueListener);
@@ -235,22 +389,23 @@ public class OximetryTestApplication {
         	if(f<yMin) yMin=f;
         	if(f>yMax) yMax=f;
         }
-        yAxis.setUpperBound(yMax);
-        yAxis.setLowerBound(yMin);
+        //Set y axis max to 100
+        yAxis.setUpperBound(100);
+        //Slightly pad the lower limit
+        //Use round on the lower bound to force an integer value on the axis label
+        yAxis.setLowerBound(Math.round(yMin-2));
+        yAxis.setTickUnit(5);
         xAxis.setUpperBound(x.get(x.size()-1));
+        xAxis.setMinorTickVisible(false);
+        xAxis.tickUnitProperty().set(50);
         
         //Create a series that represents the alarm threshold.
-        String thresholdString=simpleAlarmThreshold.getText();
-        int simpleThreshold=Integer.parseInt(thresholdString);
         Series<Number,Number> thresholdSeries=new Series<>();
         thresholdSeries.setName("Alarm Threshold");
         series.add(thresholdSeries);
         for(int i=0;i<x.size();i++) {
         	thresholdSeries.getData().add(new XYChart.Data<Number, Number>(x.get(i), simpleThreshold));
         }
-        
-        
-        
         
         //If we loop through our x and y values here, we can sleep or schedule an executor to do it later
         Series<Number, Number> spO2=new Series<>();
@@ -259,16 +414,11 @@ public class OximetryTestApplication {
         
         main.setCenter(lineChart);
         
-        int delay;
-        try {
-        	delay=Integer.parseInt(graphDelay.getText());
-        } catch (NumberFormatException nfe) {
-        	delay=1000;
-        }
-        
         Timeline tl = new Timeline();
 //        ThreadLocal<Integer> i=new ThreadLocal<Integer>();
         AtomicInteger i=new AtomicInteger(0);
+        AtomicInteger timesBelowThreshold=new AtomicInteger(0);
+        AtomicBoolean dipped=new AtomicBoolean(false);
 //        int i=0;
         
         //Before possibly hitting an alarm condition, preserve the current background
@@ -283,14 +433,90 @@ public class OximetryTestApplication {
                 	int index=i.getAndIncrement();
                 	int xx=x.get(index);
                 	float yy=y.get(index);
-                	spO2.getData().add(new XYChart.Data<Number, Number>(xx, yy));
+                	XYChart.Data<Number,Number> point=new XYChart.Data<>(xx, yy);
+                	
                 	//TODO:  - Should we do "alarm condition detection" here or in a separate thread?
-                	if(yy<simpleThreshold) {
-                		//Simple alarm threshold.
-                		setSimpleAlarmCondition();
+                	
+                	//Alarm handling
+                	if(smartCount==0) {
+                		//Smart alarms are disabled - simple alarm condition only
+                		if(yy<simpleThreshold) {
+                			if(!inAlarm) {
+                				//This is the transition point
+                				System.err.println("Need to add an alarm node for xx="+xx);
+                				Circle circle=new Circle();
+                				circle.setRadius(5f);
+                				circle.fillProperty().set(Color.RED);
+                				point.nodeProperty().set(circle);
+                			}
+                			setAlarmCondition();
+                		} else {
+                			unsetAlarmCondition();
+                		}
                 	} else {
-                		unsetSimpleAlarmCondition();
+                		//Smart alarms are enabled
+                		if(yy<simpleThreshold) {
+	                		if(!dipped.get()) {
+	                			dipped.set(true);
+	                			int currentSmart=timesBelowThreshold.incrementAndGet();
+	                			if(currentSmart==smartCount) {
+	                				timesBelowThreshold.set(0);		//Ditch this later when we want alarm to stay on
+	                				if(!inAlarm) {
+		                				Circle circle=new Circle();
+		                				circle.setRadius(5f);
+		                				circle.fillProperty().set(Color.RED);
+		                				point.nodeProperty().set(circle);
+	                				}
+	                				setAlarmCondition();
+	                			}
+	                		}
+                		} else {
+//                			System.err.println("Calling unsetAlarmCondition with smart alarms enabled at point "+xx);
+                			//UNCOMMENT THE NEXT LINE IF WE WANT SMART ALARM RESETS
+//                			unsetAlarmCondition();
+                			if(dipped.get()) {
+                				dipped.set(false);
+                			}
+                		}
                 	}
+                	spO2.getData().add(point);
+                	
+                	
+                	
+//                	if(yy<simpleThreshold) {
+//                		//Simple alarm threshold - IF smart alarm is disabled
+//                		if(smartCount==0) {
+//                			//Smart alarms are disabled - just set the simple alarm condition
+//                			if(inAlarm) {
+//                				//Already alarm - remove nodes
+//                				point.nodeProperty().set(null);
+//                			}
+//                			setAlarmCondition();
+//                		} else {
+//                			if(!dipped.get()) {
+//                				//We were not previously below the threshold, now we are...
+//                				dipped.set(true);
+//	                			int currentSmart=timesBelowThreshold.incrementAndGet();
+////	                			System.err.println("currentSmart is "+currentSmart+" at index "+index);
+//	                			if(currentSmart==smartCount) {
+//	                				setAlarmCondition();
+//	                				timesBelowThreshold.set(0);	//Reset the count
+//	                			}
+//                			}
+//                		}
+//                	} else {
+//                		point.nodeProperty().set(null);
+//                		if(inAlarm) {
+//	                		unsetAlarmCondition();
+//                		} else {
+//                			
+//                		}
+//                		if(dipped.get()) {
+//                			//We were in a possible alarm state, but now aren't
+//                			dipped.set(false);
+////                			System.err.println("set dipped to false at index at index "+index);
+//                		}
+//                	}
                 }
         }));
         
@@ -353,12 +579,20 @@ public class OximetryTestApplication {
         
 	}
 	
-	private void setSimpleAlarmCondition() {
-		main.setBackground(alarmBackground);
+	private void setAlarmCondition() {
+		if(!inAlarm) {
+//		System.err.println("Alarm condition ON");
+			main.setBackground(alarmBackground);
+			inAlarm=true;
+		}
 	}
 
-	private void unsetSimpleAlarmCondition() {
-		main.setBackground(nonAlarmBackground);
+	private void unsetAlarmCondition() {
+//		System.err.println("Alarm condition OFF");
+		if(inAlarm) {
+			main.setBackground(nonAlarmBackground);
+			inAlarm=false;
+		}
 	}
 	
 	private void handleDeviceChange(Device newDevice) {
@@ -367,6 +601,8 @@ public class OximetryTestApplication {
 		boolean[] opCanGetAve=new boolean[1];
 		boolean[] opCanSetAve=new boolean[1];
 		int[] ave=new int[1];
+		System.err.println("OTA.handleDeviceChange newDevice is "+newDevice);
+		if(null==newDevice) return;	//No device selected and/or available - can happen when patient is changed and no devices for that patient
 		numeric.forEach( n -> {
 			System.err.println("handleDeviceChange numeric dev ident is "+n.getUnique_device_identifier()+" "+n.getMetric_id());
 			if( ! n.getUnique_device_identifier().equals(newDevice.getUDI())) return;	//Some other device
@@ -382,7 +618,7 @@ public class OximetryTestApplication {
 					public void changed(ObservableValue<? extends Number> arg0, Number arg1, Number arg2) {
 						System.err.println("OTA.changed vals are "+arg1+" "+arg2);
 						currentAverage.setText(Integer.toString(arg2.intValue()));
-						Thread.dumpStack();
+//						Thread.dumpStack();
 						ave[0]=arg2.intValue();
 					}
 					
@@ -474,12 +710,14 @@ public class OximetryTestApplication {
 			setButton.setDisable(false);
 		} else {
 			//We can't set the average, so disable the controls
-			requestedAverage.setText("");
+			requestedAverage.setText("Not Available");
 			requestedAverage.setDisable(true);
 			setButton.setDisable(true);
 		}
 		currentAverage.setText(currentAve);
-		Thread.dumpStack();
+		//currentAverage should not be editable
+		currentAverage.setEditable(false);
+//		Thread.dumpStack();
 	}
 	
 	private void disableAllControls() {
@@ -543,5 +781,10 @@ public class OximetryTestApplication {
         public Value v;
         public ChangeListener<Number> l;
     }
+	
+	@Subscribe
+    public void onPartitionChooserChangeEvent(PartitionChooserModel.PartitionChooserChangeEvent evt) {
+		System.err.println("Partition change in OTA...");
+	}
 
 }

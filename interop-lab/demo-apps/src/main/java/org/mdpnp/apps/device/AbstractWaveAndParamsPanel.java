@@ -103,6 +103,7 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
               params[i].textProperty().bind(data.valueProperty().asString("%.0f"));
           }
       }
+      addToHeader(data);
   }
   protected void remove(NumericFx data) {
       for(int i = 0; i < getParameterCount(); i++) {
@@ -110,6 +111,10 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
               params[i].textProperty().unbind();
           }
       }
+  }
+  
+  protected void addToHeader(NumericFx data) {
+	  
   }
   
   private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(
@@ -121,7 +126,6 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
       deviceMonitor.getNumericModel().forEach((t)->add(t));
       deviceMonitor.getSampleArrayModel().addListener(sampleArrayListener);
       deviceMonitor.getSampleArrayModel().forEach((t)->add(t));
-      customiseLabels();
   };
   
   protected void add(SampleArrayFx data) {

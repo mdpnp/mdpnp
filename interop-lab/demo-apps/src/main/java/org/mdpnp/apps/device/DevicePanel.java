@@ -17,6 +17,7 @@ import org.mdpnp.apps.fxbeans.NumericFx;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 
 
 public abstract class DevicePanel extends BorderPane  {
@@ -46,10 +47,24 @@ public abstract class DevicePanel extends BorderPane  {
     }
     
     protected DeviceDataMonitor deviceMonitor;
-    
+
     public void set(DeviceDataMonitor deviceMonitor) {
         this.deviceMonitor = deviceMonitor;
     }
+    
+    /**
+     * A FlowPane, set by the CompositeDevicePanel, allowing this DevicePanel to write things to it 
+     */
+    protected FlowPane externalPane;
+    
+    public void setFlowPane(FlowPane externalPane) {
+    	this.externalPane=externalPane;
+    }
+    
+    protected void customiseHeaders() {
+    	
+    }
+    
 
     protected static final BorderPane label(String label, Node c) {
         return labelTop(label, c);
