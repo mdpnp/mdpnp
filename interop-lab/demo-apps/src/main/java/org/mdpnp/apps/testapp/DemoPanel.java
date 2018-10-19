@@ -33,6 +33,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
+import org.mdpnp.devices.AbstractDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -184,8 +185,13 @@ public class DemoPanel {
                                 da.setPartition(partition.toArray(new String[0]));
                                 da.setAddress(c.getAddress());
                                 da.init();
-                                da.connect();
-                                Platform.runLater(()->deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da));
+                                boolean connected=da.connect();
+                                //Is this the answer?
+                                Thread.sleep(1000);
+                                
+                                Platform.runLater( () -> {
+                                	deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da);
+                                });
 
                             } catch (Exception e) {
                                 log.error("Error in spawned DeviceAdapter", e);
@@ -198,6 +204,8 @@ public class DemoPanel {
                 });
                 t.setDaemon(true);
                 t.start();
+            } else {
+            	System.err.println("c is null outer");
             }
             
         } catch (IOException e) {
