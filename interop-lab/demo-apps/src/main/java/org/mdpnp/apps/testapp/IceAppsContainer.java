@@ -159,7 +159,10 @@ public class IceAppsContainer extends IceApplication {
     			public void handle(WindowEvent event) {
     				//System.err.println("Consuming the onCloseRequest...");
     				try {
-    					app.stop();
+    					//Do not stop DeviceApps
+    					if( ! (app instanceof DeviceApp) ) {
+    						app.stop();
+    					}
     					//x position, y position, width, height
     					double xy[]=new double[4];
     					xy[0]=newStage.getX();
