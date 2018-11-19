@@ -72,13 +72,11 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
           BorderPane t;
           params[i] = new Label(" ");
           params[i].getStyleClass().add("parameter");
-          paramLabelBorders[i]=label(getParameterLabel(i), params[i]);
+          paramLabelBorders[i]=label(getParameterLabel(i)+" ("+getParameterUnits(i)+")", params[i]);
           numerics.add(t = paramLabelBorders[i], 0, i);
           
           GridPane.setVgrow(t, Priority.ALWAYS);
           GridPane.setHgrow(t, Priority.ALWAYS);
-          t.setRight(new Label(getParameterUnits(i)));
-          BorderPane.setAlignment(t.getRight(), Pos.BOTTOM_LEFT);
       }
       setRight(numerics);
   }
