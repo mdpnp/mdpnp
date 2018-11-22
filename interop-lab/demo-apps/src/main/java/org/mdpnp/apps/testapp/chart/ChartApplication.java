@@ -134,7 +134,11 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
                     Parent node = loader.load();
                     Chart chart = loader.getController();
                     //New chart, new DateAxis
-                    DateAxis dateAxis=new DateAxis();
+                    long now = System.currentTimeMillis();
+                    now -= now % 1000;
+                    DateAxis dateAxis=new DateAxis(new Date(now - interval), new Date(now));
+//                    dateAxis.setLowerBound();
+//                    dateAxis.setUpperBound();
                     dateAxis.setAutoRanging(false);
                     dateAxis.setAnimated(false);
                     dateAxes.add(dateAxis);
