@@ -1,12 +1,10 @@
 package org.mdpnp.apps.testapp.oximetry;
 
-import java.awt.Dialog;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +22,10 @@ import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
 import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
 import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
+import org.mdpnp.guis.waveform.javafx.JavaFXWaveformPane;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.Subscribe;
 import com.rti.dds.infrastructure.InstanceHandle_t;
@@ -117,6 +118,8 @@ public class OximetryTestApplication {
 	 */
 	private Patient currentPatient;
 	
+	private static final Logger log = LoggerFactory.getLogger(JavaFXWaveformPane.class);
+	
 	
 	public void set(DeviceListModel dlm, NumericFxList numeric, OximetryAveragingObjectiveDataWriter writer, MDSHandler mdsHandler) {
 		this.dlm=dlm;
@@ -207,12 +210,10 @@ public class OximetryTestApplication {
 
 			@Override
 			public void handlePatientChange(PatientEvent evt) {
-				System.err.println("OTA.handlePatientChanged...");
 				
 			}
 			
 		});
-		System.err.println("Definitely added the PatientListener to mdsHandler");
 		
 		mdsHandler.addConnectivityListener(new MDSListener() {
 
@@ -307,7 +308,7 @@ public class OximetryTestApplication {
 					times.add(Integer.parseInt(split[0]));
 					values.add(Float.parseFloat(split[1]));
 				} catch (NumberFormatException nfe) {
-					System.err.println("Skipping line "+s+" as not a number");
+					log.info("Skipping line "+s+" as not a number");
 				}
 			}
 		}
@@ -443,7 +444,7 @@ public class OximetryTestApplication {
                 		if(yy<simpleThreshold) {
                 			if(!inAlarm) {
                 				//This is the transition point
-                				System.err.println("Need to add an alarm node for xx="+xx);
+                				log.info("Need to add an alarm node for xx="+xx);
                 				Circle circle=new Circle();
                 				circle.setRadius(5f);
                 				circle.fillProperty().set(Color.RED);
@@ -534,7 +535,7 @@ public class OximetryTestApplication {
 //			}
 //        	s.getData().add(new XYChart.Data<Number, Number>(x.get(i), y.get(i)));
 //        }
-        System.err.println("Series s has "+spO2.getData().size()+" elements");
+        log.info("Series s has "+spO2.getData().size()+" elements");
 //        lineChart.getData().addAll(series);
 //        lineChart.getData().add(s);
         /*
@@ -601,10 +602,10 @@ public class OximetryTestApplication {
 		boolean[] opCanGetAve=new boolean[1];
 		boolean[] opCanSetAve=new boolean[1];
 		int[] ave=new int[1];
-		System.err.println("OTA.handleDeviceChange newDevice is "+newDevice);
+		log.info("OTA.handleDeviceChange newDevice is "+newDevice);
 		if(null==newDevice) return;	//No device selected and/or available - can happen when patient is changed and no devices for that patient
 		numeric.forEach( n -> {
-			System.err.println("handleDeviceChange numeric dev ident is "+n.getUnique_device_identifier()+" "+n.getMetric_id());
+			log.info("handleDeviceChange numeric dev ident is "+n.getUnique_device_identifier()+" "+n.getMetric_id());
 			if( ! n.getUnique_device_identifier().equals(newDevice.getUDI())) return;	//Some other device
 			//When we get here, we are looking at a property for the currently selected device
 			if(n.getMetric_id().equals(SOFT_CAN_GET_AVE) && n.getValue()>0f) iceCanGetAve[0]=true;
@@ -616,7 +617,7 @@ public class OximetryTestApplication {
 				n.valueProperty().addListener(new ChangeListener<Number>() {
 					@Override
 					public void changed(ObservableValue<? extends Number> arg0, Number arg1, Number arg2) {
-						System.err.println("OTA.changed vals are "+arg1+" "+arg2);
+						log.info("OTA.changed vals are "+arg1+" "+arg2);
 						currentAverage.setText(Integer.toString(arg2.intValue()));
 //						Thread.dumpStack();
 						ave[0]=arg2.intValue();
@@ -625,8 +626,8 @@ public class OximetryTestApplication {
 				});
 			}
 		});
-		System.err.println("After forEach numerics, canGetAve is "+iceCanGetAve[0]);
-		System.err.println("After forEach numerics, outsideAve is "+ave[0]);
+		log.info("After forEach numerics, canGetAve is "+iceCanGetAve[0]);
+		log.info("After forEach numerics, outsideAve is "+ave[0]);
 		if(!iceCanGetAve[0]) {
 			//Case 2
 			Alert alert=new Alert(Alert.AlertType.CONFIRMATION,"OpenICE cannot automatically determine the averaging time for this device\n"+
@@ -732,7 +733,7 @@ public class OximetryTestApplication {
 		objective.newAverageTime=desiredAverage;
 		objective.unique_device_identifier=oximeters.getValue().getUDI();
 		writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-		System.err.println("Published an objective for average time "+desiredAverage);
+		log.info("Published an objective for average time "+desiredAverage);
 	}
 	
 	private void showGoodAlert() {
@@ -746,7 +747,7 @@ public class OximetryTestApplication {
 	}
 	
 	public void stop() {
-		System.err.println("OTA.stop called");
+		log.info("OTA.stop called");
 		if(listenerPresent) {
 			oximeters.getSelectionModel().selectedItemProperty().removeListener(deviceChangeListener);
 			listenerPresent=false;
@@ -754,7 +755,7 @@ public class OximetryTestApplication {
 	}
 	
 	public void activate() {
-		System.err.println("OTA.activate called");
+		log.info("OTA.activate called");
 		if(!listenerPresent) {
 			oximeters.getSelectionModel().selectedItemProperty().addListener(deviceChangeListener);
 			listenerPresent=true;
@@ -762,7 +763,7 @@ public class OximetryTestApplication {
 	}
 	
 	public OximetryTestApplication() {
-		System.err.println("OTA constructor...");
+		
 	}
 	
 	class DeviceListCell extends ListCell<Device> {
@@ -784,7 +785,7 @@ public class OximetryTestApplication {
 	
 	@Subscribe
     public void onPartitionChooserChangeEvent(PartitionChooserModel.PartitionChooserChangeEvent evt) {
-		System.err.println("Partition change in OTA...");
+		log.info("Partition change in OTA...");
 	}
 
 }

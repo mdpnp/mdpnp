@@ -140,7 +140,7 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
                     dateAxes.add(dateAxis);
                     chart.setModel(vi, dateAxis);
                     node.setUserData(chart);
-                    System.err.println("Added chart has x-azis "+chart.lineChart.getXAxis());
+                    log.info("Added chart has x-azis "+chart.lineChart.getXAxis());
                     chart.getRemoveButton().setOnAction(new EventHandler<ActionEvent>() {
 
                         @Override
