@@ -14,9 +14,11 @@ package org.mdpnp.apps.device;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 
 
 public abstract class DevicePanel extends BorderPane  {
@@ -36,6 +38,7 @@ public abstract class DevicePanel extends BorderPane  {
     protected final void setInt(NumericFx sample, String metric_id, Label label, String def) {
         if (sample.getMetric_id().equals(metric_id)) {
             setInt(sample.getValue(), label, def);
+            BorderPane.setAlignment(label, Pos.TOP_CENTER);
             if (!label.isVisible()) {
                 label.setVisible(true);
             }
@@ -46,10 +49,24 @@ public abstract class DevicePanel extends BorderPane  {
     }
     
     protected DeviceDataMonitor deviceMonitor;
-    
+
     public void set(DeviceDataMonitor deviceMonitor) {
         this.deviceMonitor = deviceMonitor;
     }
+    
+    /**
+     * A FlowPane, set by the CompositeDevicePanel, allowing this DevicePanel to write things to it 
+     */
+    protected FlowPane externalPane;
+    
+    public void setFlowPane(FlowPane externalPane) {
+    	this.externalPane=externalPane;
+    }
+    
+    protected void customiseHeaders() {
+    	
+    }
+    
 
     protected static final BorderPane label(String label, Node c) {
         return labelTop(label, c);
@@ -57,6 +74,7 @@ public abstract class DevicePanel extends BorderPane  {
 
     protected static final BorderPane labelTop(String label, Node c) {
         BorderPane pan = new BorderPane(c);
+        BorderPane.setAlignment(c, Pos.TOP_CENTER);
         pan.setTop(new Label(label));
         return pan;
     }

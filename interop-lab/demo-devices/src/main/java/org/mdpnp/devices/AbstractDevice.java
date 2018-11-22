@@ -24,6 +24,11 @@ import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,6 +82,10 @@ public abstract class AbstractDevice {
 //    {
 //        threadGroup.setDaemon(true);
 //    }
+    
+    protected Connection dbconn;
+    protected PreparedStatement numericStatement;
+    protected PreparedStatement sampleStatement;
 
     protected final EventLoop eventLoop;
     protected ScheduledExecutorService executor;
@@ -333,6 +342,20 @@ public abstract class AbstractDevice {
         holder.data.presentation_time.nanosec = t.nanosec;
         
         numericDataWriter.write(holder.data, holder.handle);
+        if(numericStatement!=null) {
+	        try {
+				numericStatement.setInt(1, t.sec);
+				numericStatement.setInt(2, t.nanosec);
+				numericStatement.setString(3, deviceIdentity.unique_device_identifier);
+				numericStatement.setString(4, holder.data.metric_id);
+				numericStatement.setFloat(5, newValue);
+				boolean resType=numericStatement.execute();
+			} catch (SQLException e) {
+				//Because this is executing once per second, including the stack trace would
+				//cause a very large log file.
+				log.warn("Failed to execute numeric statement - "+e.getMessage());
+			}
+        }
     }
 
     protected void alarmLimitSample(InstanceHolder<ice.AlarmLimit> holder, String unit_id, Float newValue) {
@@ -608,6 +631,22 @@ public abstract class AbstractDevice {
 
         sampleArrayDataWriter.write(holder.data,
                                                 holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle);
+        //If we look at fill() we can see that it adds floats to the array.
+        float[] floatsForDb=holder.data.values.userData.toArrayFloat(new float[0]);
+        if(sampleStatement!=null) {
+	        try {
+				sampleStatement.setInt(1, holder.data.presentation_time.sec);
+				sampleStatement.setInt(2, holder.data.presentation_time.nanosec);
+				sampleStatement.setString(3, deviceIdentity.unique_device_identifier);
+				sampleStatement.setString(4, holder.data.metric_id);
+				sampleStatement.setObject(5, floatsForDb);
+				boolean resType=sampleStatement.execute();
+			} catch (SQLException e) {
+				//Because this is executing once per second, including the stack trace would
+				//cause a very large log file.
+				log.warn("Failed to execute sample statement - "+e.getMessage());
+			}
+        }
     }
 
     private InstanceHolder<SampleArray> ensureHolderConsistency(InstanceHolder<SampleArray> holder,
@@ -753,6 +792,26 @@ public abstract class AbstractDevice {
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         this.eventLoop = eventLoop;
+        
+        try {
+            Class.forName("org.hsqldb.jdbc.JDBCDriver" );
+        } catch (Exception e) {
+            log.error("Failed to load HSQLDB JDBC driver.",e);
+            return;
+        }
+        
+        try {
+			dbconn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/icedb", "SA", "");
+			numericStatement=dbconn.prepareStatement("INSERT INTO allnumerics(t_sec, t_nanosec, udi, metric_id, val) VALUES (?,?,?,?,?)");
+			sampleStatement=dbconn.prepareStatement("INSERT INTO allsamples(t_sec, t_nanosec, udi, metric_id, floats) VALUES (?,?,?,?,?)");
+			//CREATE TABLE allnumerics(t_sec bigint, t_nanosec bigint, udi varchar(256), metric_id varchar(256), val float)
+			//CREATE TABLE allsamples(t_sec bigint, t_nanosec bigint, udi varchar(256), metric_id varchar(256), floats other)
+		} catch (SQLException e) {
+			log.warn("Could not connect to database - server probably not running",e);
+		}
+        
+        
+        
     }
 
     /**

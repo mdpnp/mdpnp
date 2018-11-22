@@ -6,9 +6,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.mdpnp.apps.device.OnListChange;
+import org.mdpnp.apps.testapp.HumanReadable;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -45,7 +47,6 @@ public class Chart {
             (t)->add(t), null, (t)->remove(t));
     
     public void setModel(Vital v, final DateAxis dateAxis) {
-        
         if(null != this.vital) {
             this.vital.removeListener(valueListener);
             this.vital.forEach((t)->remove(t));
@@ -72,6 +73,7 @@ public class Chart {
             yAxis.setUpperBound(v.getMaximum());
             yAxis.setLowerBound(v.getMinimum());
         }
+
     }
 
     private void add(final Value vital) {
@@ -81,7 +83,13 @@ public class Chart {
         
         final ObservableList<XYChart.Data<Date, Number>> data = FXCollections.observableArrayList();
         vsl.s = new XYChart.Series<>(data);
-        vsl.s.nameProperty().bind(vsl.v.getDevice().makeAndModelProperty());
+        
+        String humanReadable=HumanReadable.MetricLabels.get(vsl.v.getMetricId());
+        if(null!=humanReadable) {
+        	vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getDevice().getMakeAndModel()+"\n"+humanReadable));
+        } else {
+        	vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getDevice().getMakeAndModel()+"\n"+vsl.v.getMetricId()));
+        }
         series.add(vsl.s);
         vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Date>() {
 

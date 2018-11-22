@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -26,7 +27,8 @@ import com.sun.javafx.tk.Toolkit;
 
 public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
     private final Label time = new Label(" ");
-    private final Label[] params;
+    protected final Label[] params;
+    protected BorderPane[] paramLabelBorders;
 
     public abstract String[] getWaveformMetricIds();
     public abstract String[] getWaveformLabels();
@@ -62,20 +64,25 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
       GridPane numerics = new GridPane();
       numerics.setMinWidth(LEFT_RIGHT_PANEL_WIDTH);
       numerics.setPrefWidth(LEFT_RIGHT_PANEL_WIDTH);
-      
+
       params = new Label[getParameterCount()];
+      paramLabelBorders = new BorderPane[params.length];
+
       for(int i = 0; i < params.length; i++) {
           BorderPane t;
           params[i] = new Label(" ");
           params[i].getStyleClass().add("parameter");
-          numerics.add(t = label(getParameterLabel(i), params[i]), 0, i);
+          paramLabelBorders[i]=label(getParameterLabel(i)+" ("+getParameterUnits(i)+")", params[i]);
+          numerics.add(t = paramLabelBorders[i], 0, i);
           
           GridPane.setVgrow(t, Priority.ALWAYS);
           GridPane.setHgrow(t, Priority.ALWAYS);
-          t.setRight(new Label(getParameterUnits(i)));
-          BorderPane.setAlignment(t.getRight(), Pos.BOTTOM_LEFT);
       }
       setRight(numerics);
+  }
+
+  protected void customiseLabels() {
+
   }
 
   @Override
@@ -94,6 +101,7 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
               params[i].textProperty().bind(data.valueProperty().asString("%.0f"));
           }
       }
+      addToHeader(data);
   }
   protected void remove(NumericFx data) {
       for(int i = 0; i < getParameterCount(); i++) {
@@ -101,6 +109,10 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
               params[i].textProperty().unbind();
           }
       }
+  }
+  
+  protected void addToHeader(NumericFx data) {
+	  
   }
   
   private final OnListChange<NumericFx> numericListener = new OnListChange<NumericFx>(

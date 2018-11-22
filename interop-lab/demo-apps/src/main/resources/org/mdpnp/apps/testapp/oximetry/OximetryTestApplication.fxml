@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.oximetry.OximetryTestApplication">
+<center>
+      
+</center>
+<right>
+  <VBox spacing="2">
+    <children>
+	    <Label>Please select an oximeter</Label>
+	    <ComboBox fx:id="oximeters" promptText="choose"/>
+	    <Label text="Requested Average"/>
+		<TextField fx:id="requestedAverage"/>
+	    <Button fx:id="setButton" text="Set"/>
+	    <Label text="Current Average"/>
+	    <TextField fx:id="currentAverage"/>
+	    <Label text="Run Speed (ms)"/>
+	    <TextField fx:id="graphDelay" text="10"/>
+	    <Label text="Simple alarm threshold"/>
+	    <TextField fx:id="simpleAlarmThreshold" text="90"/>
+	    <Label text="Smart Alarm Count"/>
+	    <TextField fx:id="smartAlarmCount"/>
+	    <Button fx:id="chooseFile" text="Select file"/>
+	    <Label text="File"/>
+	    <TextField fx:id="selectedFile"/>
+	    <Button fx:id="runSequence" text="Run"/>
+	    <Button fx:id="clearGraph" text="Clear">
+	    	<VBox.margin>
+	    		<Insets top="30"/>
+	    	</VBox.margin>
+	    </Button>
+	    	
+	</children>
+  </VBox>
+</right>
+</BorderPane>
+
+<!--
+<BorderPane prefHeight="-1" prefWidth="-1" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.oximetry.OximetryTestApplication">
+  <center>
+  <AnchorPane id="Content" prefHeight="-1.0" prefWidth="-1.0">
+    <children>
+      <HBox layoutX="15.0" layoutY="33.0">
+        <children>
+          <Label>Please select an oximeter</Label>
+		  <ComboBox fx:id="oximeters" promptText="choose"/>
+		</children>
+	  </HBox>
+	  <HBox layoutX="15.0" layoutY="66.0">
+	    <children>
+	      <Label text="Requested Average"/>
+	      <TextField fx:id="requestedAverage"/>
+	      <Button fx:id="setButton" text="Set"/>
+	    </children>
+	  </HBox>
+	  <HBox layoutX="15.0" layoutY="99.0">
+	    <children>
+	      <Label text="Current Average"/>
+	      <TextField fx:id="currentAverage"/>
+	    </children>
+	  </HBox>
+	  <Button fx:id="chooseFile" text="Select file"/>
+	  
+          
+      
+    </children>
+  </AnchorPane>
+  </center>
+
+</BorderPane>
+-->

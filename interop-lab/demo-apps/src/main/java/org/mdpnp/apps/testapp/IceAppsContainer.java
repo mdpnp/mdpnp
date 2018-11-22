@@ -19,12 +19,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.eventbus.EventBus;
+import com.mongodb.selector.PrimaryServerSelector;
+
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -99,14 +102,103 @@ public class IceAppsContainer extends IceApplication {
     private Parent mainMenuRoot;
 
     private PartitionChooserModel partitionChooserModel;
+    
+    /**
+     * SK - to keep and use for child popup windows
+     */
+    private Stage parentStage;
+    
+    private Hashtable<Object, Stage> appStageMap;
+    private Hashtable<Stage, double[]> coordinates;
 
     public IceAppsContainer() {
 
     }
 
     private void activateGoBack(final IceApplicationProvider.IceApp app) {
-
+    	
+    	if(appStageMap==null) {
+    		appStageMap=new Hashtable<>();
+    	}
+    	if(coordinates==null) {
+    		coordinates=new Hashtable<>();
+    	}
+    	
+    	/*
+    	 * BASICALLY, WE NEED TO STICK SOMETHING ELSE HERE TO HOLD app.getUI()
+    	 * AND DISPLAY THAT INSTEAD OF REFERRING TO panelController
+    	 */
+    	
         final String appName = app.getDescriptor().getName();
+        //System.err.println("appName is "+appName+" with class "+app.getClass().getName());
+        Stage possibleStage;
+        if(app instanceof DeviceApp) {
+        	DeviceApp da=(DeviceApp)app;
+        	//System.err.println("Device app checking appStageMap for "+da.getUID());
+        	possibleStage=appStageMap.get(da.getUID());
+        } else {
+        	possibleStage=appStageMap.get(app);
+        }
+        
+        if(possibleStage==null) {
+        	//System.err.println("That does NOT have a stage already");
+        	Stage newStage= new Stage();
+        	newStage.initOwner(parentStage);
+        	newStage.setTitle(appName);
+        	final Scene sceneToSet=new Scene(app.getUI(),640,480);
+        	newStage.setScene(sceneToSet);
+        	if(app instanceof DeviceApp) {
+        		appStageMap.put( ((DeviceApp)app).getUID(), newStage);
+        	} else {
+        		appStageMap.put(app, newStage);
+        	}
+        	newStage.show();
+        	newStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+
+    			@Override
+    			public void handle(WindowEvent event) {
+    				//System.err.println("Consuming the onCloseRequest...");
+    				try {
+    					//Do not stop DeviceApps
+    					if( ! (app instanceof DeviceApp) ) {
+    						app.stop();
+    					}
+    					//x position, y position, width, height
+    					double xy[]=new double[4];
+    					xy[0]=newStage.getX();
+    					xy[1]=newStage.getY();
+    					xy[2]=newStage.getWidth();
+    					xy[3]=newStage.getHeight();
+    					coordinates.put(newStage, xy);
+    				} catch (Exception ex) {
+    					log.error("Failed to stop " + appName, ex);
+    				}
+    				newStage.hide();
+    			}
+        		
+        	});
+        	
+        	
+        } else {
+        	//System.err.println("That does have a stage already");
+        	double[] xy=coordinates.get(possibleStage);
+        	/*
+        	 * Seemed to get an NPE here without this !=null, check, but why?
+        	 * How is xy null and therefore coordinates.put not been called,
+        	 * is stage already exists? 
+        	 */
+        	if(xy!=null) {
+	        	possibleStage.setX(xy[0]);
+	        	possibleStage.setY(xy[1]);
+	        	possibleStage.setWidth(xy[2]);
+	        	possibleStage.setHeight(xy[3]);
+        	}
+        	possibleStage.show();
+        	
+        	app.getUI().setVisible(true);
+        }
+    	
+
 
         Runnable goBackAction = new Runnable() {
             public void run() {
@@ -125,7 +217,7 @@ public class IceAppsContainer extends IceApplication {
             panelController.patientSelector.setVisible(false);
         }
         panelController.back.setVisible(true);
-        panelController.content.setCenter(app.getUI());
+//        panelController.content.setCenter(app.getUI());
         panelController.getBack().setOnAction(new GoBackAction(goBackAction));
     }
 
@@ -165,6 +257,10 @@ public class IceAppsContainer extends IceApplication {
     private static class DeviceApp implements IceApplicationProvider.IceApp {
         private Parent ui;
         private DeviceView devicePanel;
+        /**
+         * A unique identifier to use for separating devices in the "multi device display" era
+         */
+        private String uid="not-started-yet";
 
         @Override
         public IceApplicationProvider.AppType getDescriptor() {
@@ -191,6 +287,7 @@ public class IceAppsContainer extends IceApplication {
             FXMLLoader loader = new FXMLLoader(DeviceView.class.getResource("DeviceView.fxml"));
             ui = loader.load();
             devicePanel = loader.getController();
+            uid=device.getUDI();
 
             DeviceDataMonitor deviceMonitor = devicePanel.getModel();
             if (null != deviceMonitor) {
@@ -214,11 +311,18 @@ public class IceAppsContainer extends IceApplication {
         @Override
         public void destroy() {
         }
+        
+        public String getUID() {
+        	return uid;
+        }
+        
+        
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("OpenICE");
+        this.parentStage=primaryStage;
         
         int visibleWidth  = Screen.getMainScreen().getVisibleWidth();
         int visibleHeight = Screen.getMainScreen().getVisibleHeight();
@@ -227,6 +331,12 @@ public class IceAppsContainer extends IceApplication {
         int height = (int) (0.85 * visibleHeight);
 
         Scene panelScene = new Scene(panelRoot);
+        URL url=getClass().getResource("ice-apps-container.css");
+        if(url!=null) {
+            String s=url.toExternalForm();
+        	ObservableList<String> sheets=panelScene.getStylesheets();
+            sheets.add(s);
+        }
         primaryStage.setOnHiding(new EventHandler<WindowEvent>() {
 
             @Override

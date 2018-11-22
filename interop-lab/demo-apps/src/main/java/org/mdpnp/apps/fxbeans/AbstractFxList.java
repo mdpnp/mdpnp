@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.infrastructure.Condition;
 import com.rti.dds.infrastructure.Copyable;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
@@ -201,8 +202,14 @@ public class AbstractFxList<D extends Copyable, R extends DataReader, F extends 
             reader = (R) subscriber.create_datareader(null == filteredTopic ? readerTopic : filteredTopic, Subscriber.DATAREADER_QOS_DEFAULT, null,
                     StatusKind.STATUS_MASK_NONE);
         } else {
-            reader = (R) subscriber.create_datareader_with_profile(null == filteredTopic ? readerTopic : filteredTopic, qosLibrary, qosProfile, null,
-                    StatusKind.STATUS_MASK_NONE);
+        	try {
+	            reader = (R) subscriber.create_datareader_with_profile(null == filteredTopic ? readerTopic : filteredTopic, qosLibrary, qosProfile, null,
+	                    StatusKind.STATUS_MASK_NONE);
+        	} catch (RETCODE_ERROR re){
+        		System.err.println("re message is "+re.getMessage());
+        		re.printStackTrace();
+        		
+        	}
         }
         reader.set_listener(logEntityStatus, StatusKind.STATUS_MASK_ALL ^ StatusKind.DATA_AVAILABLE_STATUS);
         sQos.entity_factory.autoenable_created_entities = true;

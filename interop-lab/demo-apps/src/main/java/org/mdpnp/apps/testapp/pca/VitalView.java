@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,6 +27,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 
@@ -43,6 +47,7 @@ public final class VitalView implements ListChangeListener<Value> {
     @FXML protected Button deleteButton;
     @FXML protected CheckBox ignoreZeroBox, requiredBox;
     @FXML protected HBox vitalValues;
+    @FXML protected Spinner lowestSpinner, lowerSpinner, higherSpinner, highestSpinner;
     
     
 //    private final JMultiSlider slider, slider2;
@@ -86,6 +91,7 @@ public final class VitalView implements ListChangeListener<Value> {
         controls.visibleProperty().bind(configuration);
 
         bindSlider(slider, vital);
+        bindSpinnersToSlider();
         
         for(Value v : vital) {
             add(v);
@@ -95,7 +101,128 @@ public final class VitalView implements ListChangeListener<Value> {
         
         return this;
     }
+    
+    private void bindSpinnersToSlider() {
+    	
+    	lowestSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(slider.minProperty().doubleValue(), slider.maxProperty().doubleValue()));
+    	lowestSpinner.setEditable(true);
+    	lowerSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(slider.minProperty().doubleValue(), slider.maxProperty().doubleValue()));
+    	lowerSpinner.setEditable(true);
+    	higherSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(slider.minProperty().doubleValue(), slider.maxProperty().doubleValue()));
+    	higherSpinner.setEditable(true);
+    	highestSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(slider.minProperty().doubleValue(), slider.maxProperty().doubleValue()));
+    	highestSpinner.setEditable(true);
+    	
+    	lowestSpinner.getValueFactory().setValue(slider.lowestValueProperty().getValue());
+    	lowerSpinner.getValueFactory().setValue(slider.lowerValueProperty().getValue());
+    	higherSpinner.getValueFactory().setValue(slider.higherValueProperty().getValue());
+    	highestSpinner.getValueFactory().setValue(slider.highestValueProperty().getValue());
+    	
+    	//When we have stuff bound in both directions, we will need a little lock to prevent a race condition
+    	
+    	lowestSpinner.valueProperty().addListener( (observable, oldValue, newValue) ->
+    		{
+    			if( ((Number)newValue).doubleValue() > slider.lowerValueProperty().doubleValue()) {
+    				//Can only change the lowest value if it's less than lower
+    				lowestSpinner.getValueFactory().setValue(oldValue);
+    				return;
+    			}
+    			slider.lowestValueProperty().setValue((Number)newValue);
+			}
+    	);
+    	
+    	lowerSpinner.valueProperty().addListener( (observable, oldValue, newValue) ->
+			{
+				if( ((Number)newValue).doubleValue() < slider.lowestValueProperty().doubleValue()) {
+					//Can only change the lower value if it's more than lowest
+					lowerSpinner.getValueFactory().setValue(oldValue);
+					return;
+				}
+				if( ((Number)newValue).doubleValue() > slider.higherValueProperty().doubleValue()) {
+					//Can only change the lower value if it's less than higher
+					lowerSpinner.getValueFactory().setValue(oldValue);
+					return;
+				}
+				slider.lowerValueProperty().setValue((Number)newValue);
+			}
+    	);
+    	
+    	higherSpinner.valueProperty().addListener( (observable, oldValue, newValue) ->
+			{
+				if( ((Number)newValue).doubleValue() > slider.highestValueProperty().doubleValue()) {
+					//Can only change the higher value if it's less than highest
+					higherSpinner.getValueFactory().setValue(oldValue);
+					return;
+				}
+				if( ((Number)newValue).doubleValue() < slider.lowerValueProperty().doubleValue()) {
+					//Can only change the higher value if it's more than lower
+					higherSpinner.getValueFactory().setValue(oldValue);
+					return;
+				}
+				slider.higherValueProperty().setValue((Number)newValue);
+				
+			}
+    	);
+    	
+    	highestSpinner.valueProperty().addListener( (observable, oldValue, newValue) ->
+			{
+				if( ((Number)newValue).doubleValue() > slider.higherValueProperty().doubleValue()) {
+					//Can only change the highest value if it's more than higher
+					highestSpinner.getValueFactory().setValue(oldValue);
+					return;
+				}
+				slider.highestValueProperty().setValue((Number)newValue);
+				
+			}
+    	);
+    	
+    	/*
+    	 * With these binds enabled, nasty crash seems to occur when moving the slider
+    	 */
+    	/*
+    	slider.lowestValueProperty().bind(lowestSpinner.valueProperty());
+    	slider.lowerValueProperty().bind(lowerSpinner.valueProperty());
+    	slider.higherValueProperty().bind(higherSpinner.valueProperty());
+    	slider.highestValueProperty().bind(highestSpinner.valueProperty());
+    	*/
 
+    	/*
+    	 * Obviously, we also want to bind the other way round so the spinners change when the slider does.
+    	 * CHECK FOR RACE!!!
+    	 */
+    	slider.lowestValueProperty().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				lowestSpinner.getValueFactory().setValue(newValue);
+			}
+    	});
+    	
+    	slider.lowerValueProperty().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				lowerSpinner.getValueFactory().setValue(newValue);
+			}
+    	});
+    	
+    	slider.higherValueProperty().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				higherSpinner.getValueFactory().setValue(newValue);
+			}
+    	});
+    	
+    	slider.highestValueProperty().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				highestSpinner.getValueFactory().setValue(newValue);
+			}
+    	});
+
+    }
+
+    /*
+     * SK - not sure why this is static - stops us referencing other instance specific controls...
+     */
     static public void bindSlider(MultiRangeSlider slider, Vital vital) {
 
         // Before we bind the properties, set the values so that validation logic is not
@@ -224,6 +351,7 @@ public final class VitalView implements ListChangeListener<Value> {
             v.set(value);
             node.setUserData(value);
             vitalValues.getChildren().add(node);
+            //This view is the minituare device view on the right hand side.
         } catch (IOException ioe) {
             log.error("Unable to load a UI for new Value", ioe);
         }
