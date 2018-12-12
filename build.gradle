@@ -4,9 +4,9 @@ defaultTasks 'build'
 
 // builds a gradle wrapper
 // http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
-}
+//task wrapper(type: Wrapper) {
+//    gradleVersion = '5.0'
+//}
 
 ext {
     JAVA_VERSION_SOURCE = 1.8

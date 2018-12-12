@@ -10,25 +10,58 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
+/*
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: "me.champeau.jbake"
 apply from: 'javafx.plugin'
+*/
+buildscript {
+
+    dependencies {
+        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
+    }
+
+    repositories {
+        maven {
+            url 'https://build.openice.info/artifactory/remote-repos' 
+        }
+        maven {
+            url="https://dl.bintray.com/calmdev/gradle-plugins"
+        }
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+//apply plugin: "me.champeau.jbake"
+apply plugin: 'javafx-gradle-plugin'
 
 defaultTasks 'build'
 
+/*
 jfxDeploy {
     verbose = true
 }
+*/
 
 applicationName = 'OpenICE'
 
-javafx {
-    appID 'org.mdpnp.apps.testapp.Main'
-    appName 'OpenICE'
-    mainClass 'org.mdpnp.apps.testapp.Main'
+jfx {
+    verbose=true
+    //appID 'org.mdpnp.apps.testapp.Main'
+    appName="OpenICE"
+    mainClass="org.mdpnp.apps.testapp.Main"
     
 
+    /*
     profiles {
         macosx {
         	// comment this line out so you don't have to use jdk 1.8 update 60
@@ -58,28 +91,16 @@ javafx {
             
         }
     }
+    */
 }
 
+/*
 jbake {
     srcDirName = 'src/docs'
     destDirName = 'docs'
 }
+*/
 
-buildscript {
-
-    repositories {
-        maven {
-            url 'https://build.openice.info/artifactory/remote-repos' 
-        }
-        maven {
-            url="https://dl.bintray.com/calmdev/gradle-plugins"
-        }
-    }
-
-    dependencies {
-        classpath "me.champeau.gradle:jbake-gradle-plugin:0.2.1"
-    }
-}
 
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
