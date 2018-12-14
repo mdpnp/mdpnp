@@ -52,6 +52,14 @@ jfxDeploy {
 }
 */
 
+distZip {
+  dependsOn jfxNative
+}
+
+distTar {
+  dependsOn jfxNative
+}
+
 applicationName = 'OpenICE'
 
 jfx {
@@ -59,41 +67,92 @@ jfx {
     //appID 'org.mdpnp.apps.testapp.Main'
     appName="OpenICE"
     mainClass="org.mdpnp.apps.testapp.Main"
+    jfxAppOutputDir = "build/distributions"
+    jfxMainAppJarName = "demo-apps.jar"
+    deployDir = "src/deploy"
+    useEnvironmentRelativeExecutables = true
+    //Think libFolderName might be equivalent to "app" being the deployment directory in the old plugin
+    libFolderName = "lib"
+
+    // gradle jfxJar
+    css2bin = false
+    preLoader = null // String
+    updateExistingJar = false
+    allPermissions = false
+    manifestAttributes = null // Map<String, String>
+    addPackagerJar = true
+    copyAdditionalAppResourcesToJar = false
+    skipCopyingDependencies = false
+    useLibFolderContentForManifestClasspath = false
+    fixedManifestClasspath = null
+
+    identifier = null  // String - setting this for windows-bundlers makes it possible to generate upgradeable installers (using same GUID)
+    vendor = "mdpnp.org"
+    nativeOutputDir = "build/jfx/native"
+    bundler = "ALL" // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
+    jvmProperties = null // Map<String, String>
+    jvmArgs = null // List<String>
+    userJvmArgs = null // Map<String, String>
+    launcherArguments = null // List<String>
+    nativeReleaseVersion = "1.0"
+    needShortcut = false
+    needMenu = false
+/*
+    bundleArguments = [
+        // dont bundle JRE (not recommended, but increases build-size/-speed)
+        //runtime: null
+    ]
+*/
+    appName = "OpenICE" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/package/windows/project.ico"
+    additionalBundlerResources = null // path to some additional resources for the bundlers when creating application-bundle
+    additionalAppResources = null // path to some additional resources when creating application-bundle
+    secondaryLaunchers = []	//Don't need any other .exes
+    fileAssociations = null // List<Map<String, Object>>
+    noBlobSigning = false // when using bundler "jnlp", you can choose to NOT use blob signing
+    customBundlers = null // List<String>
+    failOnError = false
+    onlyCustomBundlers = false
+    skipJNLP = false
+    skipNativeVersionNumberSanitizing = false // anything than numbers or dots are removed
+    additionalJarsignerParameters = null // List<String>
+    skipMainClassScanning = false // set to true might increase build-speed
     
+    skipNativeLauncherWorkaround124 = false
+    skipNativeLauncherWorkaround167 = false
+    skipNativeLauncherWorkaround205 = false
+    skipJNLPRessourcePathWorkaround182 = false
+    skipSigningJarFilesJNLP185 = false
+    skipSizeRecalculationForJNLP185 = false
+    skipMacBundlerWorkaround = false
+    
+    // gradle jfxRun
+    runJavaParameter = null // String
+    runAppParameter = null // String
 
-    /*
-    profiles {
-        macosx {
-        	// comment this line out so you don't have to use jdk 1.8 update 60
-        	// this hasn't been tested completely and may cause errors
-			// javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/'
-
-            bundleArguments = [
-                // for mac apps
-                'mac.CFBundleIdentifier' : 'org.mdpnp.apps.testapp.OpenICE',
-                'mac.CFBundleName' : 'OpenICE',
-                'mac.signing-key-user-name' : 'JEFFREY PLOURDE',
-                //'mac.signing-key-developer-id-app' : 'Developer ID Application: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
-                // for PKG bundles
-                //'mac.signing-key-developer-id-installer' : 'Developer ID Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
-
-                // for Mac App Store Ready bundles
-                //'mac.app-store-entitlements' : 'src/deploy/package/NetworkEntitlements.entitlements',
-                //'mac.signing-key-app' : '3rd Party Mac Developer Applicaiton: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
-                //'mac.signing-key-pkg' : '3rd Party Mac Developer Installer: JEFFREY PLOURDE', // usually redundant with mac.signing-key-user-name
-
-            ]
-        }
-        windows {
-            
-        }
-        linux {
-            
-        }
-    }
-    */
+    // per default the outcome of the gradle "jarTask" will be used, set this to specify otherwise (like proguard-output)
+    alternativePathToJarFile = null // String
+    
+    // to disable patching of ant-javafx.jar, set this to false
+    usePatchedJFXAntLib = true
+    
+    // making it able to support absolute paths, defaults to "false" for maintaining old behaviour
+    checkForAbsolutePaths = false
+    
+    // gradle jfxGenerateKeyStore
+    keyStore = "src/main/deploy/keystore.jks"
+    keyStoreAlias = "myalias"
+    keyStorePassword = "password"
+    keyPassword = null // will default to keyStorePassword
+    keyStoreType = "jks"
+    overwriteKeyStore = false
+    
+    certDomain = null // required
+    certOrgUnit = null // defaults to "none"
+    certOrg = null // required
+    certState = null // required
+    certCountry = null // required
 }
-
+    
 /*
 jbake {
     srcDirName = 'src/docs'
@@ -171,6 +230,10 @@ jar {
         "Implementation-Vendor": project.group,
         "Specification-Vendor": project.group, 
         "Build-Number": project.version)
+    }
+    //Ensure that jfxNative gets run immediately after jar, and so before distZip and distTar
+    doLast {
+      jfxNative
     }
 }
 
