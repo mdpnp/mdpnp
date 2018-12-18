@@ -19,7 +19,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.eventbus.EventBus;
-import com.mongodb.selector.PrimaryServerSelector;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -27,6 +26,8 @@ import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -152,6 +153,22 @@ public class IceAppsContainer extends IceApplication {
         	} else {
         		appStageMap.put(app, newStage);
         	}
+        	if(app.getDescriptor().isCoordinatorApp()) {
+        		//Extra handling required.
+        		newStage.focusedProperty().addListener(new ChangeListener<Boolean>() {
+
+					@Override
+					public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+						if(oldValue) {
+							panelController.patientsLabel.setVisible(true);
+							panelController.patientSelector.setVisible(true);
+						} else {
+							panelController.patientsLabel.setVisible(false);
+							panelController.patientSelector.setVisible(false);
+						}
+					}
+				});
+        	}
         	newStage.show();
         	newStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
@@ -173,10 +190,15 @@ public class IceAppsContainer extends IceApplication {
     				} catch (Exception ex) {
     					log.error("Failed to stop " + appName, ex);
     				}
+    				if(app.getDescriptor().isCoordinatorApp()) {
+	    				panelController.patientsLabel.setVisible(true);
+		                panelController.patientSelector.setVisible(true);
+    				}
     				newStage.hide();
     			}
         		
         	});
+        	
         	
         	
         } else {
@@ -329,7 +351,7 @@ public class IceAppsContainer extends IceApplication {
         
         int width = (int) (0.85 * visibleWidth);
         int height = (int) (0.85 * visibleHeight);
-
+        
         Scene panelScene = new Scene(panelRoot);
         URL url=getClass().getResource("ice-apps-container.css");
         if(url!=null) {
