@@ -42,7 +42,7 @@
        </image>
       </ImageView>
      </StackPane>
-     <Label styleClass="validation" fx:id="validationText"
+     <Label stylesheets="org/mdpnp/apps/testapp/application.css" styleClass="validation" fx:id="validationText"
       minWidth="200.0" prefWidth="200.0" />
 
 
