@@ -7,6 +7,7 @@ import java.util.*;
 
 import com.google.common.eventbus.Subscribe;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -41,6 +42,7 @@ public class DataCollectorApp implements Initializable {
     @FXML protected Button startControl;
     @FXML protected MenuButton addDataSampleControl;
     @FXML protected VBox btns;
+    @FXML protected CheckBox rawTimes;
     
     protected ObservableList<Row> tblModel = FXCollections.observableArrayList();
 
@@ -214,6 +216,11 @@ public class DataCollectorApp implements Initializable {
         }
 
     }
+    
+    @FXML
+    public void toggleRawDate(ActionEvent evt) {
+    	currentPersister.setRawDateFormat(rawTimes.isSelected());
+    }
 
     @FXML
     public void addDataSample(ActionEvent evt)  {
@@ -285,7 +292,7 @@ public class DataCollectorApp implements Initializable {
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
         // Add to the screen for visual.
         long ms = evt.getDevTime();
-        String devTime = DataCollector.dateFormats.get().format(new Date(ms));
+        String devTime = rawTimes.isSelected() ? Long.toString(ms) : DataCollector.dateFormats.get().format(new Date(ms));
         final Row row = new Row(evt.getUniqueDeviceIdentifier(), ""+evt.getInstanceId(),
                 evt.getMetricId(), devTime, (float) evt.getValue());
         Platform.runLater(new Runnable() {

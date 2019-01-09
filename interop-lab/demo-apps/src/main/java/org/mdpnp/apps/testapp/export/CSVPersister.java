@@ -30,6 +30,14 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     
     @FXML Label filePathLabel;
     @FXML ComboBox<String> backupIndex, fSize;
+    
+    //TODO: Can it be a problem that this is static?
+    private static boolean rawDateFormat=false;
+    
+    @Override
+    public void setRawDateFormat(boolean raw) {
+    	this.rawDateFormat=raw;
+    };
 
     @Override
     public String getName() {
@@ -66,7 +74,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         StringBuilder sb = new StringBuilder();
 
         long ms = value.getDevTime();
-        String devTime = dateFormats.get().format(new Date(ms));
+        String devTime = rawDateFormat ? Long.toString(ms) : dateFormats.get().format(new Date(ms));
         String mrn = value.getPatientId();
 
         sb.append(3).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
@@ -81,7 +89,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         StringBuilder sb = new StringBuilder();
 
         long ms = value.getDevTime();
-        String devTime = dateFormats.get().format(new Date(ms));
+        String devTime = rawDateFormat ? Long.toString(ms) : dateFormats.get().format(new Date(ms));
         Number v[] = value.getValues();
         String mrn = value.getPatientId();
 
@@ -101,7 +109,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         StringBuilder sb = new StringBuilder();
 
         long ms = value.getDevTime();
-        String devTime = dateFormats.get().format(new Date(ms));
+        String devTime = rawDateFormat ? Long.toString(ms) : dateFormats.get().format(new Date(ms));
         String mrn = value.getPatientId();
 
         sb.append(1).append(",").append(value.getUniqueDeviceIdentifier()).append(",")

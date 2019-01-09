@@ -79,6 +79,7 @@
    <right>
     <VBox BorderPane.alignment="CENTER" >
      <Button fx:id="startControl" mnemonicParsing="false" onAction="#clickStart" text="Start" BorderPane.alignment="CENTER" />
+     <CheckBox fx:id="rawTimes" text="Raw Times" onAction="#toggleRawDate" BorderPane.alignment="CENTER" />
      <MenuButton fx:id="addDataSampleControl" text="AddData" visible="false">
       <items>
        <MenuItem text="Numeric"     onAction="#addDataSample"/>

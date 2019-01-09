@@ -110,5 +110,7 @@ public class DataCollectorAppFactory implements IceApplicationProvider {
         public abstract void stop() throws Exception;
 
         public abstract boolean start() throws Exception;
+        
+        public void setRawDateFormat(boolean raw) {};
     }
 }
