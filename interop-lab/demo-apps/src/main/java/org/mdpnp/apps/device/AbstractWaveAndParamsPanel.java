@@ -103,6 +103,16 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
       }
       addToHeader(data);
   }
+
+  protected void add(NumericFx data, String format) {
+      for(int i = 0; i < getParameterCount(); i++) {
+          if(parameterMetrics[i].contains(data.getMetric_id())) {
+              params[i].textProperty().bind(data.valueProperty().asString(format));
+          }
+      }
+      addToHeader(data);
+  }
+
   protected void remove(NumericFx data) {
       for(int i = 0; i < getParameterCount(); i++) {
           if(parameterMetrics[i].contains(data.getMetric_id())) {
