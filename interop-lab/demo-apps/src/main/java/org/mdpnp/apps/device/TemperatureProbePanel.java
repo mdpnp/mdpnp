@@ -14,6 +14,8 @@ package org.mdpnp.apps.device;
 
 import java.util.Set;
 
+import org.mdpnp.apps.fxbeans.NumericFx;
+
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
@@ -30,7 +32,8 @@ public class TemperatureProbePanel extends AbstractWaveAndParamsPanel {
 
     private final static String[] PARAM_LABELS = new String[] { "Temp." };
 
-    private final static String[] PARAM_UNITS = new String[] { "" };
+    //00B0 is UTF-16 symbol for degrees
+    private final static String[] PARAM_UNITS = new String[] { "\u00B0C" };
 
     private final static String[] TEMP_LABELS = new String[] { };
 
@@ -83,6 +86,10 @@ public class TemperatureProbePanel extends AbstractWaveAndParamsPanel {
             }
         }
         return false;
+    }
+
+    protected void add(NumericFx data) {
+        super.add(data,"%.1f");
     }
 
 }
