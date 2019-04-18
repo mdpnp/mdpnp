@@ -142,6 +142,11 @@ public class PulseOximeterPanel extends AbstractWaveAndParamsPanel {
                 return true;
             }
         }
+        for (String[] p: PARAMS) {
+            if(identifiers.contains(p[0])) {
+                return true;
+            }
+        }
         return false;
     }
     
