@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,6 +33,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DeviceClock.Reading;
+import org.mdpnp.devices.DeviceClock.ReadingImpl;
 import org.mdpnp.devices.Unit;
 import org.mdpnp.devices.draeger.medibus.RTMedibus.RTTransmit;
 import org.mdpnp.devices.draeger.medibus.types.Command;
@@ -62,7 +65,10 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected Map<Object, InstanceHolder<ice.AlarmLimit>> alarmLowLimitUpdates = new HashMap<Object, InstanceHolder<ice.AlarmLimit>>();
     protected Map<Object, InstanceHolder<ice.AlarmLimit>> alarmHighLimitUpdates = new HashMap<Object, InstanceHolder<ice.AlarmLimit>>();
 
-    protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate;
+    protected InstanceHolder<ice.Numeric> startInspiratoryCycleUpdate, startExpiratoryCycleUpdate, derivedRespiratoryRate;
+
+    private Reading currentReading,previousReading;
+    private static final long millisPerMinute=60*1000L;
 
     protected static final String[] priorities = new String[31];
     static {
@@ -91,9 +97,23 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
 
     protected void processStartInspCycle() {
         // TODO This should not be triggered as a numeric; it's a bad idea
+        currentReading=deviceClock.instant();
         startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0,
                                                     ice.MDC_START_INSPIRATORY_CYCLE.VALUE, "",
                                                     rosetta.MDC_DIM_DIMLESS.VALUE, deviceClock.instant());
+        log.info("Publishing startInspiratoryCycleUpdate sample");
+            if(previousReading!=null) {
+            //Then we have a current and previous reading - publish a derived respiratory rate
+
+            long delta=currentReading.getTime().toEpochMilli()-previousReading.getTime().toEpochMilli();
+            log.info("delta is "+delta);
+            float rate=millisPerMinute/delta;
+            derivedRespiratoryRate = numericSample(derivedRespiratoryRate, rate,
+                                                   ice.ICE_DERIVED_RESPIRATORY_RATE.VALUE, "",
+                                                   rosetta.MDC_DIM_BREATH.VALUE, new ReadingImpl(System.currentTimeMillis()-1000));
+            log.info("Publishing derivedRate sample with value "+rate);
+        }
+        previousReading=currentReading;
     }
 
     protected void processStartExpCycle() {

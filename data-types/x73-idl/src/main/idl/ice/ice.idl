@@ -301,6 +301,12 @@ module ice {
    * Can the device averaging rate be set through the software interface
    */
   const string SP02_SOFT_CAN_SET_AVERAGING_RATE = "SP02_SOFT_CAN_SET_AVERAGING_RATE";
+  /**
+   * A class to be used as a numeric placeholder for a respiratory rate derived by
+   * OpenICE, rather than received from a device itself.  First use is in the Draeger
+   * Apollo
+   */
+  const string ICE_DERIVED_RESPIRATORY_RATE = "ICE_DERIVED_RESPIRATORY_RATE";
 
   /**
    * Numerics are values observed by sensors at a relatively slow rate; generally <=3Hz. 
