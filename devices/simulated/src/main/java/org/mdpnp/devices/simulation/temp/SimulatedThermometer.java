@@ -17,12 +17,21 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.simulation.NumberWithJitter;
+
+/*
+ * Can't do these imports from this project without circular dependencies becoming an issue.
+ * IF we need to have simulation control here, we either need to do it on the demo-device
+ * class that extends this one, or we need to refactor GlobalSimulationObjective
+ */
+//import ice.GlobalSimulationObjective;
+//import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 
 /**
  * @author Jeff Plourde
  *
  */
-public class SimulatedThermometer {
+public class SimulatedThermometer /*implements GlobalSimulationObjectiveListener*/  {
 
     
     
@@ -30,7 +39,7 @@ public class SimulatedThermometer {
         @Override
         public void run() {
             DeviceClock.Reading  t = deviceClock.instant();
-            receiveTemp1(temperature1, t);
+            receiveTemp1(simTemperature1.floatValue(), t);
             receiveTemp2(temperature2, t);
         }
 
@@ -43,9 +52,19 @@ public class SimulatedThermometer {
     protected void receiveTemp2(float temperature2, DeviceClock.Reading time) {
 
     }
+    
+    /**
+     * Use this to replace temperature1 fixed value, and register this as a global simulation objective so it can be replaced by the sim controller.
+     */
+    private Number simTemperature1 = new NumberWithJitter<>(37.0, 0.1, 2.0);
+    
+//    @Override
+//    public void simulatedNumeric(ice.GlobalSimulationObjective obj) {
+//    	//Need to pass this to something inside thermometer (the SimulatedThermometerExt instance)
+//    }
 
     private static final long UPDATE_PERIOD = 1000L;
-    protected int temperature1 = 37;
+    //protected int temperature1 = 37;
     protected int temperature2 = 39;
 
     private ScheduledFuture<?> task;
