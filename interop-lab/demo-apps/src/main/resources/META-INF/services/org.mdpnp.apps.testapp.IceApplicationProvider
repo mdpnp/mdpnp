@@ -12,3 +12,4 @@ org.mdpnp.apps.testapp.patient.PatientApplicationFactory
 org.mdpnp.apps.testapp.chart.ChartApplicationFactory
 org.mdpnp.apps.testapp.validate.ValidateApplicationFactory
 org.mdpnp.apps.testapp.oximetry.OximetryTestApplicationFactory
+org.mdpnp.apps.testapp.news.NewsTestApplicationFactory

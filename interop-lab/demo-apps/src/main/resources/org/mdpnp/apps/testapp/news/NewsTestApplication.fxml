@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.mdpnp.apps.testapp.news.NewsTestApplication">
+    <BorderPane.margin>
+        <Insets fx:id="insets" bottom="5.0" top="5.0" left="5.0" right="5.0"/>
+    </BorderPane.margin>
+    <center>
+        <fx:include fx:id="vitalSigns" source="ChartApplication.fxml"
+                    BorderPane.alignment="TOP_CENTER" BorderPane.margin="$insets"/>
+    </center>
+    <bottom>
+        <!-- ui starts with no patient selected, so we disable the observation controls -->
+        <HBox fx:id="observationControls" spacing="5.0" BorderPane.margin="$insets" disable="true">
+            <children>
+
+                <Label text="Add an observation:"/>
+                <ComboBox fx:id="observationCodes"/>
+                <Label text="Effective Time:"/>
+
+                <RadioButton fx:id="timeNow" mnemonicParsing="false" text="Now" selected="true" onAction="#setEffectiveDate">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="dateSpec" />
+                    </toggleGroup>
+                    <padding>
+                        <Insets right="5.0" />
+                    </padding>
+                </RadioButton>
+                <RadioButton fx:id="timeAsOf" mnemonicParsing="false" text="AsOf" selected="false" onAction="#setEffectiveDate" toggleGroup="$dateSpec">
+                    <padding>
+                        <Insets right="5.0" />
+                    </padding>
+                </RadioButton>
+
+                <TextField fx:id="observationEffectiveTime" maxWidth="200.0" prefWidth="200.0" visible="false"/>
+
+                <Button mnemonicParsing="false" onAction="#addObservation" text="Add"/>
+            </children>
+        </HBox>
+        <HBox fx:id="patientScore">
+        	<children>
+        		<Label text="Current NEWS Score:"/>
+        		<Label fx:id="scoreLabel" text="-"/>
+        	</children>
+        </HBox>
+    </bottom>
+</BorderPane>
+
+

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scores>
+<score name="Respiratory Rate">
+	<ranges>
+		<range lower="0" upper="8" score="3"/>
+		<range lower="9" upper="11" score="1"/>
+		<range lower="12" upper="20" score="0"/>
+		<range lower="21" upper="24" score="2"/>
+		<range lower="25" upper="" score="3"/>
+	</ranges>
+</score>
+<score name="Oxygen Saturation">
+	<ranges>
+		<range lower="0" upper="91" score="3"/>
+		<range lower="92" upper="93" score="2"/>
+		<range lower="94" upper="95" score="1"/>
+		<range lower="96" upper="100" score="0"/>
+	</ranges>
+</score>
+<score name="Temperature">
+	<ranges>
+		<range lower="0" upper="35" score="3"/>
+		<range lower="35" upper="36" score="1"/>
+		<range lower="36" upper="38" score="0"/>
+		<range lower="38" upper="39" score="1"/>
+		<range lower="39" upper="" score="2"/>
+	</ranges>
+</score>
+<score name="Systolic Blood Pressure">
+	<ranges>
+		<range lower="0" upper="90" score="3"/>
+		<range lower="91" upper="100" score="2"/>
+		<range lower="101" upper="110" score="1"/>
+		<range lower="111" upper="219" score="0"/>
+		<range lower="220" upper="" score="3"/>
+	</ranges>
+</score>
+<score name="Heart Rate">
+	<ranges>
+		<range lower="0" upper="40" score="3"/>
+		<range lower="41" upper="50" score="1"/>
+		<range lower="51" upper="90" score="0"/>
+		<range lower="91" upper="110" score="1"/>
+		<range lower="110" upper="130" score="2"/>
+		<range lower="131" upper="" score="3"/>
+	</ranges>
+</score>
+</scores>

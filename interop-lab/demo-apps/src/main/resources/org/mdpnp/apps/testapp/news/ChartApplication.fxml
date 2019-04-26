@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.news.ChartApplication">
+   <center>
+      <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
+        <content>
+          <AnchorPane>
+               <children>
+                  <VBox fx:id="charts" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+        </content>
+      </ScrollPane>
+   </center>
+   <right>
+    
+   </right>
+   <bottom>
+    <HBox spacing="5.0">
+       <children>
+       <Label text="Add a vital sign:" />
+            <ComboBox fx:id="vitalSigns" />
+         <Button mnemonicParsing="false" onAction="#addVitalSign" text="Add" />
+         <Label text="Time Interval" />
+         <ComboBox fx:id="timeInterval" onAction="#onTimeInterval" />
+	    <Button fx:id="forward" text="Newer" >
+	    
+	    </Button>
+	    <Button fx:id="backward" text="Older" >
+	    
+	    </Button>
+	    <Button fx:id="resume" text="Resume">
+	    
+	    </Button>
+    
+         
+       </children>
+      </HBox>
+      </bottom>
+</BorderPane>
