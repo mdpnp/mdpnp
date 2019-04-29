@@ -1,0 +1,17 @@
+plugins {
+  id 'java'
+}
+
+defaultTasks 'clean', 'jar'
+
+sourceSets {
+  main {
+    java {
+      srcDirs = ['src/purejavacomm', 'src/jtermios']
+    }
+  }
+}
+
+dependencies {
+  compile files('lib/jna-4.0.0.jar')
+}

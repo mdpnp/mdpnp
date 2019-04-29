@@ -15,6 +15,7 @@ include 'devices:masimo'
 include 'devices:nellcor'
 include 'devices:simulated'
 
+include 'interop-lab:purejavacomm'
 include 'interop-lab:demo-purejavacomm'
 
 include 'interop-lab:demo-guis'

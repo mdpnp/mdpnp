@@ -19,6 +19,6 @@ targetCompatibility = JAVA_VERSION_CLASSES
 dependencies {
   compile project(':interop-lab:demo-devices')
   // For serial communications with devices
-  compile group: 'com.sparetimelabs', name: 'purejavacomm', version: '0.0.22'
+  compile project(':interop-lab:purejavacomm')
 
 }

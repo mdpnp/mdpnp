@@ -121,9 +121,6 @@ subprojects {
         // All the following should be covered by the remote-repos repository above
         // They are included her for reference (and potentially fallback)
 
-        // Repository for a build of purejavacomm
-        maven { url 'http://www.sparetimelabs.com/maven2' }
-
         // Repository for javacv/javacpp
         maven {  url 'http://maven2.javacv.googlecode.com/git/' }
 
