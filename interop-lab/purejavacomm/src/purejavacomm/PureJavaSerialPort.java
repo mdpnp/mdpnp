@@ -698,6 +698,10 @@ public class PureJavaSerialPort extends SerialPort {
 				private int im_ReceiveThresholdValue;
 				private boolean im_PollingReadMode;
 				private int im_ReceiveTimeoutVTIME;
+				private boolean loggingBytes;
+				private long basetime;
+				private Hashtable<Long,byte[]> timeAndBytes;
+				PrintWriter byteWriter;
 
 				{ // initialized block instead of construct in anonymous class
 					im_ReadFDSet = newFDSet();
@@ -708,6 +712,15 @@ public class PureJavaSerialPort extends SerialPort {
 					im_ReadPollFD[1].events = POLLIN;
 					im_PollFDn = m_HaveNudgePipe ? 2 : 1;
 					im_Nudge = new byte[1];
+					loggingBytes=new Boolean(System.getProperty("ice.javacomm.logbytes"));
+					File homeDir=new File(System.getProperty("user.home"));
+					File byteFile=new File(homeDir,"openicebytes.txt");
+//					loggingBytes=true;
+  					if(loggingBytes) {
+						basetime=System.currentTimeMillis();
+						timeAndBytes=new Hashtable<>();
+						byteWriter=new PrintWriter(new BufferedOutputStream(new FileOutputStream(byteFile)),true);
+					}
 				}
 
 				@Override
@@ -776,6 +789,16 @@ public class PureJavaSerialPort extends SerialPort {
 						} else
 							bytesRead = jtermios.JTermios.read(m_FD, buffer, length);
 						m_DataAvailableNotified = false;
+						if(loggingBytes) {
+							long t=System.currentTimeMillis()-basetime;
+							byteWriter.print(t+":");
+							for(int zzz=0;zzz<bytesRead;zzz++) {
+							  byteWriter.printf("0x%02X ",buffer[offset+zzz]);
+ 							}
+							byteWriter.println();
+						}
+
+
 						return bytesRead;
 
 					} // End of raw read mode code
@@ -937,6 +960,14 @@ public class PureJavaSerialPort extends SerialPort {
 					}
 
 					m_DataAvailableNotified = false;
+						if(loggingBytes) {
+							long t=System.currentTimeMillis()-basetime;
+							byteWriter.print(t+":");
+							for(int zzz=0;zzz<bytesReceived;zzz++) {
+							  byteWriter.printf("0x%02X ",buffer[offset+zzz]);
+ 							}
+							byteWriter.println();
+						}
 					return bytesReceived;
 				}
 
