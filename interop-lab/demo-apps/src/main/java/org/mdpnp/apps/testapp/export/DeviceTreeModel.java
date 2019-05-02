@@ -97,7 +97,12 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         }
 
         TreeItem<Object> tn = makeNewNodeFactory(d, key);
+        TreeItem testParent=tn;
         d.getChildren().add(tn);
+        if( ((SelectableNode)d).isSelected()) {
+        	cascadeChildren((SelectableNode)tn, true);
+        }
+
         return tn;
     }
 
