@@ -26,6 +26,19 @@ public class CSVPersisterTest {
         String line = CSVPersister.toCSVLine(evt);
         Assert.assertEquals("Invalid csv line", "1,DEVICE0,METRIC0,0,20150203235809-0500,UNDEFINED,1,13.31", line);
     }
+    
+    @Test
+    public void testCVSLineNumericGroupingOff() throws Exception {
+
+        SimpleDateFormat dateFormat = DataCollector.dateFormats.get();
+        Date d0 = dateFormat.parse("20150203.235809.985-0500");
+
+        NumericsDataCollector.NumericSampleEvent evt =
+                NumericsDataCollector.toEvent("DEVICE0", "METRIC0", 0, d0.getTime(), 1001);
+
+        String line = CSVPersister.toCSVLine(evt);
+        Assert.assertEquals("Invalid csv line", "1,DEVICE0,METRIC0,0,20150203235809-0500,UNDEFINED,1,1001.00", line);
+    }
 
     @Test
     public void testCVSLineArray() throws Exception {

@@ -65,6 +65,8 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     static {
         valueFormat.setMaximumFractionDigits(2);
         valueFormat.setMinimumFractionDigits(2);
+        //Issue 14 - disable grouping to prevent additional , characters appearing in outputs.
+        valueFormat.setGroupingUsed(false);
     }
 
     // scientific notation, three decimal places, one exponent digit
