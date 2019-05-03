@@ -4,6 +4,7 @@ plugins {
 
 defaultTasks 'clean', 'jar'
 
+/*
 sourceSets {
   main {
     java {
@@ -11,6 +12,7 @@ sourceSets {
     }
   }
 }
+*/
 
 dependencies {
   compile files('lib/jna-4.0.0.jar')
