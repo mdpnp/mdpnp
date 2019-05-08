@@ -105,11 +105,11 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
                 	for(int i=0;i<vitalSignsController.vitalModel.size();i++) {
         	        	Vital v=vitalSignsController.vitalModel.get(i);
         	        	for(int j=0;j<v.size();j++) {
-        	        		System.err.println("Vital v value is "+v.get(j).getMetricId()+" - "+v.get(j).getValue());
+        	        		//System.err.println("Vital v value is "+v.get(j).getMetricId()+" - "+v.get(j).getValue());
         	        		VitalSign vitalSign=VitalSign.lookupByMetricId(v.get(j).getMetricId());
         	        		String scoreForMetric=vitalSignsToScore.get(vitalSign.label);
         	        		if(scoreForMetric!=null) {
-        	        			System.err.println("Need to do a score for "+scoreForMetric);
+        	        			//System.err.println("Need to do a score for "+scoreForMetric);
         	        			for(Score score : scoreList) {
         	        				if(score.name.equals(scoreForMetric)) {
         	        					float f=v.get(j).getValue();
@@ -117,7 +117,7 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         	        						Range range=score.ranges.get(k);
         	        						if(f>=range.lower && f<=range.upper) {
         	        							currentScore+=range.score;
-        	        							System.err.println(vitalSign.label+" has value "+f+" in range "+range.lower+" "+range.upper+", adding score "+range.score+" to give current score "+currentScore);
+        	        							//System.err.println(vitalSign.label+" has value "+f+" in range "+range.lower+" "+range.upper+", adding score "+range.score+" to give current score "+currentScore);
         	        							break;
         	        						}
         	        					}
@@ -126,7 +126,7 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         	        		}
         	        	}
                 	}
-                	System.err.println("final currentScore is "+currentScore);
+                	//System.err.println("final currentScore is "+currentScore);
                 	scoreLabel.setText(String.valueOf(currentScore));
                 }
             }
@@ -244,10 +244,10 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
     		DocumentBuilder db=DocumentBuilderFactory.newInstance().newDocumentBuilder();
     		Document scoresDoc=db.parse(is);
     		NodeList allNodes=scoresDoc.getChildNodes();
-    		System.err.println("allNodes length is "+allNodes.getLength());
+    		//System.err.println("allNodes length is "+allNodes.getLength());
 			Node node=allNodes.item(0);
-			System.err.println("node type is "+node.getNodeType());
-			System.err.println("node name is "+node.getNodeName());
+			//System.err.println("node type is "+node.getNodeType());
+			//System.err.println("node name is "+node.getNodeName());
 			NodeList scores=node.getChildNodes();
 			for(int i=0;i<scores.getLength();i++) {
 				Node scoreNode=scores.item(i);
