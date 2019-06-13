@@ -12,13 +12,16 @@
  ******************************************************************************/
 apply plugin: 'maven'
 
+
 defaultTasks 'build'
 
-task build(type: Zip) { 
+task buildZip(type: Zip) { 
   baseName = project.name
   from 'src/main/idl'
   include '**/*.idl'
 }
 
-artifacts {  archives build }
+build.dependsOn buildZip
+
+artifacts {  archives buildZip }
 
