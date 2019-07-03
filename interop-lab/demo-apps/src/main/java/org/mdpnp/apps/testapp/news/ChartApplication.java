@@ -49,6 +49,14 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
     private long interval = 2 * 60 * 60 * 1000L;
     @FXML ComboBox<TimeInterval> timeInterval;
     
+    /**
+     * Use this to hold a list of all the Chart objects as they are created,
+     * so the list can be looped through, finding the metrics and then setting
+     * the score on the relevant chart.  Later, map metrics directly to charts
+     * so it can just be a lookup instead of a loop.
+     */
+    private ArrayList<Chart> allCharts=new ArrayList<>();
+    
     public enum TimeInterval {
         _10SECONDS("10 Seconds", 10000L),
         _1MINUTE("1 Minute", 60000L),
@@ -133,6 +141,7 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
                 try {
                     Parent node = loader.load();
                     Chart chart = loader.getController();
+                    allCharts.add(chart);
                     //New chart, new DateAxis
                     long now = System.currentTimeMillis();
                     now -= now % 1000;
@@ -239,5 +248,17 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
         if(null != ti) {
             interval = ti.getInterval();
         }
+    }
+    
+    public void pushScoreToChart(String metricId, int score) {
+    	for(int i=0;i<allCharts.size();i++) {
+    		Chart chart=allCharts.get(i);
+    		String[] metrics=chart.getVital().getMetricIds();
+    		for(String metric : metrics) {
+    			if(metric.equals(metricId)) {
+    				chart.currentScoreText.setText(String.valueOf(score));
+    			}
+    		}
+    	}
     }
 }

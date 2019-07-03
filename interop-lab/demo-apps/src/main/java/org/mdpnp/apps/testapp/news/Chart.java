@@ -29,6 +29,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.control.MenuItem;
+import javafx.scene.text.*;
 
 public class Chart {
     @FXML protected LineChart<Date, Number> lineChart;
@@ -36,6 +37,7 @@ public class Chart {
     private final List<ValueSeriesListener> values = new ArrayList<ValueSeriesListener>();
     @FXML Button removeButton;
     @FXML BorderPane main;
+    @FXML Text currentScoreText;
     
     // TODO externalize this setting
     private static final int MAX_POINTS = 25000;

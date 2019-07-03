@@ -117,6 +117,7 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         	        						Range range=score.ranges.get(k);
         	        						if(f>=range.lower && f<=range.upper) {
         	        							currentScore+=range.score;
+        	        							pushScoreToChartApp(v.get(j).getMetricId(),range.score);
         	        							//System.err.println(vitalSign.label+" has value "+f+" in range "+range.lower+" "+range.upper+", adding score "+range.score+" to give current score "+currentScore);
         	        							break;
         	        						}
@@ -134,6 +135,11 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         datePickUpdate.setCycleCount(Timeline.INDEFINITE);
         datePickUpdate.play();
         
+    }
+    
+    
+    private void pushScoreToChartApp(String metricId, int score) {
+    	vitalSignsController.pushScoreToChart(metricId, score);
     }
 
     @Override
