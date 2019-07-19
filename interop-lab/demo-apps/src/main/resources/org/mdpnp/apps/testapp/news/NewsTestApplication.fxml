@@ -27,7 +27,7 @@
         				<Font size="16"/>
         			</font>
         		</Label>
-        		<Button fx:id="pauseNewsApp" mnemonicParsing="false" onAction="#pauseAppTimeline" text="Pause"/>
+        		<!-- <Button fx:id="pauseNewsApp" mnemonicParsing="false" onAction="#pauseAppTimeline" text="Pause"/> -->
         	</children>
         </HBox>
     </top>

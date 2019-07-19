@@ -251,14 +251,23 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
     }
     
     public void pushScoreToChart(String metricId, int score) {
+    	boolean pushed=false;
     	for(int i=0;i<allCharts.size();i++) {
     		Chart chart=allCharts.get(i);
     		String[] metrics=chart.getVital().getMetricIds();
+    		//System.err.println("chart "+i+" has "+metrics.length+" metricss");
     		for(String metric : metrics) {
     			if(metric.equals(metricId)) {
+    				//System.err.println("chart "+i+" metric "+metric+" matches");
     				chart.currentScoreText.setText(String.valueOf(score));
+    				pushed=true;
     			}
     		}
+    	}
+    	//This shouldn't happen, as the metrics come from the Vital Model anyway, and the Vital Model
+    	//is the list of things that are being displayed on charts
+    	if(!pushed) {
+    		System.err.println("No chart was handling metricId "+metricId+" with score "+score);
     	}
     }
 }

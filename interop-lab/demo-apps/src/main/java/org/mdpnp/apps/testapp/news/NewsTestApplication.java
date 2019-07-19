@@ -234,10 +234,10 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         }
     }
     
-    @FXML
-    public void pauseAppTimeline() {
-    	datePickUpdate.pause();
-    }
+//    @FXML
+//    public void pauseAppTimeline() {
+//    	datePickUpdate.pause();
+//    }
 
     List<ObservationType> readObservationTypes() {
         try {
