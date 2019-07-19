@@ -95,6 +95,7 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
             @Override
             public void handle(ActionEvent event) {
             	currentScore=0;
+                //System.err.println("NTA.handle called, score starts at "+currentScore);
                 if(timeNow.isSelected()) {
                     String v = dateFormat.format(new Date());
                     observationEffectiveTime.setText(v);
@@ -104,7 +105,22 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
                 if(vitalSignsController.vitalModel!=null) {
                 	for(int i=0;i<vitalSignsController.vitalModel.size();i++) {
         	        	Vital v=vitalSignsController.vitalModel.get(i);
+        	        	//System.err.println("Processing vitalModel element "+i+ " with size "+v.size());
+        	        	//Keep track of which value in the list of v is the "worst"
+        	        	int indexOfWorst=0;
+        	        	int worstScore=0;
         	        	for(int j=0;j<v.size();j++) {
+        	        		if(j==0) {
+        	        			/*
+        	        			 * When doing the first metric for the given chart,
+        	        			 * reset the score for the current chart to 0.  Can't
+        	        			 * do this outside the "int j" loop because if no metrics
+        	        			 * have been published yet then v.size() is 0 anyway and
+        	        			 * that gives ArrayIndexOutOfBounds.  So it happens here,
+        	        			 * conditional on it being the first metric on the chart.
+        	        			 */
+        	        			pushScoreToChartApp(v.get(0).getMetricId(),0);
+        	        		}
         	        		//System.err.println("Vital v value is "+v.get(j).getMetricId()+" - "+v.get(j).getValue());
         	        		VitalSign vitalSign=VitalSign.lookupByMetricId(v.get(j).getMetricId());
         	        		String scoreForMetric=vitalSignsToScore.get(vitalSign.label);
@@ -116,18 +132,25 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         	        					for(int k=0;k<score.ranges.size();k++) {
         	        						Range range=score.ranges.get(k);
         	        						if(f>=range.lower && f<=range.upper) {
-        	        							currentScore+=range.score;
-        	        							pushScoreToChartApp(v.get(j).getMetricId(),range.score);
-        	        							//System.err.println(vitalSign.label+" has value "+f+" in range "+range.lower+" "+range.upper+", adding score "+range.score+" to give current score "+currentScore);
-        	        							break;
+        	        							if(range.score>worstScore) {
+        	        								worstScore=range.score;
+	        	        							//System.err.println(vitalSign.label+" has value "+f+" in range "+range.lower+" "+range.upper+", set worstScore to "+worstScore);
+	        	        							//System.err.println("Pushing "+v.get(j).getMetricId()+" with score "+range.score+" to chart");
+	        	        							pushScoreToChartApp(v.get(j).getMetricId(),range.score);
+        	        							}
+        	        							break;	//Out of the loop across ranges
         	        						}
         	        					}
         	        				}
         	        			}
+        	        		} else {
+        	        			//System.err.println("No Score for "+vitalSign.label);
         	        		}
         	        	}
+        	        	currentScore+=worstScore;
+                        //System.err.println("Added "+worstScore+" to give currentScore of "+currentScore);
                 	}
-                	//System.err.println("final currentScore is "+currentScore);
+                       //System.err.println("final currentScore is "+currentScore);
                 	scoreLabel.setText(String.valueOf(currentScore));
                 }
             }
@@ -209,6 +232,11 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
                 patientAssessmentWriter.write(data, handle_t);
             }
         }
+    }
+    
+    @FXML
+    public void pauseAppTimeline() {
+    	datePickUpdate.pause();
     }
 
     List<ObservationType> readObservationTypes() {
