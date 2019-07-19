@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
@@ -13,6 +14,23 @@
     <BorderPane.margin>
         <Insets fx:id="insets" bottom="5.0" top="5.0" left="5.0" right="5.0"/>
     </BorderPane.margin>
+    <top>
+            <HBox fx:id="patientScore">
+        	<children>
+        		<Label text="Current NEWS Score:">
+        			<font>
+        				<Font size="16"/>
+        			</font>
+        		</Label>
+        		<Label fx:id="scoreLabel" text="-">
+        			<font>
+        				<Font size="16"/>
+        			</font>
+        		</Label>
+        		<Button fx:id="pauseNewsApp" mnemonicParsing="false" onAction="#pauseAppTimeline" text="Pause"/>
+        	</children>
+        </HBox>
+    </top>
     <center>
         <fx:include fx:id="vitalSigns" source="ChartApplication.fxml"
                     BorderPane.alignment="TOP_CENTER" BorderPane.margin="$insets"/>
@@ -44,12 +62,6 @@
 
                 <Button mnemonicParsing="false" onAction="#addObservation" text="Add"/>
             </children>
-        </HBox>
-        <HBox fx:id="patientScore">
-        	<children>
-        		<Label text="Current NEWS Score:"/>
-        		<Label fx:id="scoreLabel" text="-"/>
-        	</children>
         </HBox>
     </bottom>
 </BorderPane>
