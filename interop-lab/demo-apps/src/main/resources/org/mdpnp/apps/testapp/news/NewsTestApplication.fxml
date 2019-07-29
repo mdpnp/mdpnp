@@ -17,14 +17,14 @@
     <top>
             <HBox fx:id="patientScore">
         	<children>
-        		<Label text="Current NEWS Score:">
+        		<Label text="MEWS Score:">
         			<font>
-        				<Font size="16"/>
+        				<Font size="30"/>
         			</font>
         		</Label>
         		<Label fx:id="scoreLabel" text="-">
         			<font>
-        				<Font size="16"/>
+        				<Font size="30"/>
         			</font>
         		</Label>
         		<!-- <Button fx:id="pauseNewsApp" mnemonicParsing="false" onAction="#pauseAppTimeline" text="Pause"/> -->

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.FlowPane?>
@@ -15,7 +16,7 @@
       
 </center>
 <right>
-	<GridPane alignment="center" vgap="10">
+	<GridPane alignment="top_center" vgap="10">
 	    <Button prefWidth="30.0" GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="removeButton">
 		    <graphic>
 		    <ImageView fitHeight="0.0" fitWidth="25.0" preserveRatio="true">
@@ -25,11 +26,14 @@
 		    <tooltip>
 		    <Tooltip text="Remove this vital sign"/>
 		    </tooltip>
+    	    <GridPane.margin>
+	    		<Insets top="40"/>
+    		</GridPane.margin>
 	    </Button>
 		<Text text="Score" GridPane.columnIndex="0" GridPane.rowIndex="1" fx:id="scoreLabel"/>
 		<Text text="X" GridPane.columnIndex="0" GridPane.rowIndex="2" fx:id="currentScoreText">
 		  <font>
-		  	<Font size="20"/>
+		  	<Font size="30"/>
 		  </font>
 	    </Text>
 	</GridPane>

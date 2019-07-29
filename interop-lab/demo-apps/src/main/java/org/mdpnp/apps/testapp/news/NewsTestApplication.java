@@ -152,12 +152,30 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
                 	}
                        //System.err.println("final currentScore is "+currentScore);
                 	scoreLabel.setText(String.valueOf(currentScore));
+                	setCorrectColorForScore();
                 }
             }
         }));
         datePickUpdate.setCycleCount(Timeline.INDEFINITE);
         datePickUpdate.play();
         
+    }
+    
+    private void setCorrectColorForScore() {
+    	if(currentScore>=0 && currentScore<2) {
+    		scoreLabel.textFillProperty().set(javafx.scene.paint.Color.GREEN);
+    		return;
+    	}
+    	if(currentScore>=2 && currentScore<4) {
+    		scoreLabel.textFillProperty().set(javafx.scene.paint.Color.YELLOW);
+    		return;
+    	}
+    	if(currentScore>=4 && currentScore<6) {
+    		scoreLabel.textFillProperty().set(javafx.scene.paint.Color.ORANGE);
+    		return;
+    	}
+    	scoreLabel.textFillProperty().set(javafx.scene.paint.Color.RED);
+    	
     }
     
     
