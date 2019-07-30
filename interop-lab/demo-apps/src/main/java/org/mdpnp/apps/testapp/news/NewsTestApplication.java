@@ -381,6 +381,11 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
 		}
 	}
     
+    /**
+     * Configure the mapping of vital signs between scores.xml and VitalSign.
+     * KEYS are from VitalSign label field.
+     * VALUES are from scores.xml name field.
+     */
     private void configureVitalSignsToScore() {
     	vitalSignsToScore=new HashMap<>();
     	vitalSignsToScore.put("Heart Rate", "Heart Rate");
@@ -389,7 +394,8 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
     	vitalSignsToScore.put("SpO\u2082", "Oxygen Saturation");
     	vitalSignsToScore.put("Respiration Rate", "Respiratory Rate");
     	vitalSignsToScore.put("etCO\u2082", null);
-    	vitalSignsToScore.put("Tenp", "Temperature");
+    	vitalSignsToScore.put("Temp", "Temperature");
+    	vitalSignsToScore.put("Invasive Systolic", "Systolic Blood Pressure");
     	//TODO: more pairs...
     }
 }

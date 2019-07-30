@@ -168,6 +168,8 @@
                 <value type="org.mdpnp.apps.testapp.vital.VitalSign">RespiratoryRate</value>
                 <value type="org.mdpnp.apps.testapp.vital.VitalSign">HeartRate</value>
                 <value type="org.mdpnp.apps.testapp.vital.VitalSign">SpO2</value>
+                <value type="org.mdpnp.apps.testapp.vital.VitalSign">InvSystolic</value>
+                <value type="org.mdpnp.apps.testapp.vital.VitalSign">Temperature</value>
             </array>
         </constructor-arg>
 
