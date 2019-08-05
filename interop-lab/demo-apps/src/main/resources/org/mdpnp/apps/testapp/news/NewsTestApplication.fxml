@@ -17,12 +17,12 @@
     <top>
             <HBox fx:id="patientScore">
         	<children>
-        		<Label text="MEWS Score:">
+        		<Label text="MEWS Score:" style="-fx-background-color: black; -fx-text-fill: white;">
         			<font>
         				<Font size="30"/>
         			</font>
         		</Label>
-        		<Label fx:id="scoreLabel" text="-">
+        		<Label fx:id="scoreLabel" text="-" style="-fx-background-color: black;">
         			<font>
         				<Font size="30"/>
         			</font>
