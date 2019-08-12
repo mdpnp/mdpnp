@@ -16,6 +16,7 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.SpringLoadedDriver;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
+import org.mdpnp.devices.denver.mseries.MSeriesScale;
 import org.mdpnp.devices.draeger.medibus.*;
 import org.mdpnp.devices.fluke.prosim68.DemoProsim68;
 import org.mdpnp.devices.ge.serial.DemoGESerial;
@@ -603,6 +604,23 @@ public class DeviceFactory {
             return new DemoGESerial(subscriber, publisher, eventLoop);
 
         }        
+    }
+    
+    public static class MSeriesScaleProvider extends SpringLoadedDriver {
+
+		@Override
+		public DeviceType getDeviceType() {
+			return new DeviceType(ice.ConnectionType.Serial,"Denver", "MSeries", "MSeries", 1);
+		}
+
+		@Override
+		public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+			EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new MSeriesScale(subscriber, publisher, eventLoop);
+		}
+    	
     }
 
 }

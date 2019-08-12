@@ -29,5 +29,5 @@ org.mdpnp.apps.testapp.DeviceFactory$FlukeProsim68Provider
 org.mdpnp.apps.testapp.DeviceFactory$MultiparameterProvider
 org.mdpnp.apps.testapp.DeviceFactory$BioPatchProvider
 org.mdpnp.apps.testapp.DeviceFactory$GESerialProvider
-        
+org.mdpnp.apps.testapp.DeviceFactory$MSeriesScaleProvider
         
