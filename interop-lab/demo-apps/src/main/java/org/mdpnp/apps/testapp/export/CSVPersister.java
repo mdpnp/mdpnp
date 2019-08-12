@@ -63,7 +63,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     
     private static NumberFormat valueFormat = NumberFormat.getNumberInstance();
     static {
-        valueFormat.setMaximumFractionDigits(2);
+        valueFormat.setMaximumFractionDigits(4);
         valueFormat.setMinimumFractionDigits(2);
         //Issue 14 - disable grouping to prevent additional , characters appearing in outputs.
         valueFormat.setGroupingUsed(false);
