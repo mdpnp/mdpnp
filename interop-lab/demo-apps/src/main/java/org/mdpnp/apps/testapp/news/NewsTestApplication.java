@@ -15,6 +15,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Background;
 import javafx.util.Duration;
 import org.mdpnp.apps.testapp.PartitionChooserModel;
 import org.mdpnp.apps.testapp.vital.Vital;
@@ -109,6 +110,13 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         	        	//Keep track of which value in the list of v is the "worst"
         	        	int indexOfWorst=0;
         	        	int worstScore=0;
+        	        	if(v.size()==0) {
+        	        		//Probably the device(s) have been assigned to a patient and that patient
+        	        		//is not the active partition as chosen in the "Select a patient" drop down.
+        	        		//Use a score of "-1" to indicate to the chart that the data is no longer valid.
+        	        		System.err.println("v.size() is 0 for i="+i+" but vitalSignsController.vitalModel.size is "+vitalSignsController.vitalModel.size());
+        	        		pushScoreToChartApp(v.getMetricIds()[0], -1);
+        	        	}
         	        	for(int j=0;j<v.size();j++) {
         	        		if(j==0) {
         	        			/*

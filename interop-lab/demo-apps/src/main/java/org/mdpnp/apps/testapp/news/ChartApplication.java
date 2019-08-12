@@ -259,7 +259,11 @@ public class ChartApplication implements ListChangeListener<Vital>, EventHandler
     		for(String metric : metrics) {
     			if(metric.equals(metricId)) {
     				//System.err.println("chart "+i+" metric "+metric+" matches");
-    				chart.currentScoreText.setText(String.valueOf(score));
+    				if(score==-1) {
+    					chart.currentScoreText.setText("X");
+    				} else {
+    					chart.currentScoreText.setText(String.valueOf(score));
+    				}
     				pushed=true;
     			}
     		}
