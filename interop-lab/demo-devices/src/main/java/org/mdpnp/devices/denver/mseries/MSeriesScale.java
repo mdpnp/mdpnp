@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceClock.Reading;
-import org.mdpnp.devices.qcore.pumps.SapphirePump;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.serial.SerialSocket.DataBits;
