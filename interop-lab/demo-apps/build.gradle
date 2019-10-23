@@ -182,7 +182,7 @@ dependencies {
     runtime project(':interop-lab:demo-purejavacomm')
 
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
-    runtime group: 'org.mdpnp.apps.testapp.pca', name: 'mdpnp-sounds', version: '0.1.0'
+    compile files('../../artifacts/mdpnp-sounds-0.1.0.jar')
 
     //
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
@@ -201,7 +201,7 @@ dependencies {
     compile group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-base', version: '0.9'
     compile group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-structures-dstu2', version: '0.9'
     
-    compile group: 'com.jeffplourde', name: 'Utility', version: '0.0.1'
+    compile files('../../artifacts/Utility-0.0.1.jar')
     
     compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12'
 

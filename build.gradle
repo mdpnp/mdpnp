@@ -87,7 +87,7 @@ subprojects {
         repositories {
 
             // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
-            maven {  url 'https://build.openice.info/artifactory/ext-release-local' }
+            //maven {  url 'https://build.openice.info/artifactory/ext-release-local' }
 
             ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
 
@@ -98,14 +98,15 @@ subprojects {
     }
     repositories {
         // Repository for external snapshot libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'https://build.openice.info/artifactory/libs-snapshot' 
-        }
+        //maven {  url 'https://build.openice.info/artifactory/libs-snapshot' 
+        //}
 
         // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
-        maven {  url 'https://build.openice.info/artifactory/libs-release' }
+        //maven {  url 'https://build.openice.info/artifactory/libs-release' }
         
         // Virtual repository of all remote repositories
         // used in the mdpnp project
+/*
         maven {
             // Apply credentials if available to allow deployment into caches
             if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {
@@ -115,6 +116,7 @@ subprojects {
                 }
             }
             url 'https://build.openice.info/artifactory/remote-repos' }
+*/
 
 
 
@@ -143,6 +145,7 @@ subprojects {
         // Is this a VERY slow maven repo?
         // maven {  url 'http://maven.eclipse.org' }
     }
+/*
     if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {
         uploadArchives {
             repositories {
@@ -157,4 +160,5 @@ subprojects {
             }
         }
     }
+*/
 }
