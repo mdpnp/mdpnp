@@ -44,16 +44,17 @@ jar.doFirst {
 
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
-  compile group: 'com.rti.dds', name: 'nddsjava', version: '5.1-mdpnp-000007'
+  compile files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
+  //This next slf4j entry appears to have been a missing dependency somehow?
+  //Rather than a migration from mdpnp artifactory...
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
 
   //compile project(':data-types:x73-idl')
   testCompile group: 'junit', name: 'junit', version: '4.11'
 
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
-  rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen-resource', version: '5.1'
-  rtiddsgen group: 'com.rti.dds', name: 'rtiddsgen', version: '5.1'
-  rtiddsgen group: 'org.anarres', name: 'cpp-bin', version: '1.2.8-SNAPSHOT'
+  rtiddsgen files('../../artifacts/rtiddsgen-resource-5.1.zip','../../artifacts/rtiddsgen-5.1.jar','../../artifacts/cpp-bin-1.2.8-SNAPSHOT.zip')
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
   rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
   rtiddsgen group: 'org.aspectj', name: 'aspectjrt', version: '1.7.2'
