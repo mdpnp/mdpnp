@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
 
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Tooltip;
@@ -46,8 +47,14 @@ public class DeviceGridCell extends GridCell<Device> {
             setText(null);
             setGraphic(null);
         } else {
-            tooltipProperty().get().textProperty().bind(item.hostnameProperty());
-            textProperty().bind(item.makeAndModelProperty());
+        	if(item.getComPort()!=null && item.getComPort().length()!=0) {
+        		tooltipProperty().get().textProperty().bind ( Bindings.concat(item.hostnameProperty(), item.comPortProperty()));
+        		textProperty().bind(Bindings.concat( item.makeAndModelProperty(), item.comPortProperty()));
+        	} else {
+        		tooltipProperty().get().textProperty().bind(item.hostnameProperty());
+        		textProperty().bind(item.makeAndModelProperty());
+        	}
+            
             setGraphic(root);
         }
         

@@ -213,6 +213,7 @@ module ice {
     ConnectionType type;
     LongString info;
     ValidTargets valid_targets;
+    string<16> comPort;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist DeviceConnectivity unique_device_identifier
   const string DeviceConnectivityTopic = "DeviceConnectivity";

@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.beans.binding.Bindings;
 
 import org.mdpnp.apps.testapp.DeviceAdapterCommand.HeadlessAdapter;
 
@@ -30,7 +31,7 @@ public class DeviceController {
             icon.imageProperty().bind(device.imageProperty());
             overlay.visibleProperty().bind(device.connectedProperty().not());
             outofsync.visibleProperty().bind(device.clockDifferenceProperty().greaterThan(MAX_CLOCK_DIFFERENCE).or(device.clockDifferenceProperty().lessThan(-MAX_CLOCK_DIFFERENCE)));
-            text.textProperty().bind(device.makeAndModelProperty());
+            text.textProperty().bind(Bindings.format("%s %s",device.makeAndModelProperty(),device.comPortProperty()));
             closeSimulator.visibleProperty().bind(device.headlessAdapterProperty().isNotNull());
         } else {
             icon.setImage(null);

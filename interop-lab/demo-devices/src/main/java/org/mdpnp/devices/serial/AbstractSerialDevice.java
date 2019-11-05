@@ -50,6 +50,7 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
         // TODO Come back to this for multiple serial ports
         if(idx == 0) {
             synchronized (stateMachine) {
+                deviceConnectivity.comPort=portIdentifier[idx];
                 if (!ice.ConnectionState.Connected.equals(stateMachine.getState())) {
                     if (!stateMachine.transitionIfLegal(ice.ConnectionState.Connected, transitionNote)) {
                         log.warn("Unable to enter Connected state from " + stateMachine.getState());
@@ -417,5 +418,9 @@ public abstract class AbstractSerialDevice extends AbstractConnectedDevice {
      */
     protected long getNegotiateInterval(int idx) {
         return 10000L;
+    }
+
+    protected String getPortIdentifier() {
+        return portIdentifier[0];
     }
 }

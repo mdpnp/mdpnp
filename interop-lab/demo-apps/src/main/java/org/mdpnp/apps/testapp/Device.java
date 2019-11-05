@@ -157,6 +157,24 @@ public class Device {
     public void setHostname(String hostname) {
         this.hostnameProperty().set(hostname);
     }
+    
+    private StringProperty comPort;
+    
+    public StringProperty comPortProperty() {
+    	if (null == comPort) {
+    		comPort=new SimpleStringProperty(this, "comPort", "");
+    	}
+    	return comPort;
+    }
+    
+    public String getComPort() {
+    	return comPortProperty().get();
+    }
+    
+    public void setComPort(String comPort) {
+    	this.comPortProperty().set(comPort);
+    }
+
 
     private LongProperty clockDifference;
 
@@ -263,6 +281,7 @@ public class Device {
         changeUdi(deviceConnectivity.unique_device_identifier);
         connectivityStateProperty().set(deviceConnectivity.state);
         connectivityInfoProperty().set(deviceConnectivity.info);
+        comPortProperty().set(deviceConnectivity.comPort);
         connectedProperty().set(ice.ConnectionState.Connected.equals(deviceConnectivity.state));
     }
 
