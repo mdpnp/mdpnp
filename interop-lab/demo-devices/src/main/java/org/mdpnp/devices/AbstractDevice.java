@@ -52,6 +52,7 @@ import javax.json.JsonArrayBuilder;
 
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
+import org.mdpnp.sql.SQLLogging;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
@@ -922,7 +923,9 @@ public abstract class AbstractDevice {
 
                                     if (0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
                                         if (si.valid_data) {
-                                            log.warn("Limit " + obj.metric_id + " "+obj.limit_type+" limit changed to [ " + obj.value + "  " + obj.unit_identifier + "]");
+                                        	String msg="Limit " + obj.metric_id + " "+obj.limit_type+" limit changed to [ " + obj.value + "  " + obj.unit_identifier + "]";
+                                            log.warn(msg);
+                                            SQLLogging.log("AbstractDevice", msg);
                                             setAlarmLimit(obj);
                                         }
                                     } else {
