@@ -46,6 +46,10 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
@@ -645,7 +649,19 @@ public abstract class AbstractDevice {
 				sampleStatement.setInt(2, holder.data.presentation_time.nanosec);
 				sampleStatement.setString(3, deviceIdentity.unique_device_identifier);
 				sampleStatement.setString(4, holder.data.metric_id);
-				sampleStatement.setObject(5, floatsForDb);
+				/*
+				 * This is not necessarily the best way of serialising floats - if it turns out to be too big of
+				 * a performance hit, we can check out alternatives like 
+				 * https://www.factual.com/blog/the-flotsam-project-insanely-fast-floating-point-number-serialization-for-java-and-javascript/
+				 * and
+				 * https://github.com/RuedigerMoeller/fast-serialization
+				 */
+				JsonArrayBuilder builder=Json.createArrayBuilder();
+				for(int i=0;i<floatsForDb.length;i++) {
+					builder.add(floatsForDb[i]);
+				}
+				JsonArray jsonArray=builder.build();
+				sampleStatement.setString(5, jsonArray.toString());
 				boolean resType=sampleStatement.execute();
 			} catch (SQLException e) {
 				//Because this is executing once per second, including the stack trace would
