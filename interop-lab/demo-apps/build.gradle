@@ -179,7 +179,7 @@ dependencies {
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
     compile project(':interop-lab:demo-guis-javafx')
-    runtime project(':interop-lab:demo-purejavacomm')
+    compile project(':interop-lab:demo-purejavacomm')
 
     runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
     compile files('../../artifacts/mdpnp-sounds-0.1.0.jar')
