@@ -48,6 +48,14 @@ public interface IceApplicationProvider {
          */
         void destroy() throws Exception;
         
+        public default int getPreferredWidth() {
+        	return 640;
+        }
+        
+        public default int getPreferredHeight() {
+        	return 480;
+        }
+        
     }
 
     /**

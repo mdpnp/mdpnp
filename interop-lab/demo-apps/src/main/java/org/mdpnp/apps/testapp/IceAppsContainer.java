@@ -146,7 +146,7 @@ public class IceAppsContainer extends IceApplication {
         	Stage newStage= new Stage();
         	newStage.initOwner(parentStage);
         	newStage.setTitle(appName);
-        	final Scene sceneToSet=new Scene(app.getUI(),640,480);
+        	final Scene sceneToSet=new Scene(app.getUI(),app.getPreferredWidth(),app.getPreferredHeight());
         	newStage.setScene(sceneToSet);
         	if(app instanceof DeviceApp) {
         		appStageMap.put( ((DeviceApp)app).getUID(), newStage);
