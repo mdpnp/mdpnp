@@ -24,6 +24,10 @@ import ice.SampleArray;
 import ice.SampleArrayDataWriter;
 import ice.SampleArrayTypeSupport;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -37,12 +41,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
+import org.mdpnp.sql.SQLLogging;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
 import org.slf4j.Logger;
@@ -131,7 +141,8 @@ public abstract class AbstractDevice {
 
     
     protected InstanceHolder<ice.DeviceAlertCondition> deviceAlertConditionInstance;
-
+    
+    private static final String JDBC_PROPS_FILE_NAME="icejdbc.properties";
 
     public Subscriber getSubscriber() {
         return subscriber;
@@ -639,7 +650,19 @@ public abstract class AbstractDevice {
 				sampleStatement.setInt(2, holder.data.presentation_time.nanosec);
 				sampleStatement.setString(3, deviceIdentity.unique_device_identifier);
 				sampleStatement.setString(4, holder.data.metric_id);
-				sampleStatement.setObject(5, floatsForDb);
+				/*
+				 * This is not necessarily the best way of serialising floats - if it turns out to be too big of
+				 * a performance hit, we can check out alternatives like 
+				 * https://www.factual.com/blog/the-flotsam-project-insanely-fast-floating-point-number-serialization-for-java-and-javascript/
+				 * and
+				 * https://github.com/RuedigerMoeller/fast-serialization
+				 */
+				JsonArrayBuilder builder=Json.createArrayBuilder();
+				for(int i=0;i<floatsForDb.length;i++) {
+					builder.add(floatsForDb[i]);
+				}
+				JsonArray jsonArray=builder.build();
+				sampleStatement.setString(5, jsonArray.toString());
 				boolean resType=sampleStatement.execute();
 			} catch (SQLException e) {
 				//Because this is executing once per second, including the stack trace would
@@ -793,24 +816,29 @@ public abstract class AbstractDevice {
 
         this.eventLoop = eventLoop;
         
+        Properties jdbcProps=new Properties();
         try {
-            Class.forName("org.hsqldb.jdbc.JDBCDriver" );
-        } catch (Exception e) {
-            log.error("Failed to load HSQLDB JDBC driver.",e);
-            return;
-        }
-        
-        try {
-			dbconn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/icedb", "SA", "");
+        	
+        	jdbcProps.load(new FileReader(new File(System.getProperty("user.home"),JDBC_PROPS_FILE_NAME)));
+        	String driverClass=jdbcProps.getProperty("driver");
+        	//Class.forName(driverClass);
+        	
+        	String url=jdbcProps.getProperty("url");
+        	String username=jdbcProps.getProperty("username");
+        	String password=jdbcProps.getProperty("password");
+        	dbconn = DriverManager.getConnection(url, username, password);
 			numericStatement=dbconn.prepareStatement("INSERT INTO allnumerics(t_sec, t_nanosec, udi, metric_id, val) VALUES (?,?,?,?,?)");
 			sampleStatement=dbconn.prepareStatement("INSERT INTO allsamples(t_sec, t_nanosec, udi, metric_id, floats) VALUES (?,?,?,?,?)");
-			//CREATE TABLE allnumerics(t_sec bigint, t_nanosec bigint, udi varchar(256), metric_id varchar(256), val float)
-			//CREATE TABLE allsamples(t_sec bigint, t_nanosec bigint, udi varchar(256), metric_id varchar(256), floats other)
-		} catch (SQLException e) {
+            
+        } catch (FileNotFoundException fnfe) {
+            log.warn("No JDBC properties file found",fnfe);
+        } catch (IOException ioe) {
+			log.warn("Could not read JDBC properties file", ioe);
+		} /*catch (ClassNotFoundException cnfe) {
+			log.warn("Could not load JDBC driver class", cnfe);
+		} */ catch (SQLException e) {
 			log.warn("Could not connect to database - server probably not running",e);
 		}
-        
-        
         
     }
 
@@ -895,7 +923,9 @@ public abstract class AbstractDevice {
 
                                     if (0 != (si.instance_state & InstanceStateKind.ALIVE_INSTANCE_STATE)) {
                                         if (si.valid_data) {
-                                            log.warn("Limit " + obj.metric_id + " "+obj.limit_type+" limit changed to [ " + obj.value + "  " + obj.unit_identifier + "]");
+                                        	String msg="Limit " + obj.metric_id + " "+obj.limit_type+" limit changed to [ " + obj.value + "  " + obj.unit_identifier + "]";
+                                            log.warn(msg);
+                                            SQLLogging.log("AbstractDevice", msg);
                                             setAlarmLimit(obj);
                                         }
                                     } else {
