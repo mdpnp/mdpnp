@@ -404,6 +404,23 @@ module ice {
   const string OximetryAveragingObjectiveTopic = "OximetryAveragingObjective";
 
   /**
+   * SK - Topic for setting the flow rate in a Pump device.
+   * The "Pump Control" app will publish a sample with flowRate=N to
+   * indicate that this is the desired flow rate.  ICE compliant devices
+   * that can have their flow rate set will already be publishing their current
+   * flow rate, and so the acknowledgement will come from that parameter changing.
+   *
+   * Stability: 1 - Experimental
+  */
+  struct FlowRateObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString requestor;
+    float newFlowRate;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist FlowRateObjective unique_device_identifier
+  const string FlowRateObjectiveTopic = "FlowRateObjective";
+   
+  /**
    * Speculative topic used for the PCA demonstration. Only currently used by infusion 
    * pump simulators. But this is meant to represent the current state of an infusion 
    * pump holistically and coherently. While this is an early guess at some appropriate 
