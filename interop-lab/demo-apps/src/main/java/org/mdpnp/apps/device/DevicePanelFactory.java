@@ -40,7 +40,8 @@ public class DevicePanelFactory {
         InvasiveBloodPressurePanel.class,
         TemperatureProbePanel.class,
         RespRatePanel.class,
-        WeightPanel.class
+        WeightPanel.class,
+        PumpPanel.class
     };
     private final static Logger log = LoggerFactory.getLogger(DevicePanelFactory.class);
     public static final Method[] PANEL_SUPPORTED = new Method[PANELS.length];
