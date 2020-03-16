@@ -54,6 +54,14 @@
         <constructor-arg ref="publisher" />
         <constructor-arg ref="domainParticipant" />
     </bean>
+    
+    <!-- This is needed for setting flow rates to a QCore device.
+    -->
+     <bean id="flowRateObjectiveWriter" class="org.mdpnp.rtiapi.data.FlowRateObjectiveDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+    
 
     <!-- This is only needed when Charting apps are installed -->
     <bean id="patientAssessmentWriter" class="org.mdpnp.rtiapi.data.PatientAssessmentDataWriterFactory" lazy-init="true">
