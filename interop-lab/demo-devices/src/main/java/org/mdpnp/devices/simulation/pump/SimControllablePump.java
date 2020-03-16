@@ -6,7 +6,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
-import org.mdpnp.devices.qcore.pumps.SapphirePump;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
@@ -64,7 +63,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	
 	private DeviceClock defaultClock;
 	
-	private static final Logger log = LoggerFactory.getLogger(SapphirePump.class);
+	private static final Logger log = LoggerFactory.getLogger(SimControllablePump.class);
 	
 	ScheduledFuture<?> flowRateEmitter;
 	
