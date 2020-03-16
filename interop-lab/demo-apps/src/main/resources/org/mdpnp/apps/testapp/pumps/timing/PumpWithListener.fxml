@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+ <HBox spacing="2" fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.timing.PumpWithListener">
+	<children>
+		<!--<CheckBox fx:id="selected"/>-->
+    	<Label fx:id="pumpId"/>
+        <Label text="Current Speed"/>
+  		<Label fx:id="currentSpeedLabel"/>
+  		<Button text="File" onAction="#selectFile"/>
+  		<Label fx:id="currentFileLabel"/>
+    </children>
+    <userData>
+      <fx:reference source="controller"/>
+    </userData>
+
+</HBox>

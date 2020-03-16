@@ -14,3 +14,4 @@ org.mdpnp.apps.testapp.validate.ValidateApplicationFactory
 org.mdpnp.apps.testapp.oximetry.OximetryTestApplicationFactory
 org.mdpnp.apps.testapp.news.NewsTestApplicationFactory
 org.mdpnp.apps.testapp.pumps.PumpControllerTestApplicationFactory
+org.mdpnp.apps.testapp.pumps.timing.PumpTimingTestApplicationFactory
