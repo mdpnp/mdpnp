@@ -33,4 +33,6 @@ __data-types/__
 
 __devices/__
 * Implementation of device protocols for lab devices.
-* To be used in conjunction with other components that provide nomenclature, information model translation, and messaging.
+* To be used in conjunction with other components that provide nomenclature, information model translation, and messaging
+
+<a href="https://iconscout.com/icons/infusion-pumps" target="_blank">Infusion pumps Icon</a> by <a href="https://iconscout.com/contributors/icons8">Icons8</a> on <a href="https://iconscout.com">Iconscout</a>
