@@ -107,6 +107,12 @@ public enum VitalSign {
             rosetta.MDC_PRESS_CUFF_MEAN.VALUE,
             rosetta.MDC_PRESS_BLD_NONINV_MEAN.VALUE     
     }, 60.0, 100.0, 40.0, 120.0, 0.0, 200.0, 5000L, 5000L, Color.red),
+    /* A rather dubious abuse of the design here to allow diastolic and systolic on the same chart */
+    BothBP("Dia and Sys BP", "mmHg", new String[] {
+    		rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE,
+    		rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE
+    }, 10.0, 300.0, 10.0, 300.0, 10.0, 300.0, 5000L, 5000L, Color.red
+    ),
 
     Test("Test", "", new String[] {}, 60.0, 100.0, 40.0, 120.0, 10.0, 200.0, 5000L, 5000L, Color.red),
     ;
