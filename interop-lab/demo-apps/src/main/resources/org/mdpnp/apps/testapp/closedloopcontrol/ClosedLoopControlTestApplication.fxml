@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.closedloopcontrol.ClosedLoopControlTestApplication">
+<center>
+  <VBox fx:id="bpGraphBox"/>
+</center>
+<right>
+  <VBox spacing="2">
+    <children>
+    	<RadioButton fx:id="openRadio" mnemonicParsing="false" text="Open Mode">
+    		<toggleGroup>
+    			<ToggleGroup fx:id="operatingMode"/>
+    		</toggleGroup>
+    	</RadioButton>
+    	<RadioButton fx:id="closedRadio" mnemonicParsing="false" text="Closed Mode" toggleGroup="$operatingMode" selected="true">
+    	</RadioButton>
+    	<VBox spacing="2" fx:id="bpVBox">
+	    	<Label>Target Systolic BP</Label>
+	    	<Spinner fx:id="targetSystolic"/>
+	    	<Label>Target Diastolic BP</Label>
+	    	<Spinner fx:id="targetDiastolic"/>
+	    	<!--<Label fx:id="errorLabel"/>-->
+	    </VBox>
+	    <VBox spacing="2" fx:id="bpAlarmBox">
+	    	<Label>Systolic Alarm Level</Label>
+	    	<Spinner fx:id="systolicAlarm"/>
+	    	<Label>Diastolic Alarm Level</Label>
+	    	<Spinner fx:id="diastolicAlarm"/>
+	    </VBox>
+	    <VBox spacing="2" fx:id="infusionVBox">
+	    	<Label text="Infusion Rate (ml/hour)"/>
+	    	<Spinner fx:id="infusionRate"/>
+	    </VBox>
+	    <Label>Please select a pump</Label>
+	    <ComboBox fx:id="pumps" promptText="choose"/>
+	    <Label>Please select a BP source</Label>
+	    <ComboBox fx:id="bpsources" promptText="choose"/>
+	    <Label text="Sys"/>
+		<TextField fx:id="currentSystolic" editable="false"/>
+		<Label text="Dia"/>
+		<TextField fx:id="currentDiastolic" editable="false"/>
+	    <Label text="Mean"/>
+		<TextField fx:id="currentMean" editable="false"/>
+		<Button fx:id="startButton" onAction="#startProcess" text="Start"/>
+		<Label fx:id="infusionStatusLabel" text="---"/>
+	</children>
+  </VBox>
+</right>
+<bottom>
+	<VBox fx:id="bottomBox" spacing="2">
+		<children>
+			<Label fx:id="lastPumpUpdate">Last pump update</Label>
+			<Label fx:id="lastBPUpdate">Last BP update</Label>
+		</children>
+	</VBox>
+</bottom>
+</BorderPane>
