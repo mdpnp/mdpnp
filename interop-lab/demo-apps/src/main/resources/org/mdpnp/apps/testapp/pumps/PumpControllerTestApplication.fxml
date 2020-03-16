@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.PumpControllerTestApplication">
+<center>
+  <VBox fx:id="pumps" spacing="2">
+  
+  
+  </VBox>
+      
+</center>
+<right>
+  <VBox spacing="2">
+    <children>
+    <!--
+	    <Label>Please select a pump</Label>
+	    <ComboBox fx:id="icepumps" promptText="choose"/>
+	    <Label text="Requested Speed"/>
+		<TextField fx:id="requestedSpeed"/>
+	    <Button fx:id="setButton" text="Set"/>
+	    <Label text="Current Speed"/>
+	    <TextField fx:id="currentSpeed"/>
+	-->
+	    <Label>Please select a BP source</Label>
+	    <ComboBox fx:id="bpsources" promptText="choose"/>
+	    <Label text="Sys"/>
+		<TextField fx:id="systolic"/>
+		<Label text="Dia"/>
+		<TextField fx:id="diastolic"/>
+	    <Label text="Mean"/>
+		<TextField fx:id="mean"/>
+	</children>
+  </VBox>
+</right>
+</BorderPane>

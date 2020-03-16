@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+ <HBox spacing="2" fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.PumpWithListener">
+	<children>
+    	<Label fx:id="pumpId"/>
+        <Label text="Current Speed"/>
+  		<Label fx:id="currentSpeedLabel"/>
+  		<Label text="Request Speed"/>
+        <TextField fx:id="requestedSpeed"/> 
+        <Button fx:id="setSpeedButton" text="Set" onAction="#setTheFlowRate"/>
+    </children>
+
+</HBox>
