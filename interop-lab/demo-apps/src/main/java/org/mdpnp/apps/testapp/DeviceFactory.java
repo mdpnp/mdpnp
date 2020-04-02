@@ -40,6 +40,7 @@ import org.mdpnp.devices.simulation.pulseox.InitialEightSecIceSettableAvgSimPuls
 import org.mdpnp.devices.simulation.pulseox.InitialEightSecOperSettableAvgSimPulseOximeter;
 import org.mdpnp.devices.simulation.pulseox.SimPulseOximeter;
 import org.mdpnp.devices.simulation.pump.SimControllablePump;
+import org.mdpnp.devices.simulation.clcbp.SimControllableBPMonitor;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
@@ -641,6 +642,24 @@ public class DeviceFactory {
     	
     	
     }
+    
+    public static class ControllableBPMonitor_SimulatorProvider extends SpringLoadedDriver {
+    	
+    	@Override
+        public DeviceType getDeviceType() {
+                return new DeviceType(ice.ConnectionType.Simulated,"ICE", "Controllable BP Monitor", "Controllable_BPMonitor", 1);
+        }
+    	
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+                EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
+                Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+                Publisher publisher = context.getBean("publisher", Publisher.class);
+                return new SimControllableBPMonitor(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    
 
 
 }

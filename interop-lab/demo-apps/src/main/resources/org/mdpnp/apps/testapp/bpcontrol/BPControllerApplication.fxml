@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+ <HBox spacing="2" fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.bpcontrol.BPControllerApplication">
+	<children>
+    	<Label fx:id="deviceID"/>
+        <Label text="Change By"/>
+        <TextField fx:id="requestedChange"/> 
+        <Button fx:id="" text="Set" onAction="#requestTheChange"/>
+        <Button fx:id="runButton" text="Run" onAction="#runMonitor"/>
+        <Button fx:id="StopButton" text="Stop" onAction="#stopMonitor"/>
+    </children>
+
+</HBox>

@@ -419,6 +419,35 @@ module ice {
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist FlowRateObjective unique_device_identifier
   const string FlowRateObjectiveTopic = "FlowRateObjective";
+
+/**
+ * SK - Topic for changing the BP published by the SimControllableBPMonitor.
+ * That simulated device is (initially) used as part of the Closed Loop Control
+ * application.  We will have another application that will be used to adjust the
+ * BP produced by the device.  Note that the value is how much to change the current
+ * value by - NOT a new target
+ */
+  struct BPObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString requestor;
+    float changeBy;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist BPObjective unique_device_identifier
+  const string BPObjectiveTopic = "BPObjective";
+
+/**
+ * SK - Topic to ask out controllable BP monitor to pause or resume.
+ * This will be used to test alarm production in the FROA app, that is required
+ * to produce alarms when the BP monitor stops producing a signal
+ */
+struct BPPauseResumeObjective {
+   UniqueDeviceIdentifier unique_device_identifier; //@key
+   LongString requestor;
+   boolean running;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist BPObjective unique_device_identifier
+  const string BPPauseResumeObjectiveTopic = "BPPauseResumeObjective";
+
    
   /**
    * Speculative topic used for the PCA demonstration. Only currently used by infusion 
