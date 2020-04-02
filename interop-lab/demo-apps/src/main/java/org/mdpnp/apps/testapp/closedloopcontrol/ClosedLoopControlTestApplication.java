@@ -17,6 +17,7 @@ import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.safetylockapplication.MessageDialog;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.chart.Chart;
@@ -34,8 +35,11 @@ import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.FlowRateObjective;
 import ice.FlowRateObjectiveDataWriter;
 import ice.MDSConnectivity;
 import ice.Patient;
@@ -173,6 +177,16 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private IntegerProperty systolicProperty=new SimpleIntegerProperty();
 	private IntegerProperty diastolicProperty=new SimpleIntegerProperty();
 	
+	private boolean pleaseStopAlgo;
+	private Thread algoThread;
+	private Thread bpUpdateAlarmThread;
+	private Thread pumpUpdateAlarmThread;
+	
+	SampleArrayFx[] sampleFromSelectedMonitor;
+	
+	private static final int oneMinute= 1000 * 60;
+	private static final int fiveMinutes= 1000 * 60 * 5;
+	
 	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel) {
 		this.dlm=dlm;
 		this.numeric=numeric;
@@ -236,7 +250,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	}
 	
 	public void stop() {
-		//TODO: Stop listening to the BP waveform for efficiency?
+		if(algoThread!=null) {
+			pleaseStopAlgo=true;
+			algoThread.interrupt();
+		}
 
 	}
 	
@@ -653,7 +670,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         });
         
         Device monitor=bpsources.getSelectionModel().getSelectedItem();
-        SampleArrayFx[] sampleFromSelectedMonitor=new SampleArrayFx[1];
+        sampleFromSelectedMonitor=new SampleArrayFx[1];
         samples.forEach( s -> {
         	if(s.getUnique_device_identifier().equals(monitor.getUDI()) && s.getMetric_id().equals(ARTERIAL)) {
         		sampleFromSelectedMonitor[0]=s;
@@ -665,7 +682,127 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		if(openRadio.isSelected()) {
 			
 		} else {
-			
+			closedLoopAlgo();
+		}
+		startBPUpdateAlarmThread();
+	}
+	
+	private void closedLoopAlgo() {
+		/*
+		 * Later on, switch on the algorithm from a drop down box,
+		 * and stop any previous thread defined in algoThread.
+		 */
+		simonsSimpleAlgo();
+	}
+	
+	private void simonsSimpleAlgo() {
+		algoThread=new Thread() {
+			@Override
+			public void run() {
+				try {
+					double infusionRateValue=(double)infusionRate.getValue();
+					Device selectedPump=pumps.getSelectionModel().getSelectedItem();
+					String pumpUDI=selectedPump.getUDI();
+					FlowRateObjective objective=new FlowRateObjective();
+					objective.newFlowRate=(float)infusionRateValue;
+					objective.unique_device_identifier=pumpUDI;
+					writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+					System.err.println("Set initial speed in Simons Simple Algo");
+					//Now, we check the BP.
+					//Continually check the BP against the target;
+					while(true) {
+						//Check the BP against the target
+						int currentSys=Integer.parseInt(currentSystolic.getText());
+						int compare=((int)targetSystolic.getValue()-5);
+						if( currentSys < compare ) {
+							System.err.println("Need to increase the pump speed");
+							//Need to increase the pump speed.
+							float delta=(float)(infusionRateValue*0.1);
+							objective.newFlowRate=(float)(infusionRateValue+delta);
+							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+							infusionRateValue=objective.newFlowRate;
+						} else {
+							System.err.println("Setting the pump speed back to default");
+							//Current BP is OK.  Set the speed to default.
+							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
+							infusionRateValue=(double)infusionRate.getValue();
+							objective.newFlowRate=(float)infusionRateValue;
+							objective.unique_device_identifier=pumpUDI;
+							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+							infusionRateValue=objective.newFlowRate;
+						}
+						//Sleep after deciding what to do.
+						sleep(60000);
+					}
+				} catch (InterruptedException ie) {
+					if( ! pleaseStopAlgo) {
+						System.err.println("Unexpected interruption...");
+					}
+					return;
+				}
+			} 
+		};
+		algoThread.start();
+	}
+	
+	public void startBPUpdateAlarmThread() {
+		bpUpdateAlarmThread=new Thread() {
+			Alert oneMinuteAlert=new Alert(AlertType.WARNING,"Data was not received from the BP monitor for at least one minute",ButtonType.OK);
+			boolean showing;
+			public void run() {
+				try {
+					while(true) {
+						Date lastUpdate=sampleFromSelectedMonitor[0].getPresentation_time();
+						Date now=new Date();
+						long delta=now.getTime()-lastUpdate.getTime();
+						System.err.println("BP update delta is "+delta);
+						if(  delta > fiveMinutes) {
+							stopEverything();	//Calling stop everything will interrupt this thread.
+							return;	//But return anyway.
+						}
+						if( delta > oneMinute && ! showing) {
+							System.err.println("More than one minute since last update - showing oneMinuteAlert");
+							javafx.application.Platform.runLater(()-> {
+								oneMinuteAlert.show();
+							});
+							showing=true;
+							oneMinuteAlert.resultProperty().addListener(new ChangeListener<ButtonType>() {
+							
+								@Override
+								public void changed(ObservableValue<? extends ButtonType> observable, ButtonType oldValue,
+										ButtonType newValue) {
+									if(newValue.equals(ButtonType.OK)) {
+										showing=false;
+									}
+									
+								}
+								
+							});
+						}
+						sleep(5000);
+					}
+				} catch (InterruptedException ie) {
+					return;
+				}
+			}
+		};
+		bpUpdateAlarmThread.start();
+	}
+	
+	private void stopEverything() {
+		javafx.application.Platform.runLater(()-> {
+			Alert alert=new Alert(AlertType.ERROR,"Data was not received from devices for more than 5 minutes");
+			alert.show();
+		});
+		pleaseStopAlgo=true;
+		if(algoThread!=null) {
+			algoThread.interrupt();
+		}
+		if(bpUpdateAlarmThread!=null) {
+			bpUpdateAlarmThread.interrupt();
+		}
+		if(pumpUpdateAlarmThread!=null) {
+			pumpUpdateAlarmThread.interrupt();
 		}
 	}
 	
