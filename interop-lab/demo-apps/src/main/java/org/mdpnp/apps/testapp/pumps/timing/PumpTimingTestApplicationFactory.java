@@ -84,7 +84,7 @@ public class PumpTimingTestApplicationFactory implements IceApplicationProvider 
 
 			@Override
 			public void destroy() throws Exception {
-				controller.stop();
+				controller.destroy();
 				
 			}
 			

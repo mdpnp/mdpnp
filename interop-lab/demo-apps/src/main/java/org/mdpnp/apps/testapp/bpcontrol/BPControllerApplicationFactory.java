@@ -91,7 +91,7 @@ public class BPControllerApplicationFactory implements IceApplicationProvider {
 
 			@Override
 			public void destroy() throws Exception {
-				controller.stop();
+				controller.destroy();
 				
 			}
 			

@@ -815,28 +815,11 @@ public abstract class AbstractDevice {
                 QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
 
         this.eventLoop = eventLoop;
-        
-        Properties jdbcProps=new Properties();
         try {
-        	
-        	jdbcProps.load(new FileReader(new File(System.getProperty("user.home"),JDBC_PROPS_FILE_NAME)));
-        	String driverClass=jdbcProps.getProperty("driver");
-        	//Class.forName(driverClass);
-        	
-        	String url=jdbcProps.getProperty("url");
-        	String username=jdbcProps.getProperty("username");
-        	String password=jdbcProps.getProperty("password");
-        	dbconn = DriverManager.getConnection(url, username, password);
+        	dbconn = SQLLogging.getConnection();
 			numericStatement=dbconn.prepareStatement("INSERT INTO allnumerics(t_sec, t_nanosec, udi, metric_id, val) VALUES (?,?,?,?,?)");
 			sampleStatement=dbconn.prepareStatement("INSERT INTO allsamples(t_sec, t_nanosec, udi, metric_id, floats) VALUES (?,?,?,?,?)");
-            
-        } catch (FileNotFoundException fnfe) {
-            log.warn("No JDBC properties file found",fnfe);
-        } catch (IOException ioe) {
-			log.warn("Could not read JDBC properties file", ioe);
-		} /*catch (ClassNotFoundException cnfe) {
-			log.warn("Could not load JDBC driver class", cnfe);
-		} */ catch (SQLException e) {
+		} catch (SQLException e) {
 			log.warn("Could not connect to database - server probably not running",e);
 		}
         

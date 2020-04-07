@@ -25,6 +25,7 @@ import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
 import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
 import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,8 +95,6 @@ public class PumpTimingTestApplication {
 	private Connection dbconn;
 	private PreparedStatement controlStatement;
 	
-	private static final String JDBC_PROPS_FILE_NAME="icejdbc.properties";
-	
 	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler) {
 		this.dlm=dlm;
 		this.numeric=numeric;
@@ -106,7 +105,16 @@ public class PumpTimingTestApplication {
 	
 	public void stop() {
 		//TODO: Stop listening to the BP waveform for efficiency?
-
+	}
+	
+	public void destroy() {
+		if(dbconn!=null) {
+			try {
+				dbconn.close();
+			} catch (SQLException e) {
+				log.error("Could not cleanly close SQL Connection",e);
+			}
+		}
 	}
 	
 	public void activate() {
@@ -245,23 +253,7 @@ public class PumpTimingTestApplication {
 			
 		});
 		
-		Properties jdbcProps=new Properties();
-        try {
-        	
-        	jdbcProps.load(new FileReader(new File(System.getProperty("user.home"),JDBC_PROPS_FILE_NAME)));
-        	
-        	String url=jdbcProps.getProperty("url");
-        	String username=jdbcProps.getProperty("username");
-        	String password=jdbcProps.getProperty("password");
-        	dbconn = DriverManager.getConnection(url, username, password);
-            
-        } catch (FileNotFoundException fnfe) {
-            log.warn("No JDBC properties file found",fnfe);
-        } catch (IOException ioe) {
-			log.warn("Could not read JDBC properties file", ioe);
-		} catch (SQLException e) {
-			log.warn("Could not connect to database - server probably not running",e);
-		}
+    	dbconn = SQLLogging.getConnection();
 	}
 	
 	private void addPumpToMainPanel(Device d) {

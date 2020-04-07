@@ -1,6 +1,7 @@
 package org.mdpnp.sql;
 
 import java.io.File;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,6 +20,7 @@ public class SQLLogging {
 	private static PreparedStatement logStatement;
 	private static boolean init=false;
 	private static final String JDBC_PROPS_FILE_NAME="icejdbc.properties";
+	private static Properties jdbcProps;
 	
 	/**
 	 * In case we have problems logging to the database, we'll log them here...
@@ -37,12 +39,10 @@ public class SQLLogging {
 	}
 	
 	private static void init() {
-		Properties jdbcProps=new Properties();
+		jdbcProps=new Properties();
         try {
         	
         	jdbcProps.load(new FileReader(new File(System.getProperty("user.home"),JDBC_PROPS_FILE_NAME)));
-        	String driverClass=jdbcProps.getProperty("driver");
-        	//Class.forName(driverClass);
         	
         	String url=jdbcProps.getProperty("url");
         	String username=jdbcProps.getProperty("username");
@@ -50,12 +50,33 @@ public class SQLLogging {
         	dbconn = DriverManager.getConnection(url, username, password);
         	logStatement=dbconn.prepareStatement("INSERT INTO devicelogs(sourceclass,eventtext) VALUES (?,?)");
             init=true;
+            
         } catch (FileNotFoundException fnfe) {
             log.warn("No JDBC properties file found",fnfe);
         } catch (IOException ioe) {
 			log.warn("Could not read JDBC properties file", ioe);
 		} catch (SQLException e) {
 			log.warn("Could not connect to database - server probably not running",e);
+		}
+	}
+
+	/**
+	 * A single place to obtain a connection, that means we don't need to have JDBC client
+	 * jar files all over the codebase.  It is the callers job to maintain the state of this
+	 * connection, and in particular, to close it when it's finished with.
+	 *  
+	 * @return a JDBC connection object, or null if a connection cannot be created.
+	 */
+	public static Connection getConnection() {
+		if(!init) init();	//Populate the properties
+		try {
+			String url=jdbcProps.getProperty("url");
+			String username=jdbcProps.getProperty("username");
+			String password=jdbcProps.getProperty("password");
+			return DriverManager.getConnection(url, username, password);
+		} catch (SQLException sqle) {
+			log.error("Failed to create database connection", sqle);
+			return null;
 		}
 	}
 

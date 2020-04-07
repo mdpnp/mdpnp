@@ -87,7 +87,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
 
 			@Override
 			public void destroy() throws Exception {
-				controller.stop();
+				controller.destroy();
 				
 			}
 			

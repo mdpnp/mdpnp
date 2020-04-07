@@ -84,7 +84,7 @@ public class PumpControllerTestApplicationFactory implements IceApplicationProvi
 
 			@Override
 			public void destroy() throws Exception {
-				controller.stop();
+				controller.destroy();
 				
 			}
 			

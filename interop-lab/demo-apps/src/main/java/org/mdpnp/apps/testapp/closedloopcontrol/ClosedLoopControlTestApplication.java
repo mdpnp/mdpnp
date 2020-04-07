@@ -33,6 +33,7 @@ import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
 import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
 import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,8 +173,6 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 */
 	private Timeline timeline;
 	
-	private static final String JDBC_PROPS_FILE_NAME="icejdbc.properties";
-	
 	private IntegerProperty systolicProperty=new SimpleIntegerProperty();
 	private IntegerProperty diastolicProperty=new SimpleIntegerProperty();
 	
@@ -250,11 +249,19 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	}
 	
 	public void stop() {
+
+	}
+	
+	public void destroy() {
 		if(algoThread!=null) {
 			pleaseStopAlgo=true;
 			algoThread.interrupt();
 		}
-
+		try {
+			dbconn.close();
+		} catch (SQLException e) {
+			log.error("Could not cleanly close sql connection",e);
+		}
 	}
 	
 	public void activate() {
@@ -411,40 +418,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			
 		});
 		
-		Properties jdbcProps=new Properties();
-        try {
-        	
-        	jdbcProps.load(new FileReader(new File(System.getProperty("user.home"),JDBC_PROPS_FILE_NAME)));
-        	
-        	String url=jdbcProps.getProperty("url");
-        	String username=jdbcProps.getProperty("username");
-        	String password=jdbcProps.getProperty("password");
-        	dbconn = DriverManager.getConnection(url, username, password);
-            
-        } catch (FileNotFoundException fnfe) {
-            log.warn("No JDBC properties file found",fnfe);
-        } catch (IOException ioe) {
-			log.warn("Could not read JDBC properties file", ioe);
-		} catch (SQLException e) {
-			log.warn("Could not connect to database - server probably not running",e);
-		}
+       	dbconn = SQLLogging.getConnection();
+
 	}
-	
-//	private void addPumpToMainPanel(Device d) {
-//		if(!udiToPump.containsKey(d.getUDI()) && numeric!=null) {
-//			FXMLLoader loader = new FXMLLoader(PumpWithListener.class.getResource("PumpWithListener.fxml"));
-//			try {
-//		        final Parent ui = loader.load();
-//		        
-//		        final PumpWithListener controller = ((PumpWithListener) loader.getController());
-//		        controller.setPump(d,numeric,writer, dbconn);
-//		        pumps.getChildren().add(ui);
-//		        udiToPump.put(d.getUDI(), ui);
-//			} catch (IOException ioe) {
-//				ioe.printStackTrace();
-//			}
-//		}
-//	}
 	
 	/**
 	 * Use this to allow access to the numeric sample that has a listener attached.
