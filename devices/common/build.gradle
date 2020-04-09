@@ -18,4 +18,5 @@ targetCompatibility = JAVA_VERSION_CLASSES
 dependencies {
   compile group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
   testCompile group: 'junit', name: 'junit', version: '4.11'
+  runtime group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '2.6.0'
 }
