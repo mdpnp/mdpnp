@@ -178,8 +178,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private boolean pleaseStopAlgo;
 	private Thread algoThread;
+	/**
+	 * Thread that monitors the last update time from the BP monitor
+	 */
 	private Thread bpUpdateAlarmThread;
 	private Thread pumpUpdateAlarmThread;
+
 	
 	SampleArrayFx[] sampleFromSelectedMonitor;
 	
@@ -660,7 +664,19 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		} else {
 			closedLoopAlgo();
 		}
+		AppConfig appConfig=new AppConfig();
+		appConfig.mode=openRadio.isSelected() ? 0 : 1;
+		appConfig.target_sys=(int)targetSystolic.getValue();
+		appConfig.target_dia=(int)targetDiastolic.getValue();
+		appConfig.sys_alarm=(int)systolicAlarm.getValue();
+		appConfig.dia_alarm=(int)diastolicAlarm.getValue();
+		appConfig.bp_udi=monitor.getUDI();
+		appConfig.pump_udi=pump.getUDI();
+		double rate=(double)infusionRate.getValue();
+		appConfig.inf_rate=(float)rate;
+		appConfig.writeToDb();
 		startBPUpdateAlarmThread();
+		startBPValueMonitor();
 	}
 	
 	private void closedLoopAlgo() {
@@ -697,6 +713,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							objective.newFlowRate=(float)(infusionRateValue+delta);
 							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
 							infusionRateValue=objective.newFlowRate;
+							//TODO: How should we record this - as a new instance of AppConfig, or not?
 						} else {
 							System.err.println("Setting the pump speed back to default");
 							//Current BP is OK.  Set the speed to default.
@@ -706,6 +723,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							objective.unique_device_identifier=pumpUDI;
 							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
 							infusionRateValue=objective.newFlowRate;
+							//TODO: How should we record this - as a new instance of AppConfig, or not?
 						}
 						//Sleep after deciding what to do.
 						sleep(60000);
@@ -721,6 +739,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		algoThread.start();
 	}
 	
+	/**
+	 * Starts a thread that monitors the last time data was received from the BP monitor
+	 */
 	public void startBPUpdateAlarmThread() {
 		bpUpdateAlarmThread=new Thread() {
 			Alert oneMinuteAlert=new Alert(AlertType.WARNING,"Data was not received from the BP monitor for at least one minute",ButtonType.OK);
@@ -765,6 +786,56 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		bpUpdateAlarmThread.start();
 	}
 	
+	/**
+	 * Method that monitors the BP values (systolic/diastolic).  We don't need a thread
+	 * to do this, because we are using properties for those two variables, and so we can
+	 * just add listeners to them.
+	 */
+	public void startBPValueMonitor() {
+		boolean sysShowing[]=new boolean[] {false};
+		boolean diaShowing[]=new boolean[] {false};
+		Alert sysAlert=new Alert(AlertType.WARNING,"Systolic value is below the alarm threshold");
+		Alert diaAlert=new Alert(AlertType.WARNING,"Diastolic value is below the alarm threshold");
+		//https://bugs.openjdk.java.net/browse/JDK-8125218
+		systolicProperty.addListener(new ChangeListener<Number>() {
+
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				//TODO: Do we really need the extra boolean, or do the alarm popups prevent further alarms being shown anyway because of being modal?
+				if(newValue.intValue()<(int)systolicAlarm.getValue() && !sysShowing[0] ) {
+					System.err.println("systolic alarm condition...");
+					javafx.application.Platform.runLater(()-> {
+						sysShowing[0]=true;
+						sysAlert.show();
+					});
+					BPAlarm alarm=new BPAlarm(BP_ALARM_SYS, newValue.intValue());
+				} else {
+					sysAlert.hide();
+					sysShowing[0]=false;
+				}
+			}
+		});
+
+		diastolicProperty.addListener(new ChangeListener<Number>() {
+
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				if(newValue.intValue()<(int)diastolicAlarm.getValue() && !diaShowing[0]) {
+					System.err.println("diastolic alarm condition...");
+					javafx.application.Platform.runLater(()-> {
+						diaShowing[0]=true;
+						diaAlert.show();
+					});
+					BPAlarm alarm=new BPAlarm(BP_ALARM_DIA, newValue.intValue());
+				} else {
+					diaAlert.hide();
+					diaShowing[0]=false;
+				}
+			}
+		});
+
+	}
+
 	private void stopEverything() {
 		javafx.application.Platform.runLater(()-> {
 			Alert alert=new Alert(AlertType.ERROR,"Data was not received from devices for more than 5 minutes");
@@ -802,5 +873,114 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		
 	}
 
+	private static final int BP_ALARM_SYS=1;
+	private static final int BP_ALARM_DIA=2;
+
+	/**
+	 * A small class to contain a BP alarm, and a way to store it in the database
+	 * @author simon
+	 *
+	 */
+	private class BPAlarm {
+		//TODO: Inconsitent style with the AppConfig class
+		//TODO: Device time as well?  Prob important.
+		int type;
+		int value;
+
+		/**
+		 * Creates a new instance of the Blood Pressure alarm, which is immediately written
+		 * to the database.
+		 *
+		 * @param type Should be one of BP_ALARM_SYS or BP_ALARM_DIA - but no check here
+		 * @param value The value for the BP.
+		 */
+		BPAlarm(int type, int value) {
+			this.type=type;
+			this.value=value;
+			writeToDb();
+		}
+
+		private PreparedStatement stmt;
+
+		private void writeToDb() {
+			try {
+				if(stmt==null) {
+					stmt=dbconn.prepareStatement("INSERT INTO froa_bp_alarm(alarmtype,value,t_sec) VALUES (?,?,?)");
+				}
+				stmt.setInt(1, type);
+				stmt.setInt(2, value);
+				stmt.setInt(3, (int)(System.currentTimeMillis()/1000));
+				stmt.execute();
+			} catch (SQLException sqle) {
+				log.warn("Could not create db record of alarm", sqle);
+			}
+		}
+
+	}
+
+	/**
+	 * A small class to contain the app configuration when the app is started
+	 * or changed, and a way to store it in the database in accordance with the
+	 * logging requirement.
+	 * @author simon
+	 *
+	 */
+	private class AppConfig {
+		/**
+		 * 0 for open, 1 for closed
+		 */
+		int mode;
+		/**
+		 * Target systolic rate
+		 */
+		int target_sys;
+		/**
+		 * Target diastolic rate
+		 */
+		int target_dia;
+		/**
+		 * Systolic alarm level
+		 */
+		int sys_alarm;
+		/**
+		 * Diastolic alarm level
+		 */
+		int dia_alarm;
+		/**
+		 * UDI for the pump
+		 */
+		String pump_udi;
+		/**
+		 * UDI for the BP monitor
+		 */
+		String bp_udi;
+		/**
+		 * Infusion rate
+		 */
+		float inf_rate;
+
+		private PreparedStatement stmt;
+
+		void writeToDb() {
+			try {
+				if(stmt==null) {
+					stmt=dbconn.prepareStatement("INSERT INTO froa_config(mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,inf_rate,t_sec) VALUES (?,?,?,?,?,?,?,?,?)");
+				}
+				stmt.setInt(1,mode);
+				stmt.setInt(2,target_sys);
+				stmt.setInt(3,target_dia);
+				stmt.setInt(4,sys_alarm);
+				stmt.setInt(5,dia_alarm);
+				stmt.setString(6, pump_udi);
+				stmt.setString(7, bp_udi);
+				stmt.setFloat(8, inf_rate);
+				stmt.setInt(9, (int)(System.currentTimeMillis()/1000));
+				stmt.execute();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}	//end of AppConfig
 
 }
