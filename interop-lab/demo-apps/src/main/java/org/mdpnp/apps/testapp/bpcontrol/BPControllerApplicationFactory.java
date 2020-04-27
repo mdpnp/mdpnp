@@ -94,6 +94,20 @@ public class BPControllerApplicationFactory implements IceApplicationProvider {
 				controller.destroy();
 				
 			}
+
+			@Override
+			public int getPreferredWidth() {
+				// TODO Auto-generated method stub
+				return 800;
+			}
+
+			@Override
+			public int getPreferredHeight() {
+				// TODO Auto-generated method stub
+				return 200;
+			}
+			
+			
 			
 		};	
 	}
