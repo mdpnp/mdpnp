@@ -190,7 +190,13 @@ public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
         });
 
 	}
-	
+
+	@Override
+	protected String iconResourceName() {
+		// TODO Auto-generated method stub
+		return "bp.png";
+	}
+
 	/**
 	 * pause or resume the production of data.
 	 * @param running if true, then resume, else pause.
