@@ -114,6 +114,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	@FXML private BorderPane main;
 	@FXML private Label lastPumpUpdate;
 	@FXML private Label lastBPUpdate;
+	@FXML private Button startButton;
 	
 	
 	private final String FLOW_RATE=rosetta.MDC_FLOW_FLUID_PUMP.VALUE;
@@ -189,6 +190,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private static final int oneMinute= 1000 * 60;
 	private static final int fiveMinutes= 1000 * 60 * 5;
+	
+	private boolean running;
 	
 	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel) {
 		this.dlm=dlm;
@@ -495,13 +498,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         }
     }
 
-//	public void refresh() {
-//		int childCount=pumps.getChildren().size();
-//		pumps.getChildren().remove(0, childCount);
-//		activate();
-//	}
-	
 	public void startProcess() {
+		if(running) {
+			orderlyStop();
+			running=false;
+			return;
+		}
 		if(checkValid()) {
 			runForMode();
 		}
@@ -600,45 +602,27 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         	
         	Parent node = loader.load();
             Chart chart = loader.getController();
-//            Vital[] vitalForChart=new Vital[1];
-//            VitalSign bothBP=VitalSign.BothBP;
-//            boolean[] found=new boolean[1];
-//            //Run through the Vitals in the VitalModel,
-//            //and check if the one we want is already in the model.
-//            vitalModel.forEach( v-> {
-//            	if(v.getLabel().equals(bothBP.label)) {
-//            		found[0]=true;
-//            		vitalForChart[0]=v;
-//            	}
-//            });
-//            if( ! found[0] ) {
-//            	vitalForChart[0]=bothBP.addToModel(vitalModel);
-//            }
-//            for(String s : vitalForChart[0].getMetricIds()) {
-//            	System.err.println("metricid for vitalForChart is "+s);
-//            }
-            
-            
+
             long now = System.currentTimeMillis();
             now -= now % 1000;
             dateAxis=new DateAxis(new Date(now - interval), new Date(now));
-//            dateAxis.setLowerBound();
-//            dateAxis.setUpperBound();
             dateAxis.setAutoRanging(false);
             dateAxis.setAnimated(false);
             
             timeline = new Timeline(new KeyFrame(new Duration(1000.0), this));
             timeline.setCycleCount(Animation.INDEFINITE);
             timeline.play();
-            
-            
-            //chart.setModel(vitalForChart[0], dateAxis);
+
             chart.setModel(vitalForChart, dateAxis);
+            //TODO: What should happen during a stop/start cycle?  Just stop the timeline, or actually kill a previous instance and add a new one?
+            if(bpGraphBox.getChildren().size()>0) {
+            	//Remove any existing instance
+            	bpGraphBox.getChildren().remove(0);
+            }
             bpGraphBox.getChildren().add(node);
         } catch (Exception e) {
         	e.printStackTrace();
         }
-		//bpGraphBox.getChildren().add();
         Device pump=pumps.getSelectionModel().getSelectedItem();
         NumericFx[] flowRateFromSelectedPump=new NumericFx[1];
         numeric.forEach( n -> {
@@ -677,6 +661,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		appConfig.writeToDb();
 		startBPUpdateAlarmThread();
 		startBPValueMonitor();
+		
+		running=true;
+		startButton.setText("Stop");
 	}
 	
 	private void closedLoopAlgo() {
@@ -779,6 +766,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						sleep(5000);
 					}
 				} catch (InterruptedException ie) {
+					System.err.println("bpUpdateAlarmThread was interrupted.  Calling return...");
 					return;
 				}
 			}
@@ -786,54 +774,62 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		bpUpdateAlarmThread.start();
 	}
 	
+	ChangeListener<Number> systolicListener=new ChangeListener<Number>() {
+		boolean sysShowing[]=new boolean[] {false};
+		Alert sysAlert=new Alert(AlertType.WARNING,"Systolic value is below the alarm threshold");
+		
+		@Override
+		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+			//TODO: Do we really need the extra boolean, or do the alarm popups prevent further alarms being shown anyway because of being modal?
+			if(newValue.intValue()<(int)systolicAlarm.getValue() && !sysShowing[0] ) {
+				System.err.println("systolic alarm condition...");
+				javafx.application.Platform.runLater(()-> {
+					sysShowing[0]=true;
+					sysAlert.show();
+				});
+				BPAlarm alarm=new BPAlarm(BP_ALARM_SYS, newValue.intValue());
+			} else {
+				sysAlert.hide();
+				sysShowing[0]=false;
+			}
+		}
+	};
+	
+	ChangeListener<Number> diastolicListener=new ChangeListener<Number>() {
+		boolean diaShowing[]=new boolean[] {false};
+		Alert diaAlert=new Alert(AlertType.WARNING,"Diastolic value is below the alarm threshold");
+		
+		@Override
+		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+			if(newValue.intValue()<(int)diastolicAlarm.getValue() && !diaShowing[0]) {
+				System.err.println("diastolic alarm condition...");
+				javafx.application.Platform.runLater(()-> {
+					diaShowing[0]=true;
+					diaAlert.show();
+				});
+				BPAlarm alarm=new BPAlarm(BP_ALARM_DIA, newValue.intValue());
+			} else {
+				diaAlert.hide();
+				diaShowing[0]=false;
+			}
+		}
+	};
+	
 	/**
 	 * Method that monitors the BP values (systolic/diastolic).  We don't need a thread
 	 * to do this, because we are using properties for those two variables, and so we can
-	 * just add listeners to them.
+	 * just add listeners to them.  The listeners are assigned to instance variables above,
+	 * so that the instances can be removed later.
 	 */
 	public void startBPValueMonitor() {
-		boolean sysShowing[]=new boolean[] {false};
-		boolean diaShowing[]=new boolean[] {false};
-		Alert sysAlert=new Alert(AlertType.WARNING,"Systolic value is below the alarm threshold");
-		Alert diaAlert=new Alert(AlertType.WARNING,"Diastolic value is below the alarm threshold");
 		//https://bugs.openjdk.java.net/browse/JDK-8125218
-		systolicProperty.addListener(new ChangeListener<Number>() {
-
-			@Override
-			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-				//TODO: Do we really need the extra boolean, or do the alarm popups prevent further alarms being shown anyway because of being modal?
-				if(newValue.intValue()<(int)systolicAlarm.getValue() && !sysShowing[0] ) {
-					System.err.println("systolic alarm condition...");
-					javafx.application.Platform.runLater(()-> {
-						sysShowing[0]=true;
-						sysAlert.show();
-					});
-					BPAlarm alarm=new BPAlarm(BP_ALARM_SYS, newValue.intValue());
-				} else {
-					sysAlert.hide();
-					sysShowing[0]=false;
-				}
-			}
-		});
-
-		diastolicProperty.addListener(new ChangeListener<Number>() {
-
-			@Override
-			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-				if(newValue.intValue()<(int)diastolicAlarm.getValue() && !diaShowing[0]) {
-					System.err.println("diastolic alarm condition...");
-					javafx.application.Platform.runLater(()-> {
-						diaShowing[0]=true;
-						diaAlert.show();
-					});
-					BPAlarm alarm=new BPAlarm(BP_ALARM_DIA, newValue.intValue());
-				} else {
-					diaAlert.hide();
-					diaShowing[0]=false;
-				}
-			}
-		});
-
+		systolicProperty.addListener(systolicListener);
+		diastolicProperty.addListener(diastolicListener);
+	}
+	
+	public void stopBPValueMonitor() {
+		systolicProperty.removeListener(systolicListener);
+		diastolicProperty.removeListener(diastolicListener);
 	}
 
 	private void stopEverything() {
@@ -841,6 +837,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			Alert alert=new Alert(AlertType.ERROR,"Data was not received from devices for more than 5 minutes");
 			alert.show();
 		});
+		orderlyStop();
+	}
+
+	private void orderlyStop() {
 		pleaseStopAlgo=true;
 		if(algoThread!=null) {
 			algoThread.interrupt();
@@ -851,8 +851,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		if(pumpUpdateAlarmThread!=null) {
 			pumpUpdateAlarmThread.interrupt();
 		}
+		stopBPValueMonitor();
+		startButton.setText("Start");
 	}
-	
+
 	@Override
 	public void handle(ActionEvent arg0) {
 		long now = System.currentTimeMillis();
@@ -864,15 +866,6 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		
 	}
 	
-	private class BPAlarmMonitor extends Thread {
-		
-		@Override
-		public void run() {
-			//systolicProperty.
-		}
-		
-	}
-
 	private static final int BP_ALARM_SYS=1;
 	private static final int BP_ALARM_DIA=2;
 
