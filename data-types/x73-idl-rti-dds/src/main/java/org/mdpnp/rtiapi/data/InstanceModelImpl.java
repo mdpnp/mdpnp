@@ -36,7 +36,7 @@ import com.rti.dds.topic.TypeSupport;
 import com.rti.dds.topic.builtin.TopicBuiltinTopicDataTypeSupport;
 import com.rti.dds.util.Sequence;
 
-public class InstanceModelImpl<D extends Copyable, R extends DataReader, W extends DataWriter> 
+public class InstanceModelImpl<D, R extends DataReader, W extends DataWriter> 
     implements ReaderInstanceModel<D,R>,
                WriterInstanceModel<D,W> {
     private final ListenerList<InstanceModelListener<D, R>> listeners = new ListenerList<InstanceModelListener<D,R>>(InstanceModelListener.class);

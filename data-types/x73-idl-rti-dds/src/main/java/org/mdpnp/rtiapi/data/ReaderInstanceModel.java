@@ -5,7 +5,7 @@ import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.Subscriber;
 
-public interface ReaderInstanceModel<D extends Copyable, R extends DataReader> {
+public interface ReaderInstanceModel<D, R extends DataReader> {
 
     void addListener(InstanceModelListener<D,R> listener);
     void iterateAndAddListener(InstanceModelListener<D, R> listener);
