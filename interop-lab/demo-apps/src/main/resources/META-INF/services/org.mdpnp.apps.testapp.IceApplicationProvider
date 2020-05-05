@@ -17,3 +17,4 @@ org.mdpnp.apps.testapp.pumps.PumpControllerTestApplicationFactory
 org.mdpnp.apps.testapp.pumps.timing.PumpTimingTestApplicationFactory
 org.mdpnp.apps.testapp.closedloopcontrol.ClosedLoopControlTestApplicationFactory
 org.mdpnp.apps.testapp.bpcontrol.BPControllerApplicationFactory
+org.mdpnp.apps.testapp.bpcontrol.timing.BPTimingTestApplicationFactory
