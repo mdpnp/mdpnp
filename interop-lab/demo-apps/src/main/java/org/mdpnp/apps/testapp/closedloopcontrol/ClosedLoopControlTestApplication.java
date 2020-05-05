@@ -4,12 +4,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -100,6 +103,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		
 	@FXML private ComboBox<Device> bpsources;
 	@FXML private ComboBox<Device> pumps;
+	@FXML private ComboBox<String> algos;
 	@FXML private TextField currentDiastolic;
 	@FXML private TextField currentSystolic;
 	@FXML private TextField currentMean;
@@ -193,6 +197,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private boolean running;
 	
+	//TODO: Make all algos implement an interface so we can dynamically find them.
+	/**
+	 * Map of name for a control algorithm to the method that implements it.  Populated in configureFields
+	 */
+	Map<String, Method> allAlgos=new HashMap<>();
+	
 	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel) {
 		this.dlm=dlm;
 		this.numeric=numeric;
@@ -247,6 +257,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 			
 		});
+		
+		try {
+			allAlgos.put("10% change", this.getClass().getMethod("simonsSimpleAlgo", null));
+			allAlgos.put("Linear", this.getClass().getMethod("linearAlgo", null));
+		} catch (NoSuchMethodException | SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		algos.getItems().addAll(allAlgos.keySet());
 		
 	}
 	
@@ -667,14 +686,28 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	}
 	
 	private void closedLoopAlgo() {
-		/*
-		 * Later on, switch on the algorithm from a drop down box,
-		 * and stop any previous thread defined in algoThread.
-		 */
-		simonsSimpleAlgo();
+		if(algoThread!=null) {
+			pleaseStopAlgo=true;
+			algoThread.interrupt();
+			pleaseStopAlgo=false;
+		}
+		String algoName=algos.getValue();
+		Method algoMethod=allAlgos.get(algoName);
+		try {
+			//Every algo should populate algoThread.
+			algoMethod.invoke(this, null);
+			algoThread.start();
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
-	private void simonsSimpleAlgo() {
+	/**
+	 * This is only public to allow simple reflection access.  Later on when it implements an interface
+	 * or we do other dynamic discovery, it can go back to being private
+	 */
+	public void simonsSimpleAlgo() {
 		algoThread=new Thread() {
 			@Override
 			public void run() {
@@ -723,7 +756,59 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				}
 			} 
 		};
-		algoThread.start();
+	}
+	
+	/**
+	 * A control alogrithm that sets the pump speed to be
+	 * 
+	 * 100 + 2 * (target systolic - current systolic)
+	 * 
+	 * For example, if target is 120 and current is 90, the difference is 30 so the target is 160.
+	 * 
+	 * If target is 120 and current is 75, the difference is 45 and so the target is 190.
+	 */
+	public void linearAlgo() {
+		
+		algoThread=new Thread() {
+			public void run() {
+				try {
+					//TODO: factor out this initial step to something that can be shared?
+					double infusionRateValue=(double)infusionRate.getValue();
+					Device selectedPump=pumps.getSelectionModel().getSelectedItem();
+					String pumpUDI=selectedPump.getUDI();
+					FlowRateObjective objective=new FlowRateObjective();
+					objective.newFlowRate=(float)infusionRateValue;
+					objective.unique_device_identifier=pumpUDI;
+					writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+					System.err.println("Set initial speed in Simons Simple Algo");
+					while(true) {
+						int currentSys=Integer.parseInt(currentSystolic.getText());
+						int compare=((int)targetSystolic.getValue()-5);
+						if( currentSys < compare ) {
+							objective.newFlowRate=(float)(100 + 2 * ( (int) targetSystolic.getValue() - currentSys));
+							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+							infusionRateValue=objective.newFlowRate;
+						} else {
+							System.err.println("Setting the pump speed back to default");
+							//Current BP is OK.  Set the speed to default.
+							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
+							infusionRateValue=(double)infusionRate.getValue();
+							objective.newFlowRate=(float)infusionRateValue;
+							objective.unique_device_identifier=pumpUDI;
+							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+							infusionRateValue=objective.newFlowRate;
+						}
+						Thread.sleep(60000);
+					}
+				} catch (InterruptedException ie) {
+					if( ! pleaseStopAlgo) {
+						System.err.println("Unexpected interruption...");
+					}
+					return;
+				}
+			}	//End of run()
+		};	//End of new Thread()
+		
 	}
 	
 	/**

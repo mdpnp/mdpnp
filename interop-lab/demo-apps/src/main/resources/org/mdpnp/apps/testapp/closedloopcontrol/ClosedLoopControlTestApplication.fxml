@@ -42,6 +42,8 @@
 	    <ComboBox fx:id="pumps" promptText="choose"/>
 	    <Label>Please select a BP source</Label>
 	    <ComboBox fx:id="bpsources" promptText="choose"/>
+	    <Label>Please select an algorithm</Label>
+	    <ComboBox fx:id="algos" promptText="choose"/>
 	    <Label text="Sys"/>
 		<TextField fx:id="currentSystolic" editable="false"/>
 		<Label text="Dia"/>
