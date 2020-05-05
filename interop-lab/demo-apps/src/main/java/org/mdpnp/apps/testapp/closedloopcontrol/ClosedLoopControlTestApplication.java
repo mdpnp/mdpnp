@@ -556,7 +556,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			//Check BP monitor selected
 			//Check target BP range
 			//Check infusion rate.
-			return checkTargetBPRange() && checkInfusionRate() && checkPumpSelected() && checkMonitorSelected();
+			return checkTargetBPRange() && checkInfusionRate() && checkPumpSelected() && checkMonitorSelected() && checkAlgoSelected();
 		}
 	}
 	
@@ -608,6 +608,16 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		return true;
 	}
 	
+	private boolean checkAlgoSelected() {
+		String s=algos.getSelectionModel().getSelectedItem();
+		if(s==null) {
+			Alert alert=new Alert(AlertType.ERROR,"A control algorithm must be selected",ButtonType.OK);
+			alert.showAndWait();
+			return false;
+		}
+		return true;
+	}
+
 	private void runForMode() {
 		//Get a whole graph thing...
 		FXMLLoader loader = new FXMLLoader(Chart.class.getResource("Chart.fxml"));
