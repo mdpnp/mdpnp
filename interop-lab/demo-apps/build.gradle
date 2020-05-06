@@ -133,7 +133,7 @@ jfx {
     alternativePathToJarFile = null // String
     
     // to disable patching of ant-javafx.jar, set this to false
-    usePatchedJFXAntLib = true
+    usePatchedJFXAntLib = false
     
     // making it able to support absolute paths, defaults to "false" for maintaining old behaviour
     checkForAbsolutePaths = false
