@@ -22,6 +22,7 @@ jobs:
         java-package: jdk+fx
     - name: Build with Gradle
       run: .\gradlew build
+      continue-on-error: true
     - uses: actions/upload-artifact@v2
       name: Upload EXE
       with:
