@@ -23,7 +23,7 @@ jobs:
     - name: Build with Gradle
       run: .\gradlew build
     - uses: actions/upload-artifact@v2
-      name: Upload MSI
+      name: Upload EXE
       with:
-        name: MSI
-        path: interop-lab\demo-apps\build\jfx\native\*.msi
+        name: EXE
+        path: interop-lab\demo-apps\build\jfx\native\*.exe
