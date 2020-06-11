@@ -172,7 +172,8 @@ public class ConfigurationDialog {
                 Integer.parseInt(d.settingsController.domainProperty().get()), 
                 d.settingsController.selectedDeviceProperty().get(),
                 d.settingsController.addressProperty().get(),
-                d.settingsController.fhirServerNameProperty().get());
+                d.settingsController.fhirServerNameProperty().get(),
+                d.settingsController.emrServerNameProperty().get());
 
         return d;
     }

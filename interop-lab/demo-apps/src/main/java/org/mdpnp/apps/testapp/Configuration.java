@@ -94,7 +94,8 @@ public class Configuration {
     private final Properties           cmdLineEnv = new Properties();
 
     public Configuration(boolean headless, Application application, int domainId, 
-            DeviceDriverProvider deviceFactory, String address, String fhirServerName) {
+            DeviceDriverProvider deviceFactory, String address, String fhirServerName,
+            String openEMRServerName) {
         this.headless = headless;
         this.deviceFactory = deviceFactory;
         this.address = address;
@@ -104,6 +105,7 @@ public class Configuration {
 
         cmdLineEnv.put("mdpnp.domain", Integer.toString(domainId));
         cmdLineEnv.put("mdpnp.fhir.url", fhirServerName);
+        cmdLineEnv.put("mdpnp.emr.url", openEMRServerName);
     }
 
     public boolean isHeadless()
@@ -147,7 +149,8 @@ public class Configuration {
     private static final String DOMAIN_ID             = "domainId";
     private static final String DEVICE_TYPE           = "deviceType";
     private static final String ADDRESS               = "address";
-    private static final String FHIR_SERVER_NAME      = "fhirServerName"; 
+    private static final String FHIR_SERVER_NAME      = "fhirServerName";
+    private static final String EMR_SERVER_NAME       = "emrServerName";
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
@@ -206,6 +209,7 @@ public class Configuration {
         DeviceDriverProvider deviceType = null;
         String address = null;
         String fhirServerName = "";
+        String emrServerName = "";
 
         if(p.containsKey(APPLICATION)) {
             String s = p.getProperty(APPLICATION);
@@ -239,7 +243,11 @@ public class Configuration {
             fhirServerName = p.getProperty(FHIR_SERVER_NAME, "");
         }
 
-        return new Configuration(false, app, domainId, deviceType, address, fhirServerName);
+        if(p.containsKey(EMR_SERVER_NAME)) {
+            emrServerName = p.getProperty(EMR_SERVER_NAME, "");
+        }
+
+        return new Configuration(false, app, domainId, deviceType, address, fhirServerName, emrServerName);
     }
 
     @SuppressWarnings("static-access")
@@ -266,6 +274,12 @@ public class Configuration {
                 .isRequired(false)
                 .withDescription("FHIR Server URL to use for patient information")
                 .create("fhirServerNAme");
+
+        Option emrServerNameArg = OptionBuilder.withArgName("emrServerName")
+                .hasArg()
+                .isRequired(false)
+                .withDescription("OpenEMR Server URL to use for patient information")
+                .create("emrServerName");
 
         StringBuilder ds = new StringBuilder();
         ds.append("if Application is ").append(Application.ICE_Device_Interface.name()).append(" then DeviceType may be one of:");
@@ -301,6 +315,7 @@ public class Configuration {
         options.addOption( deviceArg );
         options.addOption( addressArg );
         options.addOption( fhirServerNameArg );
+        options.addOption( emrServerNameArg );
 
         CommandLine line = parseCommandLine("ICE", cmdLineArgs, options);
         if(line == null)
@@ -311,6 +326,7 @@ public class Configuration {
         DeviceDriverProvider deviceType = null;
         String address = null;
         String fhirServerName = "";
+        String emrServerName = "";
 
         String v = line.getOptionValue("app");
         try {
@@ -339,11 +355,16 @@ public class Configuration {
             fhirServerName = v;
         }
 
+        if(line.hasOption("emrServerName")) {
+            v = line.getOptionValue("emrServerName");
+            emrServerName = v;
+        }
+
         // if mdpnp.ui is set to true, force the system to come up in the UI mode regardless of
         // command line having arguments or not. If not set, default to headless==true.
         //
         boolean headless=!Boolean.getBoolean("mdpnp.ui");
-        return new Configuration(headless, app, domainId, deviceType, address, fhirServerName);
+        return new Configuration(headless, app, domainId, deviceType, address, fhirServerName, emrServerName);
     }
 
     public static Configuration searchAndLoadSettings(File[] fPath) throws IOException {
