@@ -13,11 +13,17 @@
 package org.mdpnp.apps.testapp;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -34,6 +40,7 @@ import javafx.scene.layout.BorderPane;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -177,14 +184,61 @@ public class DemoPanel {
                                 final DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(c.getDeviceFactory(), context, false) {
                                     // intercept stop to destroy the context specific to this device
                                     public void stop() {
+                                        //Must get the UDI before calling calling super.stop and context.destroy.
+                                        AbstractDevice d=getDevice();
+                                        String udiToKill=d.getUniqueDeviceIdentifier();
                                         super.stop();
                                         context.destroy();
+                                        try {
+                                            Connection c=SQLLogging.getConnection();
+                                            PreparedStatement ps=c.prepareStatement("UPDATE devices SET destroyed=? WHERE udi=? AND destroyed IS NULL");
+                                            ps.setLong(1, System.currentTimeMillis()/1000);
+                                            ps.setString(2, udiToKill);
+	                                        /*
+	                                         * ps.execute should return false here and we should get an update count.  Of course the update count should be 1
+	                                         * -1 in this context indicates an error.
+	                                         */
+                                            if( ! ps.execute()) {
+                                                log.info("Updated "+ps.getUpdateCount()+" rows in the devices table with destroyed time");
+	                                        }
+	                                        c.close();
+                                        } catch (SQLException sqle) {
+                                            log.error("Failed to record device destruction in database",sqle);
+                                        }
                                     };
+
+                                    @Override
+                                    public void init() throws Exception {
+                                        super.init();
+                                        AbstractDevice d=getDevice();
+                                        //String logThis=d.getUniqueDeviceIdentifier()+" "+d.getManufacturer()+" "+d.getModel();
+                                        //System.err.println("HeadlessAdapter init override has details "+logThis);
+                                        /*
+                                         * Although this init method throws Exception in signature, we still wrap this SQL stuff in a
+                                         * try/catch so we don't cause the init to fail if we can't log.
+                                         */
+                                        try {
+	                                        Connection c=SQLLogging.getConnection();
+	                                        PreparedStatement ps=c.prepareStatement("INSERT INTO devices(created, manufacturer, model, udi) VALUES (?,?,?,?)");
+	                                        ps.setLong(1, (System.currentTimeMillis()/1000) );
+	                                        ps.setString(2, d.getManufacturer());
+	                                        ps.setString(3, d.getModel());
+	                                        ps.setString(4, d.getUniqueDeviceIdentifier());
+	                                        if( ! ps.execute()) {
+	                                            log.error("Failed to add device creation record to database");
+	                                        }
+	                                        c.close();
+                                        } catch (SQLException sqle) {
+                                            log.error("Failed to record device creation in database",sqle);
+                                        }
+                                    }
+
                                 };
                                 // Use the current partition of the app container
                                 da.setPartition(partition.toArray(new String[0]));
                                 da.setAddress(c.getAddress());
                                 da.init();
+
                                 boolean connected=da.connect();
                                 //Is this the answer?
                                 Thread.sleep(1000);
