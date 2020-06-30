@@ -26,9 +26,13 @@ import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.PartitionAssignmentController;
+import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,6 +97,22 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     public void removeDeviceAssociation(DevicePatientAssociation assoc)  {
         emr.deleteDevicePatientAssociation(assoc);
+        assoc.getMrn();
+        assoc.getDevice().getUDI();
+        try {
+            Connection c=SQLLogging.getConnection();
+            PreparedStatement ps=c.prepareStatement("UPDATE patientdevice set dissociated=? WHERE mrn=? AND udi=?");
+            ps.setLong(1,System.currentTimeMillis()/1000);
+            ps.setString(2,assoc.getMrn());
+            ps.setString(3, assoc.getDevice().getUDI());
+            if( ! ps.execute() ) {
+                log.info("Updated "+ps.getUpdateCount()+" rows in patientdevice");
+            } else {
+                log.error("Unexpected outcome for update statement in removeDeviceAssociation");
+            }
+        } catch (SQLException sqle) {
+            log.error("Failed to delete patient device association",sqle);
+        }
         associationModel.remove(assoc);
 
         Device d = assoc.getDevice();
@@ -125,8 +145,17 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     }
 
     private DevicePatientAssociation associateEMR(Device d, PatientInfo p)  {
-
         DevicePatientAssociation dpa = emr.updateDevicePatientAssociation(new DevicePatientAssociation(d, p));
+        try {
+            Connection c=SQLLogging.getConnection();
+            PreparedStatement ps=c.prepareStatement("INSERT INTO patientdevice(mrn, udi, associated) VALUES (?,?,?)");
+            ps.setString(1,p.getMrn());
+            ps.setString(2, d.getUDI());
+            ps.setLong(3, System.currentTimeMillis()/1000);
+            ps.execute();
+        } catch (SQLException sqle) {
+            log.error("Failed to record device association in database",sqle);
+        }
         return dpa;
     }
 
