@@ -153,7 +153,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private static final int INITIAL_SYSTOLIC=120;
 	private static final int INITIAL_DIASTOLIC=80;
 	private static final int INITIAL_SYSTOLIC_ALARM=100;
-	private static final int INITIAL_DIASTOLIC_ALARM=80;
+	private static final int INITIAL_DIASTOLIC_ALARM=60;
 	
 	private static final long interval= 5 * 60 * 1000L; 
 	
