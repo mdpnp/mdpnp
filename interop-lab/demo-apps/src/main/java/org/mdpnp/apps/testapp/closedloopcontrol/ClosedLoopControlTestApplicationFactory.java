@@ -57,7 +57,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
        
         final ClosedLoopControlTestApplication controller = ((ClosedLoopControlTestApplication) loader.getController());
         
-        controller.set(deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler, vitalModel);
+        controller.set(parentContext, deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler, vitalModel, subscriber);
         
         controller.start(eventLoop, subscriber);
 		

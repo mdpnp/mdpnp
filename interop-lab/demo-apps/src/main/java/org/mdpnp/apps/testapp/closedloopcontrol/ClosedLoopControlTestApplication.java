@@ -10,8 +10,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -29,19 +31,29 @@ import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
 import org.mdpnp.apps.testapp.vital.VitalSign;
+import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.PartitionAssignmentController;
+import org.mdpnp.devices.AbstractDevice.InstanceHolder;
+import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
 import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
 import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriberQos;
 
 import ice.FlowRateObjective;
 import ice.FlowRateObjectiveDataWriter;
@@ -90,6 +102,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 
 public class ClosedLoopControlTestApplication implements EventHandler<ActionEvent> {
 	
+	private ApplicationContext parentContext;
+	private Subscriber assignedSubscriber;	//Use a slightly different name here to avoid poss conflict with any other subscriber variable.
 	private DeviceListModel dlm;
 	private NumericFxList numeric;
 	private SampleArrayFxList samples;
@@ -203,16 +217,92 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 */
 	Map<String, Method> allAlgos=new HashMap<>();
 	
-	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel) {
+	//Need a context here...
+	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber) {
+		this.parentContext=parentContext;
 		this.dlm=dlm;
 		this.numeric=numeric;
 		this.samples=samples;
 		this.writer=writer;
 		this.mdsHandler=mdsHandler;
 		this.vitalModel=vitalModel;
+		this.assignedSubscriber=subscriber;
 		configureFields();
 	}
 	
+	private final class NumericBPDevice extends AbstractDevice {
+
+		private InstanceHolder<ice.Numeric> systolic;
+		private InstanceHolder<ice.Numeric> diastolic;
+
+		public NumericBPDevice(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
+			super(subscriber, publisher, eventLoop);
+            deviceIdentity.manufacturer = "";
+            deviceIdentity.model = "BP Numeric Provider";
+            deviceIdentity.serial_number = "1234";
+            AbstractSimulatedDevice.randomUDI(deviceIdentity);		//TODO: clone the device id, or does that mess everything up?
+            writeDeviceIdentity();
+		}
+
+		public void writeNumerics() {
+            DeviceClock.Reading sampleTime = clock.instant();
+            // TODO clearly a synchronization issue here.
+            // enforce a singular calling thread or synchronize accesses
+            this.systolic = numericSample(systolic, (int) Math.round(systolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 
+                    rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, rosetta.MDC_DIM_MMHG.VALUE, sampleTime);
+            this.diastolic = numericSample(diastolic, (int) Math.round(diastolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 
+                    rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, rosetta.MDC_DIM_MMHG.VALUE, sampleTime);
+		}
+	}
+
+    protected final DeviceClock clock = new DeviceClock.WallClock();
+    private DeviceDriverProvider.DeviceAdapter numericBPDeviceAdapter;
+    private NumericBPDevice numericBPDevice;
+
+    private void createNumericDevice() {
+        if (numericBPDeviceAdapter == null) {
+
+            DeviceDriverProvider.SpringLoadedDriver df = new DeviceDriverProvider.SpringLoadedDriver() {
+                @Override
+                public DeviceType getDeviceType() {
+                    return new DeviceType(ice.ConnectionType.Simulated, "Simulated", "NumericBP", "NumericBP", 1);
+                }
+
+                @Override
+                public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+                    //TODO: This is a clone of rapid respiratory device.  Do we need a new subscriber here?
+                    //Can't it share the passed in subscriber?  That already comes from the parentContext
+                    //anyway, so is the same bean if you look back to the factory.
+                    EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+                    Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+                    Publisher publisher = context.getBean("publisher", Publisher.class);
+                    return new NumericBPDevice(subscriber, publisher, eventLoop);
+                }
+            };
+
+            try {
+                numericBPDeviceAdapter = df.create((AbstractApplicationContext) parentContext);
+
+                // TODO Make this more elegant
+                List<String> strings = new ArrayList<String>();
+                SubscriberQos qos = new SubscriberQos();
+                assignedSubscriber.get_qos(qos);
+
+                for (int i = 0; i < qos.partition.name.size(); i++) {
+                    strings.add((String) qos.partition.name.get(i));
+                }
+
+                numericBPDeviceAdapter.setPartition(strings.toArray(new String[0]));
+                numericBPDevice=(NumericBPDevice)numericBPDeviceAdapter.getDevice();
+
+            }
+            catch(Exception ex) {
+                throw new RuntimeException("Failed to create a driver", ex);
+            }
+
+        }
+    }
+
 	Pattern p=Pattern.compile("[0-9]?");
 	
 	private void configureFields() {
@@ -462,6 +552,11 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 		diastolicProperty.set((int)minAndMax[0]);
 		systolicProperty.set((int)minAndMax[1]);
+		//This getMinAndMax method is called before the start button is pressed, in which case the numericBPDevice
+		//won't have been created yet, hence the null check.
+		if(numericBPDevice!=null) {
+			numericBPDevice.writeNumerics();
+		}
 		return minAndMax;
 	}
 	
@@ -688,6 +783,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		double rate=(double)infusionRate.getValue();
 		appConfig.inf_rate=(float)rate;
 		appConfig.writeToDb();
+		createNumericDevice();
 		startBPUpdateAlarmThread();
 		startBPValueMonitor();
 		
@@ -1070,5 +1166,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 		}
 	}	//end of AppConfig
+
+	public void deviceOnly() {
+		if(numericBPDevice==null) {
+			createNumericDevice();
+		} else {
+			numericBPDeviceAdapter.stop();
+			numericBPDeviceAdapter=null;
+			numericBPDevice=null;
+		}
+	}
 
 }

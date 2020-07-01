@@ -53,7 +53,7 @@ public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
 
 	private static final Logger log = LoggerFactory.getLogger(SimControllableBPMonitor.class);
 
-	ScheduledFuture<?> numericEmitter, sampleEmitter;
+	ScheduledFuture<?> sampleEmitter;
 
 	private float defaultSys=120;
 	private float defaultDia=80;
@@ -261,30 +261,12 @@ public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
 			}
 		}, 5, 1, TimeUnit.SECONDS);
 
-		numericEmitter=executor.scheduleAtFixedRate(new Runnable() {
-			InstanceHolder<Numeric> sysHolder=createNumericInstance(rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, "");
-			InstanceHolder<Numeric> diaHolder=createNumericInstance(rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, "");
-			public void run() {
-				/*
-				 * We need to emit
-				 * rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE,
-				 * rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE
-				 */
-				//We use the global "running" variable to allow the pause/resume objective listener to control
-				//if data is being emitted or not.
-				if(running) {
-					numericSample(sysHolder, currentSys , defaultClock.instant());
-					numericSample(diaHolder, currentDia , defaultClock.instant());
-				}
-			}
-		}, 5, 1, TimeUnit.SECONDS);
 	}
 
 	@Override
 	public void disconnect() {
 		if(sampleEmitter!=null) {
 			sampleEmitter.cancel(true);
-			numericEmitter.cancel(true);
 		}
 
 		super.disconnect();

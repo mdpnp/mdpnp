@@ -51,6 +51,7 @@
 	    <Label text="Mean"/>
 		<TextField fx:id="currentMean" editable="false"/>
 		<Button fx:id="startButton" onAction="#startProcess" text="Start"/>
+		<Button fx:id="createDevice" onAction="#deviceOnly" text="Device"/>
 		<Label fx:id="infusionStatusLabel" text="---"/>
 	</children>
   </VBox>
