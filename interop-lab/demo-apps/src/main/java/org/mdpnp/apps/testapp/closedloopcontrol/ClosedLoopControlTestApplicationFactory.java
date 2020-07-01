@@ -97,7 +97,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
 			}
 			
 			public int getPreferredHeight() {
-				return 600;
+				return 800;
 			}
 			
 		};
