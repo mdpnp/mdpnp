@@ -114,7 +114,7 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
         	        		//Probably the device(s) have been assigned to a patient and that patient
         	        		//is not the active partition as chosen in the "Select a patient" drop down.
         	        		//Use a score of "-1" to indicate to the chart that the data is no longer valid.
-        	        		System.err.println("v.size() is 0 for i="+i+" but vitalSignsController.vitalModel.size is "+vitalSignsController.vitalModel.size());
+        	        		//System.err.println("v.size() is 0 for i="+i+" but vitalSignsController.vitalModel.size is "+vitalSignsController.vitalModel.size());
         	        		pushScoreToChartApp(v.getMetricIds()[0], -1);
         	        	}
         	        	for(int j=0;j<v.size();j++) {
