@@ -150,6 +150,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private static final int DIASTOLIC_ALARM_HIGHER=120;
 	private static final int MIN_FLOW_RATE=100;
 	private static final int MAX_FLOW_RATE=2000;
+	private static final int INITIAL_SYSTOLIC=120;
+	private static final int INITIAL_DIASTOLIC=80;
+	private static final int INITIAL_SYSTOLIC_ALARM=100;
+	private static final int INITIAL_DIASTOLIC_ALARM=80;
 	
 	private static final long interval= 5 * 60 * 1000L; 
 	
@@ -308,13 +312,13 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private void configureFields() {
 		//main.setPrefSize(400, 400);
 		//new TextFormatter<?>(UnaryOperator<TextFormatter.Change> change
-		targetDiastolic.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(LOWER_DIASTOLIC_LIMIT,UPPER_DIASTOLIC_LIMIT));
+		targetDiastolic.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(LOWER_DIASTOLIC_LIMIT,UPPER_DIASTOLIC_LIMIT,INITIAL_DIASTOLIC));
 		targetDiastolic.setEditable(true);
-		targetSystolic.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(LOWER_SYSTOLIC_LIMIT,UPPER_SYSTOLIC_LIMIT));
+		targetSystolic.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(LOWER_SYSTOLIC_LIMIT,UPPER_SYSTOLIC_LIMIT,INITIAL_SYSTOLIC));
 		targetSystolic.setEditable(true);
-		diastolicAlarm.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(DIASTOLIC_ALARM_LOWER, DIASTOLIC_ALARM_HIGHER));
+		diastolicAlarm.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(DIASTOLIC_ALARM_LOWER, DIASTOLIC_ALARM_HIGHER,INITIAL_DIASTOLIC_ALARM));
 		diastolicAlarm.setEditable(true);
-		systolicAlarm.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(SYSTOLIC_ALARM_LOWER, SYSTOLIC_ALARM_HIGHER));
+		systolicAlarm.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(SYSTOLIC_ALARM_LOWER, SYSTOLIC_ALARM_HIGHER,INITIAL_SYSTOLIC_ALARM));
 		systolicAlarm.setEditable(true);
 		SpinnerValueFactory.DoubleSpinnerValueFactory rateFactory=new SpinnerValueFactory.DoubleSpinnerValueFactory(MIN_FLOW_RATE, MAX_FLOW_RATE);
 		rateFactory.setAmountToStepBy(0.1);
