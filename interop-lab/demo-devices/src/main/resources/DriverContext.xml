@@ -49,7 +49,8 @@
     <constructor-arg ref="eventLoop"/>
     <constructor-arg ref="publisher"/>
     <constructor-arg ref="subscriber"/>
-    <constructor-arg value="${mdpnp.partition.file}"/>
+    <!--SK - removing this until purpose better understood - the property is not expanded anyway
+    <constructor-arg value="${mdpnp.partition.file}"/>-->
   </bean>
 
   <!--
