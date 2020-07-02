@@ -1,13 +1,8 @@
 package org.mdpnp.apps.testapp.closedloopcontrol;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -15,14 +10,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
-import org.mdpnp.apps.safetylockapplication.MessageDialog;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.chart.Chart;
@@ -35,13 +28,11 @@ import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.MDSHandler;
-import org.mdpnp.devices.PartitionAssignmentController;
-import org.mdpnp.devices.AbstractDevice.InstanceHolder;
-import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
 import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
 import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.sql.SQLLogging;
@@ -62,43 +53,36 @@ import ice.Patient;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.collections.ListChangeListener.Change;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import javafx.util.converter.*;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.layout.BorderPane;
-
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.util.converter.NumberStringConverter;
 
 public class ClosedLoopControlTestApplication implements EventHandler<ActionEvent> {
 	
@@ -246,15 +230,16 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
             deviceIdentity.serial_number = "1234";
             AbstractSimulatedDevice.randomUDI(deviceIdentity);		//TODO: clone the device id, or does that mess everything up?
             writeDeviceIdentity();
+//            System.err.println("NumericBPDeviceConstructor subscriber is "+subscriber);
 		}
 
 		public void writeNumerics() {
             DeviceClock.Reading sampleTime = clock.instant();
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
-            this.systolic = numericSample(systolic, (int) Math.round(systolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 
+            systolic = numericSample(systolic, (int) Math.round(systolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 
                     rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, rosetta.MDC_DIM_MMHG.VALUE, sampleTime);
-            this.diastolic = numericSample(diastolic, (int) Math.round(diastolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 
+            diastolic = numericSample(diastolic, (int) Math.round(diastolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 
                     rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, rosetta.MDC_DIM_MMHG.VALUE, sampleTime);
 		}
 	}
@@ -290,14 +275,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
                 // TODO Make this more elegant
                 List<String> strings = new ArrayList<String>();
                 SubscriberQos qos = new SubscriberQos();
+//                System.err.println("assignedSubscriber is "+assignedSubscriber);
                 assignedSubscriber.get_qos(qos);
 
                 for (int i = 0; i < qos.partition.name.size(); i++) {
                     strings.add((String) qos.partition.name.get(i));
                 }
 
-                numericBPDeviceAdapter.setPartition(strings.toArray(new String[0]));
-                numericBPDevice=(NumericBPDevice)numericBPDeviceAdapter.getDevice();
+                //numericBPDeviceAdapter.setPartition(strings.toArray(new String[0]));
+                
 
             }
             catch(Exception ex) {
@@ -305,6 +291,17 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
             }
 
         }
+    	numericBPDeviceAdapter.setPartition(new String[] {PartitionAssignmentController.toPartition(currentPatient.mrn)});
+        numericBPDevice=(NumericBPDevice)numericBPDeviceAdapter.getDevice();
+        //We have the device - we must associate it with the correct partition...
+        //mdsHandler.
+        //mdsHandler.publish(new MDSConnectivity());
+        String partitionToAssociate=PartitionAssignmentController.toPartition(currentPatient.mrn);
+        MDSConnectivity connectivity=new MDSConnectivity();
+        connectivity.partition=partitionToAssociate;
+        connectivity.unique_device_identifier=numericBPDevice.getUniqueDeviceIdentifier();
+        mdsHandler.publish(connectivity);
+//        System.err.println(connectivity.toString("Published device connectivity ",2));
     }
 
 	Pattern p=Pattern.compile("[0-9]?");
@@ -500,7 +497,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 
 			@Override
 			public void handlePatientChange(PatientEvent evt) {
-				
+
 			}
 			
 		});
@@ -510,6 +507,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			@Override
 			public void handleConnectivityChange(MDSEvent evt) {
 		        ice.MDSConnectivity c = (MDSConnectivity) evt.getSource();
+//		        System.err.println("CLC.handleConnectivity Partition is "+c.partition);
 
 		        String mrnPartition = PartitionAssignmentController.findMRNPartition(c.partition);
 
@@ -756,7 +754,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         numeric.forEach( n -> {
         	if( n.getUnique_device_identifier().equals(pump.getUDI()) && n.getMetric_id().equals(FLOW_RATE)) {
         		//This is the flow rate from the pump we want
-        		System.err.println("Found numeric for matching pump");
+//        		System.err.println("Found numeric for matching pump");
         		flowRateFromSelectedPump[0]=n;
         	}
         });
@@ -829,7 +827,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 					objective.newFlowRate=(float)infusionRateValue;
 					objective.unique_device_identifier=pumpUDI;
 					writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-					System.err.println("Set initial speed in Simons Simple Algo");
+//					System.err.println("Set initial speed in Simons Simple Algo");
 					//Now, we check the BP.
 					//Continually check the BP against the target;
 					while(true) {
@@ -837,7 +835,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
 						if( currentSys < compare ) {
-							System.err.println("Need to increase the pump speed");
+//							System.err.println("Need to increase the pump speed");
 							//Need to increase the pump speed.
 							float delta=(float)(infusionRateValue*0.1);
 							objective.newFlowRate=(float)(infusionRateValue+delta);
@@ -845,7 +843,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							infusionRateValue=objective.newFlowRate;
 							//TODO: How should we record this - as a new instance of AppConfig, or not?
 						} else {
-							System.err.println("Setting the pump speed back to default");
+//							System.err.println("Setting the pump speed back to default");
 							//Current BP is OK.  Set the speed to default.
 							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
 							infusionRateValue=(double)infusionRate.getValue();
@@ -890,7 +888,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 					objective.newFlowRate=(float)infusionRateValue;
 					objective.unique_device_identifier=pumpUDI;
 					writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-					System.err.println("Set initial speed in Simons Simple Algo");
+//					System.err.println("Set initial speed in Simons Simple Algo");
 					while(true) {
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
@@ -899,7 +897,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
 							infusionRateValue=objective.newFlowRate;
 						} else {
-							System.err.println("Setting the pump speed back to default");
+//							System.err.println("Setting the pump speed back to default");
 							//Current BP is OK.  Set the speed to default.
 							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
 							infusionRateValue=(double)infusionRate.getValue();
@@ -934,13 +932,13 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						Date lastUpdate=sampleFromSelectedMonitor[0].getPresentation_time();
 						Date now=new Date();
 						long delta=now.getTime()-lastUpdate.getTime();
-						System.err.println("BP update delta is "+delta);
+//						System.err.println("BP update delta is "+delta);
 						if(  delta > fiveMinutes) {
 							stopEverything();	//Calling stop everything will interrupt this thread.
 							return;	//But return anyway.
 						}
 						if( delta > oneMinute && ! showing) {
-							System.err.println("More than one minute since last update - showing oneMinuteAlert");
+//							System.err.println("More than one minute since last update - showing oneMinuteAlert");
 							javafx.application.Platform.runLater(()-> {
 								oneMinuteAlert.show();
 							});
@@ -961,7 +959,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						sleep(5000);
 					}
 				} catch (InterruptedException ie) {
-					System.err.println("bpUpdateAlarmThread was interrupted.  Calling return...");
+//					System.err.println("bpUpdateAlarmThread was interrupted.  Calling return...");
 					return;
 				}
 			}
@@ -977,7 +975,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 			//TODO: Do we really need the extra boolean, or do the alarm popups prevent further alarms being shown anyway because of being modal?
 			if(newValue.intValue()<(int)systolicAlarm.getValue() && !sysShowing[0] ) {
-				System.err.println("systolic alarm condition...");
+//				System.err.println("systolic alarm condition...");
 				javafx.application.Platform.runLater(()-> {
 					sysShowing[0]=true;
 					sysAlert.show();
@@ -997,7 +995,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		@Override
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 			if(newValue.intValue()<(int)diastolicAlarm.getValue() && !diaShowing[0]) {
-				System.err.println("diastolic alarm condition...");
+//				System.err.println("diastolic alarm condition...");
 				javafx.application.Platform.runLater(()-> {
 					diaShowing[0]=true;
 					diaAlert.show();
@@ -1045,6 +1043,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 		if(pumpUpdateAlarmThread!=null) {
 			pumpUpdateAlarmThread.interrupt();
+		}
+		if(numericBPDevice!=null) {
+			numericBPDevice.shutdown();
+			numericBPDevice=null;	//Prevent any further writes from writeNumerics.
+			numericBPDeviceAdapter.stop();
+			numericBPDeviceAdapter=null;
 		}
 		stopBPValueMonitor();
 		startButton.setText("Start");
