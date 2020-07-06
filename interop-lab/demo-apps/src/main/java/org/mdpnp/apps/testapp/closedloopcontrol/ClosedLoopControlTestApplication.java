@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
@@ -20,6 +21,8 @@ import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.chart.Chart;
 import org.mdpnp.apps.testapp.chart.DateAxis;
+import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.apps.testapp.vital.VitalModelImpl;
@@ -59,6 +62,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -79,6 +84,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -94,6 +100,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private FlowRateObjectiveDataWriter writer;
 	private MDSHandler mdsHandler;
 	private VitalModel vitalModel;
+	private EMRFacade emr;
 	
 	@FXML VBox bpVBox;
 	@FXML VBox bpGraphBox;	//TODO: Something simpler than a VBox?
@@ -117,6 +124,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	@FXML private Label lastPumpUpdate;
 	@FXML private Label lastBPUpdate;
 	@FXML private Button startButton;
+	@FXML private Label patientNameLabel;
 	
 	
 	private final String FLOW_RATE=rosetta.MDC_FLOW_FLUID_PUMP.VALUE;
@@ -206,7 +214,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	Map<String, Method> allAlgos=new HashMap<>();
 	
 	//Need a context here...
-	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber) {
+	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples,
+			FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber, EMRFacade emr) {
 		this.parentContext=parentContext;
 		this.dlm=dlm;
 		this.numeric=numeric;
@@ -215,6 +224,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		this.mdsHandler=mdsHandler;
 		this.vitalModel=vitalModel;
 		this.assignedSubscriber=subscriber;
+		this.emr=emr;
 		configureFields();
 	}
 	
@@ -523,11 +533,13 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		            	 * then that "Patient" has an ID
 		            	 */
 		            	currentPatient=p;
+                        setPatientNameLabel();
 		            	return;	//Nothing else to do.
 		            }
 		            if( ! currentPatient.mrn.equals(p.mrn) ) {
 		            	//Patient has changed
 		            	currentPatient=p;
+                        setPatientNameLabel();
 		            }
 		            
 		            //deviceUdiToPatientMRN.put(c.unique_device_identifier, p);
@@ -540,6 +552,28 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 
 	}
 	
+	private void setPatientNameLabel() {
+		try {
+            ObservableList<PatientInfo> patientInfos=emr.getPatients();
+            FilteredList<PatientInfo> onlyPatient=patientInfos.filtered(new Predicate<PatientInfo>() {
+
+				@Override
+				public boolean test(PatientInfo t) {
+					if(t.getMrn().equals(currentPatient.mrn)) {
+						return true;
+					}
+					return false;
+				}
+
+            });
+            PatientInfo pi=onlyPatient.get(0);
+            patientNameLabel.setText("Current Patient: "+pi.getFirstName()+" "+pi.getLastName());
+            patientNameLabel.setFont(Font.font(24));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 	/**
 	 * Use this to allow access to the numeric sample that has a listener attached.
 	 * Then if the pump is changed, the listener can be detached from the previous numeric
