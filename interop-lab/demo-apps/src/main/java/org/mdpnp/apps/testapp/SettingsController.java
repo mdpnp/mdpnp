@@ -54,6 +54,8 @@ public class SettingsController {
     GridPane gridPane;
     @FXML
     TextField fhirServer;
+    @FXML
+    TextField emrServer;
 
     @FXML
     VBox serialPortsContainer;
@@ -70,6 +72,7 @@ public class SettingsController {
     private final StringProperty address = new SimpleStringProperty(this, "address", "");
     private final StringProperty domain = new SimpleStringProperty(this, "domain", "");
     private final StringProperty fhirServerName = new SimpleStringProperty(this, "fhirServerName", "");
+    private final StringProperty openEMRServerName = new SimpleStringProperty(this, "openEMRServerName", "");
     @FXML ComboBox<ice.ConnectionType> deviceCategory;
     
     
@@ -273,6 +276,7 @@ public class SettingsController {
         domain.bind(domainId.textProperty());
         address.bind(addressField.textProperty());
         fhirServerName.bind(fhirServer.textProperty());
+        openEMRServerName.bind(emrServer.textProperty());
 
         selectedDevice.addListener(new ChangeListener<DeviceDriverProvider>() {
 
@@ -326,6 +330,18 @@ public class SettingsController {
 
     public void setFhirServerName(final String fhirServerName) {
         this.fhirServerNameProperty().set(fhirServerName);
+    }
+
+    public StringProperty emrServerNameProperty() {
+        return this.openEMRServerName;
+    }
+
+    public String getEMRServerName() {
+        return this.emrServerNameProperty().get();
+    }
+
+    public void setEmrServerName(final String fhirServerName) {
+        this.emrServerNameProperty().set(fhirServerName);
     }
 
     

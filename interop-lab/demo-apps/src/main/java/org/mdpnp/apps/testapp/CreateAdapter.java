@@ -69,8 +69,9 @@ public class CreateAdapter {
         }
         address = d.settingsController.addressProperty().get();
         String fhirServerName = d.settingsController.getFhirServerName();
+        String emrServerName = d.settingsController.getEMRServerName();
         
-        return d.closePressed ? null : new Configuration(false, Application.ICE_Device_Interface, domainId, ddp, address, fhirServerName);
+        return d.closePressed ? null : new Configuration(false, Application.ICE_Device_Interface, domainId, ddp, address, fhirServerName, emrServerName);
 
     }
 }

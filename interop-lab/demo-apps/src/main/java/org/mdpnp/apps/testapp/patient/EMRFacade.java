@@ -140,6 +140,7 @@ public abstract class EMRFacade {
 
         private DataSource         jdbcDB;
         private String             fhirEMRUrl;
+        private String             openEMRUrl;
         private FhirContext        fhirContext;
         private ControlFlowHandler controlFlowHandler;
         private MDSHandler         mdsHandler;
@@ -151,6 +152,13 @@ public abstract class EMRFacade {
             fhirEMRUrl = url;
         }
         
+		public String getOpenEMRUrl() {
+			return openEMRUrl;
+		}
+		public void setOpenEMRUrl(String openEMRUrl) {
+			this.openEMRUrl = openEMRUrl;
+		}
+
         public FhirContext getFhirContext() {
             return fhirContext;
         }
@@ -184,8 +192,13 @@ public abstract class EMRFacade {
         @Override
         public EMRFacade getObject() throws Exception {
             if(instance == null) {
+				//For now, OpenEMR becomes the number one choice.
+				if(openEMRUrl!=null && openEMRUrl.length()>0) {
+					instance=new OpenEMRImpl(new ExecutorFx());
+					((OpenEMRImpl)instance).setUrl(openEMRUrl);
+				}
 
-                if(fhirEMRUrl == null || fhirEMRUrl.isEmpty()) {
+				else if(fhirEMRUrl == null || fhirEMRUrl.isEmpty()) {
                     if(jdbcDB == null)
                         throw new IllegalStateException("JDBC database cannot be null");
                     instance = new JdbcEMRImpl(new ExecutorFx());

@@ -225,6 +225,7 @@
         <property name="controlFlowHandler" ref="controlFlowHandler"/>
         <property name="mdsHandler"         ref="mdsConnectivity"/>
         <property name="url"                value="${mdpnp.fhir.url}"/>
+        <property name="openEMRUrl"         value="${mdpnp.emr.url}"/>
         <property name="jdbcDB"             ref="jdbcDB"/>
         <property name="fhirContext"        ref="fhirContext"/>
     </bean>       
