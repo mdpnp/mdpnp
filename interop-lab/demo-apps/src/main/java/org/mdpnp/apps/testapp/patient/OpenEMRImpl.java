@@ -199,8 +199,8 @@ public class OpenEMRImpl extends EMRFacade {
 
 	@Override
 	public DevicePatientAssociation updateDevicePatientAssociation(DevicePatientAssociation assoc) {
-		// TODO Auto-generated method stub
-		return null;
+		//This does nothing for now...
+		return assoc;
 	}
 
 }
