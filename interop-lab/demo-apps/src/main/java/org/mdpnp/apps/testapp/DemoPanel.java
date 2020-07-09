@@ -201,6 +201,13 @@ public class DemoPanel {
                                             if( ! ps.execute()) {
                                                 log.info("Updated "+ps.getUpdateCount()+" rows in the devices table with destroyed time");
 	                                        }
+                                            
+                                            ps=c.prepareStatement("UPDATE patientdevice SET dissociated=? WHERE udi=? AND dissociated IS NULL");
+                                            ps.setLong(1, System.currentTimeMillis()/1000);
+                                            ps.setString(2, udiToKill);
+                                            if( ! ps.execute()) {
+                                                log.info("Updated "+ps.getUpdateCount()+" rows in the patientdevice table with dissociated time");
+	                                        }
 	                                        c.close();
                                         } catch (SQLException sqle) {
                                             log.error("Failed to record device destruction in database",sqle);
@@ -224,9 +231,7 @@ public class DemoPanel {
 	                                        ps.setString(2, d.getManufacturer());
 	                                        ps.setString(3, d.getModel());
 	                                        ps.setString(4, d.getUniqueDeviceIdentifier());
-	                                        if( ! ps.execute()) {
-	                                            log.error("Failed to add device creation record to database");
-	                                        }
+	                                        ps.execute();
 	                                        c.close();
                                         } catch (SQLException sqle) {
                                             log.error("Failed to record device creation in database",sqle);
