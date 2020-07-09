@@ -8,8 +8,20 @@
 <?import javafx.geometry.Insets?>
 
 <BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.closedloopcontrol.ClosedLoopControlTestApplication">
+<top>
+	<Label fx:id="patientNameLabel"></Label>
+</top>
 <center>
-  <VBox fx:id="bpGraphBox"/>
+  <VBox fx:id="bpGraphBox">
+		<children>
+		  <VBox fx:id="updatesBox">
+		    <children>
+			  <Label fx:id="lastPumpUpdate">Last pump update</Label>
+			  <Label fx:id="lastBPUpdate">Last BP update</Label>
+			</children>
+          </VBox>
+		</children>
+  </VBox>
 </center>
 <right>
   <VBox spacing="2">
@@ -57,11 +69,6 @@
   </VBox>
 </right>
 <bottom>
-	<VBox fx:id="bottomBox" spacing="2">
-		<children>
-			<Label fx:id="lastPumpUpdate">Last pump update</Label>
-			<Label fx:id="lastBPUpdate">Last BP update</Label>
-		</children>
-	</VBox>
+	
 </bottom>
 </BorderPane>

@@ -775,11 +775,11 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 
             chart.setModel(vitalForChart, dateAxis);
             //TODO: What should happen during a stop/start cycle?  Just stop the timeline, or actually kill a previous instance and add a new one?
-            if(bpGraphBox.getChildren().size()>0) {
+            if(bpGraphBox.getChildren().size()>1) {
             	//Remove any existing instance
             	bpGraphBox.getChildren().remove(0);
             }
-            bpGraphBox.getChildren().add(node);
+            bpGraphBox.getChildren().add(0,node);
         } catch (Exception e) {
         	e.printStackTrace();
         }
