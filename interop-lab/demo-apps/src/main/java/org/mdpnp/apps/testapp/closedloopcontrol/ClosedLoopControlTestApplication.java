@@ -30,6 +30,7 @@ import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceDriverProvider;
+import org.mdpnp.devices.DeviceIdentityBuilder;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
@@ -212,6 +213,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 * Map of name for a control algorithm to the method that implements it.  Populated in configureFields
 	 */
 	Map<String, Method> allAlgos=new HashMap<>();
+	/**
+	 * The current session id.
+	 */
+	private String sessionid;
+	
+	/**
+	 * A prepared statement used to record the end time of the session in the database.
+	 */
+	private PreparedStatement endStatement;
 	
 	//Need a context here...
 	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples,
@@ -808,6 +818,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		} else {
 			closedLoopAlgo();
 		}
+		//Maybe we can use a different session identifier later, but this is handy for now.
+		sessionid=DeviceIdentityBuilder.randomUDI();
+		String mrnString=currentPatient.mrn;
 		AppConfig appConfig=new AppConfig();
 		appConfig.mode=openRadio.isSelected() ? 0 : 1;
 		appConfig.target_sys=(int)targetSystolic.getValue();
@@ -818,6 +831,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		appConfig.pump_udi=pump.getUDI();
 		double rate=(double)infusionRate.getValue();
 		appConfig.inf_rate=(float)rate;
+		appConfig.sessionid=sessionid;
+		appConfig.patientid=Integer.parseInt(mrnString);
 		appConfig.writeToDb();
 		createNumericDevice();
 		startBPUpdateAlarmThread();
@@ -1085,7 +1100,21 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			numericBPDeviceAdapter=null;
 		}
 		stopBPValueMonitor();
+		recordSessionEnd();
 		startButton.setText("Start");
+	}
+
+	private void recordSessionEnd() {
+		try {
+			if(endStatement==null) {
+				endStatement=dbconn.prepareStatement("UPDATE froa_config SET endtime=? WHERE session=?");
+			}
+			endStatement.setInt(1, (int)(System.currentTimeMillis()/1000));
+			endStatement.setString(2, sessionid);
+			endStatement.execute();
+		} catch (SQLException sqle) {
+			log.error("Failed to record session end time in database",sqle);
+		}
 	}
 
 	@Override
@@ -1184,13 +1213,21 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		 * Infusion rate
 		 */
 		float inf_rate;
+		/**
+		 * The ID of the patient.
+		 */
+		int patientid;
+		/**
+		 * The id of the session
+		 */
+		String sessionid;
 
 		private PreparedStatement stmt;
 
 		void writeToDb() {
 			try {
 				if(stmt==null) {
-					stmt=dbconn.prepareStatement("INSERT INTO froa_config(mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,inf_rate,t_sec) VALUES (?,?,?,?,?,?,?,?,?)");
+					stmt=dbconn.prepareStatement("INSERT INTO froa_config(mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,inf_rate,starttime,patient_id,session) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 				}
 				stmt.setInt(1,mode);
 				stmt.setInt(2,target_sys);
@@ -1201,6 +1238,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				stmt.setString(7, bp_udi);
 				stmt.setFloat(8, inf_rate);
 				stmt.setInt(9, (int)(System.currentTimeMillis()/1000));
+				stmt.setInt(10, patientid);
+				stmt.setString(11, sessionid);
 				stmt.execute();
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
