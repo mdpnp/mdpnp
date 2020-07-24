@@ -11,6 +11,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
 import org.mdpnp.apps.testapp.closedloopcontrol.ClosedLoopControlTestApplication;
+import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.EMRFacade.EMRType;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
@@ -39,6 +41,13 @@ public class OpenEMRTestApplicationFactory implements IceApplicationProvider {
 
 	@Override
 	public IceApp create(ApplicationContext parentContext) throws IOException {
+		/*
+		 * The first thing we do is to get an emr instance, and check if it is
+		 * an OpenEMR instance.  If it is not, there is no point creating the OpenEMR
+		 * application.
+		 */
+		final EMRFacade emr = (EMRFacade) parentContext.getBean("emr");
+
 		FXMLLoader loader = new FXMLLoader(OpenEMRTestApplication.class.getResource("OpenEMRTestApplication.fxml"));
 
         final Parent ui = loader.load();
@@ -52,7 +61,7 @@ public class OpenEMRTestApplicationFactory implements IceApplicationProvider {
         final MDSHandler mdsHandler=(MDSHandler)parentContext.getBean("mdsConnectivity",MDSHandler.class);
         mdsHandler.start();
         
-        controller.set(mdsHandler);
+        controller.set(mdsHandler, emr);
         controller.start(eventLoop, subscriber);
         
         return new IceApplicationProvider.IceApp() {

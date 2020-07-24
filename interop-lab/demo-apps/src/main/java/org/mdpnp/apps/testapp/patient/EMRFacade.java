@@ -22,6 +22,31 @@ import java.util.concurrent.Executor;
  */
 public abstract class EMRFacade {
 
+	/**
+	 * An enum to track the different possible types.
+	 * @author simon
+	 *
+	 */
+	public static enum EMRType {
+		UNKNOWN,
+		JDBC_ONLY,
+		FHIR_ONLY,
+		JDBC_AND_FHIR,
+		OPENEMR
+	}
+
+	/**
+	 * An instance variable denoting which of the possible EMRType
+	 * values this instance provides.  Used so that an OpenICE application
+	 * class that is receiving a bean of type emr can tell if that bean is
+	 * an OpenEMR instance without checking the class of the bean.
+	 */
+	protected EMRType emrType=EMRType.UNKNOWN;
+
+	public EMRType getEMRType() {
+		return emrType;
+	}
+
     private final ListHandler listHandler;
 
     public EMRFacade(Executor executor) {

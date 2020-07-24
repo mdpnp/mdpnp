@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,6 +25,7 @@ import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
 import javax.json.stream.JsonParser;
 
@@ -39,6 +42,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.io.DefaultHttpRequestWriterFactory;
 import org.apache.http.util.EntityUtils;
+import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.EMRFacade.EMRType;
+import org.mdpnp.apps.testapp.pumps.PumpControllerTestApplication;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
@@ -47,6 +53,8 @@ import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
 import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.sql.SQLLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javafx.fxml.*;
 import javafx.scene.control.*;
@@ -59,7 +67,9 @@ import ice.MDSConnectivity;
 import ice.Patient;
 
 public class OpenEMRTestApplication {
-	
+
+	private static final Logger log = LoggerFactory.getLogger(OpenEMRTestApplication.class);
+
 	@FXML TextField servername;
 	@FXML TextField username,password,scope,accessToken;
 	@FXML TextArea patientList;
@@ -68,36 +78,107 @@ public class OpenEMRTestApplication {
 	private Subscriber subscriber;
 	private EventLoop eventLoop;
 	private MDSHandler mdsHandler;
+	private EMRFacade emr;
 	
 	private Connection dbconn;
 	
-	private PreparedStatement dataStatement,sessionStatement;
+	private PreparedStatement numericsStatement,samplesStatement,sessionStatement;
 	
 	private Patient currentPatient;
 	
 	private final Map<String, Patient> deviceUdiToPatientMRN = Collections.synchronizedMap(new HashMap<String, Patient>());
 
+	/**
+	 * The default interval, in seconds.
+	 */
+	private static final int defaultInterval=60;
+
+	/**
+	 * The currently selected time interval between attempts to send to OpenEMR, in seconds.
+	 */
+	private int currentInterval;
+
+	/**
+	 * The last time we successfully transmitted data to the server.
+	 */
+	private long t_last;
+
+	/**
+	 * The next time we need to try and transmit data to the server.
+	 */
+	private long t_next;
+
+	/**
+	 * Session id for transferring data
+	 */
+	private String transferSession;
+
+	/**
+	 * The time at which this process was created - effectively the process start time.
+	 * The assumption is that no device/patient association can occur before this, and
+	 * so this time is used to select device/patient associations that occurred after this
+	 * time. Knowing that, we can select numerics and samples produced by devices that are
+	 * associated with the current patient, where the association occurred after this time
+	 * and where the associated has not been ended.  That gives us devices, that we can then
+	 * match to the numerics or samples produced by those devices.
+	 */
+	private final long absoluteStartTime;
+
 	public OpenEMRTestApplication() {
-		
-		
-		
-		
+		currentInterval=defaultInterval;
+		absoluteStartTime=System.currentTimeMillis();
+		log.info("Absolute start time is "+absoluteStartTime);
 	}
 	
-	public void set(MDSHandler mdsHandler) {
+	public void set(MDSHandler mdsHandler, EMRFacade emr) {
 		this.mdsHandler=mdsHandler;
+		this.emr=emr;
+		t_last=-1;	//We don't know when we last transferred.
 	}
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
-		mdsHandler.addPatientListener(new PatientListener() {
 
+		if(emr.getEMRType()!=EMRType.OPENEMR) {
+			//There is nothing to do.
+			//TODO: give some indication that the app is not running.
+			return;
+		}
+
+		emrLogin();
+
+		Thread transferThread=new Thread() {
 			@Override
-			public void handlePatientChange(PatientEvent evt) {
-				ice.Patient p=(ice.Patient)evt.getSource();
-				System.err.println("p.family_name");
+			public void run() {
+				long t_tmp=0;
+				while(true) {
+					if(t_last==-1) {
+						log.info("No t_last yet.");
+						//This is our first pass.  We set t_last to "now".
+						t_last=System.currentTimeMillis();
+					}
+					if(transferSession==null) {
+						transferSession=getTransferSession();
+					}
+					try {
+						log.info("About to sleep");
+						sleep(currentInterval*1000);
+						//We set this to allow time for sendData to execute without us missing any metrics that happen during that execution time.
+						t_tmp=System.currentTimeMillis();
+						log.info("set t_tmp to "+t_tmp);
+					} catch (InterruptedException ie) {
+						//TODO: Exit somehow...
+					}
+
+					if(sendData()) {
+						//We successfully sent data.  Update t_last. This assumes that sendData can miss some metrics produced after the query executes.
+						//When we later get multiple result sets from sendData, will we need multiple t_last?  Maybe not.
+						t_last=t_tmp;
+					}
+				}
 			}
-			
-		});
+		};
+
+		transferThread.start();
 		
 		mdsHandler.addConnectivityListener(new MDSListener() {
 
@@ -108,8 +189,6 @@ public class OpenEMRTestApplication {
 		        String mrnPartition = PartitionAssignmentController.findMRNPartition(c.partition);
 
 		        if(mrnPartition != null) {
-		            //log.info("udi " + c.unique_device_identifier + " is MRN=" + mrnPartition);
-
 		            Patient p = new Patient();
 		            p.mrn = PartitionAssignmentController.toMRN(mrnPartition);
 		            
@@ -125,30 +204,31 @@ public class OpenEMRTestApplication {
 		            	//Patient has changed
 		            	currentPatient=p;
 		            }
-		            
-		            deviceUdiToPatientMRN.put(c.unique_device_identifier, p);
 		        }
 		    }
 			
 		});
 	}
 	
-	public void sendData() {
-		String session=sessionList.getValue();
+	private boolean sendData() {
+		if(currentPatient==null) {
+			log.warn("OpenEMR data export doing nothing because patient is not selected");
+			return true;
+		}
 		if(dbconn==null) {
 			dbconn=SQLLogging.getConnection();
 		}
 		try {
-			if(dataStatement==null) {
-				dataStatement=dbconn.prepareStatement("select allnumerics.t_sec,allnumerics.udi,allnumerics.metric_id,allnumerics.val from allnumerics inner join froa_config on allnumerics.udi=froa_config.bp_udi"+
-						 " where allnumerics.t_sec>froa_config.starttime and allnumerics.t_sec<froa_config.endtime"+
-						 " and froa_config.session=?"
-				); 
+			if(numericsStatement==null) {
+				numericsStatement=dbconn.prepareStatement("SELECT allnumerics.t_sec,allnumerics.udi,allnumerics.metric_id,allnumerics.val FROM allnumerics INNER JOIN patientdevice ON allnumerics.udi=patientdevice.udi WHERE allnumerics.t_sec>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
 			}
-			dataStatement.setString(1, session);
-			if(dataStatement.execute()) {
+			log.info("Using "+(t_last/1000)+" for numericsStatment");
+			numericsStatement.setLong(1, (t_last/1000));
+			numericsStatement.setString(2, currentPatient.mrn);
+			numericsStatement.setLong(3, (absoluteStartTime/1000));
+			if(numericsStatement.execute()) {
 				//We have a result set
-				ResultSet rs=dataStatement.getResultSet();
+				ResultSet rs=numericsStatement.getResultSet();
 				JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
 				while(rs.next()) {
 					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
@@ -159,19 +239,71 @@ public class OpenEMRTestApplication {
 					resultsBuilder.add(rowBuilder);
 				}
 				JsonArray allRows=resultsBuilder.build();
-				String jsonPayload=allRows.toString();
-				sendOverApi(jsonPayload,99);
+				JsonObjectBuilder builder=Json.createObjectBuilder();
+				builder.add("sessionid", transferSession);
+				builder.add("patientid", currentPatient.mrn);
+				builder.add("payload", allRows);
+				String jsonPayload=builder.build().toString();
+				log.info("About to call sendNumericsOverApi with "+allRows.size()+" elements");
+				sendNumericsOverApi(jsonPayload);
 			} else {
-				//Something went wrong!
+				log.warn("Unexpected result from executing numericsStatement");
 			}
+			if(samplesStatement==null) {
+				samplesStatement=dbconn.prepareStatement("select allsamples.t_sec,allsamples.udi,allsamples.metric_id,allsamples.floats from allsamples where allsamples.t_sec>?");
+			}
+			log.info("Using "+(t_last/1000)+" for samplesStatment");
+			samplesStatement.setLong(1, (t_last/1000));
+			if(samplesStatement.execute()) {
+				//We have a result set
+				ResultSet rs=samplesStatement.getResultSet();
+				JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
+				while(rs.next()) {
+					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+					rowBuilder.add(rs.getString(2));	//UDI
+					rowBuilder.add(rs.getString(3));	//METRIC_ID
+					rowBuilder.add(rs.getString(4));		//VALUE
+					rowBuilder.add(rs.getInt(1));		//T_SEC
+					resultsBuilder.add(rowBuilder);
+				}
+				JsonArray allRows=resultsBuilder.build();
+				JsonObjectBuilder builder=Json.createObjectBuilder();
+				builder.add("sessionid", transferSession);
+				builder.add("payload", allRows);
+				String jsonPayload=builder.build().toString();
+				log.info("About to call sendSamplesOverApi with "+allRows.size()+" elements");
+				sendSamplesOverApi(jsonPayload);
+				return true;
+			} else {
+				log.warn("Unexpected result from executing samplesStatement");
+			}
+
 		} catch (SQLException sqle) {
-			sqle.printStackTrace();
+			log.error("Error sending data", sqle );
+		}
+		return false;
+	}
+
+	private void sendNumericsOverApi(String jsonPayload) {
+		try {
+			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/numerics");
+			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
+			numericsPost.setEntity(new StringEntity(jsonPayload));
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(numericsPost);
+			response.getStatusLine();
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception sending numerics", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception sending numerics", e);
+		} catch (IOException e) {
+			log.error("Exception sending numerics", e);
 		}
 	}
-	
-	private void sendOverApi(String jsonPayload,int pid) {
+
+	private void sendSamplesOverApi(String jsonPayload) {
 		try {
-			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/"+pid+"/numerics");
+			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/samples");
 			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
 			numericsPost.setEntity(new StringEntity(jsonPayload));
 			CloseableHttpClient client=HttpClients.createDefault();
@@ -179,14 +311,11 @@ public class OpenEMRTestApplication {
 			response.getStatusLine();
 			
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception sending samples", e);
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception sending samples", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception sending samples", e);
 		}
 		
 	}
@@ -209,13 +338,11 @@ public class OpenEMRTestApplication {
 				sessionList.setItems(new ObservableListWrapper(sessions));
 			}
 		} catch (SQLException sqle) {
-			
+			log.error("Exception getting froa_config data", sqle);
 		}
-		
 	}
-	
-	
-	public void emrLogin() {
+
+	private void emrLogin() {
 		HttpPost loginPost=new HttpPost("http://"+servername.getText()+"/apis/api/auth");
 		JsonObjectBuilder builder=Json.createObjectBuilder();
 		builder.add("grant_type","password");
@@ -230,26 +357,66 @@ public class OpenEMRTestApplication {
 			response.getStatusLine();
 			HttpEntity responseEntity=response.getEntity();
 			InputStream is=responseEntity.getContent();
-			
+
 			try {
 				JsonReader reader=Json.createReader(new InputStreamReader(is));
 				JsonObject loginObject=reader.readObject();
 				String accessToken=loginObject.getString("access_token");
 				this.accessToken.setText(accessToken);
 			} catch (JsonException je) {
-				System.err.println("Couldn't parse the login response...");
+				log.error("Could not parse the login response",je);
 			}
 			EntityUtils.consume(responseEntity);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception logging into EMR", e);
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception logging into EMR", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception logging into EMR", e);
 		}
+	}
+
+	/**
+	 * Used to retrieve a session id from OpenEMR.
+	 */
+	private String getTransferSession() {
+		String hostname="localhost";	//Fallback value - and potentially a confusing one.
+		try {
+			hostname=InetAddress.getLocalHost().getHostName();
+			if(hostname.indexOf('.')!=-1) {
+				// the dot character is not legal in the dispatch handler for OpenEMR, so hostnames
+				// must be trimmed down.
+				hostname=hostname.substring(0,hostname.indexOf('.'));
+			}
+		} catch (UnknownHostException e) {
+			log.error("Failed to get local hostname",e);
+		}
+		HttpGet sessionGet=new HttpGet("http://"+servername.getText()+"/apis/api/openice/session/"+hostname);
+		try {
+			sessionGet.setHeader("Authorization", "Bearer "+accessToken.getText());
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(sessionGet);
+			response.getStatusLine();
+			HttpEntity responseEntity=response.getEntity();
+			InputStream is=responseEntity.getContent();
+
+			try {
+				JsonReader reader=Json.createReader(new InputStreamReader(is));
+				JsonObject returnVal=reader.readObject();
+				JsonValue val=returnVal.get("sessionid");
+				String v=val.toString();
+				return v;
+			} catch (JsonException je) {
+				log.error("Couldn't parse the transfer session data",je);
+			}
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception getting transfer session", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception getting transfer session", e);
+		} catch (IOException e) {
+			log.error("Exception getting transfer session", e);
+		}
+		return "";
 	}
 	
 	public void getPatients() {
@@ -270,7 +437,7 @@ public class OpenEMRTestApplication {
 			try {
 				JsonReader reader=Json.createReader(new InputStreamReader(is));
 				JsonArray patientArray=reader.readArray();
-				System.err.println("There are "+patientArray.size()+" patients");
+				log.info("There are "+patientArray.size()+" patients");
 				StringBuilder sb=new StringBuilder();
 				patientArray.forEach( v -> {
 					if(v.getValueType().equals(ValueType.OBJECT)) {
@@ -283,17 +450,14 @@ public class OpenEMRTestApplication {
 				});
 				patientList.setText(sb.toString());
 			} catch (JsonException je) {
-				System.err.println("Couldn't parse the patient data");
+				log.error("Couldn't parse the patient data",je);
 			}
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception getting patient data", e);
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception getting patient data", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Exception getting patient data", e);
 		}
 	}
 

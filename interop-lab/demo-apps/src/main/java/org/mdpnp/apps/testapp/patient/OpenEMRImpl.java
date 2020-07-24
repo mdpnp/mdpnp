@@ -49,6 +49,7 @@ public class OpenEMRImpl extends EMRFacade {
 	public OpenEMRImpl(Executor executor) {
 		super(executor);
 		loadProps();
+		emrType=EMRType.OPENEMR;
 	}
 
 	public OpenEMRImpl(ListHandler handler) {
