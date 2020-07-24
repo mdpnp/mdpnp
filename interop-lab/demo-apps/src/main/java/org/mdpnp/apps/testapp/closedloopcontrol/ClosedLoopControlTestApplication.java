@@ -697,7 +697,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			//Check BP monitor selected
 			//Check target BP range
 			//Check infusion rate.
-			return checkTargetBPRange() && checkInfusionRate() && checkPumpSelected() && checkMonitorSelected() && checkAlgoSelected();
+			return checkTargetBPRange() && checkInfusionRate() && checkPumpSelected() && checkMonitorSelected() && checkAlgoSelected() && checkPatientSelected();
 		}
 	}
 	
@@ -753,6 +753,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		String s=algos.getSelectionModel().getSelectedItem();
 		if(s==null) {
 			Alert alert=new Alert(AlertType.ERROR,"A control algorithm must be selected",ButtonType.OK);
+			alert.showAndWait();
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean checkPatientSelected() {
+		if(currentPatient==null) {
+			Alert alert=new Alert(AlertType.ERROR,"A patient must be selected",ButtonType.OK);
 			alert.showAndWait();
 			return false;
 		}
