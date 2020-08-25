@@ -99,9 +99,9 @@ public class OpenEMRTestApplication {
 	private int currentInterval;
 
 	/**
-	 * The last time we successfully transmitted data to the server.
+	 * The last sequence number 
 	 */
-	private long t_last;
+	private long maxNumericSeqNum;
 
 	/**
 	 * The next time we need to try and transmit data to the server.
@@ -133,7 +133,7 @@ public class OpenEMRTestApplication {
 	public void set(MDSHandler mdsHandler, EMRFacade emr) {
 		this.mdsHandler=mdsHandler;
 		this.emr=emr;
-		t_last=-1;	//We don't know when we last transferred.
+		maxNumericSeqNum=-1;	//We don't have a max seq num yet
 	}
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
@@ -149,12 +149,10 @@ public class OpenEMRTestApplication {
 		Thread transferThread=new Thread() {
 			@Override
 			public void run() {
-				long t_tmp=0;
+				//long t_tmp=0;
 				while(true) {
-					if(t_last==-1) {
-						log.info("No t_last yet.");
-						//This is our first pass.  We set t_last to "now".
-						t_last=System.currentTimeMillis();
+					if(maxNumericSeqNum==-1) {
+						maxNumericSeqNum=getMaxNumericSeqNum();
 					}
 					if(transferSession==null) {
 						transferSession=getTransferSession();
@@ -163,16 +161,14 @@ public class OpenEMRTestApplication {
 						log.info("About to sleep");
 						sleep(currentInterval*1000);
 						//We set this to allow time for sendData to execute without us missing any metrics that happen during that execution time.
-						t_tmp=System.currentTimeMillis();
-						log.info("set t_tmp to "+t_tmp);
+						//t_tmp=System.currentTimeMillis();
+						//log.info("set t_tmp to "+t_tmp);
 					} catch (InterruptedException ie) {
 						//TODO: Exit somehow...
 					}
 
 					if(sendData()) {
-						//We successfully sent data.  Update t_last. This assumes that sendData can miss some metrics produced after the query executes.
-						//When we later get multiple result sets from sendData, will we need multiple t_last?  Maybe not.
-						t_last=t_tmp;
+						//Nothing to do at the moment...
 					}
 				}
 			}
@@ -211,6 +207,7 @@ public class OpenEMRTestApplication {
 	}
 	
 	private boolean sendData() {
+		log.info("sendData at least got called...");
 		if(currentPatient==null) {
 			log.warn("OpenEMR data export doing nothing because patient is not selected");
 			return true;
@@ -220,12 +217,13 @@ public class OpenEMRTestApplication {
 		}
 		try {
 			if(numericsStatement==null) {
-				numericsStatement=dbconn.prepareStatement("SELECT allnumerics.t_sec,allnumerics.udi,allnumerics.metric_id,allnumerics.val FROM allnumerics INNER JOIN patientdevice ON allnumerics.udi=patientdevice.udi WHERE allnumerics.t_sec>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
+				numericsStatement=dbconn.prepareStatement("SELECT allnumerics.t_sec,allnumerics.udi,allnumerics.metric_id,allnumerics.val,allnumerics.seqnum FROM allnumerics INNER JOIN patientdevice ON allnumerics.udi=patientdevice.udi WHERE allnumerics.seqnum>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
 			}
-			log.info("Using "+(t_last/1000)+" for numericsStatment");
-			numericsStatement.setLong(1, (t_last/1000));
+			log.info("Using "+maxNumericSeqNum+" for numericsStatment");
+			numericsStatement.setLong(1, maxNumericSeqNum);
 			numericsStatement.setString(2, currentPatient.mrn);
 			numericsStatement.setLong(3, (absoluteStartTime/1000));
+			long newMaxNum=maxNumericSeqNum;
 			if(numericsStatement.execute()) {
 				//We have a result set
 				ResultSet rs=numericsStatement.getResultSet();
@@ -236,8 +234,11 @@ public class OpenEMRTestApplication {
 					rowBuilder.add(rs.getString(3));	//METRIC_ID
 					rowBuilder.add(rs.getFloat(4));		//VALUE
 					rowBuilder.add(rs.getInt(1));		//T_SEC
+					rowBuilder.add(rs.getLong(5)); 		//SEQNUM
+					newMaxNum=rs.getLong(5);
 					resultsBuilder.add(rowBuilder);
 				}
+				log.info("newMaxNum is "+newMaxNum);
 				JsonArray allRows=resultsBuilder.build();
 				JsonObjectBuilder builder=Json.createObjectBuilder();
 				builder.add("sessionid", transferSession);
@@ -246,9 +247,12 @@ public class OpenEMRTestApplication {
 				String jsonPayload=builder.build().toString();
 				log.info("About to call sendNumericsOverApi with "+allRows.size()+" elements");
 				sendNumericsOverApi(jsonPayload);
+				maxNumericSeqNum=newMaxNum;	//Flip to the last known sequence number from the result set for the transfer just sent.
 			} else {
 				log.warn("Unexpected result from executing numericsStatement");
 			}
+
+			/*
 			if(samplesStatement==null) {
 				samplesStatement=dbconn.prepareStatement("select allsamples.t_sec,allsamples.udi,allsamples.metric_id,allsamples.floats from allsamples where allsamples.t_sec>?");
 			}
@@ -272,11 +276,12 @@ public class OpenEMRTestApplication {
 				builder.add("payload", allRows);
 				String jsonPayload=builder.build().toString();
 				log.info("About to call sendSamplesOverApi with "+allRows.size()+" elements");
-				sendSamplesOverApi(jsonPayload);
+				//sendSamplesOverApi(jsonPayload);
 				return true;
 			} else {
 				log.warn("Unexpected result from executing samplesStatement");
 			}
+			*/
 
 		} catch (SQLException sqle) {
 			log.error("Error sending data", sqle );
@@ -419,6 +424,53 @@ public class OpenEMRTestApplication {
 		return "";
 	}
 	
+	/**
+	 * Used to retrieve the max sequence number from openemr for this machine
+	 */
+	private int getMaxNumericSeqNum() {
+		String hostname="localhost";	//Fallback value - and potentially a confusing one.
+		try {
+			hostname=InetAddress.getLocalHost().getHostName();
+			if(hostname.indexOf('.')!=-1) {
+				// the dot character is not legal in the dispatch handler for OpenEMR, so hostnames
+				// must be trimmed down.
+				hostname=hostname.substring(0,hostname.indexOf('.'));
+			}
+		} catch (UnknownHostException e) {
+			log.error("Failed to get local hostname",e);
+		}
+		HttpGet sessionGet=new HttpGet("http://"+servername.getText()+"/apis/api/openice/maxnumseq/"+hostname);
+		try {
+			sessionGet.setHeader("Authorization", "Bearer "+accessToken.getText());
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(sessionGet);
+			response.getStatusLine();
+			HttpEntity responseEntity=response.getEntity();
+			InputStream is=responseEntity.getContent();
+
+			try {
+				JsonReader reader=Json.createReader(new InputStreamReader(is));
+				JsonObject returnVal=reader.readObject();
+				JsonValue val=returnVal.get("seqnum");
+				String v=val.toString();
+				// "null" in this case is the literal string value returned by OpenEMR when no records matched.
+				if(v.equals("null")) {
+					return -1;
+				}
+				return Integer.parseInt(v.replaceAll("\"", ""));	//Not sure why it has the double quotes in it?
+			} catch (JsonException je) {
+				log.error("Couldn't parse the sequence number data",je);
+			}
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception getting transfer session", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception getting transfer session", e);
+		} catch (IOException e) {
+			log.error("Exception getting transfer session", e);
+		}
+		return -1;
+	}
+
 	public void getPatients() {
 		if(accessToken.getText().length()==0) {
 			Alert alert=new Alert(AlertType.ERROR,"Access Token must be set by logging in",ButtonType.OK);
