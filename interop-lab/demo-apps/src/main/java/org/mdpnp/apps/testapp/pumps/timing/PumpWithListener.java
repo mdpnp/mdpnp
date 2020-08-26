@@ -148,6 +148,10 @@ public class PumpWithListener {
 		BufferedReader br=new BufferedReader(new FileReader(timingsFile));
 		String nextLine;
 		while( (nextLine=br.readLine())!=null) {
+			if( nextLine.length()==0 || nextLine.startsWith("#") || (nextLine.indexOf(',')==-1) ) {
+				System.err.println("Skipping line "+nextLine);
+				continue;
+			}
 			String[] parts=nextLine.split(",");
 			TimeAndRate tr=new TimeAndRate();
 			tr.interval=Long.parseLong(parts[0]);
