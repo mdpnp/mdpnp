@@ -14,9 +14,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import java.util.stream.Collectors;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -43,6 +47,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.io.DefaultHttpRequestWriterFactory;
 import org.apache.http.util.EntityUtils;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.OpenEMRImpl;
+import org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory;
 import org.mdpnp.apps.testapp.patient.EMRFacade.EMRType;
 import org.mdpnp.apps.testapp.pumps.PumpControllerTestApplication;
 import org.mdpnp.devices.MDSHandler;
@@ -143,7 +149,18 @@ public class OpenEMRTestApplication {
 			//TODO: give some indication that the app is not running.
 			return;
 		}
-
+		
+		OpenEMRImpl impl=(OpenEMRImpl)emr;
+		/*
+		 * Getting the URL could work several ways - we put a static method in the static class EMRFacadeFactory,
+		 * which is hideous.  We could put the URL into the top level facade, which is probably best.
+		 * Or for now, we just have a reference to the actual implementation type subclass,
+		 * which will have to do.
+		 */
+		//TODO: What is the best way to get this URL?
+		String emrURL=impl.getUrl();
+		System.err.println("Current servername text is "+servername.getText());
+		servername.setText(emrURL);
 		emrLogin();
 
 		Thread transferThread=new Thread() {
@@ -216,6 +233,56 @@ public class OpenEMRTestApplication {
 			dbconn=SQLLogging.getConnection();
 		}
 		try {
+			sendNumerics();
+			sendSamples();
+			return true;
+		} catch (SQLException sqle) {
+			log.error("Failed to export data",sqle);
+			return false;
+		}
+
+	}
+	
+	/**
+	 * A very simple holder for a running total (the value), and the count of elements that made up the total.
+	 * @author simon
+	 *
+	 */
+	class OpenIceNumeric {
+		int t_sec;
+		String udi;
+		String metricId;
+		float val;
+		long seqNum;	//Possibly not needed.
+
+		public OpenIceNumeric(int t_sec, String udi, String metricId, float val, long seqNum) {
+			super();
+			this.t_sec = t_sec;
+			this.udi = udi;
+			this.metricId = metricId;
+			this.val = val;
+			this.seqNum = seqNum;
+		}
+		
+		public String getUDI() {
+			return udi;
+		}
+		
+		public String getMetricId() {
+			return metricId;
+		}
+		
+		public float getVal() {
+			return val;
+		}
+
+		@Override
+		public String toString() {
+			return "t_sec "+t_sec+", udi "+udi+", metricId "+metricId+" val "+val+", seqNum "+seqNum;
+		}
+	}
+	
+	private boolean sendNumerics() throws SQLException {
 			if(numericsStatement==null) {
 				numericsStatement=dbconn.prepareStatement("SELECT allnumerics.t_sec,allnumerics.udi,allnumerics.metric_id,allnumerics.val,allnumerics.seqnum FROM allnumerics INNER JOIN patientdevice ON allnumerics.udi=patientdevice.udi WHERE allnumerics.seqnum>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
 			}
@@ -224,20 +291,57 @@ public class OpenEMRTestApplication {
 			numericsStatement.setString(2, currentPatient.mrn);
 			numericsStatement.setLong(3, (absoluteStartTime/1000));
 			long newMaxNum=maxNumericSeqNum;
+			//Hashtable<String,ValAndCount> numerics=new Hashtable<>();
+			ArrayList<OpenIceNumeric> results=new ArrayList<>();
 			if(numericsStatement.execute()) {
 				//We have a result set
 				ResultSet rs=numericsStatement.getResultSet();
 				JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
+				float runningTotal=0;
+				int numOfVals=0;
 				while(rs.next()) {
-					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
-					rowBuilder.add(rs.getString(2));	//UDI
-					rowBuilder.add(rs.getString(3));	//METRIC_ID
-					rowBuilder.add(rs.getFloat(4));		//VALUE
-					rowBuilder.add(rs.getInt(1));		//T_SEC
-					rowBuilder.add(rs.getLong(5)); 		//SEQNUM
+					OpenIceNumeric oin=new OpenIceNumeric(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getFloat(4), rs.getLong(5));
+					results.add(oin);
+					
+//					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+//					rowBuilder.add(rs.getString(2));	//UDI
+//					rowBuilder.add(rs.getString(3));	//METRIC_ID
+//					rowBuilder.add(rs.getFloat(4));		//VALUE
+//					rowBuilder.add(rs.getInt(1));		//T_SEC
+//					rowBuilder.add(rs.getLong(5)); 		//SEQNUM
+					//runningTotal+=
 					newMaxNum=rs.getLong(5);
-					resultsBuilder.add(rowBuilder);
+					//resultsBuilder.add(rowBuilder);
+					numOfVals++;
 				}
+				
+				/*
+				 * We now need to build results rows to export to OpenEMR, but now, instead of using every single value from
+				 * the result set, we want to average out the values from the results ArrayList.  But, we need to split up each
+				 * metric by its UDI as well.
+				 */
+				
+				//This groupingBy gets us a map of all different UDIs
+				Map<String, List<OpenIceNumeric>> numericsByUDI=results.stream().collect(Collectors.groupingBy(OpenIceNumeric::getUDI));
+				numericsByUDI.keySet().forEach( udi -> {
+					//This groupingBy gets us a map of all different metrics for the current UDI
+					Map<String, List<OpenIceNumeric>> numericsByMetricForUdi=numericsByUDI.get(udi).stream().collect(Collectors.groupingBy(OpenIceNumeric::getMetricId));
+					numericsByMetricForUdi.keySet().forEach( metricid -> {
+						List<OpenIceNumeric> finalStream=numericsByMetricForUdi.get(metricid);
+						Double averageForNumeric=finalStream.stream().collect(Collectors.averagingDouble(OpenIceNumeric::getVal));
+						System.err.println("Average for "+metricid+" from "+udi+" is "+averageForNumeric);
+						JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+						rowBuilder.add(udi);
+						rowBuilder.add(metricid);
+						rowBuilder.add(averageForNumeric);
+						OpenIceNumeric finalNumeric=finalStream.get(finalStream.size()-1);
+						rowBuilder.add(finalNumeric.t_sec);
+						rowBuilder.add(finalNumeric.seqNum);
+						resultsBuilder.add(rowBuilder);
+					});
+					
+				});
+				
 				log.info("newMaxNum is "+newMaxNum);
 				JsonArray allRows=resultsBuilder.build();
 				JsonObjectBuilder builder=Json.createObjectBuilder();
@@ -251,42 +355,41 @@ public class OpenEMRTestApplication {
 			} else {
 				log.warn("Unexpected result from executing numericsStatement");
 			}
-
-			/*
-			if(samplesStatement==null) {
-				samplesStatement=dbconn.prepareStatement("select allsamples.t_sec,allsamples.udi,allsamples.metric_id,allsamples.floats from allsamples where allsamples.t_sec>?");
-			}
-			log.info("Using "+(t_last/1000)+" for samplesStatment");
-			samplesStatement.setLong(1, (t_last/1000));
-			if(samplesStatement.execute()) {
-				//We have a result set
-				ResultSet rs=samplesStatement.getResultSet();
-				JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
-				while(rs.next()) {
-					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
-					rowBuilder.add(rs.getString(2));	//UDI
-					rowBuilder.add(rs.getString(3));	//METRIC_ID
-					rowBuilder.add(rs.getString(4));		//VALUE
-					rowBuilder.add(rs.getInt(1));		//T_SEC
-					resultsBuilder.add(rowBuilder);
-				}
-				JsonArray allRows=resultsBuilder.build();
-				JsonObjectBuilder builder=Json.createObjectBuilder();
-				builder.add("sessionid", transferSession);
-				builder.add("payload", allRows);
-				String jsonPayload=builder.build().toString();
-				log.info("About to call sendSamplesOverApi with "+allRows.size()+" elements");
-				//sendSamplesOverApi(jsonPayload);
-				return true;
-			} else {
-				log.warn("Unexpected result from executing samplesStatement");
-			}
-			*/
-
-		} catch (SQLException sqle) {
-			log.error("Error sending data", sqle );
-		}
 		return false;
+	}
+	
+	private boolean sendSamples() {
+		return true;
+		/*
+		if(samplesStatement==null) {
+			samplesStatement=dbconn.prepareStatement("select allsamples.t_sec,allsamples.udi,allsamples.metric_id,allsamples.floats from allsamples where allsamples.t_sec>?");
+		}
+		log.info("Using "+(t_last/1000)+" for samplesStatment");
+		samplesStatement.setLong(1, (t_last/1000));
+		if(samplesStatement.execute()) {
+			//We have a result set
+			ResultSet rs=samplesStatement.getResultSet();
+			JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
+			while(rs.next()) {
+				JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+				rowBuilder.add(rs.getString(2));	//UDI
+				rowBuilder.add(rs.getString(3));	//METRIC_ID
+				rowBuilder.add(rs.getString(4));		//VALUE
+				rowBuilder.add(rs.getInt(1));		//T_SEC
+				resultsBuilder.add(rowBuilder);
+			}
+			JsonArray allRows=resultsBuilder.build();
+			JsonObjectBuilder builder=Json.createObjectBuilder();
+			builder.add("sessionid", transferSession);
+			builder.add("payload", allRows);
+			String jsonPayload=builder.build().toString();
+			log.info("About to call sendSamplesOverApi with "+allRows.size()+" elements");
+			//sendSamplesOverApi(jsonPayload);
+			return true;
+		} else {
+			log.warn("Unexpected result from executing samplesStatement");
+		}
+		*/
 	}
 
 	private void sendNumericsOverApi(String jsonPayload) {

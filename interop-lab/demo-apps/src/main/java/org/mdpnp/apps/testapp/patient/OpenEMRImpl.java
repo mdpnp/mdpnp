@@ -83,6 +83,10 @@ public class OpenEMRImpl extends EMRFacade {
 	public void setUrl(String url) {
 		openEMRURL=url;
 	}
+	
+	public String getUrl() {
+		return openEMRURL;
+	}
 
 	@Override
 	List<PatientInfo> fetchAllPatients() {

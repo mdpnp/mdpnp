@@ -10,8 +10,8 @@
 <BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.openemr.OpenEMRTestApplication">
 <center>
   <VBox fx:id="bpGraphBox">
-  <Label>Server Name</Label>	
-  <TextField fx:id="servername">ec2-174-129-188-54.compute-1.amazonaws.com</TextField>
+  <Label>Server Name</Label>
+  <TextField fx:id="servername"></TextField>	
   <Label>Username</Label>
   <TextField fx:id="username">admin</TextField>
   <Label>Password</Label>
