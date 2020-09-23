@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
@@ -182,7 +187,6 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private Patient currentPatient;
 	
 	private Connection dbconn;
-	private PreparedStatement controlStatement;
 	
 	/**
 	 * Graphing timeline used to animate the axis
@@ -222,6 +226,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 * A prepared statement used to record the end time of the session in the database.
 	 */
 	private PreparedStatement endStatement;
+	
+	private PreparedStatement flowStatement;
+	
+	private PreparedStatement sampleStatement;
 	
 	//Need a context here...
 	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples,
@@ -620,6 +628,47 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			 */
 			float meanCalc=(minMax[1]+(2*minMax[0]))/3;
 			currentMean.setText(Integer.toString((int)meanCalc));
+			buffer.put(currentBPSample); 	//Store it in case we want it later.
+			if(recording) {
+				recorded++;
+			}
+			if(recording && recorded==3) {
+				SampleArrayFx[] samplesToStore=buffer.get(3);
+				try {
+					if(sampleStatement==null) {
+						sampleStatement=dbconn.prepareStatement("INSERT INTO samples_for_export(t_sec, t_nanosec, udi, metric_id, floats) VALUES (?,?,?,?,?)");
+					}
+					/*
+					 * It's theoretically possible for the call to get to return elements that are null, if not enough puts have been done to fill the
+					 * number of elements requested in the get.  So check for nulls in the loop.
+					 */
+					for(SampleArrayFx sample : samplesToStore) {
+						if(sample==null) {
+							continue;
+						}
+						//presentation time is set like this
+						//setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
+						Instant i=sample.getPresentation_time().toInstant();
+						sampleStatement.setLong(1, i.getEpochSecond());
+						sampleStatement.setLong(2, i.getNano());
+						sampleStatement.setString(3, sample.getUnique_device_identifier());
+						sampleStatement.setString(4, sample.getMetric_id());
+						
+						Number[] floatsForDb=sample.getValues();
+						JsonArrayBuilder builder=Json.createArrayBuilder();
+						for(int j=0;j<floatsForDb.length;j++) {
+							builder.add(floatsForDb[j].floatValue());
+						}
+						JsonArray jsonArray=builder.build();
+						sampleStatement.setString(5, jsonArray.toString());
+						sampleStatement.execute();
+					}
+				} catch (SQLException sqle) {
+					log.error("Failed to store samples for export",sqle);
+				}
+				recording=false;
+				recorded=0;
+			}
 		}
 	}
 	
@@ -630,6 +679,21 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 * Then if the BP monitor is changed, the listener can be detached from the previous sample
 	 */
 	private SampleArrayFx currentBPSample;
+	
+	/**
+	 * A rolling array of samples.
+	 */
+	private CircularBuffer buffer=new CircularBuffer(5);
+	
+	/**
+	 * Are we recording samples for entry into the export table of the database?
+	 */
+	private boolean recording=false;
+	
+	/**
+	 * How many samples have we recorded?
+	 */
+	private int recorded=0;
 	
 	private void handleBPDeviceChange(Device newDevice) {
 		log.info("QCT.handleDeviceChange newDevice is "+newDevice);
@@ -767,6 +831,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 		return true;
 	}
+	
+	NumericFx[] flowRateFromSelectedPump=new NumericFx[1];
 
 	private void runForMode() {
 		//Get a whole graph thing...
@@ -803,7 +869,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         	e.printStackTrace();
         }
         Device pump=pumps.getSelectionModel().getSelectedItem();
-        NumericFx[] flowRateFromSelectedPump=new NumericFx[1];
+        
         numeric.forEach( n -> {
         	if( n.getUnique_device_identifier().equals(pump.getUDI()) && n.getMetric_id().equals(FLOW_RATE)) {
         		//This is the flow rate from the pump we want
@@ -841,7 +907,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		double rate=(double)infusionRate.getValue();
 		appConfig.inf_rate=(float)rate;
 		appConfig.sessionid=sessionid;
-		appConfig.patientid=Integer.parseInt(mrnString);
+		try {
+			appConfig.patientid=Integer.parseInt(mrnString);
+		} catch (NumberFormatException nfe) {
+			log.warn("Non-numeric mrn "+mrnString);
+			appConfig.patientid=0;
+		}
 		appConfig.writeToDb();
 		createNumericDevice();
 		startBPUpdateAlarmThread();
@@ -879,36 +950,34 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			public void run() {
 				try {
 					double infusionRateValue=(double)infusionRate.getValue();
-					Device selectedPump=pumps.getSelectionModel().getSelectedItem();
-					String pumpUDI=selectedPump.getUDI();
-					FlowRateObjective objective=new FlowRateObjective();
-					objective.newFlowRate=(float)infusionRateValue;
-					objective.unique_device_identifier=pumpUDI;
-					writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+					setFlowRate((float)infusionRateValue);
 //					System.err.println("Set initial speed in Simons Simple Algo");
 					//Now, we check the BP.
 					//Continually check the BP against the target;
 					while(true) {
 						//Check the BP against the target
+						//TODO: Why doesn't this just use the property?
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
 						if( currentSys < compare ) {
 //							System.err.println("Need to increase the pump speed");
 							//Need to increase the pump speed.
 							float delta=(float)(infusionRateValue*0.1);
-							objective.newFlowRate=(float)(infusionRateValue+delta);
-							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-							infusionRateValue=objective.newFlowRate;
+							setFlowRate((float)(infusionRateValue+delta));
+							infusionRateValue=infusionRateValue+delta;
 							//TODO: How should we record this - as a new instance of AppConfig, or not?
 						} else {
 //							System.err.println("Setting the pump speed back to default");
 							//Current BP is OK.  Set the speed to default.
 							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
 							infusionRateValue=(double)infusionRate.getValue();
-							objective.newFlowRate=(float)infusionRateValue;
-							objective.unique_device_identifier=pumpUDI;
-							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-							infusionRateValue=objective.newFlowRate;
+							if(flowRateFromSelectedPump[0].getValue()!=infusionRateValue) {
+								setFlowRate((float)infusionRateValue);
+							}
+//							objective.newFlowRate=(float)infusionRateValue;
+//							objective.unique_device_identifier=pumpUDI;
+//							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+//							infusionRateValue=objective.newFlowRate;
 							//TODO: How should we record this - as a new instance of AppConfig, or not?
 						}
 						//Sleep after deciding what to do.
@@ -940,29 +1009,24 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				try {
 					//TODO: factor out this initial step to something that can be shared?
 					double infusionRateValue=(double)infusionRate.getValue();
-					Device selectedPump=pumps.getSelectionModel().getSelectedItem();
-					String pumpUDI=selectedPump.getUDI();
-					FlowRateObjective objective=new FlowRateObjective();
-					objective.newFlowRate=(float)infusionRateValue;
-					objective.unique_device_identifier=pumpUDI;
-					writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-//					System.err.println("Set initial speed in Simons Simple Algo");
+					setFlowRate((float)infusionRateValue);
 					while(true) {
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
 						if( currentSys < compare ) {
-							objective.newFlowRate=(float)(100 + 2 * ( (int) targetSystolic.getValue() - currentSys));
-							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-							infusionRateValue=objective.newFlowRate;
+							float newFlowRate=(float)(100 + 2 * ( (int) targetSystolic.getValue() - currentSys));
+							setFlowRate(newFlowRate);
+							infusionRateValue=newFlowRate;
 						} else {
 //							System.err.println("Setting the pump speed back to default");
 							//Current BP is OK.  Set the speed to default.
 							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
 							infusionRateValue=(double)infusionRate.getValue();
-							objective.newFlowRate=(float)infusionRateValue;
-							objective.unique_device_identifier=pumpUDI;
-							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
-							infusionRateValue=objective.newFlowRate;
+							setFlowRate((float)infusionRateValue);
+//							objective.newFlowRate=(float)infusionRateValue;
+//							objective.unique_device_identifier=pumpUDI;
+//							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
+//							infusionRateValue=objective.newFlowRate;
 						}
 						Thread.sleep(60000);
 					}
@@ -975,6 +1039,29 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}	//End of run()
 		};	//End of new Thread()
 		
+	}
+	
+	private void setFlowRate(float newRate) {
+		Device selectedPump=pumps.getSelectionModel().getSelectedItem();
+		String pumpUDI=selectedPump.getUDI();
+		FlowRateObjective objective=new FlowRateObjective();
+		objective.newFlowRate=newRate;
+		objective.unique_device_identifier=pumpUDI;
+		try {
+			if(flowStatement==null) {
+				flowStatement=dbconn.prepareStatement("INSERT INTO flowrequest(t_millis, target_udi, requestedRate) VALUES (?,?,?)");
+			}
+			flowStatement.setLong(1, System.currentTimeMillis()/1000);
+			flowStatement.setString(2, objective.unique_device_identifier);
+			flowStatement.setFloat(3, objective.newFlowRate);
+			flowStatement.execute();
+			recording=true;	//If we set the flow rate, remember to record samples.
+			recorded++;
+		} catch (SQLException e) {
+			log.error("Failed to create flowrequest statement",e);
+		}
+		
+		writer.write(objective, InstanceHandle_t.HANDLE_NIL);
 	}
 	
 	/**
@@ -1266,5 +1353,69 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			numericBPDevice=null;
 		}
 	}
+	
+	class CircularBuffer {
+		int size;
+		int index;
+		SampleArrayFx[] samples;
+		
+		public CircularBuffer(int size) {
+			this.size=size;
+			samples=new SampleArrayFx[size];
+		}
+		
+		public void put(SampleArrayFx sample) {
+			//System.err.println("put called with sample time of "+sample.getPresentation_time().toInstant().toEpochMilli());
+			samples[index++ % size]=copy(sample);
+		}
+		
+		public SampleArrayFx[] get(int howMany) {
+			System.err.println("get called for "+howMany+" elements");
+			dump();
+			SampleArrayFx[] ret=new SampleArrayFx[howMany];
+			int start= (index % size) - 1 ;
+			if(start<0) {
+				start=size-1;	//Back to the end.
+			}
+			for(int i=0;i<howMany;i++) {
+				ret[i]=samples[start--];
+				if(ret[i]!=null) {
+					System.err.println("Added sample with time "+ret[i].getPresentation_time().toInstant().toEpochMilli()+" to ret["+i+"] from samples["+(start+1)+"]");
+				} else {
+					System.err.println("WARNING - returning a null SampleArrayFx in CircularBuffer.get - current index is "+index);
+				}
+				if(start<0) {
+					start=size-1;	//Back to the end.
+				}
+			}
+			return ret;
+		}
+		
+		/**
+		 * A copy routine for a SampleArrayFx that only populates the properties we need later.
+		 * This is heinous...
+		 * @param in
+		 * @return
+		 */
+		private SampleArrayFx copy(SampleArrayFx in) {
+			SampleArrayFx clone=new SampleArrayFx();
+			clone.setPresentation_time(in.getPresentation_time());
+			clone.setMetric_id(in.getMetric_id());
+			clone.setUnique_device_identifier(in.getUnique_device_identifier());
+			clone.valuesProperty().set(in.getValues());
+			return clone;
+		}
+		
+		private void dump() {
+			for(int i=0;i<size;i++) {
+				if(samples[i]==null) {
+					break;
+				}
+				System.out.println("["+i+"] has sample with time "+samples[i].getPresentation_time().toInstant().toEpochMilli());
+			}
+		}
+	}
+	
+	
 
 }

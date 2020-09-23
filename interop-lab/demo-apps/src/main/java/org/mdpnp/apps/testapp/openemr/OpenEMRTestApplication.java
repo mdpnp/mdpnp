@@ -105,9 +105,14 @@ public class OpenEMRTestApplication {
 	private int currentInterval;
 
 	/**
-	 * The last sequence number 
+	 * The last sequence number for numerics 
 	 */
 	private long maxNumericSeqNum;
+	
+	/**
+	 * The last sequence number for samples
+	 */
+	private long maxSampleSeqNum;
 
 	/**
 	 * The next time we need to try and transmit data to the server.
@@ -139,7 +144,8 @@ public class OpenEMRTestApplication {
 	public void set(MDSHandler mdsHandler, EMRFacade emr) {
 		this.mdsHandler=mdsHandler;
 		this.emr=emr;
-		maxNumericSeqNum=-1;	//We don't have a max seq num yet
+		maxNumericSeqNum=-1;	//We don't have a max seq num for numerics yet
+		maxSampleSeqNum=-1;		//We don't have a max seq num for samples yet
 	}
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
@@ -170,6 +176,9 @@ public class OpenEMRTestApplication {
 				while(true) {
 					if(maxNumericSeqNum==-1) {
 						maxNumericSeqNum=getMaxNumericSeqNum();
+					}
+					if(maxSampleSeqNum==-1) {
+						maxSampleSeqNum=getMaxSampleSeqNum();
 					}
 					if(transferSession==null) {
 						transferSession=getTransferSession();
@@ -284,7 +293,7 @@ public class OpenEMRTestApplication {
 	
 	private boolean sendNumerics() throws SQLException {
 			if(numericsStatement==null) {
-				numericsStatement=dbconn.prepareStatement("SELECT allnumerics.t_sec,allnumerics.udi,allnumerics.metric_id,allnumerics.val,allnumerics.seqnum FROM allnumerics INNER JOIN patientdevice ON allnumerics.udi=patientdevice.udi WHERE allnumerics.seqnum>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
+				numericsStatement=dbconn.prepareStatement("SELECT nfe.t_sec,nfe.udi,nfe.metric_id,nfe.val,nfe.seqnum FROM numerics_for_export nfe INNER JOIN patientdevice ON nfe.udi=patientdevice.udi WHERE nfe.seqnum>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
 			}
 			log.info("Using "+maxNumericSeqNum+" for numericsStatment");
 			numericsStatement.setLong(1, maxNumericSeqNum);
@@ -292,7 +301,7 @@ public class OpenEMRTestApplication {
 			numericsStatement.setLong(3, (absoluteStartTime/1000));
 			long newMaxNum=maxNumericSeqNum;
 			//Hashtable<String,ValAndCount> numerics=new Hashtable<>();
-			ArrayList<OpenIceNumeric> results=new ArrayList<>();
+			//ArrayList<OpenIceNumeric> results=new ArrayList<>();
 			if(numericsStatement.execute()) {
 				//We have a result set
 				ResultSet rs=numericsStatement.getResultSet();
@@ -300,47 +309,16 @@ public class OpenEMRTestApplication {
 				float runningTotal=0;
 				int numOfVals=0;
 				while(rs.next()) {
-					OpenIceNumeric oin=new OpenIceNumeric(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getFloat(4), rs.getLong(5));
-					results.add(oin);
-					
-//					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
-//					rowBuilder.add(rs.getString(2));	//UDI
-//					rowBuilder.add(rs.getString(3));	//METRIC_ID
-//					rowBuilder.add(rs.getFloat(4));		//VALUE
-//					rowBuilder.add(rs.getInt(1));		//T_SEC
-//					rowBuilder.add(rs.getLong(5)); 		//SEQNUM
-					//runningTotal+=
+					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+					rowBuilder.add(rs.getString(2));	//UDI
+					rowBuilder.add(rs.getString(3));	//METRIC_ID
+					rowBuilder.add(rs.getFloat(4));		//VALUE
+					rowBuilder.add(rs.getInt(1));		//T_SEC
+					rowBuilder.add(rs.getLong(5)); 		//SEQNUM
 					newMaxNum=rs.getLong(5);
-					//resultsBuilder.add(rowBuilder);
+					resultsBuilder.add(rowBuilder);
 					numOfVals++;
 				}
-				
-				/*
-				 * We now need to build results rows to export to OpenEMR, but now, instead of using every single value from
-				 * the result set, we want to average out the values from the results ArrayList.  But, we need to split up each
-				 * metric by its UDI as well.
-				 */
-				
-				//This groupingBy gets us a map of all different UDIs
-				Map<String, List<OpenIceNumeric>> numericsByUDI=results.stream().collect(Collectors.groupingBy(OpenIceNumeric::getUDI));
-				numericsByUDI.keySet().forEach( udi -> {
-					//This groupingBy gets us a map of all different metrics for the current UDI
-					Map<String, List<OpenIceNumeric>> numericsByMetricForUdi=numericsByUDI.get(udi).stream().collect(Collectors.groupingBy(OpenIceNumeric::getMetricId));
-					numericsByMetricForUdi.keySet().forEach( metricid -> {
-						List<OpenIceNumeric> finalStream=numericsByMetricForUdi.get(metricid);
-						Double averageForNumeric=finalStream.stream().collect(Collectors.averagingDouble(OpenIceNumeric::getVal));
-						System.err.println("Average for "+metricid+" from "+udi+" is "+averageForNumeric);
-						JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
-						rowBuilder.add(udi);
-						rowBuilder.add(metricid);
-						rowBuilder.add(averageForNumeric);
-						OpenIceNumeric finalNumeric=finalStream.get(finalStream.size()-1);
-						rowBuilder.add(finalNumeric.t_sec);
-						rowBuilder.add(finalNumeric.seqNum);
-						resultsBuilder.add(rowBuilder);
-					});
-					
-				});
 				
 				log.info("newMaxNum is "+newMaxNum);
 				JsonArray allRows=resultsBuilder.build();
@@ -350,22 +328,27 @@ public class OpenEMRTestApplication {
 				builder.add("payload", allRows);
 				String jsonPayload=builder.build().toString();
 				log.info("About to call sendNumericsOverApi with "+allRows.size()+" elements");
-				sendNumericsOverApi(jsonPayload);
-				maxNumericSeqNum=newMaxNum;	//Flip to the last known sequence number from the result set for the transfer just sent.
+				if(sendNumericsOverApi(jsonPayload)) {
+					maxNumericSeqNum=newMaxNum;	//Flip to the last known sequence number from the result set for the transfer just sent.
+				}
+				return true;
 			} else {
 				log.warn("Unexpected result from executing numericsStatement");
 			}
 		return false;
 	}
 	
-	private boolean sendSamples() {
-		return true;
-		/*
+	private boolean sendSamples() throws SQLException {
+//		return true;
+
 		if(samplesStatement==null) {
-			samplesStatement=dbconn.prepareStatement("select allsamples.t_sec,allsamples.udi,allsamples.metric_id,allsamples.floats from allsamples where allsamples.t_sec>?");
+			samplesStatement=dbconn.prepareStatement("SELECT sfe.t_sec,sfe.udi,sfe.metric_id,sfe.floats,sfe.seqnum FROM samples_for_export sfe INNER JOIN patientdevice ON sfe.udi=patientdevice.udi WHERE sfe.seqnum>? AND patientdevice.mrn=? AND patientdevice.associated>? AND patientdevice.dissociated IS NULL");
 		}
-		log.info("Using "+(t_last/1000)+" for samplesStatment");
-		samplesStatement.setLong(1, (t_last/1000));
+		log.info("Using "+maxSampleSeqNum+" for samplesStatment");
+		samplesStatement.setLong(1, maxSampleSeqNum);
+		samplesStatement.setString(2, currentPatient.mrn);
+		samplesStatement.setLong(3, (absoluteStartTime/1000));
+		long newMaxNum=maxSampleSeqNum;
 		if(samplesStatement.execute()) {
 			//We have a result set
 			ResultSet rs=samplesStatement.getResultSet();
@@ -376,23 +359,29 @@ public class OpenEMRTestApplication {
 				rowBuilder.add(rs.getString(3));	//METRIC_ID
 				rowBuilder.add(rs.getString(4));		//VALUE
 				rowBuilder.add(rs.getInt(1));		//T_SEC
+				rowBuilder.add(rs.getLong(5)); 		//SEQNUM
+				newMaxNum=rs.getLong(5);
 				resultsBuilder.add(rowBuilder);
 			}
 			JsonArray allRows=resultsBuilder.build();
 			JsonObjectBuilder builder=Json.createObjectBuilder();
 			builder.add("sessionid", transferSession);
+			builder.add("patientid", currentPatient.mrn);
 			builder.add("payload", allRows);
 			String jsonPayload=builder.build().toString();
 			log.info("About to call sendSamplesOverApi with "+allRows.size()+" elements");
-			//sendSamplesOverApi(jsonPayload);
-			return true;
+			if(sendSamplesOverApi(jsonPayload)) {
+				maxSampleSeqNum=newMaxNum;	//Flip to the last known sequence number from the result set for the transfer just sent.
+				return true;
+			}
+			return false;
 		} else {
 			log.warn("Unexpected result from executing samplesStatement");
 		}
-		*/
+		return false;
 	}
 
-	private void sendNumericsOverApi(String jsonPayload) {
+	private boolean sendNumericsOverApi(String jsonPayload) {
 		try {
 			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/numerics");
 			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
@@ -400,6 +389,7 @@ public class OpenEMRTestApplication {
 			CloseableHttpClient client=HttpClients.createDefault();
 			CloseableHttpResponse response=client.execute(numericsPost);
 			response.getStatusLine();
+			return true;
 		} catch (UnsupportedEncodingException e) {
 			log.error("Exception sending numerics", e);
 		} catch (ClientProtocolException e) {
@@ -407,9 +397,10 @@ public class OpenEMRTestApplication {
 		} catch (IOException e) {
 			log.error("Exception sending numerics", e);
 		}
+		return false;
 	}
 
-	private void sendSamplesOverApi(String jsonPayload) {
+	private boolean sendSamplesOverApi(String jsonPayload) {
 		try {
 			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/samples");
 			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
@@ -417,7 +408,7 @@ public class OpenEMRTestApplication {
 			CloseableHttpClient client=HttpClients.createDefault();
 			CloseableHttpResponse response=client.execute(numericsPost);
 			response.getStatusLine();
-			
+			return true;
 		} catch (UnsupportedEncodingException e) {
 			log.error("Exception sending samples", e);
 		} catch (ClientProtocolException e) {
@@ -425,7 +416,7 @@ public class OpenEMRTestApplication {
 		} catch (IOException e) {
 			log.error("Exception sending samples", e);
 		}
-		
+		return false;
 	}
 	
 	public void refresh() {
@@ -528,7 +519,7 @@ public class OpenEMRTestApplication {
 	}
 	
 	/**
-	 * Used to retrieve the max sequence number from openemr for this machine
+	 * Used to retrieve the max numeric sequence number from openemr for this machine
 	 */
 	private int getMaxNumericSeqNum() {
 		String hostname="localhost";	//Fallback value - and potentially a confusing one.
@@ -543,6 +534,53 @@ public class OpenEMRTestApplication {
 			log.error("Failed to get local hostname",e);
 		}
 		HttpGet sessionGet=new HttpGet("http://"+servername.getText()+"/apis/api/openice/maxnumseq/"+hostname);
+		try {
+			sessionGet.setHeader("Authorization", "Bearer "+accessToken.getText());
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(sessionGet);
+			response.getStatusLine();
+			HttpEntity responseEntity=response.getEntity();
+			InputStream is=responseEntity.getContent();
+
+			try {
+				JsonReader reader=Json.createReader(new InputStreamReader(is));
+				JsonObject returnVal=reader.readObject();
+				JsonValue val=returnVal.get("seqnum");
+				String v=val.toString();
+				// "null" in this case is the literal string value returned by OpenEMR when no records matched.
+				if(v.equals("null")) {
+					return -1;
+				}
+				return Integer.parseInt(v.replaceAll("\"", ""));	//Not sure why it has the double quotes in it?
+			} catch (JsonException je) {
+				log.error("Couldn't parse the sequence number data",je);
+			}
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception getting transfer session", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception getting transfer session", e);
+		} catch (IOException e) {
+			log.error("Exception getting transfer session", e);
+		}
+		return -1;
+	}
+	
+	/**
+	 * Used to retrieve the max sample sequence number from openemr for this machine
+	 */
+	private int getMaxSampleSeqNum() {
+		String hostname="localhost";	//Fallback value - and potentially a confusing one.
+		try {
+			hostname=InetAddress.getLocalHost().getHostName();
+			if(hostname.indexOf('.')!=-1) {
+				// the dot character is not legal in the dispatch handler for OpenEMR, so hostnames
+				// must be trimmed down.
+				hostname=hostname.substring(0,hostname.indexOf('.'));
+			}
+		} catch (UnknownHostException e) {
+			log.error("Failed to get local hostname",e);
+		}
+		HttpGet sessionGet=new HttpGet("http://"+servername.getText()+"/apis/api/openice/maxsamseq/"+hostname);
 		try {
 			sessionGet.setHeader("Authorization", "Bearer "+accessToken.getText());
 			CloseableHttpClient client=HttpClients.createDefault();
