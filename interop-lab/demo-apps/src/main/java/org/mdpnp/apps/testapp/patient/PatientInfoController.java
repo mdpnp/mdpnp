@@ -59,7 +59,11 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     protected ObservableList<Device> unassignedDevices = FXCollections.observableArrayList();
 
     private Map<String, String> deviceAssignments = new HashMap<>();
-
+    
+    private Connection conn;
+    private PreparedStatement assocStatement;
+    private PreparedStatement dissocStatement;
+    
     public DeviceListModel getDeviceListDataModel() {
         return deviceListDataModel;
     }
@@ -99,19 +103,24 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
         emr.deleteDevicePatientAssociation(assoc);
         assoc.getMrn();
         assoc.getDevice().getUDI();
+        Connection c=null;
         try {
-            Connection c=SQLLogging.getConnection();
-            PreparedStatement ps=c.prepareStatement("UPDATE patientdevice set dissociated=? WHERE mrn=? AND udi=?");
-            ps.setLong(1,System.currentTimeMillis()/1000);
-            ps.setString(2,assoc.getMrn());
-            ps.setString(3, assoc.getDevice().getUDI());
-            if( ! ps.execute() ) {
-                log.info("Updated "+ps.getUpdateCount()+" rows in patientdevice");
+            dissocStatement.setLong(1,System.currentTimeMillis()/1000);
+            dissocStatement.setString(2,assoc.getMrn());
+            dissocStatement.setString(3, assoc.getDevice().getUDI());
+            if( ! dissocStatement.execute() ) {
+                log.info("Updated "+dissocStatement.getUpdateCount()+" rows in patientdevice");
             } else {
                 log.error("Unexpected outcome for update statement in removeDeviceAssociation");
             }
         } catch (SQLException sqle) {
             log.error("Failed to delete patient device association",sqle);
+        } finally {
+        	try {
+        		c.close();
+        	} catch (SQLException sqle) {
+        		
+        	}
         }
         associationModel.remove(assoc);
 
@@ -147,12 +156,10 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
     private DevicePatientAssociation associateEMR(Device d, PatientInfo p)  {
         DevicePatientAssociation dpa = emr.updateDevicePatientAssociation(new DevicePatientAssociation(d, p));
         try {
-            Connection c=SQLLogging.getConnection();
-            PreparedStatement ps=c.prepareStatement("INSERT INTO patientdevice(mrn, udi, associated) VALUES (?,?,?)");
-            ps.setString(1,p.getMrn());
-            ps.setString(2, d.getUDI());
-            ps.setLong(3, System.currentTimeMillis()/1000);
-            ps.execute();
+            assocStatement.setString(1,p.getMrn());
+            assocStatement.setString(2, d.getUDI());
+            assocStatement.setLong(3, System.currentTimeMillis()/1000);
+            assocStatement.execute();
         } catch (SQLException sqle) {
             log.error("Failed to record device association in database",sqle);
         }
@@ -436,6 +443,13 @@ public class PatientInfoController implements ListChangeListener<Device>, MDSHan
 
     public PatientInfoController() {
         super();
+        try {
+        	conn=SQLLogging.getConnection();
+        	assocStatement=conn.prepareStatement("INSERT INTO patientdevice(mrn, udi, associated) VALUES (?,?,?)");
+        	dissocStatement=conn.prepareStatement("UPDATE patientdevice set dissociated=? WHERE mrn=? AND udi=?");
+        } catch (SQLException sqle) {
+        	log.error("Failed to connect to database and prepare statements",sqle);
+        }
     }
 
 }

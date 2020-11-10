@@ -88,7 +88,7 @@ public class OpenEMRTestApplication {
 	
 	private Connection dbconn;
 	
-	private PreparedStatement numericsStatement,samplesStatement,sessionStatement;
+	private PreparedStatement numericsStatement,samplesStatement,sessionStatement,pdStatement,commandsStatement,alarmsStatement,froaStatement;
 	
 	private Patient currentPatient;
 	
@@ -118,7 +118,33 @@ public class OpenEMRTestApplication {
 	 * The next time we need to try and transmit data to the server.
 	 */
 	private long t_next;
+	
+	/**
+	 * The last time that the Patient<->Device association handled association.
+	 */
+	private long lastPDStartTimeA;
+	
+	/**
+	 * The last time that the Patient<->Device association handled dissociation.
+	 */
+	private long lastPDStartTimeD;
+	
+	/**
+	 * The last time that commands were sent.
+	 */
+	private long lastCommandsTime;
+	
+	/**
+	 * The last time that alarms were sent to the events table.
+	 */
+	private long lastAlarmsTime;
+	
+	/**
+	 * The last time that froa_config entries were sent to the events table.
+	 */
+	private long lastFroaConfigTime;
 
+	
 	/**
 	 * Session id for transferring data
 	 */
@@ -244,6 +270,9 @@ public class OpenEMRTestApplication {
 		try {
 			sendNumerics();
 			sendSamples();
+			sendPatientDevice();
+			sendCommands();
+			sendEvents();
 			return true;
 		} catch (SQLException sqle) {
 			log.error("Failed to export data",sqle);
@@ -380,6 +409,308 @@ public class OpenEMRTestApplication {
 		}
 		return false;
 	}
+	
+	/**
+	 * The strategy here is that we get all records where the associated OR dissociated time is greater than our last run time.
+	 * If the associated time is greater than the last run time, send an association record.
+	 * If the dissociated time is not null and greater than our last run time, send a dissociation record.<br/>
+	 * 
+	 * We need to select using both fields because if the device association lasts longer than one sleep interval, then the device
+	 * association will be before the last interval, but the dissociation (if not null) will be later.  If we only got records later
+	 * than the run time by association, then we'd miss the dissociation records, because dissociation appears in the same record as
+	 * association, by that record being updated.<br/>
+	 * 
+	 * This makes it different to numerics/samples, because there are never updates to those records.  On the plus side, we don't need
+	 * a sequence number here to ensure all records are handled, because there is only one source of data for these records (as opposed
+	 * to devices, where multiple devices could be producing records at fractionally different times and a record could be missed if it
+	 * arrives with the same timestamp, but that timestamp has already started to be processed.
+	 * @return
+	 */
+	private boolean sendPatientDevice() throws SQLException {
+		if(lastPDStartTimeA==0) {
+			lastPDStartTimeA=absoluteStartTime/1000;	//These are second values.
+			lastPDStartTimeD=absoluteStartTime/1000;	//These are second values.
+		}
+		if(pdStatement==null) {
+			//TODO: Match the records against the current patient?
+			//SELECT pd.mrn,pd.udi,pd.associated,pd.dissociated,concat(d.manufacturer,' ',d.model) FROM patientdevice pd INNER JOIN devices d ON pd.udi=d.udi WHERE
+			pdStatement=dbconn.prepareStatement("SELECT pd.mrn,pd.udi,pd.associated,pd.dissociated,CONCAT(d.manufacturer,' ',d.model) FROM patientdevice pd INNER JOIN devices d ON pd.udi=d.udi WHERE pd.associated>? OR pd.dissociated>?");
+		}
+		long whenA=(lastPDStartTimeA);	//whenA is a value in seconds, to match that in the table
+		long whenD=(lastPDStartTimeD);  //whenD is a value in seconds, to match that in the table
+		pdStatement.setLong(1, whenA);
+		pdStatement.setLong(2, whenD);
+		if(pdStatement.execute()) {
+			//We have a result set
+			ResultSet rs=pdStatement.getResultSet();
+			JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
+			long latestTimeA=whenA; //latestTimeA is a value in seconds, to match that in the table
+			long latestTimeD=whenD; //latestTimeD is a value in seconds, to match that in the table
+			while(rs.next()) {
+				if(rs.getLong(3)>whenA) {
+					//Device was associated since last execution.
+					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+					rowBuilder.add("A");				//Device was ASSOCIATED
+					rowBuilder.add(rs.getString(1));	//MRN
+					rowBuilder.add(rs.getString(2));	//UDI
+					rowBuilder.add(rs.getLong(3));		//ASSOCIATED
+					//We don't need the dissociation time (if any) to create this record.
+					rowBuilder.add(rs.getString(5));	//DESCRIPTION
+					resultsBuilder.add(rowBuilder);
+					if(rs.getLong(3)>latestTimeA) {
+						//New latest association time.
+						latestTimeA=rs.getLong(3);
+					}
+				}
+				if(rs.getLong(4)>whenD) {
+					//Device was associated since last execution.
+					JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+					rowBuilder.add("D");				//Device was DISSOCIATED
+					rowBuilder.add(rs.getString(1));	//MRN
+					rowBuilder.add(rs.getString(2));	//UDI
+					rowBuilder.add(rs.getLong(3));		//ASSOCIATED
+					//In this case, we leave the association time in, in order to allow the receiving end to correctly identify the record to update
+					rowBuilder.add(rs.getLong(4));		//DISSOCIATED
+					//In this case we omit the device description as that was sent with the association record and does not change.
+					if(rs.getLong(4)>latestTimeD) {
+						latestTimeD=rs.getLong(4);
+					}
+					resultsBuilder.add(rowBuilder);
+				}
+			}
+			JsonArray allRows=resultsBuilder.build();
+			JsonObjectBuilder builder=Json.createObjectBuilder();
+			builder.add("sessionid", transferSession);
+			//TODO: Do we want the current patient id in the payload, or are we exporting all of them?
+			//builder.add("patientid", currentPatient.mrn);
+			builder.add("payload", allRows);
+			String jsonPayload=builder.build().toString();
+			log.info("About to call sendPatientDeviceOverApi with "+allRows.size()+" elements");
+			log.info("Payload is "+jsonPayload);
+			if(sendPatientDeviceOverApi(jsonPayload)) {
+				/*
+				 * Set the lastPDStartTime variable to be equal to the latest time seen in any record.
+				 * This ensures that the next pass will not include any of the records we've already handled.
+				 */
+				lastPDStartTimeA=latestTimeA;
+				lastPDStartTimeD=latestTimeD;
+				return true;
+			}
+			
+			return false;
+		} else {
+			log.warn("Unexpected result from executing pdStatement");
+		}
+		return false;
+	}
+	
+	private boolean sendCommands() throws SQLException {
+		if(lastCommandsTime==0) {
+			lastCommandsTime=absoluteStartTime/1000;	//These are second values.
+		}
+		if(commandsStatement==null) {
+			commandsStatement=dbconn.prepareStatement("SELECT t_millis, target_udi, target_type, requestedRate, source_id, source_type FROM flowrequest WHERE t_millis>? AND source_type IS NOT NULL");
+		}
+		long when=lastCommandsTime;	//when is a value in seconds, to match that in the table
+		commandsStatement.setLong(1, when);
+		if(commandsStatement.execute()) {
+			//We have a result set
+			ResultSet rs=commandsStatement.getResultSet();
+			JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
+			long latestTime=when; //latestTime is a value in seconds, to match that in the table
+			while(rs.next()) {
+				JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+				rowBuilder.add(rs.getString(5));	//SOURCE ID
+				rowBuilder.add(rs.getString(6));	//SOURCE_TYPE
+				rowBuilder.add(rs.getString(2));	//TARGET_UDI
+				rowBuilder.add(rs.getString(3));	//TARGET_TYPE
+				rowBuilder.add(rs.getFloat(4));		//REQUESTED_RATE
+				rowBuilder.add(rs.getLong(1));		//T_MILLIS
+				resultsBuilder.add(rowBuilder);
+
+				if(rs.getLong(1)>when) {
+					//New latest association time.
+					latestTime=rs.getLong(1);
+				}
+				
+			}
+			JsonArray allRows=resultsBuilder.build();
+			JsonObjectBuilder builder=Json.createObjectBuilder();
+			builder.add("sessionid", transferSession);
+			//TODO: Do we want the current patient id in the payload, or are we exporting all of them?
+			//builder.add("patientid", currentPatient.mrn);
+			builder.add("payload", allRows);
+			String jsonPayload=builder.build().toString();
+			log.info("About to call sendCommands with "+allRows.size()+" elements");
+			log.info("Payload is "+jsonPayload);
+			if(sendCommandsOverApi(jsonPayload)) {
+				/*
+				 * Set the lastPDStartTime variable to be equal to the latest time seen in any record.
+				 * This ensures that the next pass will not include any of the records we've already handled.
+				 */
+				lastCommandsTime=latestTime;
+				return true;
+			}
+			return false;
+		} else {
+			log.warn("Unexpected result from executing pdStatement");
+		}
+		return false;
+	}
+	
+	private boolean sendEvents() throws SQLException {
+		
+		/*
+		 * This is shared between the alams_for_export and froa_config queries/results.
+		 */
+		JsonArrayBuilder resultsBuilder=Json.createArrayBuilder();
+		
+		if(lastAlarmsTime==0) {
+			lastAlarmsTime=absoluteStartTime/1000;	//These are second values.
+		}
+		/*
+		 * Now, in the long term, events could include different things, and therefore we'd need multiple markers for last time etc.,
+		 * and we'd have a more complex question of how to make sure we got everything.  But for now, we just need alarms from the FROA
+		 * application. The FROA application also populates "alarms_for_export" with a narrative of the alarm description, so we just take
+		 * that as the source statement here.
+		 */
+		if(alarmsStatement==null) {
+			alarmsStatement=dbconn.prepareStatement("SELECT t_sec, mrn, source, sourcetype, alarmtype, alarmvalue, local_time FROM alarms_for_export WHERE t_sec>?");
+		}
+		long alarmWhen=lastAlarmsTime;	//alarmWhen is a value in seconds, to match that in the table
+		alarmsStatement.setLong(1,alarmWhen);
+		//latestAlarmTime is a value in seconds, to match that in the table - it holds the latest time we encounter processing the upcoming results.
+		long latestAlarmTime=alarmWhen;
+		if(alarmsStatement.execute()) {
+			//We have a result set
+			ResultSet rs=alarmsStatement.getResultSet();
+			while(rs.next()) {
+				JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+				rowBuilder.add(rs.getString(2)); 	//MRN
+				rowBuilder.add(rs.getString(3));	//SOURCE
+				rowBuilder.add(rs.getString(4));	//SOURCETYPE
+				rowBuilder.add(rs.getInt(1));		//T_SEC
+				rowBuilder.add(3);					//TYPE=ALARM
+				
+				JsonObjectBuilder pairs=Json.createObjectBuilder();
+				pairs.add("alarmtype", rs.getString(5));
+				pairs.add("alarmvalue", rs.getString(6));
+				pairs.add("localtime", rs.getString(7));
+				
+				rowBuilder.add(pairs);
+				
+				resultsBuilder.add(rowBuilder);
+				
+				if(rs.getLong(1)>alarmWhen) {
+					//New latest alarm time.
+					latestAlarmTime=rs.getLong(1);
+				}
+				
+			}
+		} else {
+			log.warn("Unexpected result from executing alarmStatement");
+		}
+		
+		if(lastFroaConfigTime==0) {
+			lastFroaConfigTime=absoluteStartTime/1000;	//These are second values.
+		}
+		
+		if(froaStatement==null) {
+			froaStatement=dbconn.prepareStatement("SELECT mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,inf_rate,starttime,patient_id,session,endtime,bp_numeric FROM froa_config WHERE starttime>? OR endtime>?");
+		}
+		long froaWhen=lastFroaConfigTime;	//alarmWhen is a value in seconds, to match that in the table
+		froaStatement.setLong(1,froaWhen);
+		froaStatement.setLong(2,froaWhen);
+		//latestFroaTime is a value in seconds, to match that in the table - it holds the latest time we encounter processing the upcoming results.
+		long latestFroaTime=froaWhen;
+		if(froaStatement.execute()) {
+			//We have a result set
+			ResultSet rs=froaStatement.getResultSet();
+			while(rs.next()) {
+				JsonArrayBuilder rowBuilder=Json.createArrayBuilder();
+				rowBuilder.add(rs.getString(10)); 	//MRN
+				rowBuilder.add("ClosedLoopControl");	//SOURCE
+				rowBuilder.add("A");				//SOURCETYPE=APPLICATION
+				int testTime=0;
+				//Get the starttime as a test value...
+				testTime=rs.getInt(9);
+				boolean startOfTherapy=true;
+				if(rs.wasNull()) {
+					//No start time, so there SHOULD be an endtime
+					testTime=rs.getInt(12);
+					startOfTherapy=false;
+					if(rs.wasNull()) {
+						log.error("Illegal froa_config with no start OR end time");
+						continue;
+					}
+				}
+				rowBuilder.add(testTime);
+				if(startOfTherapy) {
+					rowBuilder.add(5);	//THERAPY START
+				} else {
+					rowBuilder.add(6);	//THERAPY END
+				}
+				//If we got really flash here, we could use ResultSetMetaData to get the column names, and loop through all the columns
+				//to ge the key names that we wanted, and set the values from the column in the result set.  Definitely a TODO: use meta data!
+				JsonObjectBuilder pairs=Json.createObjectBuilder();
+				pairs.add("mode",rs.getInt(1));
+				pairs.add("target_sys",rs.getInt(2));
+				pairs.add("target_dia",rs.getInt(3));
+				pairs.add("sys_alarm",rs.getInt(4));
+				pairs.add("dia_alarm",rs.getInt(5));
+				pairs.add("pump_udi",rs.getString(6));
+				pairs.add("bp_udi",rs.getString(7));
+				pairs.add("bp_numeric", rs.getString(13));
+				pairs.add("inf_rate",rs.getFloat(8));
+				//starttime is used in the event object, so we don't include it here
+				//patientid is used in the event object, so we don't include it here
+				String testSession=rs.getString(11);
+				if(rs.wasNull()) {
+					System.err.println("Null session...");
+					testSession="MISSING!";
+				}
+				pairs.add("session",testSession );
+				//endtime is used in the event object if it exists.
+
+				rowBuilder.add(pairs);
+				
+				resultsBuilder.add(rowBuilder);
+				
+				if(testTime>froaWhen) {
+					//New latest alarm time.
+					latestFroaTime=testTime;
+				}
+				
+			}
+		} else {
+			log.warn("Unexpected result from executing alarmStatement");
+		}
+		
+		
+		
+		
+		JsonArray allRows=resultsBuilder.build();
+		JsonObjectBuilder builder=Json.createObjectBuilder();
+		builder.add("sessionid", transferSession);
+		//TODO: Do we want the current patient id in the payload, or are we exporting all of them?
+		//builder.add("patientid", currentPatient.mrn);
+		builder.add("payload", allRows);
+		String jsonPayload=builder.build().toString();
+		log.info("About to call sendEventsOverApi with "+allRows.size()+" elements");
+		log.info("Payload is "+jsonPayload);
+		if(sendEventsOverApi(jsonPayload)) {
+			/*
+			 * Set the lastEvents variable to be equal to the latest time seen in any record.
+			 * This ensures that the next pass will not include any of the records we've already handled.
+			 */
+			lastAlarmsTime=latestAlarmTime;
+			lastFroaConfigTime=latestFroaTime;
+			return true;
+		}
+		return false;
+		
+		//return false;
+	}
 
 	private boolean sendNumericsOverApi(String jsonPayload) {
 		try {
@@ -415,6 +746,63 @@ public class OpenEMRTestApplication {
 			log.error("Exception sending samples", e);
 		} catch (IOException e) {
 			log.error("Exception sending samples", e);
+		}
+		return false;
+	}
+	
+	private boolean sendPatientDeviceOverApi(String jsonPayload) {
+		try {
+			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/patientdevice");
+			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
+			numericsPost.setEntity(new StringEntity(jsonPayload));
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(numericsPost);
+			response.getStatusLine();
+			return true;
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception sending samples", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception sending samples", e);
+		} catch (IOException e) {
+			log.error("Exception sending samples", e);
+		}
+		return false;
+	}
+	
+	private boolean sendCommandsOverApi(String jsonPayload) {
+		try {
+			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/commands");
+			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
+			numericsPost.setEntity(new StringEntity(jsonPayload));
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(numericsPost);
+			response.getStatusLine();
+			return true;
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception sending commands", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception sending commands", e);
+		} catch (IOException e) {
+			log.error("Exception sending commands", e);
+		}
+		return false;
+	}
+	
+	private boolean sendEventsOverApi(String jsonPayload) {
+		try {
+			HttpPost numericsPost=new HttpPost("http://"+servername.getText()+"/apis/api/openice/events");
+			numericsPost.setHeader("Authorization", "Bearer "+accessToken.getText());
+			numericsPost.setEntity(new StringEntity(jsonPayload));
+			CloseableHttpClient client=HttpClients.createDefault();
+			CloseableHttpResponse response=client.execute(numericsPost);
+			response.getStatusLine();
+			return true;
+		} catch (UnsupportedEncodingException e) {
+			log.error("Exception sending commands", e);
+		} catch (ClientProtocolException e) {
+			log.error("Exception sending commands", e);
+		} catch (IOException e) {
+			log.error("Exception sending commands", e);
 		}
 		return false;
 	}

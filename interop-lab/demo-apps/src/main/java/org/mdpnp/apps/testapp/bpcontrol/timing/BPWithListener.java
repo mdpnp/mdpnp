@@ -90,19 +90,6 @@ public class BPWithListener {
 		objective.unique_device_identifier=monitor.getUDI();
 		writer.write(objective, InstanceHandle_t.HANDLE_NIL);
 		log.info("Published an objective for delta "+delta);
-//		try {
-//			if(controlStatement==null && dbconn!=null) {
-//				controlStatement=dbconn.prepareStatement("INSERT INTO flowrequest(t_millis, target_udi, requestedRate) VALUES (?,?,?)");
-//			}
-//			if(controlStatement!=null) {
-//				controlStatement.setLong(1, System.currentTimeMillis()/1000);
-//				controlStatement.setString(2, objective.unique_device_identifier);
-//				controlStatement.setFloat(3, objective.newFlowRate);
-//				controlStatement.execute();
-//			}
-//		} catch (SQLException sqle) {
-//			log.error("Could not record request in database", sqle);
-//		}
 	}
 	
 	public void selectFile() {

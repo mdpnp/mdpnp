@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -893,6 +894,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		} else {
 			closedLoopAlgo();
 		}
+		
+		createNumericDevice();
+		
 		//Maybe we can use a different session identifier later, but this is handy for now.
 		sessionid=DeviceIdentityBuilder.randomUDI();
 		String mrnString=currentPatient.mrn;
@@ -903,6 +907,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		appConfig.sys_alarm=(int)systolicAlarm.getValue();
 		appConfig.dia_alarm=(int)diastolicAlarm.getValue();
 		appConfig.bp_udi=monitor.getUDI();
+		appConfig.bp_numeric=numericBPDevice.getUniqueDeviceIdentifier();
 		appConfig.pump_udi=pump.getUDI();
 		double rate=(double)infusionRate.getValue();
 		appConfig.inf_rate=(float)rate;
@@ -914,7 +919,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			appConfig.patientid=0;
 		}
 		appConfig.writeToDb();
-		createNumericDevice();
+		
 		startBPUpdateAlarmThread();
 		startBPValueMonitor();
 		
@@ -1049,11 +1054,14 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		objective.unique_device_identifier=pumpUDI;
 		try {
 			if(flowStatement==null) {
-				flowStatement=dbconn.prepareStatement("INSERT INTO flowrequest(t_millis, target_udi, requestedRate) VALUES (?,?,?)");
+				flowStatement=dbconn.prepareStatement("INSERT INTO flowrequest(t_millis, target_udi, target_type, requestedRate, source_id, source_type) VALUES (?,?,?,?,?,?)");
 			}
 			flowStatement.setLong(1, System.currentTimeMillis()/1000);
 			flowStatement.setString(2, objective.unique_device_identifier);
-			flowStatement.setFloat(3, objective.newFlowRate);
+			flowStatement.setString(3, "D");
+			flowStatement.setFloat(4, objective.newFlowRate);
+			flowStatement.setString(5, getClass().getSimpleName());
+			flowStatement.setString(6, "A");
 			flowStatement.execute();
 			recording=true;	//If we set the flow rate, remember to record samples.
 			recorded++;
@@ -1189,26 +1197,45 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		if(pumpUpdateAlarmThread!=null) {
 			pumpUpdateAlarmThread.interrupt();
 		}
+		stopBPValueMonitor();
+		recordSessionEnd();
+		//Move the closure of the numeric device to after the recordSessionEnd() call,
+		//as recordSessionEnd() makes use of the UDI for numericBPDevice.
 		if(numericBPDevice!=null) {
 			numericBPDevice.shutdown();
 			numericBPDevice=null;	//Prevent any further writes from writeNumerics.
 			numericBPDeviceAdapter.stop();
 			numericBPDeviceAdapter=null;
 		}
-		stopBPValueMonitor();
-		recordSessionEnd();
 		startButton.setText("Start");
 	}
 
 	private void recordSessionEnd() {
 		try {
-			if(endStatement==null) {
-				endStatement=dbconn.prepareStatement("UPDATE froa_config SET endtime=? WHERE session=?");
+			Device monitor=bpsources.getSelectionModel().getSelectedItem();
+			Device pump=pumps.getSelectionModel().getSelectedItem();
+			String mrnString=currentPatient.mrn;
+			AppConfig appConfig=new AppConfig();
+			appConfig.mode=openRadio.isSelected() ? 0 : 1;
+			appConfig.target_sys=(int)targetSystolic.getValue();
+			appConfig.target_dia=(int)targetDiastolic.getValue();
+			appConfig.sys_alarm=(int)systolicAlarm.getValue();
+			appConfig.dia_alarm=(int)diastolicAlarm.getValue();
+			appConfig.bp_udi=monitor.getUDI();
+			appConfig.bp_numeric=numericBPDevice.getUniqueDeviceIdentifier();
+			appConfig.pump_udi=pump.getUDI();
+			double rate=(double)infusionRate.getValue();
+			appConfig.inf_rate=(float)rate;
+			appConfig.sessionid=sessionid;
+			try {
+				appConfig.patientid=Integer.parseInt(mrnString);
+			} catch (NumberFormatException nfe) {
+				log.warn("Non-numeric mrn "+mrnString);
+				appConfig.patientid=0;
 			}
-			endStatement.setInt(1, (int)(System.currentTimeMillis()/1000));
-			endStatement.setString(2, sessionid);
-			endStatement.execute();
-		} catch (SQLException sqle) {
+			appConfig.endOfSession=true;
+			appConfig.writeToDb();
+		} catch (Exception sqle) {
 			log.error("Failed to record session end time in database",sqle);
 		}
 	}
@@ -1251,22 +1278,60 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			writeToDb();
 		}
 
+		/**
+		 * Alarm statement for froa_bp_alarm
+		 */
 		private PreparedStatement stmt;
+		
+		/**
+		 * alarms_for_export statement
+		 */
+		private PreparedStatement exportStmt;
 
 		private void writeToDb() {
+			int t=(int)(System.currentTimeMillis()/1000);	//Make sure we use the same one for both froa_bp_alarm and alarms_for_export.
 			try {
 				if(stmt==null) {
 					stmt=dbconn.prepareStatement("INSERT INTO froa_bp_alarm(alarmtype,value,t_sec) VALUES (?,?,?)");
 				}
 				stmt.setInt(1, type);
 				stmt.setInt(2, value);
-				stmt.setInt(3, (int)(System.currentTimeMillis()/1000));
+				stmt.setInt(3, t);
 				stmt.execute();
 			} catch (SQLException sqle) {
 				log.warn("Could not create db record of alarm", sqle);
 			}
+			try {
+				if(exportStmt==null) {
+					exportStmt=dbconn.prepareStatement("INSERT INTO alarms_for_export(t_sec, mrn, source, sourcetype, alarmtype, alarmvalue, local_time) VALUES (?,?,?,?,?,?,?)");
+				}
+				exportStmt.setInt(1, t);
+				exportStmt.setString(2,currentPatient.mrn);
+				exportStmt.setString(3, getClass().getSimpleName());
+				exportStmt.setString(4, "A");
+				exportStmt.setString(5, type==BP_ALARM_SYS ? "Systolic" : "Diastolic");
+				exportStmt.setString(6, String.valueOf(value));
+				exportStmt.setString(7, DateFormat.getDateTimeInstance().format( new Date(t*1000L) ) );
+				exportStmt.execute();
+			} catch (SQLException sqle) {
+				log.warn("Could not create export record of alarm", sqle);
+			}
 		}
 
+	}
+	
+	/**
+	 * Create a simple narrative representation of the alarm condition.
+	 * @param type
+	 * @param value
+	 * @param time
+	 * @return
+	 */
+	private String createAlarmDescription(int type, int value, int time) {
+		Date narrativeDate=new Date(time*1000L);
+		System.err.println("narrativeDate is "+narrativeDate);
+		String narrativeString=DateFormat.getDateTimeInstance().format(narrativeDate);
+		return (type==BP_ALARM_SYS ? "Systolic " : "Diastolic ") + "reached value "+value+" at "+narrativeString+" locally";
 	}
 
 	/**
@@ -1306,6 +1371,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		 */
 		String bp_udi;
 		/**
+		 * The UDI for the numeric device that produces BP numerics from waveforms
+		 */
+		String bp_numeric;
+		/**
 		 * Infusion rate
 		 */
 		float inf_rate;
@@ -1317,13 +1386,22 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		 * The id of the session
 		 */
 		String sessionid;
+		
+		/**
+		 * True if the session is ending.
+		 */
+		boolean endOfSession;
 
 		private PreparedStatement stmt;
 
 		void writeToDb() {
 			try {
-				if(stmt==null) {
-					stmt=dbconn.prepareStatement("INSERT INTO froa_config(mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,inf_rate,starttime,patient_id,session) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+				if(endOfSession) {
+					//Write an object with end time
+					stmt=dbconn.prepareStatement("INSERT INTO froa_config(mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,bp_numeric,inf_rate,endtime,patient_id,session) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+				} else {
+					//Write an object with start time
+					stmt=dbconn.prepareStatement("INSERT INTO froa_config(mode,target_sys,target_dia,sys_alarm,dia_alarm,pump_udi,bp_udi,bp_numeric,inf_rate,starttime,patient_id,session) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 				}
 				stmt.setInt(1,mode);
 				stmt.setInt(2,target_sys);
@@ -1332,10 +1410,11 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				stmt.setInt(5,dia_alarm);
 				stmt.setString(6, pump_udi);
 				stmt.setString(7, bp_udi);
-				stmt.setFloat(8, inf_rate);
-				stmt.setInt(9, (int)(System.currentTimeMillis()/1000));
-				stmt.setInt(10, patientid);
-				stmt.setString(11, sessionid);
+				stmt.setString(8, bp_numeric);
+				stmt.setFloat(9, inf_rate);
+				stmt.setInt(10, (int)(System.currentTimeMillis()/1000));
+				stmt.setInt(11, patientid);
+				stmt.setString(12, sessionid);
 				stmt.execute();
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
