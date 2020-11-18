@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.sim.ScenarioSimControl">
+  <center>
+    <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="-1.0" prefWidth="-1.0">
+      <content>
+        <AnchorPane id="Content" minHeight="0.0" minWidth="0.0">
+          <children>
+            <VBox fx:id="main">
+            	<HBox>
+            		<Button fx:id="selectFile">Select File</Button>
+            		<Label fx:id="fileNameLabel"/>
+            		<VBox.margin><Insets><bottom>10</bottom></Insets></VBox.margin>
+            	</HBox>
+            	<HBox>
+            		<Label>Speed</Label>
+            		<TextField fx:id="speedField"/>
+            		<VBox.margin><Insets><bottom>10</bottom></Insets></VBox.margin>
+            	</HBox>
+            	<Button fx:id="run" onAction="#runSequence">Run</Button>
+				<VBox.margin><Insets><bottom>10</bottom></Insets></VBox.margin>
+            	<Label>Pending Metrics</Label>
+            	<TextArea fx:id="pendingMetrics"/>
+            	<Label>Published Metrics</Label>
+            	<TextArea fx:id="publishedMetrics"/>
+            </VBox>
+          </children>
+        </AnchorPane>
+      </content>
+    </ScrollPane>
+  </center>
+</BorderPane>
