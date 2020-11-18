@@ -2,10 +2,13 @@ package org.mdpnp.apps.testapp.closedloopcontrol;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -132,6 +135,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	@FXML private Label lastBPUpdate;
 	@FXML private Button startButton;
 	@FXML private Label patientNameLabel;
+	@FXML private Label currentPumpSpeed;
 	
 	
 	private final String FLOW_RATE=rosetta.MDC_FLOW_FLUID_PUMP.VALUE;
@@ -889,6 +893,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         
         lastPumpUpdate.textProperty().bind(Bindings.format("Last pump update %s", flowRateFromSelectedPump[0].presentation_timeProperty()));
         lastBPUpdate.textProperty().bind(Bindings.format("Last BP update %s", sampleFromSelectedMonitor[0].presentation_timeProperty()));
+        currentPumpSpeed.textProperty().bind(Bindings.format("Current flow rate (ml/hour) %.2f", flowRateFromSelectedPump[0].valueProperty()));
+        currentPumpSpeed.setFont(Font.font(24));
 		if(openRadio.isSelected()) {
 			
 		} else {
@@ -898,7 +904,14 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		createNumericDevice();
 		
 		//Maybe we can use a different session identifier later, but this is handy for now.
-		sessionid=DeviceIdentityBuilder.randomUDI();
+		String hostname=null;
+		try {
+			hostname=InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			log.warn("Could not get local hostname - using localhost instead");
+		}
+		DateFormat df=SimpleDateFormat.getDateTimeInstance();
+		sessionid="FROA_"+currentPatient.mrn+"_"+hostname+"_"+df.format(new Date());
 		String mrnString=currentPatient.mrn;
 		AppConfig appConfig=new AppConfig();
 		appConfig.mode=openRadio.isSelected() ? 0 : 1;

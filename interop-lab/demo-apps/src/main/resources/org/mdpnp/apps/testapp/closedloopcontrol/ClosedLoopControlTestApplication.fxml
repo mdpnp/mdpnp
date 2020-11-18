@@ -18,6 +18,7 @@
 		    <children>
 			  <Label fx:id="lastPumpUpdate">Last pump update</Label>
 			  <Label fx:id="lastBPUpdate">Last BP update</Label>
+			  <Label fx:id="currentPumpSpeed">Current Pump Speed</Label>
 			</children>
           </VBox>
 		</children>
