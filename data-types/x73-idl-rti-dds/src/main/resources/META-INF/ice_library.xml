@@ -19,7 +19,8 @@
 <dds version="5.1.0">
   <qos_library name="ice_library">
     <!-- Using a singular default profile for now -->
-    <qos_profile name="default_profile" is_default_qos="true">
+    <qos_profile name="default_profile" base_name="BuiltinQosLib::Generic.Security" is_default_qos="true">
+	    <!--<qos_profile name="default_profile" is_default_qos="true">-->
       <participant_qos>
         <!--
           useful info on the subject:
@@ -203,7 +204,7 @@
              but not part of the standard -->
             <element>
               <name>dds.transport.UDPv4.builtin.send_ping</name>
-              <value>false</value>
+              <value>0</value>
             </element>
             <element>
               <name>dds.transport.UDPv4.builtin.ignore_loopback_interface</name>
@@ -217,7 +218,38 @@
               <name>ignore_loopback_interface</name>
               <value>0</value>
             </element>
+            <!-- DDS Secure configuration artifacts. -->
+            <element>
+              <name>dds.sec.auth.identity_ca</name>
+              <value>file:$(SEC_ARTIFACT_DIR)/cert/root-ca-cert.pem</value>
+            </element>
+            <element>
+              <name>dds.sec.auth.identity_certificate</name>
+              <value>file:$(SEC_ARTIFACT_DIR)/cert/a-cert.pem</value>
+            </element>
+            <element>
+              <name>dds.sec.auth.private_key</name>
+              <value>file:$(SEC_ARTIFACT_DIR)/cert/a-key.pem</value>
+            </element>
+            <element>
+              <name>dds.sec.access.permissions_ca</name>
+              <value>file:$(SEC_ARTIFACT_DIR)/cert/root-ca-cert.pem</value>
+            </element>
+            <element>
+              <name>dds.sec.access.governance</name>
+              <value>file:$(SEC_ARTIFACT_DIR)/xml/GovernanceEncryptPayload.p7s</value>
+            </element>
+            <element>
+              <name>dds.sec.access.permissions</name>
+              <value>file:$(SEC_ARTIFACT_DIR)/xml/PermissionsA.p7s</value>
+            </element>
           </value>
+	  <value>
+	    <element>
+	      <name>com.rti.serv.secure.logging.log_file</name>
+	      <value>log.txt</value>
+            </element>
+	</value>
         </property>
       </participant_qos>
 

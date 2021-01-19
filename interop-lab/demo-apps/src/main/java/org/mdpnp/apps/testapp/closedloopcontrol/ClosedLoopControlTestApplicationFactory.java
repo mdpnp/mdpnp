@@ -7,6 +7,8 @@ import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
+import org.mdpnp.apps.testapp.patient.EMRFacade;
+import org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -50,6 +52,8 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
         
         final MDSHandler mdsHandler=(MDSHandler)parentContext.getBean("mdsConnectivity",MDSHandler.class);
         mdsHandler.start();
+
+        final EMRFacade emr=(EMRFacade) parentContext.getBean("emr");
 		
 		FXMLLoader loader = new FXMLLoader(ClosedLoopControlTestApplication.class.getResource("ClosedLoopControlTestApplication.fxml"));
 
@@ -57,7 +61,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
        
         final ClosedLoopControlTestApplication controller = ((ClosedLoopControlTestApplication) loader.getController());
         
-        controller.set(deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler, vitalModel);
+        controller.set(parentContext, deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler, vitalModel, subscriber, emr);
         
         controller.start(eventLoop, subscriber);
 		
@@ -97,7 +101,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
 			}
 			
 			public int getPreferredHeight() {
-				return 600;
+				return 800;
 			}
 			
 		};

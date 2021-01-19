@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.openemr.OpenEMRTestApplication">
+<center>
+  <VBox fx:id="bpGraphBox">
+  <Label>Server Name</Label>
+  <TextField fx:id="servername"></TextField>	
+  <Label>Username</Label>
+  <TextField fx:id="username">admin</TextField>
+  <Label>Password</Label>
+  <TextField fx:id="password">i-03a09585277e0bb64</TextField>
+  <Label>Scope</Label>
+  <TextField fx:id="scope">default</TextField>
+  <Label>Access Token</Label>
+  <TextField fx:id="accessToken" editable="false"/>
+  <!--
+  <Button fx:id="refresh" onAction="#refresh">Refresh</Button>
+  <Label>Sessions</Label>
+  <ComboBox fx:id="sessionList" promptText="Select a session"/>
+  <Button fx:id="transmit" onAction="#sendData">To OpenEMR</Button>
+  -->
+  </VBox>
+  
+</center>
+</BorderPane>

@@ -4,6 +4,7 @@ import java.net.URL;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.devices.MDSHandler;
@@ -52,15 +53,15 @@ public class BPControllerApplication {
 
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
 		//Rely on addition of metrics to add devices...
-		numeric.addListener(new ListChangeListener<NumericFx>() {
+		samples.addListener(new ListChangeListener<SampleArrayFx>() {
 			@Override
-			public void onChanged(Change<? extends NumericFx> change) {
+			public void onChanged(Change<? extends SampleArrayFx> change) {
 				while(change.next()) {
-					change.getAddedSubList().forEach( n -> {
-						if(n.getMetric_id().equals(rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE)) {
+					change.getAddedSubList().forEach( s -> {
+						if(s.getMetric_id().equals(rosetta.MDC_PRESS_BLD_ART_ABP.VALUE)) {
 							//Flow rate published - add to panel.  addPumpToMainPanel avoids duplication of devices anyway,
 							//so just call it here.
-							currentDeviceId=n.getUnique_device_identifier();
+							currentDeviceId=s.getUnique_device_identifier();
 							deviceID.setText(currentDeviceId);
 						}
 					});

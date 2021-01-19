@@ -1,0 +1,78 @@
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----FFA7908DCA382CC70E5BD5847984A32F"
+
+This is an S/MIME signed message
+
+------FFA7908DCA382CC70E5BD5847984A32F
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/6.0.0/dds_security_governance.xsd">
+    <domain_access_rules>
+        <domain_rule>
+            <domains>
+                <id_range>
+                    <min>10</min>
+                </id_range>
+            </domains>
+            <allow_unauthenticated_participants>false</allow_unauthenticated_participants>
+            <enable_join_access_control>true</enable_join_access_control>
+            <discovery_protection_kind>SIGN</discovery_protection_kind>
+            <liveliness_protection_kind>SIGN</liveliness_protection_kind>
+            <rtps_protection_kind>SIGN</rtps_protection_kind>
+            <topic_access_rules>
+                <topic_rule>
+                    <topic_expression>*</topic_expression>
+                    <enable_discovery_protection>true</enable_discovery_protection>
+                    <enable_liveliness_protection>true</enable_liveliness_protection>
+                    <enable_read_access_control>false</enable_read_access_control>
+                    <enable_write_access_control>true</enable_write_access_control>
+                    <metadata_protection_kind>SIGN</metadata_protection_kind>
+                    <data_protection_kind>ENCRYPT</data_protection_kind>
+                </topic_rule>
+            </topic_access_rules>
+        </domain_rule>
+    </domain_access_rules>
+</dds>
+
+------FFA7908DCA382CC70E5BD5847984A32F
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+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
+
+------FFA7908DCA382CC70E5BD5847984A32F--
+

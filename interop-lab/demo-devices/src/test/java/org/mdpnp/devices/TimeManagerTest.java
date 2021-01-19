@@ -49,9 +49,9 @@ public class TimeManagerTest {
         f = ff.getObject();
         
         
-        dpf1 = new DomainParticipantFactory(0);
-        dpf2 = new DomainParticipantFactory(0);
-        dpf3 = new DomainParticipantFactory(0);
+        dpf1 = new DomainParticipantFactory(10);
+        dpf2 = new DomainParticipantFactory(10);
+        dpf3 = new DomainParticipantFactory(10);
         
         // Creates a heartbeating "Device" in partition A
         s1 = new SubscriberFactory(dpf1.getObject(), "A");

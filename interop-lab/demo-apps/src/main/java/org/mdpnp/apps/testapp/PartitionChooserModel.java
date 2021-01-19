@@ -51,6 +51,11 @@ public class PartitionChooserModel {
     }
         
     public void activate(List<String> partitions) {
+    	
+    	for(String p : partitions) {
+    		System.err.println("partition in activate is "+p);
+    	}
+    	
         SubscriberQos sQos = new SubscriberQos();
         
         subscriber.get_qos(sQos);

@@ -12,6 +12,12 @@
  ******************************************************************************/
 apply plugin: 'java'
 
+//For RTI 6.x, use an RTI_INSTALL_DIR to get RTI artifacts, rather than a built in one.
+ext {
+  rtiDdsGenProgram = System.getenv("RTI_INSTALL_DIR") + File.separator + "bin" + File.separator + "rtiddsgen"
+  rtiNddsJava = System.getenv("RTI_INSTALL_DIR") + File.separator + "resource" + File.separator + "app" + File.separator + "lib" + File.separator + "java" + File.separator + "nddsjava.jar"
+}
+
 // jplourde hacked this together March 13 with
 
 // By default we build (no task specified)
@@ -25,6 +31,7 @@ configurations { rtiddsgen }
 
 def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/main/java').getPath()
 def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getPath()
+def IDL_DIR = "-I"+new File(project.projectDir, '../x73-idl/src/main/idl').getPath()
 
 // add generated source code to the main java sourceset
 sourceSets {
@@ -44,7 +51,7 @@ jar.doFirst {
 
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
-  compile files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
+  compile files(rtiNddsJava)
   //This next slf4j entry appears to have been a missing dependency somehow?
   //Rather than a migration from mdpnp artifactory...
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
@@ -54,7 +61,7 @@ dependencies {
 
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
-  rtiddsgen files('../../artifacts/rtiddsgen-resource-5.1.zip','../../artifacts/rtiddsgen-5.1.jar','../../artifacts/cpp-bin-1.2.8-SNAPSHOT.zip')
+  //For DDS 6.X, rtiddsgen program is a shell script that configures its own classpath, so the rtidds* files are redundant
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
   rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
   rtiddsgen group: 'org.aspectj', name: 'aspectjrt', version: '1.7.2'
@@ -83,52 +90,12 @@ task rtiddsgenExplodeResources(type: Copy) {
 // Runs the RTI DDS Generate code generator for all idl files under src/main/idl
 task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
   doLast {
-  //println project(':x73-idl').build.source
-  //println project(':x73-idl').projectDir
-  //  FileCollection idlFiles = project(':x73-idl').build.source
-  //For gradle 5 where build task cannot be overridden, build is now buildZip
-  FileTree idlFiles = project(':data-types:x73-idl').buildZip.source
-
-  //println idlFiles
-  String loc = 'build/rtiddsgen/jcpp'
-
-  if(System.properties['os.name'].toLowerCase().contains("windows")) {
-    loc = loc + '.cmd'
-  }
-
-  String myMain = 'com.rti.ndds.nddsgen.Main'
-  List<String> myArgs = ['-language', 'Java']
-  myArgs.addAll(['-ppPath', loc])
-  myArgs.addAll(['-d', GENERATED_JAVA_SOURCES])
-  myArgs.addAll(['-ppOption', '-I'+project(':data-types:x73-idl').projectDir.getPath()+'/src/main/idl'])
-  myArgs.add('-replace')
-  myArgs.add('-inputIdl')
-  
-  new ByteArrayOutputStream().withStream { os ->
-  
-      for(File f : idlFiles) {
-        println 'Generating from ' + f.name
-        myArgs.add(f.getPath())
-        try {
-            javaexec {
-              classpath = configurations.rtiddsgen
-              jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
-              main = myMain
-              args = myArgs
-              standardOutput = os
-            }
-        } finally {
-            // The jcpp preprocessor will not recognize these #pragmas used by the PrismTech code generator
-            // This will capture and hide warnings from the preprocessor that make people think that things have gone
-            // more wrong than they have
-            // This in a finally block to ensure we do print to screen messages related any errors that may have abnormally 
-            // terminated the code generator.
-            print os.toString().replaceAll(/.*warning: Unknown #pragma: keylist\r?\n/, "")
-        }
-        os.reset()
-        myArgs.remove(myArgs.size()-1)
+    FileTree idlFiles = project(':data-types:x73-idl').buildZip.source
+    for(File f : idlFiles) {
+      exec {
+        commandLine rtiDdsGenProgram, '-language', 'Java', '-d', GENERATED_JAVA_SOURCES , '-ppOption', IDL_DIR, '-replace', '-inputIdl', f.getPath()
       }
-  }
+    }
   }
 }
 

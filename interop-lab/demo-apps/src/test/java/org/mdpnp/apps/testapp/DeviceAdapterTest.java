@@ -21,7 +21,7 @@ public class DeviceAdapterTest {
     private final static Logger log = LoggerFactory.getLogger(DeviceAdapterTest.class);
 
     static {
-        System.setProperty("mdpnp.domain", "0");
+        System.setProperty("mdpnp.domain", "10");
     }
 
     private long adapterUptime = Long.getLong("test.timeout", 5);

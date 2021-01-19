@@ -22,6 +22,31 @@ import java.util.concurrent.Executor;
  */
 public abstract class EMRFacade {
 
+	/**
+	 * An enum to track the different possible types.
+	 * @author simon
+	 *
+	 */
+	public static enum EMRType {
+		UNKNOWN,
+		JDBC_ONLY,
+		FHIR_ONLY,
+		JDBC_AND_FHIR,
+		OPENEMR
+	}
+
+	/**
+	 * An instance variable denoting which of the possible EMRType
+	 * values this instance provides.  Used so that an OpenICE application
+	 * class that is receiving a bean of type emr can tell if that bean is
+	 * an OpenEMR instance without checking the class of the bean.
+	 */
+	protected EMRType emrType=EMRType.UNKNOWN;
+
+	public EMRType getEMRType() {
+		return emrType;
+	}
+
     private final ListHandler listHandler;
 
     public EMRFacade(Executor executor) {
@@ -140,6 +165,7 @@ public abstract class EMRFacade {
 
         private DataSource         jdbcDB;
         private String             fhirEMRUrl;
+        private String             openEMRUrl;
         private FhirContext        fhirContext;
         private ControlFlowHandler controlFlowHandler;
         private MDSHandler         mdsHandler;
@@ -151,6 +177,13 @@ public abstract class EMRFacade {
             fhirEMRUrl = url;
         }
         
+		public String getOpenEMRUrl() {
+			return openEMRUrl;
+		}
+		public void setOpenEMRUrl(String openEMRUrl) {
+			this.openEMRUrl = openEMRUrl;
+		}
+
         public FhirContext getFhirContext() {
             return fhirContext;
         }
@@ -184,8 +217,13 @@ public abstract class EMRFacade {
         @Override
         public EMRFacade getObject() throws Exception {
             if(instance == null) {
+				//For now, OpenEMR becomes the number one choice.
+				if(openEMRUrl!=null && openEMRUrl.length()>0) {
+					instance=new OpenEMRImpl(new ExecutorFx());
+					((OpenEMRImpl)instance).setUrl(openEMRUrl);
+				}
 
-                if(fhirEMRUrl == null || fhirEMRUrl.isEmpty()) {
+				else if(fhirEMRUrl == null || fhirEMRUrl.isEmpty()) {
                     if(jdbcDB == null)
                         throw new IllegalStateException("JDBC database cannot be null");
                     instance = new JdbcEMRImpl(new ExecutorFx());

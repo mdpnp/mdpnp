@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.bpcontrol.timing.BPTimingTestApplication">
+<center>
+  <VBox fx:id="monitors" spacing="2">
+  
+  
+  </VBox>
+
+</center>
+<right>
+  <VBox spacing="2">
+    <children>
+	    <Label>Press start after loading the file</Label>
+	    <Button fx:id="start" onAction="#startMonitors">Start</Button>
+	</children>
+  </VBox>
+</right>
+</BorderPane>

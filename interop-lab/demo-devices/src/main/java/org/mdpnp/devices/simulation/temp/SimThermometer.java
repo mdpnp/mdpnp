@@ -16,6 +16,7 @@ import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 
+import com.rti.dds.infrastructure.Tag;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
@@ -34,6 +35,7 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
         
         @Override
         protected void receiveTemp1(float temperature1, DeviceClock.Reading time) {
+        	Tag tag=new Tag("ICE_METRIC_TYPE", "TEMPERATURE");
             // TODO assign a unit type
             SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, rosetta.MDC_TEMP_BLD.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, time);

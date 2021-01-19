@@ -26,7 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class SimMultiparameterTest {
 
-    private static final int domainId=0;
+    private static final int domainId=10;
 
 
     @Test
