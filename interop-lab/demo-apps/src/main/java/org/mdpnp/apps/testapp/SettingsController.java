@@ -28,6 +28,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -56,6 +57,10 @@ public class SettingsController {
     TextField fhirServer;
     @FXML
     TextField emrServer;
+    @FXML
+    TextField username;
+    @FXML
+    PasswordField password;
 
     @FXML
     VBox serialPortsContainer;
@@ -164,7 +169,6 @@ public class SettingsController {
             gridPane.getChildren().remove(serialPortsContainer);
             if(!gridPane.getChildren().contains(fhirServerLabel)) { gridPane.getChildren().add(fhirServerLabel); }
             if(!gridPane.getChildren().contains(fhirServer)) { gridPane.getChildren().add(fhirServer); }
-            ready.set(true);
             start.set("Start " + app);
             break;
         }
@@ -268,9 +272,25 @@ public class SettingsController {
 
         };
         
+        ChangeListener userPassListener = new ChangeListener<String>() {
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				//We don't really care about the arguments - we just want to know username and password are populated
+				if(username.getText().length()>0 && password.getText().length()>0) {
+					ready.set(true);
+					return;
+				}
+				ready.set(false);
+			}
+        };
+
         applications.setOnAction(handler);
         deviceType.setOnAction(handler);
         
+        username.textProperty().addListener(  userPassListener   );
+        password.textProperty().addListener(  userPassListener   );
+
         selectedApp.bind(applications.getSelectionModel().selectedItemProperty());
         selectedDevice.bind(deviceType.getSelectionModel().selectedItemProperty());
         domain.bind(domainId.textProperty());
@@ -342,6 +362,14 @@ public class SettingsController {
 
     public void setEmrServerName(final String fhirServerName) {
         this.emrServerNameProperty().set(fhirServerName);
+    }
+
+    public String getUsername() {
+    	return this.username.getText();
+    }
+
+    public String getPassword() {
+    	return this.password.getText();
     }
 
     

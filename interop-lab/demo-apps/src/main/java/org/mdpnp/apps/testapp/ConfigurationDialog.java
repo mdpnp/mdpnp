@@ -23,7 +23,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebView;
@@ -111,6 +114,16 @@ public class ConfigurationDialog {
                     DeviceDriverProvider dt = settingsController.selectedDeviceProperty().get();
                     if (dt == null)
                         return;
+                }
+                if(Application.ICE_Supervisor.equals(app)) {
+                	//Need to login for the supervisor...
+                	String username=settingsController.getUsername();
+                	String password=settingsController.getPassword();
+                	if(!ICELogin.login(username,password)) {
+                		Alert loginFailed=new Alert(AlertType.ERROR,"Logging in failed",new ButtonType[] {ButtonType.OK});
+                		loginFailed.showAndWait();
+                		return;
+                	}
                 }
                 quitPressed = false;
                 currentStage.hide();
