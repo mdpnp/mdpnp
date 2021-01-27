@@ -20,7 +20,14 @@ import java.net.URL;
 import java.util.IllegalFormatCodePointException;
 
 import javafx.application.Platform;
+import javafx.event.EventHandler;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +84,55 @@ public class Main {
 			is.close();
 		}
 	}
+	
+	static class MouseTimer extends Thread {
+		
+		private IceApplication whatToLock;
+		
+		MouseTimer(IceApplication whatToLock) {
+			this.whatToLock=whatToLock;
+			setName("MouseTimerMain");
+		}
+		 
+		private final int COUNTDOWN_FROM=30;
+		
+		private int seconds=COUNTDOWN_FROM;
+		
+		@Override
+		public void run() {
+			while(true) {
+				try {
+					if(whatToLock.isLocked()) {
+						//System.err.println("Already locked...");
+						continue;
+					}
+					sleep(5000);
+					seconds-=5;
+					System.err.println("Seconds is now "+seconds);
+					if(seconds<1) {
+						System.err.println("Need to lock");
+						Platform.runLater(new Runnable() {
+							public void run() {
+								//https://www.xspdf.com/resolution/50032529.html
+								//whatToLock.hide();
+								whatToLock.lockScreen();
+							}
+						});
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		public void reset() {
+			synchronized (this) {
+				seconds=COUNTDOWN_FROM;
+			}
+		}
+		
+	}
 
 	public static class FxApplication extends javafx.application.Application {
 
@@ -109,6 +165,18 @@ public class Main {
 					app = (IceApplication) o;
 
 					try {
+						MouseTimer mouseTimer=new MouseTimer(app);
+						mouseTimer.start();
+						
+						EventHandler<MouseEvent> mouseTimeoutHandler=new EventHandler<MouseEvent>() {
+							@Override
+							public void handle(MouseEvent event) {
+								mouseTimer.reset();
+							}
+						};
+						primaryStage.addEventHandler(MouseEvent.ANY, mouseTimeoutHandler);
+						System.err.println("Added a mouseTimeoutHandler");
+						
 						app.setConfiguration(runConf);
 						app.init();
 						app.start(primaryStage);

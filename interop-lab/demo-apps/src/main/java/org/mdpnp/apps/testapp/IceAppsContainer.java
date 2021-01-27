@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -30,12 +32,16 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.SingleSelectionModel;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -45,6 +51,7 @@ import org.mdpnp.apps.fxbeans.InfusionStatusFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.IceApplicationProvider.AppType;
+import org.mdpnp.apps.testapp.closedloopcontrol.ClosedLoopControlTestApplication;
 import org.mdpnp.apps.testapp.device.DeviceView;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
 import org.mdpnp.apps.testapp.patient.PatientInfo;
@@ -108,10 +115,14 @@ public class IceAppsContainer extends IceApplication {
      * SK - to keep and use for child popup windows
      */
     private Stage parentStage;
+    /**
+     * SK - MUST use a separate stage for the lock screen 
+     */
+    private Stage lockScreenStage;
     
     private Hashtable<Object, Stage> appStageMap;
     private Hashtable<Stage, double[]> coordinates;
-
+    
     public IceAppsContainer() {
 
     }
@@ -199,6 +210,14 @@ public class IceAppsContainer extends IceApplication {
         		
         	});
         	
+        	EventHandler<MouseEvent> mouseTimeoutHandler=new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent event) {
+					mousePing(event);
+				}
+			};
+			newStage.addEventHandler(MouseEvent.MOUSE_MOVED, mouseTimeoutHandler);
+        	
         	
         	
         } else {
@@ -241,6 +260,12 @@ public class IceAppsContainer extends IceApplication {
         panelController.back.setVisible(true);
 //        panelController.content.setCenter(app.getUI());
         panelController.getBack().setOnAction(new GoBackAction(goBackAction));
+    }
+    
+    private void mousePing(Event e) {
+    	//System.err.println("IceAppsContainer got mouse ping");
+    	parentStage.fireEvent(e);
+    	
     }
 
     /**
@@ -363,9 +388,16 @@ public class IceAppsContainer extends IceApplication {
 
             @Override
             public void handle(WindowEvent event) {
+            	
+            	if(locked) {
+            		//Just do nothing.
+            		//System.err.println("setOnHiding handler doing nothing for lock");
+            		return;
+            	}
+            	
                 final ExecutorService refreshScheduler = context.getBean("refreshScheduler", ExecutorService.class);
                 refreshScheduler.shutdownNow();
-
+                
                 for (IceApplicationProvider.IceApp a : activeApps.values()) {
                     String aName = a.getDescriptor().getName();
                     try {
@@ -539,4 +571,63 @@ public class IceAppsContainer extends IceApplication {
         context.destroy();
         super.stop();
     }
+    
+    private boolean locked;
+
+	@Override
+	public void lockScreen() {
+		//Must show a new screen before hiding this one, otherwise we will kill the app.
+		showLockScreen();
+		//We set locked to true here BEFORE hiding any stages, so that we can use the locked boolean
+		//in the app onHiding logic so that we don't actually destroy the apps when we are only hiding
+		//the window in order to lock.
+		locked=true;
+		if(appStageMap!=null) {
+			//Loop through any child windows.
+			//for(Enumeration<Stage> e=coordinates.keys();e.hasMoreElements();) {
+			for(Iterator<Stage> e=appStageMap.values().iterator();e.hasNext();) {
+				Stage s=e.next();
+				s.hide();
+			}
+		}
+		parentStage.hide();
+	}
+
+	@Override
+	public void unlockScreen() {
+		System.err.println("Got unlock call in IceAppsContainer");
+		parentStage.show();
+		if(appStageMap!=null) {
+			for(Iterator<Stage> e=appStageMap.values().iterator();e.hasNext();) {
+				Stage s=e.next();
+				s.show();
+			}
+		}
+		lockScreenStage.hide();
+		locked=false;
+	}
+	
+	private void showLockScreen() {
+		FXMLLoader loader=new FXMLLoader(this.getClass().getResource("LockScreen.fxml"));
+		try {
+			Parent p=loader.load();
+			LockScreenController lock=loader.getController();
+			lock.setWhatToUnlock(this);
+			Scene lockScene=new Scene(p);
+			lockScreenStage=new Stage();
+			lockScreenStage.setScene(lockScene);
+			lockScreenStage.show();
+			locked=true;
+		} catch (IOException e) {
+			log.error("Could not load lock screen",e);
+			Alert noLockScreen=new Alert(AlertType.ERROR,"The application should be locked, but the lock screen could not be found",new ButtonType[] {ButtonType.OK});
+    		noLockScreen.showAndWait();
+		}
+	}
+
+	@Override
+	public boolean isLocked() {
+		return locked;
+	}
+
 }
