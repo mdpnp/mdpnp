@@ -625,6 +625,21 @@ struct BPPauseResumeObjective {
   };
   #pragma keylist Patient mrn
   const string PatientTopic = "Patient";
+
+  enum FroaAlarmType {
+    Systolic,
+    Diastolic
+  };
+
+  struct FROAAlarm {
+    FroaAlarmType type;	//@key
+    string<16> mrn;
+    string<256> alarmText;
+    float alarmValue;
+    float threshold;
+  };
+  const string FROAAlarmTopic = "FROAAlarm";
+
 };
 
 

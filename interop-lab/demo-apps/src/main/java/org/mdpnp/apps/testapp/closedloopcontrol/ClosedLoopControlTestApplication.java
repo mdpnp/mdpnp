@@ -1,5 +1,7 @@
 package org.mdpnp.apps.testapp.closedloopcontrol;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -48,19 +50,31 @@ import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
 import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
+import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.DataWriter;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+import com.rti.dds.topic.Topic;
+import com.rti.ndds.config.LogVerbosity;
 
+import ice.FROAAlarm;
+import ice.FROAAlarmDataWriter;
+import ice.FROAAlarmTopic;
+import ice.FROAAlarmTypeSupport;
 import ice.FlowRateObjective;
 import ice.FlowRateObjectiveDataWriter;
+import ice.FroaAlarmType;
 import ice.MDSConnectivity;
 import ice.Patient;
 import javafx.animation.Animation;
@@ -104,6 +118,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private ApplicationContext parentContext;
 	private Subscriber assignedSubscriber;	//Use a slightly different name here to avoid poss conflict with any other subscriber variable.
+	private Subscriber constructorSubscriber;
 	private DeviceListModel dlm;
 	private NumericFxList numeric;
 	private SampleArrayFxList samples;
@@ -236,6 +251,46 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private PreparedStatement sampleStatement;
 	
+	/**
+	 * A domain participant for publishing things in DDS if required.
+	 */
+	private DomainParticipant participant;
+	
+	/**
+	 * DDS topic to use for FROA alarms.
+	 */
+	private Topic froaAlarmTopic;
+	
+	/**
+	 * DataWriter to use for FROA alarms.
+	 */
+	private FROAAlarmDataWriter froaAlarmWriter;
+	
+	/**
+	 * DDS publisher for anything we want to publish.
+	 */
+	private Publisher publisher;
+	
+	/**
+	 * Instance handle for systolic alarm
+	 */
+	private InstanceHandle_t sysAlarmHandle;
+	
+	/**
+	 * Instance handle for diastolic alarm
+	 */
+	private InstanceHandle_t diaAlarmHandle;
+	
+	/**
+	 * Systolic alarm instance
+	 */
+	private FROAAlarm systolicDDSAlarm;
+	
+	/**
+	 * Systolic alarm instance
+	 */
+	private FROAAlarm diastolicDDSAlarm;
+	
 	//Need a context here...
 	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples,
 			FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber, EMRFacade emr) {
@@ -249,6 +304,20 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		this.assignedSubscriber=subscriber;
 		this.emr=emr;
 		configureFields();
+		configureRTILogging();
+	}
+	
+	private void configureRTILogging() {
+		com.rti.ndds.config.Logger logger=com.rti.ndds.config.Logger.get_instance();
+		try {
+			logger.set_output_file(new File("/tmp/rti.log"));
+			logger.set_verbosity(LogVerbosity.NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
+			System.err.println("Configured verbose RTI logging");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.error("Could not configure RTI logging",e);
+		}
+		
 	}
 	
 	private final class NumericBPDevice extends AbstractDevice {
@@ -263,6 +332,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
             deviceIdentity.serial_number = "1234";
             AbstractSimulatedDevice.randomUDI(deviceIdentity);		//TODO: clone the device id, or does that mess everything up?
             writeDeviceIdentity();
+            
 //            System.err.println("NumericBPDeviceConstructor subscriber is "+subscriber);
 		}
 
@@ -1141,6 +1211,17 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 			//TODO: Do we really need the extra boolean, or do the alarm popups prevent further alarms being shown anyway because of being modal?
 			if(newValue.intValue()<(int)systolicAlarm.getValue() && !sysShowing[0] ) {
+				
+				if(systolicDDSAlarm==null) {
+					systolicDDSAlarm=new FROAAlarm();
+					systolicDDSAlarm.type=FroaAlarmType.Systolic;	//This won't change so set it once.
+				}
+				systolicDDSAlarm.alarmText="Systolic value is below the alarm threshold";
+				systolicDDSAlarm.alarmValue=newValue.floatValue();
+				systolicDDSAlarm.threshold=(int)systolicAlarm.getValue();
+				systolicDDSAlarm.mrn=currentPatient.mrn;
+				publishAlarm("systolic");
+				
 //				System.err.println("systolic alarm condition...");
 				javafx.application.Platform.runLater(()-> {
 					sysShowing[0]=true;
@@ -1154,6 +1235,52 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 	};
 	
+	private void publishAlarm(String alarmType) {
+		if(participant==null) {
+			participant=assignedSubscriber.get_participant();
+		}
+		FROAAlarmTypeSupport.register_type(participant, FROAAlarmTypeSupport.get_type_name());
+		
+		if(froaAlarmTopic==null) {
+			froaAlarmTopic=TopicUtil.findOrCreateTopic(participant, FROAAlarmTopic.VALUE, FROAAlarmTypeSupport.class);
+		}
+		
+		if(publisher==null) {
+			publisher=parentContext.getBean("publisher", Publisher.class);
+		}
+		
+		if(froaAlarmWriter==null) {
+			froaAlarmWriter=(FROAAlarmDataWriter)publisher.create_datawriter_with_profile(froaAlarmTopic, QosProfiles.ice_library,
+                QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
+		}
+		
+		//TODO: can we get more reuse of handle here?
+		if(alarmType.equals("systolic")) {
+			if(sysAlarmHandle==null) {
+				sysAlarmHandle=froaAlarmWriter.register_instance(systolicDDSAlarm);
+			}
+			froaAlarmWriter.write(systolicDDSAlarm, sysAlarmHandle);
+		} else {
+			//Assume diastolic
+			if(diaAlarmHandle==null) {
+				diaAlarmHandle=froaAlarmWriter.register_instance(diastolicDDSAlarm);
+			}
+			froaAlarmWriter.write(diastolicDDSAlarm, diaAlarmHandle);
+		}
+		/*
+		InstanceHandle_t handle=froaAlarmWriter.register_instance(alarm);
+		if(handle.get_is_validI()==0) {
+			System.err.println("publishAlarm handle is not valid yet");
+		} else {
+			System.err.println("publishAlarm handle is valid");
+		}
+		
+		froaAlarmWriter.write(alarm, handle);
+		System.err.println("Wrote the alarm...");
+		*/
+		
+	}
+	
 	ChangeListener<Number> diastolicListener=new ChangeListener<Number>() {
 		boolean diaShowing[]=new boolean[] {false};
 		Alert diaAlert=new Alert(AlertType.WARNING,"Diastolic value is below the alarm threshold");
@@ -1161,6 +1288,17 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		@Override
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 			if(newValue.intValue()<(int)diastolicAlarm.getValue() && !diaShowing[0]) {
+				
+				if(diastolicDDSAlarm==null) {
+					diastolicDDSAlarm=new FROAAlarm();
+					diastolicDDSAlarm.type=FroaAlarmType.Diastolic;	//This won't change so set it once.
+				}
+				diastolicDDSAlarm.alarmText="Diastolic value is below the alarm threshold";
+				diastolicDDSAlarm.alarmValue=newValue.floatValue();
+				diastolicDDSAlarm.threshold=(int)diastolicAlarm.getValue();
+				diastolicDDSAlarm.mrn=currentPatient.mrn;
+				publishAlarm("diastolic");
+				
 //				System.err.println("diastolic alarm condition...");
 				javafx.application.Platform.runLater(()-> {
 					diaShowing[0]=true;
@@ -1220,6 +1358,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			numericBPDeviceAdapter.stop();
 			numericBPDeviceAdapter=null;
 		}
+		
+		if(publisher!=null && froaAlarmWriter!=null) {
+			froaAlarmWriter.unregister_instance(diastolicDDSAlarm, diaAlarmHandle);
+			froaAlarmWriter.unregister_instance(systolicDDSAlarm, sysAlarmHandle);
+			publisher.delete_datawriter(froaAlarmWriter);
+			participant.delete_topic(froaAlarmTopic);
+			//System.err.println("Not deleting the froa writer/topic");
+		}
+		
 		startButton.setText("Start");
 	}
 
