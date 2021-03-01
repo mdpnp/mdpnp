@@ -34,15 +34,18 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogEvent;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -607,21 +610,53 @@ public class IceAppsContainer extends IceApplication {
 		locked=false;
 	}
 	
+	@Override
+	public void unlockScreenWithKill() {
+		System.err.println("Got unlock call in IceAppsContainer");
+		parentStage.show();
+		if(appStageMap!=null) {
+			for(Iterator<Stage> e=appStageMap.values().iterator();e.hasNext();) {
+				Stage s=e.next();
+				s.show();
+			}
+		}
+		if(appStageMap!=null) {
+			for(Iterator<Object> e=appStageMap.keySet().iterator();e.hasNext();) {
+				Object shouldBeAnApp=e.next();
+				IceApplicationProvider.IceApp stopThis=(IceApplicationProvider.IceApp)shouldBeAnApp;
+				try {
+					stopThis.destroy();
+				} catch (Exception e1) {
+					log.error("Failed to stop application "+stopThis.getDescriptor().getName());
+				}
+			}
+		}
+		lockScreenStage.hide();
+		locked=false;
+    }
+	
 	private void showLockScreen() {
 		FXMLLoader loader=new FXMLLoader(this.getClass().getResource("LockScreen.fxml"));
 		try {
 			Parent p=loader.load();
 			LockScreenController lock=loader.getController();
+			lock.showLogin();
 			lock.setWhatToUnlock(this);
 			Scene lockScene=new Scene(p);
 			lockScreenStage=new Stage();
 			lockScreenStage.setScene(lockScene);
 			lockScreenStage.show();
 			locked=true;
+			lockScreenStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, new EventHandler<WindowEvent>() {
+				@Override
+				public void handle(WindowEvent event) {
+					event.consume();
+				}
+			});
 		} catch (IOException e) {
 			log.error("Could not load lock screen",e);
 			Alert noLockScreen=new Alert(AlertType.ERROR,"The application should be locked, but the lock screen could not be found",new ButtonType[] {ButtonType.OK});
-    		noLockScreen.showAndWait();
+			noLockScreen.showAndWait();
 		}
 	}
 

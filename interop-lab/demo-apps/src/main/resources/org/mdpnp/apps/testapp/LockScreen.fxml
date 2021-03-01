@@ -11,47 +11,62 @@
  fx:controller="org.mdpnp.apps.testapp.LockScreenController" xmlns="http://javafx.com/javafx/8"
  xmlns:fx="http://javafx.com/fxml/1">
  <bottom>
-  <Button fx:id="unlockButton" onAction="#clickUnlock" text="Unlock"/>
+   <HBox>
+	  <children>
+	    <Button fx:id="unlockButton" onAction="#clickUnlock" text="Unlock"/>
+	    <Button fx:id="killRunningApps" onAction="#unlockWithKill" text="Kill running apps(!)"/>
+	    <Button fx:id="keepRunningApps" onAction="#unlockWithKeep" text="Keep apps running"/>
+	  </children>
+  </HBox>
  </bottom>
  <center>
-  <GridPane alignment="CENTER" hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
-    <children>
-  <!--Login credentials-->
-  <Label fx:id="usernameLabel" text="Username" GridPane.columnIndex="0" GridPane.rowIndex="10">
-   <GridPane.margin>
-    <Insets bottom="5.0" right="5.0" top="5.0" />
-   </GridPane.margin>
-  </Label>
-  <TextField fx:id="username" maxWidth="200.0" prefWidth="200.0" promptText="OpenICE username" GridPane.columnIndex="1" GridPane.rowIndex="10" />
-  <Label fx:id="passwordLabel" text="Password" GridPane.columnIndex="0" GridPane.rowIndex="12">
-   <GridPane.margin>
-    <Insets bottom="5.0" right="5.0" top="5.0" />
-   </GridPane.margin>
-  </Label>
-  <PasswordField fx:id="password" maxWidth="200.0" prefWidth="200.0" promptText="OpenICE password" GridPane.columnIndex="1" GridPane.rowIndex="12" />
-  <Label fx:id="lockLabel" alignment="CENTER" contentDisplay="CENTER"
-    text="THE APPLICATION IS LOCKED" textAlignment="CENTER" wrapText="true"
-    BorderPane.alignment="CENTER" />
-    </children>
-    <!--
-    <columnConstraints>
-  <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
-  <ColumnConstraints halignment="LEFT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
- </columnConstraints>
- <rowConstraints>
-  <RowConstraints minHeight="0" prefHeight="-1" valignment="CENTER" vgrow="NEVER" />
-  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
-  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
-  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
-  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
-  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
-  <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
- </rowConstraints>
- -->
-   <padding>
-      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-   </padding>
-    </GridPane>
+  <VBox fx:id="centerToggleBox">
+	  <GridPane fx:id="loginPane" alignment="CENTER" hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
+	    <children>
+	      <!--Login credentials-->
+	      <Label fx:id="usernameLabel" text="Username" GridPane.columnIndex="0" GridPane.rowIndex="10">
+	        <GridPane.margin>
+	          <Insets bottom="5.0" right="5.0" top="5.0" />
+	        </GridPane.margin>
+	      </Label>
+	      <TextField fx:id="username" maxWidth="200.0" prefWidth="200.0" promptText="OpenICE username" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+	      <Label fx:id="passwordLabel" text="Password" GridPane.columnIndex="0" GridPane.rowIndex="12">
+	        <GridPane.margin>
+	          <Insets bottom="5.0" right="5.0" top="5.0" />
+	        </GridPane.margin>
+	      </Label>
+	      <PasswordField fx:id="password" maxWidth="200.0" prefWidth="200.0" promptText="OpenICE password" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+	      <Label fx:id="lockLabel" alignment="CENTER" contentDisplay="CENTER"
+	        text="THE APPLICATION IS LOCKED" textAlignment="CENTER" wrapText="true"
+	        BorderPane.alignment="CENTER" />
+	    </children>
+	<!--
+	    <columnConstraints>
+	      <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+	      <ColumnConstraints halignment="LEFT" hgrow="NEVER" minWidth="10.0" prefWidth="100.0" />
+	    </columnConstraints>
+	    <rowConstraints>
+	      <RowConstraints minHeight="0" prefHeight="-1" valignment="CENTER" vgrow="NEVER" />
+	      <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+	      <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+	      <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+	      <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+	      <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+	      <RowConstraints minHeight="0" prefHeight="-1" vgrow="NEVER" />
+	    </rowConstraints>
+	 -->
+	    <padding>
+	      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+	    </padding>
+	   
+	  </GridPane>
+	    
+	  <GridPane fx:id="otherUserPane" alignment="CENTER" hgap="5.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8">
+	      <children>
+	        <Label fx:id="differentUserLabel" text=""/>
+	      </children>
+	  </GridPane>
+   </VBox>
  </center>
    
 </BorderPane>

@@ -28,6 +28,13 @@ public abstract class IceApplication extends javafx.application.Application {
     	
     }
     
+    /**
+     * A method to unlock the application, also stopping apps that are running.
+     */
+    public void unlockScreenWithKill() {
+    	
+    }
+    
     public boolean isLocked() {
     	return false;
     }
