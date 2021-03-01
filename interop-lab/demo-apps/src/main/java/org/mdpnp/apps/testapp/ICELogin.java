@@ -22,6 +22,16 @@ import javax.security.auth.login.LoginException;
 
 /*public*/ class ICELogin {
 	
+	private static String currentUser;
+	
+	/**
+	 * Get the currently logged in user, or null if nobody is logged in
+	 * @return The current username in the system
+	 */
+	public static String getCurrentUser() {
+		return currentUser;
+	}
+
 	static boolean trivialLogin(String username, String password) {
 		if(!username.equals("x") || !password.equals("y")) {
 			return false;
@@ -58,12 +68,18 @@ import javax.security.auth.login.LoginException;
 				
 			});
 			loginContext.login();
+			currentUser=username;
 			return true;
 		} catch (LoginException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	static void logout() {
+		//Log the action...
+		currentUser=null;
 	}
 	
 
