@@ -19,7 +19,7 @@ import ice.IDLToDDL.Struct;
 public class DDLGen {
 	
 	private static Hashtable<String, String> typedefs;
-	private static ArrayList<Struct> structs;
+	private static Hashtable<String, Struct> structs;
 	
 	private static Pattern stringPattern=Pattern.compile(".?string<(\\d+)>");
 
@@ -52,13 +52,38 @@ public class DDLGen {
 
 	private static void generateDDL() {
 		StringBuilder ddl=new StringBuilder();
-		for(Struct struct : structs) {
+		for(String s : structs.keySet()) {
+			Struct struct=structs.get(s);
 			ddl.append("CREATE TABLE "+struct.name+" (\n");
 			for(int i=0;i<struct.members.size();i++) {
 				StructMember member=struct.members.get(i);
-				ddl.append("\t"+member.memberName+" ");
-				ddl.append( decodeType(member.memberType) );
-				ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
+				//We need somehow to deal with "compound" types, where the type
+				//is already some other struct like image.
+				if( structs.containsKey(member.memberType) ) {
+					Struct otherStruct=structs.get(member.memberType);
+					for(int j=0;j<otherStruct.members.size();j++) {
+						StructMember otherMember=otherStruct.members.get(j);
+						ddl.append("\t"+member.memberName+"_");
+						ddl.append(otherMember.memberName);
+						ddl.append(" "+ decodeType(otherMember.memberType));
+						if(i<struct.members.size()-1) {
+							//There will definitely be something else.
+							ddl.append(",\n");
+						} else if (j<otherStruct.members.size()-1) {
+							//There will definitely be something else.
+							ddl.append(",\n");
+						} else {
+							ddl.append("\n");
+						}
+					}
+					//ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
+				} else {
+					ddl.append("\t"+member.memberName+" ");
+					ddl.append( decodeType(member.memberType) );
+					ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
+					//ddl.append(",\n");
+				}
+				
 			}
 			ddl.append(");\n");
 		}
@@ -67,8 +92,8 @@ public class DDLGen {
 	
 	private static String decodeType(String type) {
 		String idlType=type;
-		if(typedefs.containsKey(idlType)) {
-			idlType=typedefs.get(type);
+		while(typedefs.containsKey(idlType)) {
+			idlType=typedefs.get(idlType);
 		}
 		Matcher m=stringPattern.matcher(idlType);
 		if(m.matches()) {
