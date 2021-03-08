@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import ice.IDLParser.Constr_type_specContext;
 import ice.IDLParser.DefinitionContext;
+import ice.IDLParser.Sequence_typeContext;
 
 public class IDLToDDL extends IDLBaseListener {
 	
@@ -42,11 +43,13 @@ public class IDLToDDL extends IDLBaseListener {
 	
 	private Hashtable<String,String> typedefs;
 	
-	private ArrayList<Struct> structs;
+	private Hashtable<String,Struct> structs;
 
 	public IDLToDDL() {
 		typedefs=new Hashtable<>();
-		structs=new ArrayList<>();
+		structs=new Hashtable<>();
+		//Some "fake" typedefs that are effectively just SQL mappings
+		typedefs.put("long", "bigint");
 	}
 
 	@Override
@@ -119,7 +122,7 @@ public class IDLToDDL extends IDLBaseListener {
 			struct.members.add(extractStructMember(allStructMembers,i));
 		}
 		System.out.println("struct is "+struct.toString());
-		structs.add(struct);
+		structs.put(struct.name, struct);
 		
 	}
 	
@@ -147,10 +150,9 @@ public class IDLToDDL extends IDLBaseListener {
 		//System.err.println("exit definition "+ctx.getText());
 	}
 	
-	public ArrayList<Struct> getStructs() {
+	public Hashtable<String, Struct> getStructs() {
 		return structs;
 	}
-	
 	
 
 }
