@@ -5,16 +5,14 @@
  * For more details take a look at the Java Quickstart chapter in the Gradle
  * user guide available at https://docs.gradle.org/5.0/userguide/tutorial_java_projects.html
  */
+apply plugin: 'java'
+apply plugin: 'antlr'
+apply plugin: 'application'
 
-plugins {
-    // Apply the java plugin to add support for Java
-    id 'java'
+defaultTasks 'build'
 
-    // Apply the application plugin to add support for building an application
-    //id 'application'
-
-    id 'antlr'
-}
+sourceCompatibility = JAVA_VERSION_SOURCE
+targetCompatibility = JAVA_VERSION_CLASSES
 
 repositories {
     // Use jcenter for resolving your dependencies.
@@ -32,10 +30,13 @@ dependencies {
     //Use ANTLR 4
     antlr "org.antlr:antlr4:4.9.1"
     
-    runtime files('lib/antlr-idl.jar')
-
-    
+    compile files('lib/antlr-idl.jar')
 }
 
-// Define the main class for the application
-//mainClassName = 'org.mdpnp.x73.sql.App'
+ext {
+   javaMainClass = "org.mdpnp.x73.sql.DDLGen"
+}
+
+application {
+    mainClassName = javaMainClass
+}
