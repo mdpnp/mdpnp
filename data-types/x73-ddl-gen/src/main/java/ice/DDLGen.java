@@ -22,6 +22,7 @@ public class DDLGen {
 	private static Hashtable<String, Struct> structs;
 	
 	private static Pattern stringPattern=Pattern.compile(".?string<(\\d+)>");
+	private static Pattern sequencePattern=Pattern.compile("sequence<.*>");
 
 	public static void main(String args[]) {
 		
@@ -98,6 +99,10 @@ public class DDLGen {
 		Matcher m=stringPattern.matcher(idlType);
 		if(m.matches()) {
 			idlType="varchar("+m.group(1)+")";	//group(1) is the NNN in <NNN>
+		}
+		m=sequencePattern.matcher(idlType);
+		if(m.matches()) {
+			idlType="blob";
 		}
 		
 		return idlType;
