@@ -21,7 +21,7 @@ import ice.IDLParser;
 
 public class DDLGen {
 	
-	private static String BASE_DIRECTORY = "./../x73-idl-rti-dds/build/generated/src/main/resources/schema/";
+	private static String BASE_DIRECTORY = "./../x73-ddl/build/generated/src/main/resources/schema/";
 	private static Hashtable<String, String> typedefs;
 	private static Hashtable<String, Struct> structs;
 	

@@ -32,6 +32,7 @@ if(hasProperty('sdk.dir') || null != System.getenv().get("ANDROID_HOME")) {
 
 
 include 'data-types:x73-idl-rti-dds'
+include 'data-types:x73-ddl'
 include 'data-types:x73-ddl-gen'
 
 if(null != System.getenv().get("OSPL_HOME") && null != System.getenv().get("SPLICE_TARGET")) {

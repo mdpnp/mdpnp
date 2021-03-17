@@ -31,7 +31,6 @@ configurations { rtiddsgen }
 
 def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/main/java').getPath()
 def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getPath()
-def GENERATED_SQL_SCHEMA  = new File(project.projectDir, 'build/generated/src/main/resources').getPath()
 def IDL_DIR = "-I"+new File(project.projectDir, '../x73-idl/src/main/idl').getPath()
 
 // add generated source code to the main java sourceset
@@ -40,9 +39,6 @@ sourceSets {
     java {
       srcDirs += GENERATED_JAVA_SOURCES
     }
-    resources {
-      srcDirs += GENERATED_SQL_SCHEMA
-     }
   }
 }
 
@@ -51,13 +47,9 @@ jar.doFirst {
   sourceSets.main.java.srcDirs.each {
     from it
   }
-  sourceSets.main.resources.srcDirs.each {
-    from it
-  }
 }
 
 dependencies {
-  compile project(':data-types:x73-ddl-gen')
   // nddsjava.jar is the java binding library for RTI DDS
   compile files(rtiNddsJava)
   //This next slf4j entry appears to have been a missing dependency somehow?
@@ -97,7 +89,7 @@ task rtiddsgenExplodeResources(type: Copy) {
 }
 
 // Runs the RTI DDS Generate code generator for all idl files under src/main/idl
-task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources, ':data-types:x73-ddl-gen:run']) {
+task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
   doLast {
     FileTree idlFiles = project(':data-types:x73-idl').buildZip.source
     for(File f : idlFiles) {
