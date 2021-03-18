@@ -644,6 +644,7 @@ public class IceAppsContainer extends IceApplication {
 			lock.setWhatToUnlock(this);
 			Scene lockScene=new Scene(p);
 			lockScreenStage=new Stage();
+			lockScreenStage.setTitle("OpenICE Lock Screen");
 			lockScreenStage.setScene(lockScene);
 			lockScreenStage.show();
 			locked=true;
