@@ -61,7 +61,6 @@ dependencies {
 
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
-  
   //For DDS 6.X, rtiddsgen program is a shell script that configures its own classpath, so the rtidds* files are redundant
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
   rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
