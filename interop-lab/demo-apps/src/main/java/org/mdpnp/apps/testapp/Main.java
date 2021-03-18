@@ -102,15 +102,15 @@ public class Main {
 		public void run() {
 			while(true) {
 				try {
+					sleep(5000);
 					if(whatToLock.isLocked()) {
 						//System.err.println("Already locked...");
 						continue;
 					}
-					sleep(5000);
 					seconds-=5;
-					System.err.println("Seconds is now "+seconds);
+					//System.err.println("Seconds is now "+seconds);
 					if(seconds<1) {
-						System.err.println("Need to lock");
+						//System.err.println("Need to lock");
 						Platform.runLater(new Runnable() {
 							public void run() {
 								//https://www.xspdf.com/resolution/50032529.html
