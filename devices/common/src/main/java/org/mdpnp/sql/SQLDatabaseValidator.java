@@ -3,6 +3,7 @@ package org.mdpnp.sql;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -16,14 +17,15 @@ public class SQLDatabaseValidator {
 	private static final String FILE_ENDING = ".sql";
 
 	private static final Logger log = LoggerFactory.getLogger(SQLDatabaseValidator.class);
+	private static final String fileSeparator = System.getProperty("file.separator");
 
 	private static Collection<String> getSQLSchemaFilePaths() {
-		Pattern pattern = Pattern.compile(".*schema.*\\" + FILE_ENDING);
+		Pattern pattern = Pattern
+				.compile(".*" + "\\" + fileSeparator + "schema\\" + fileSeparator + ".*\\" + FILE_ENDING);
 		return ResourceUtil.getResources(pattern);
 	}
 
 	private static String getTableNameFromResourcePath(String path) {
-		final String fileSeparator = System.getProperty("file.separator");
 		String[] pathComponents = path.split(fileSeparator);
 		final String fileName = pathComponents != null && pathComponents.length > 0
 				? pathComponents[pathComponents.length - 1]
@@ -33,10 +35,13 @@ public class SQLDatabaseValidator {
 				: null;
 	}
 
-	private static boolean tableExists(String tableName) throws SQLException {
+	private static boolean tableExists(String tableName) throws SQLException, DatabaseConnectionException {
 		boolean tableExists = false;
-		try (ResultSet result = SQLLogging.getConnection().getMetaData().getTables(null, null, tableName,
-				new String[] { "TABLE" })) {
+		Connection connection = SQLLogging.getConnection();
+		if (connection == null) {
+			throw new DatabaseConnectionException("Database connection unavailable");
+		}
+		try (ResultSet result = connection.getMetaData().getTables(null, null, tableName, new String[] { "TABLE" })) {
 			while (result.next()) {
 				String resultTableName = result.getString("TABLE_NAME");
 				if (resultTableName != null && resultTableName.equals(tableName)) {
@@ -45,6 +50,7 @@ public class SQLDatabaseValidator {
 				}
 			}
 		}
+		connection.close();
 		return tableExists;
 	}
 
@@ -58,6 +64,10 @@ public class SQLDatabaseValidator {
 			} catch (SQLException e) {
 				System.out.println(tableNameFromResourcePath + "\n" + e.getMessage());
 				log.error(e.getMessage());
+			} catch (DatabaseConnectionException e) {
+				System.out.println(e.getMessage());
+				log.error(e.getMessage());
+				return;
 			}
 			if (!tableExists) {
 				log.debug("Table: " + tableNameFromResourcePath + " does not exist, executing create statements");

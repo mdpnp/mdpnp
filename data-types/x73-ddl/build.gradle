@@ -17,16 +17,7 @@ defaultTasks 'build'
 sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
-def GENERATED_SQL_SCHEMA  = new File(project.projectDir, 'build/generated/src/main/resources').getPath()
-
-// add generated source code to the main java sourceset
-sourceSets {
-  main {
-    resources {
-      srcDirs += GENERATED_SQL_SCHEMA
-     }
-  }
-}
+def GENERATED_SQL_SCHEMA  = new File(project.projectDir, './../../interop-lab/demo-apps/src/main/resources/schema/').getPath()
 
 dependencies {
   compile project(':data-types:x73-ddl-gen')
