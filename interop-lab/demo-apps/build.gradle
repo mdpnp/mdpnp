@@ -61,6 +61,9 @@ distTar {
 }
 
 applicationName = 'OpenICE'
+application {
+  applicationDefaultJvmArgs=['-Djava.security.auth.login.config=icelogin.config']
+}
 
 jfx {
     verbose=true
@@ -81,7 +84,7 @@ jfx {
     allPermissions = false
     manifestAttributes = null // Map<String, String>
     addPackagerJar = true
-    copyAdditionalAppResourcesToJar = false
+    copyAdditionalAppResourcesToJar = true
     skipCopyingDependencies = false
     useLibFolderContentForManifestClasspath = false
     fixedManifestClasspath = null
@@ -91,8 +94,8 @@ jfx {
     nativeOutputDir = "build/jfx/native"
     bundler = "ALL" // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
     jvmProperties = null // Map<String, String>
-    jvmArgs = null // List<String>
-    userJvmArgs = null // Map<String, String>
+    jvmArgs = ['-Djava.security.auth.login.config=icelogin.config'] // List<String>
+    userJvmArgs = ['-Djava.security.auth.login.config' : 'icelogin.config'] // Map<String, String>
     launcherArguments = null // List<String>
     nativeReleaseVersion = "1.0"
     needShortcut = false
@@ -126,7 +129,7 @@ jfx {
     skipMacBundlerWorkaround = false
     
     // gradle jfxRun
-    runJavaParameter = null // String
+    runJavaParameter = '-Djava.security.auth.login.config=icelogin.config' // String
     runAppParameter = null // String
 
     // per default the outcome of the gradle "jarTask" will be used, set this to specify otherwise (like proguard-output)
@@ -139,18 +142,10 @@ jfx {
     checkForAbsolutePaths = false
     
     // gradle jfxGenerateKeyStore
-    keyStore = "src/main/deploy/keystore.jks"
-    keyStoreAlias = "myalias"
-    keyStorePassword = "password"
     keyPassword = null // will default to keyStorePassword
     keyStoreType = "jks"
     overwriteKeyStore = false
     
-    certDomain = null // required
-    certOrgUnit = null // defaults to "none"
-    certOrg = null // required
-    certState = null // required
-    certCountry = null // required
 }
     
 /*
@@ -176,6 +171,7 @@ ext {
 manifest { attributes "Main-Class" : mainClassName }
 
 dependencies {
+	compile project(':data-types:x73-ddl')
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
     compile project(':interop-lab:demo-guis-javafx')

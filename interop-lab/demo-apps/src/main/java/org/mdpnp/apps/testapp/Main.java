@@ -17,19 +17,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.IllegalFormatCodePointException;
+
+import org.mdpnp.sql.SQLDatabaseValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
-import javafx.scene.Group;
-import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Jeff Plourde
@@ -61,6 +57,7 @@ public class Main {
 			System.exit(retCode);
 
 		} else {
+			SQLDatabaseValidator.validate();
 			javafx.application.Application.launch(Main.FxApplication.class, args);
 			Platform.exit();
 			log.info("This is the end, exit code=" + 0);
