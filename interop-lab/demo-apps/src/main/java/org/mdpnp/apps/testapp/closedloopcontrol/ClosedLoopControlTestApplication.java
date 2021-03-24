@@ -148,6 +148,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	@FXML private BorderPane main;
 	@FXML private Label lastPumpUpdate;
 	@FXML private Label lastBPUpdate;
+	@FXML private Label lastPumpSQI;
 	@FXML private Button startButton;
 	@FXML private Label patientNameLabel;
 	@FXML private Label currentPumpSpeed;
@@ -963,6 +964,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         
         lastPumpUpdate.textProperty().bind(Bindings.format("Last pump update %s", flowRateFromSelectedPump[0].presentation_timeProperty()));
         lastBPUpdate.textProperty().bind(Bindings.format("Last BP update %s", sampleFromSelectedMonitor[0].presentation_timeProperty()));
+        lastPumpSQI.textProperty().bind(Bindings.format(
+        		"Pump SQI: Accuracy %4.0f Accuracy Duration %4.0f Completeness %4.0f Precision %4.0f Frequency %4.0f",
+        		flowRateFromSelectedPump[0].sqi_accuracyProperty(),
+        		flowRateFromSelectedPump[0].sqi_accuracy_durationProperty(),
+        		flowRateFromSelectedPump[0].sqi_completenessProperty(),
+        		flowRateFromSelectedPump[0].sqi_precisionProperty(),
+        		flowRateFromSelectedPump[0].sqi_frequencyProperty()
+    		)
+		);
         currentPumpSpeed.textProperty().bind(Bindings.format("Current flow rate (ml/hour) %.2f", flowRateFromSelectedPump[0].valueProperty()));
         currentPumpSpeed.setFont(Font.font(24));
 		if(openRadio.isSelected()) {

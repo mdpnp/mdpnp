@@ -13,6 +13,8 @@ import javafx.beans.property.StringProperty;
 
 import com.rti.dds.subscription.SampleInfo;
 
+import ice.NumericSQI;
+
 public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.Numeric> {
     
     private StringProperty unique_device_identifier;
@@ -127,6 +129,76 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         this.presentation_timeProperty().set(presentation_time);
     }
     
+    private FloatProperty sqi_accuracy;
+    public final FloatProperty sqi_accuracyProperty() {
+    	if(null == sqi_accuracy) {
+    		sqi_accuracy=new SimpleFloatProperty(this, "sqi_accuracy");
+    	}
+    	return this.sqi_accuracy;
+    }
+    public final float getSQI_accuracy() {
+    	return this.sqi_accuracyProperty().get();
+    }
+    public final void setSQI_accuracy(final float accuracy) {
+    	this.sqi_accuracyProperty().set(accuracy);
+    }
+    
+    private FloatProperty sqi_accuracy_duration;
+    public final FloatProperty sqi_accuracy_durationProperty() {
+    	if(null == sqi_accuracy_duration) {
+    		sqi_accuracy_duration=new SimpleFloatProperty(this, "sqi_accuracy_duration");
+    	}
+    	return this.sqi_accuracy_duration;
+    }
+    public final float getSQI_accuracy_duration() {
+    	return this.sqi_accuracy_durationProperty().get();
+    }
+    public final void setSQI_accuracy_duration(final float accuracy_duration) {
+    	this.sqi_accuracy_durationProperty().set(accuracy_duration);
+    }
+    
+    private FloatProperty sqi_completeness;
+    public final FloatProperty sqi_completenessProperty() {
+    	if(null == sqi_completeness) {
+    		sqi_completeness=new SimpleFloatProperty(this, "sqi_completeness");
+    	}
+    	return this.sqi_completeness;
+    }
+    public final float getSQI_completeness() {
+    	return this.sqi_completenessProperty().get();
+    }
+    public final void setSQI_completeness(final float completeness) {
+    	this.sqi_completenessProperty().set(completeness);
+    }
+    
+    private FloatProperty sqi_precision;
+    public final FloatProperty sqi_precisionProperty() {
+    	if(null == sqi_precision) {
+    		sqi_precision=new SimpleFloatProperty(this, "sqi_precision");
+    	}
+    	return this.sqi_precision;
+    }
+    public final float getSQI_precision() {
+    	return this.sqi_precisionProperty().get();
+    }
+    public final void setSQI_precision(final float precision) {
+    	this.sqi_precisionProperty().set(precision);
+    }
+    
+    private FloatProperty sqi_frequency;
+    public final FloatProperty sqi_frequencyProperty() {
+    	if(null == sqi_frequency) {
+    		sqi_frequency=new SimpleFloatProperty(this, "sqi_frequency");
+    	}
+    	return this.sqi_frequency;
+    }
+    public final float getSQI_frequency() {
+    	return this.sqi_frequencyProperty().get();
+    }
+    public final void setSQI_frequency(final float frequency) {
+    	this.sqi_frequencyProperty().set(frequency);
+    }
+    
     public NumericFx() {
     }
         
@@ -138,6 +210,12 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setVendor_metric_id(v.vendor_metric_id);
         setInstance_id(v.instance_id);
         setUnit_id(v.unit_id);
+        setSQI_accuracy(v.sqi.accuracy);
+        setSQI_accuracy_duration(v.sqi.accuracy_duration);
+        setSQI_completeness(v.sqi.completeness);
+        setSQI_frequency(v.sqi.frequency);
+        setSQI_precision(v.sqi.precision);
+        System.err.printf("In NumerixFx.update, v.sqi.frequency is %4.0f\n",v.sqi.frequency);
         setValue(v.value);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
         setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));

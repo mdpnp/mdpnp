@@ -163,9 +163,20 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 		stateMachine.transitionIfLegal(ConnectionState.Connected, "Connected");
 		final InstanceHolder<Numeric> flowRateHolder=createNumericInstance(rosetta.MDC_FLOW_FLUID_PUMP.VALUE, "");
 		System.err.println("executor is "+executor.getClass().getName());
-		//We have access to "executor" - a scheduled executor service	 
+		//We have access to "executor" - a scheduled executor service
+		int a[]= {0}, d[]= {0}, c[]= {0},f[]= {0},p[]= {0};
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
+				
+				/*
+				 * Eventually there should be a version of numericSample where the NumericSQI is passed in next to the value
+				 * which in this case is currentFlowRate.  For now we will fill it in in the holder
+				 */
+				flowRateHolder.data.sqi.accuracy=(a[0]++)%4;
+				flowRateHolder.data.sqi.accuracy_duration=(d[0]++)%5;
+				flowRateHolder.data.sqi.completeness=(c[0]++)%6;
+				flowRateHolder.data.sqi.frequency=(f[0]++)%7;
+				flowRateHolder.data.sqi.precision=(p[0]++)%8;
 				numericSample(flowRateHolder, currentFlowRate , defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);

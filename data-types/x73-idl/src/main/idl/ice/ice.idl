@@ -122,7 +122,7 @@ module ice {
    * the heartbeat enough information has been gathered to ascertain clock 
    * synchronization. So a Supervisory participant can determine whether any device
    * clocks are out of sync.
-   * 
+	   * me
    * Stability: 1 - Experimental
    *            It is unclear whether the overhead created by this exceeds the benefit
    *            of detecting a lack of clock synchronization.
@@ -309,6 +309,15 @@ module ice {
    */
   const string ICE_DERIVED_RESPIRATORY_RATE = "ICE_DERIVED_RESPIRATORY_RATE";
 
+  struct NumericSQI {
+	float accuracy;
+	float accuracy_duration;
+	float completeness;
+	float precision;
+	float frequency;
+  };
+  const string NumericSQITopic = "NumericSQI";
+
   /**
    * Numerics are values observed by sensors at a relatively slow rate; generally <=3Hz. 
    * Multiple sensors may exist for the same metric so the instance_id serves to 
@@ -334,6 +343,7 @@ module ice {
     float value;
     Time_t device_time;
     Time_t presentation_time;
+    NumericSQI sqi;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist Numeric unique_device_identifier metric_id vendor_metric_id instance_id unit_id
   const string NumericTopic = "Numeric";
