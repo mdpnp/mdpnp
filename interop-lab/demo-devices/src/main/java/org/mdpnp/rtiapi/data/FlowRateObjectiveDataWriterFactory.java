@@ -6,7 +6,6 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
-import ice.InfusionStatusDataWriter;
 import ice.FlowRateObjectiveDataWriter;
 
 import org.springframework.beans.factory.DisposableBean;
@@ -34,7 +33,7 @@ public class FlowRateObjectiveDataWriterFactory implements FactoryBean<FlowRateO
 
     @Override
     public Class<?> getObjectType() {
-        return InfusionStatusDataWriter.class;
+        return FlowRateObjectiveDataWriter.class;
     }
 
     @Override

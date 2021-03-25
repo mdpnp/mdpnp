@@ -7,14 +7,46 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.geometry.Insets?>
 
- <HBox spacing="2" fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.PumpWithListener">
-	<children>
-    	<Label fx:id="pumpId"/>
-        <Label text="Current Speed"/>
-  		<Label fx:id="currentSpeedLabel"/>
-  		<Label text="Request Speed"/>
-        <TextField fx:id="requestedSpeed"/> 
-        <Button fx:id="setSpeedButton" text="Set" onAction="#setTheFlowRate"/>
-    </children>
+ <GridPane fx:id="main" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.PumpWithListener">
+	
+	<Label GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="pumpId"/>
+    <Label GridPane.columnIndex="0" GridPane.rowIndex="1" text="Speed"/>
+    <Label GridPane.columnIndex="1" GridPane.rowIndex="1" text="Current"/>
+	<Label GridPane.columnIndex="2" GridPane.rowIndex="1" fx:id="currentSpeedLabel"/>
+	<Label GridPane.columnIndex="3" GridPane.rowIndex="1" text="Request"/>
+    <TextField GridPane.columnIndex="4" GridPane.rowIndex="1" fx:id="requestedSpeed"/>
+    
+    <Label GridPane.columnIndex="0" GridPane.rowIndex="2" text="Accuracy"/>
+    <Label GridPane.columnIndex="1" GridPane.rowIndex="2" text="Current"/>
+	<Label GridPane.columnIndex="2" GridPane.rowIndex="2" fx:id="currentAccuracyLabel"/>
+	<Label GridPane.columnIndex="3" GridPane.rowIndex="2" text="Request"/>
+    <TextField GridPane.columnIndex="4" GridPane.rowIndex="2" fx:id="requestedAccuracy"/>
+    
+    <Label GridPane.columnIndex="0" GridPane.rowIndex="3" text="Accuracy Duration"/>
+    <Label GridPane.columnIndex="1" GridPane.rowIndex="3" text="Current"/>
+	<Label GridPane.columnIndex="2" GridPane.rowIndex="3" fx:id="currentAccuracyDurationLabel"/>
+	<Label GridPane.columnIndex="3" GridPane.rowIndex="3" text="Request"/>
+    <TextField GridPane.columnIndex="4" GridPane.rowIndex="3" fx:id="requestedAccuracyDuration"/>
+    
+    <Label GridPane.columnIndex="0" GridPane.rowIndex="4" text="Completeness"/>
+    <Label GridPane.columnIndex="1" GridPane.rowIndex="4" text="Current"/>
+	<Label GridPane.columnIndex="2" GridPane.rowIndex="4" fx:id="currentCompletenessLabel"/>
+	<Label GridPane.columnIndex="3" GridPane.rowIndex="4" text="Request"/>
+    <TextField GridPane.columnIndex="4" GridPane.rowIndex="4" fx:id="requestedCompleteness"/>
+    
+    <Label GridPane.columnIndex="0" GridPane.rowIndex="5" text="Precision"/>
+    <Label GridPane.columnIndex="1" GridPane.rowIndex="5" text="Current"/>
+	<Label GridPane.columnIndex="2" GridPane.rowIndex="5" fx:id="currentPrecisionLabel"/>
+	<Label GridPane.columnIndex="3" GridPane.rowIndex="5" text="Request"/>
+    <TextField GridPane.columnIndex="4" GridPane.rowIndex="5" fx:id="requestedPrecision"/>
+    
+    <Label GridPane.columnIndex="0" GridPane.rowIndex="6" text="Frequency"/>
+    <Label GridPane.columnIndex="1" GridPane.rowIndex="6" text="Current"/>
+	<Label GridPane.columnIndex="2" GridPane.rowIndex="6" fx:id="currentFrequencyLabel"/>
+	<Label GridPane.columnIndex="3" GridPane.rowIndex="6" text="Request"/>
+    <TextField GridPane.columnIndex="4" GridPane.rowIndex="6" fx:id="requestedFrequency"/>
+     
+    <Button GridPane.columnIndex="0" GridPane.rowIndex="7" fx:id="setSpeedButton" text="Set" onAction="#setTheFlowRate"/>
 
-</HBox>
+
+</GridPane>

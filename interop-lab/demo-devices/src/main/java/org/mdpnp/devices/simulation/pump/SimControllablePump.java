@@ -33,7 +33,8 @@ import com.rti.dds.topic.Topic;
 import ice.ConnectionState;
 import ice.FlowRateObjectiveDataReader;
 import ice.Numeric;
-
+import ice.NumericSQIObjective;
+import ice.NumericSQIObjectiveDataReader;
 import javafx.beans.value.*;
 import javafx.beans.property.*;
 
@@ -58,8 +59,13 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	private float currentFlowRate=1.0f;
 	
 	private FlowRateObjectiveDataReader flowRateReader;
+	private NumericSQIObjectiveDataReader sqiDataReader;
 	private Topic flowRateTopic;
+	private Topic numericSQITopic;
 	private QueryCondition flowRateQueryCondition;
+	private QueryCondition sqiQueryCondition;
+	
+	private float accuracy, accuracy_duration, completeness, frequency, precision;
 	
 	private DeviceClock defaultClock;
 	
@@ -116,6 +122,48 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
             }
         });
         
+        /**
+		 * Following block of code is for receiving objectives for the SQI
+		 */
+		ice.NumericSQIObjectiveTypeSupport.register_type(getParticipant(), ice.NumericSQIObjectiveTypeSupport.get_type_name());
+		numericSQITopic = TopicUtil.findOrCreateTopic(getParticipant(), ice.NumericSQIObjectiveTopic.VALUE, ice.NumericSQIObjectiveTypeSupport.class);
+		sqiDataReader = (ice.NumericSQIObjectiveDataReader) subscriber.create_datareader_with_profile(numericSQITopic,
+        		QosProfiles.ice_library, QosProfiles.state,  null, StatusKind.STATUS_MASK_NONE);
+		StringSeq sqiParams = new StringSeq();
+		/*
+		 * Althought the SQI objective allows the metric id to be specified, this device only has one metric ID
+		 * anyway so we don't bother doing anything with that in the sqiParams, relying only on the UDI.
+		 */
+        sqiParams.add("'" + deviceIdentity.unique_device_identifier + "'");
+        sqiQueryCondition = sqiDataReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+        		ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", sqiParams);
+        eventLoop.addHandler(sqiQueryCondition, new ConditionHandler() {
+            private ice.NumericSQIObjectiveSeq data_seq = new ice.NumericSQIObjectiveSeq();
+            private SampleInfoSeq info_seq = new SampleInfoSeq();
+
+            @Override
+            public void conditionChanged(Condition condition) {
+
+                for (;;) {
+                    try {
+                    	sqiDataReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                                (ReadCondition) condition);
+                        for (int i = 0; i < info_seq.size(); i++) {
+                            SampleInfo si = (SampleInfo) info_seq.get(i);
+                            ice.NumericSQIObjective data = (ice.NumericSQIObjective) data_seq.get(i);
+                            if (si.valid_data) {
+                        		setSQI(data);
+                            }
+                        }
+                    } catch (RETCODE_NO_DATA noData) {
+                        break;
+                    } finally {
+                    	sqiDataReader.return_loan(data_seq, info_seq);
+                    }
+                }
+            }
+        });
+        
 	}
 	
 	/**
@@ -133,6 +181,14 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 			e.printStackTrace();
 		}		//Take 5 seconds
 		
+	}
+	
+	private void setSQI(NumericSQIObjective sqi) {
+		accuracy=sqi.newAccuracy;
+		accuracy_duration=sqi.newAccuracy_duration;
+		completeness=sqi.newCompleteness;
+		frequency=sqi.newFrequency;
+		precision=sqi.newPrecision;
 	}
 	
 	@Override
@@ -164,7 +220,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 		final InstanceHolder<Numeric> flowRateHolder=createNumericInstance(rosetta.MDC_FLOW_FLUID_PUMP.VALUE, "");
 		System.err.println("executor is "+executor.getClass().getName());
 		//We have access to "executor" - a scheduled executor service
-		int a[]= {0}, d[]= {0}, c[]= {0},f[]= {0},p[]= {0};
+		//int a[]= {0}, d[]= {0}, c[]= {0},f[]= {0},p[]= {0};
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
 				
@@ -172,11 +228,11 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 				 * Eventually there should be a version of numericSample where the NumericSQI is passed in next to the value
 				 * which in this case is currentFlowRate.  For now we will fill it in in the holder
 				 */
-				flowRateHolder.data.sqi.accuracy=(a[0]++)%4;
-				flowRateHolder.data.sqi.accuracy_duration=(d[0]++)%5;
-				flowRateHolder.data.sqi.completeness=(c[0]++)%6;
-				flowRateHolder.data.sqi.frequency=(f[0]++)%7;
-				flowRateHolder.data.sqi.precision=(p[0]++)%8;
+				flowRateHolder.data.sqi.accuracy=accuracy;
+				flowRateHolder.data.sqi.accuracy_duration=accuracy_duration;
+				flowRateHolder.data.sqi.completeness=completeness;
+				flowRateHolder.data.sqi.frequency=frequency;
+				flowRateHolder.data.sqi.precision=precision;
 				numericSample(flowRateHolder, currentFlowRate , defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);

@@ -215,7 +215,7 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setSQI_completeness(v.sqi.completeness);
         setSQI_frequency(v.sqi.frequency);
         setSQI_precision(v.sqi.precision);
-        System.err.printf("In NumerixFx.update, v.sqi.frequency is %4.0f\n",v.sqi.frequency);
+        //System.err.printf("In NumerixFx.update, v.sqi.frequency is %4.0f\n",v.sqi.frequency);
         setValue(v.value);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
         setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));

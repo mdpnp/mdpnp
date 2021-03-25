@@ -430,6 +430,27 @@ module ice {
   #pragma keylist FlowRateObjective unique_device_identifier
   const string FlowRateObjectiveTopic = "FlowRateObjective";
 
+  /**
+   * SK - Topic for setting the SQI for a numeric.
+   * Rather like the "Set BP objective" (below in this file)
+   * this wouldn't have a real world usage since the SQI would vary
+   * according to whether or not sensors were malfunctioning etc.
+   * This is really to be able to control things that are not normally
+   * controlled in order to allow development and testing of applications
+   * that use these parameters.
+   */
+  struct NumericSQIObjective {
+	UniqueDeviceIdentifier unique_device_identifier;	//@key
+	MetricIdentifier metric_id; //@key
+	float newAccuracy;
+	float newAccuracy_duration;
+	float newCompleteness;
+	float newPrecision;
+	float newFrequency;
+  };
+  #pragma keylist NumericSQIObjective unique_device_identifier metric_id
+  const string NumericSQIObjectiveTopic = "NumericSQIObjective";
+
 /**
  * SK - Topic for changing the BP published by the SimControllableBPMonitor.
  * That simulated device is (initially) used as part of the Closed Loop Control

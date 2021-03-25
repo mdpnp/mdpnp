@@ -965,7 +965,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         lastPumpUpdate.textProperty().bind(Bindings.format("Last pump update %s", flowRateFromSelectedPump[0].presentation_timeProperty()));
         lastBPUpdate.textProperty().bind(Bindings.format("Last BP update %s", sampleFromSelectedMonitor[0].presentation_timeProperty()));
         lastPumpSQI.textProperty().bind(Bindings.format(
-        		"Pump SQI: Accuracy %4.0f Accuracy Duration %4.0f Completeness %4.0f Precision %4.0f Frequency %4.0f",
+        		"Pump SQI: Accuracy %4.0f%% Accuracy Duration %4.0f(mins) Completeness %4.0f%% Resolution 1E%2.0f Frequency %4.0fHz",
         		flowRateFromSelectedPump[0].sqi_accuracyProperty(),
         		flowRateFromSelectedPump[0].sqi_accuracy_durationProperty(),
         		flowRateFromSelectedPump[0].sqi_completenessProperty(),
