@@ -36,3 +36,10 @@ docbox-himss-2014/src_dds
 *.iml
 interop-lab/demo-apps/demo-app.csv*
 id_file
+
+data-types/x73-ddl/src/main/resources/schema/
+
+interop-lab/demo-apps/log.txt
+
+interop-lab/demo-apps/openicedataexport.csv*
+interop-lab/demo-apps/src/main/resources/schema/

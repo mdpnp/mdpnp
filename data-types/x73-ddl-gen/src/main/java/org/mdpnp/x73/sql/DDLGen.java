@@ -1,9 +1,10 @@
-package ice;
+package org.mdpnp.x73.sql;
 
 import java.io.FileInputStream;
-
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,12 +13,15 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.mdpnp.x73.sql.IDLToDDL.Struct;
+import org.mdpnp.x73.sql.IDLToDDL.StructMember;
 
-import ice.IDLToDDL.StructMember;
-import ice.IDLToDDL.Struct;
+import ice.IDLLexer;
+import ice.IDLParser;
 
 public class DDLGen {
 	
+	private static String BASE_DIRECTORY = "./../../interop-lab/demo-apps/src/main/resources/schema/";
 	private static Hashtable<String, String> typedefs;
 	private static Hashtable<String, Struct> structs;
 	
@@ -27,19 +31,15 @@ public class DDLGen {
 	public static void main(String args[]) {
 		
 		try {
-			ANTLRInputStream input=new ANTLRInputStream(new FileInputStream("/openice/apl3/mdpnp/data-types/x73-idl/src/main/idl/ice/ice.idl"));
+			ANTLRInputStream input=new ANTLRInputStream(new FileInputStream("./../x73-idl/src/main/idl/ice/ice.idl"));
 			IDLLexer lexer=new IDLLexer(input);
 			CommonTokenStream tokens=new CommonTokenStream(lexer);
 			IDLParser parser=new IDLParser(tokens);
 			ParseTree tree=parser.definition();
-			//System.out.println(tree.toStringTree(parser));
 			ParseTreeWalker walker=new ParseTreeWalker();
 			IDLToDDL listener=new IDLToDDL();
 			walker.walk(listener, tree);
-			System.err.println();
-			System.out.println();
 			typedefs=listener.getTypedefs();
-			System.err.println("typedefs is "+typedefs);
 			structs=listener.getStructs();
 			
 			generateDDL();
@@ -52,8 +52,8 @@ public class DDLGen {
 	}
 
 	private static void generateDDL() {
-		StringBuilder ddl=new StringBuilder();
 		for(String s : structs.keySet()) {
+			StringBuilder ddl=new StringBuilder();
 			Struct struct=structs.get(s);
 			ddl.append("CREATE TABLE "+struct.name+" (\n");
 			for(int i=0;i<struct.members.size();i++) {
@@ -77,18 +77,24 @@ public class DDLGen {
 							ddl.append("\n");
 						}
 					}
-					//ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
 				} else {
 					ddl.append("\t"+member.memberName+" ");
 					ddl.append( decodeType(member.memberType) );
 					ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
-					//ddl.append(",\n");
 				}
-				
 			}
 			ddl.append(");\n");
+		    Path path = Paths.get(BASE_DIRECTORY + struct.name + ".sql");
+		    Path directoryPath = Paths.get(BASE_DIRECTORY);
+		    try {
+		    	Files.createDirectories(directoryPath);
+				Files.write(path, ddl.toString().getBytes());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		System.out.println(ddl);
+		
 	}
 	
 	private static String decodeType(String type) {
@@ -104,11 +110,6 @@ public class DDLGen {
 		if(m.matches()) {
 			idlType="blob";
 		}
-		
 		return idlType;
 	}
-
-	
-
-
 }
