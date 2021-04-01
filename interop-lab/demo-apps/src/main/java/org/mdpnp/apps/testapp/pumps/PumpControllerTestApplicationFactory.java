@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationContext;
 import com.rti.dds.subscription.Subscriber;
 
 import ice.FlowRateObjectiveDataWriter;
+import ice.NumericSQIObjectiveDataWriter;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
@@ -45,6 +46,8 @@ public class PumpControllerTestApplicationFactory implements IceApplicationProvi
         //"flowRateObjectiveWriter" is a new bean in IceAppContainerContext.xml
         final FlowRateObjectiveDataWriter objectiveWriter=(FlowRateObjectiveDataWriter) parentContext.getBean("flowRateObjectiveWriter");
         
+        final NumericSQIObjectiveDataWriter sqiObjectiveWriter=(NumericSQIObjectiveDataWriter) parentContext.getBean("numericSQIObjectiveWriter");
+        
         final MDSHandler mdsHandler=(MDSHandler)parentContext.getBean("mdsConnectivity",MDSHandler.class);
         mdsHandler.start();
 		
@@ -54,7 +57,7 @@ public class PumpControllerTestApplicationFactory implements IceApplicationProvi
         
         final PumpControllerTestApplication controller = ((PumpControllerTestApplication) loader.getController());
         
-        controller.set(deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler);
+        controller.set(deviceListModel, numericList, sampleList, objectiveWriter, sqiObjectiveWriter, mdsHandler);
         
         controller.start(eventLoop, subscriber);
 		

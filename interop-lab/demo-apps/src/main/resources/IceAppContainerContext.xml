@@ -76,6 +76,11 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
     
+    <!-- This is for test purposes -->
+    <bean id="numericSQIObjectiveWriter" class="org.mdpnp.rtiapi.data.NumericSQIObjectiveDataWriterFactory" lazy-init="true">
+    	<constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
 
     <!-- This is only needed when Charting apps are installed -->
     <bean id="patientAssessmentWriter" class="org.mdpnp.rtiapi.data.PatientAssessmentDataWriterFactory" lazy-init="true">

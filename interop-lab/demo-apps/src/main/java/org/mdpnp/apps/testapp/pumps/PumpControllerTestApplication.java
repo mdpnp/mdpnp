@@ -32,6 +32,7 @@ import com.rti.dds.subscription.Subscriber;
 
 import ice.FlowRateObjectiveDataWriter;
 import ice.MDSConnectivity;
+import ice.NumericSQIObjectiveDataWriter;
 import ice.Patient;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -53,14 +54,10 @@ public class PumpControllerTestApplication {
 	private NumericFxList numeric;
 	private SampleArrayFxList samples;
 	private FlowRateObjectiveDataWriter writer;
+	private NumericSQIObjectiveDataWriter sqiWriter;
 	private MDSHandler mdsHandler;
 	
 	@FXML VBox pumps;
-		
-	@FXML private ComboBox<Device> bpsources;
-	@FXML private TextField systolic;
-	@FXML private TextField diastolic;
-	@FXML private TextField mean;
 		
 	private final String FLOW_RATE=rosetta.MDC_FLOW_FLUID_PUMP.VALUE;
 	private final String ARTERIAL=rosetta.MDC_PRESS_BLD_ART_ABP.VALUE;
@@ -98,11 +95,13 @@ public class PumpControllerTestApplication {
 	
 	private Connection dbconn;
 	
-	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler) {
+	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples,
+			FlowRateObjectiveDataWriter writer, NumericSQIObjectiveDataWriter sqiWriter, MDSHandler mdsHandler) {
 		this.dlm=dlm;
 		this.numeric=numeric;
 		this.samples=samples;
 		this.writer=writer;
+		this.sqiWriter=sqiWriter;
 		this.mdsHandler=mdsHandler;
 	}
 	
@@ -126,16 +125,6 @@ public class PumpControllerTestApplication {
 		System.err.println("In PumpControllerTestApplication.activate");
 
 	}
-	
-	class BPDeviceChangeListener implements ChangeListener<Device> {
-
-		@Override
-		public void changed(ObservableValue<? extends Device> observable, Device oldValue, Device newValue) {
-			handleBPDeviceChange(newValue);
-		}
-	}
-
-	BPDeviceChangeListener bpDeviceChangeListener=new BPDeviceChangeListener();
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
 		
@@ -162,54 +151,10 @@ public class PumpControllerTestApplication {
 				while(change.next()) {
 					change.getRemoved().forEach( d-> {
 						//icepumps.getItems().remove(d);
-						bpsources.getItems().remove(d);
 						removePumpFromMainPanel(d);
 					});
 				}
 			}
-		});
-		
-		//Similarly, rely on metrics to add BP devices.
-		samples.addListener(new ListChangeListener<SampleArrayFx>() {
-			@Override
-			public void onChanged(Change<? extends SampleArrayFx> change) {
-				while(change.next()) {
-					change.getAddedSubList().forEach( n -> {
-						if(n.getMetric_id().equals(ARTERIAL)) {
-							bpsources.getItems().add(dlm.getByUniqueDeviceIdentifier(n.getUnique_device_identifier()));
-						}
-					});
-				}
-				
-			}
-		});
-		
-		bpsources.getSelectionModel().selectedItemProperty().addListener(bpDeviceChangeListener);
-		listenerPresent=true;
-		
-		bpsources.setCellFactory(new Callback<ListView<Device>,ListCell<Device>>() {
-
-			@Override
-			public ListCell<Device> call(ListView<Device> device) {
-				return new DeviceListCell();
-			}
-			
-		});
-		
-		bpsources.setConverter(new StringConverter<Device>() {
-
-			@Override
-			public Device fromString(String arg0) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String toString(Device arg0) {
-				// TODO Auto-generated method stub
-				return arg0.getModel();
-			}
-			
 		});
 		
 		mdsHandler.addPatientListener(new PatientListener() {
@@ -264,7 +209,7 @@ public class PumpControllerTestApplication {
 		        final Parent ui = loader.load();
 		        
 		        final PumpWithListener controller = ((PumpWithListener) loader.getController());
-		        controller.setPump(d,numeric,writer, dbconn);
+		        controller.setPump(d,numeric,writer, sqiWriter, dbconn);
 		        pumps.getChildren().add(ui);
 		        udiToPump.put(d.getUDI(), ui);
 			} catch (IOException ioe) {
@@ -290,47 +235,6 @@ public class PumpControllerTestApplication {
 			if(numbers[i].floatValue()>minAndMax[1]) minAndMax[1]=numbers[i].floatValue();
 		}
 		return minAndMax;
-	}
-	
-	class SampleValuesChangeListener implements ChangeListener<Number[]> {
-
-		@Override
-		public void changed(ObservableValue<? extends Number[]> observable, Number[] oldValue, Number[] newValue) {
-			//Ignore the old values.  Just get new ones.
-			float[] minMax=getMinAndMax(newValue);
-			//System.err.println("got minMax as "+minMax[0]+ " and "+minMax[1]);
-			diastolic.setText(Integer.toString((int)minMax[0]));
-			systolic.setText(Integer.toString((int)minMax[1]));
-			/*
-			 * https://nursingcenter.com/ncblog/december-2011/calculating-the-map
-			 */
-			float meanCalc=(minMax[1]+(2*minMax[0]))/3;
-			mean.setText(Integer.toString((int)meanCalc));
-		}
-	}
-	
-	SampleValuesChangeListener bpArrayListener=new SampleValuesChangeListener();
-	
-	/**
-	 * Use this to allow access to the array sample that has a listener attached.
-	 * Then if the BP monitor is changed, the listener can be detached from the previous sample
-	 */
-	private SampleArrayFx currentBPSample;
-	
-	private void handleBPDeviceChange(Device newDevice) {
-		log.info("QCT.handleDeviceChange newDevice is "+newDevice);
-		if(currentBPSample!=null) {
-			currentBPSample.valuesProperty().removeListener(bpArrayListener);
-		}
-		if(null==newDevice) return;	//No device selected and/or available - can happen when patient is changed and no devices for that patient
-		samples.forEach( s-> {
-			if (! s.getUnique_device_identifier().contentEquals(newDevice.getUDI())) return;	//Some other device.
-			//This sample is from the current device.
-			if(s.getMetric_id().equals(ARTERIAL)) {
-				s.valuesProperty().addListener(bpArrayListener);
-				currentBPSample=s;
-			}
-		});
 	}
 	
 	class DeviceListCell extends ListCell<Device> {

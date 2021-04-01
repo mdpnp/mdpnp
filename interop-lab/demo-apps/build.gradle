@@ -171,6 +171,7 @@ ext {
 manifest { attributes "Main-Class" : mainClassName }
 
 dependencies {
+	compile project(':data-types:x73-ddl')
     compile project(':interop-lab:demo-devices')
     compile project(':interop-lab:demo-guis')
     compile project(':interop-lab:demo-guis-javafx')
