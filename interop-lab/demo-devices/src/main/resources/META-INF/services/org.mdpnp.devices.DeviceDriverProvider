@@ -32,3 +32,4 @@ org.mdpnp.apps.testapp.DeviceFactory$GESerialProvider
 org.mdpnp.apps.testapp.DeviceFactory$MSeriesScaleProvider
 org.mdpnp.apps.testapp.DeviceFactory$ControllablePump_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$ControllableBPMonitor_SimulatorProvider
+org.mdpnp.apps.testapp.DeviceFactory$TestDevice_SimulatorProvider

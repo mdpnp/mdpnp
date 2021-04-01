@@ -43,6 +43,7 @@ import org.mdpnp.devices.simulation.pump.SimControllablePump;
 import org.mdpnp.devices.simulation.clcbp.SimControllableBPMonitor;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
+import org.mdpnp.devices.testdevice.TestDevice;
 import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -659,7 +660,21 @@ public class DeviceFactory {
         }
     }
     
-    
+    public static class TestDevice_SimulatorProvider extends SpringLoadedDriver {
+
+        @Override
+        public DeviceType getDeviceType(){
+            return new DeviceType(ice.ConnectionType.Simulated, "ICE", "Test Device", "Test_Device", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+            EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
+            Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+            Publisher publisher = context.getBean("publisher", Publisher.class);
+            return new TestDevice(subscriber, publisher, eventLoop);
+        }
+    }
 
 
 }
