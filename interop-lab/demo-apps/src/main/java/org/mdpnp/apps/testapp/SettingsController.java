@@ -50,7 +50,7 @@ public class SettingsController {
     @FXML
     ComboBox<DeviceDriverProvider> deviceType;
     @FXML
-    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel, fhirServerLabel;
+    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel, fhirServerLabel, emrServerLabel,usernameLabel,passwordLabel;
     @FXML
     GridPane gridPane;
     @FXML
@@ -119,6 +119,12 @@ public class SettingsController {
         case ICE_Device_Interface:
             gridPane.getChildren().remove(fhirServer);
             gridPane.getChildren().remove(fhirServerLabel);
+            gridPane.getChildren().remove(emrServer);
+            gridPane.getChildren().remove(emrServerLabel);
+            gridPane.getChildren().remove(username);
+            gridPane.getChildren().remove(usernameLabel);
+            gridPane.getChildren().remove(password);
+            gridPane.getChildren().remove(passwordLabel);
             if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
             if(!gridPane.getChildren().contains(deviceCategory)) { gridPane.getChildren().add(deviceCategory); }
             if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
@@ -169,6 +175,12 @@ public class SettingsController {
             gridPane.getChildren().remove(serialPortsContainer);
             if(!gridPane.getChildren().contains(fhirServerLabel)) { gridPane.getChildren().add(fhirServerLabel); }
             if(!gridPane.getChildren().contains(fhirServer)) { gridPane.getChildren().add(fhirServer); }
+            if(!gridPane.getChildren().contains(emrServerLabel)) { gridPane.getChildren().add(emrServerLabel); }
+            if(!gridPane.getChildren().contains(emrServer)) { gridPane.getChildren().add(emrServer); }
+            if(!gridPane.getChildren().contains(usernameLabel)) { gridPane.getChildren().add(usernameLabel); }
+            if(!gridPane.getChildren().contains(username)) { gridPane.getChildren().add(username); }
+            if(!gridPane.getChildren().contains(passwordLabel)) { gridPane.getChildren().add(passwordLabel); }
+            if(!gridPane.getChildren().contains(password)) { gridPane.getChildren().add(password); }
             start.set("Start " + app);
             break;
         }

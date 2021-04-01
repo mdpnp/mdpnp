@@ -6,26 +6,25 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicDescription;
 
-import ice.FlowRateObjectiveDataWriter;
-
+import ice.NumericSQIObjectiveDataWriter;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 
 /**
  *
  */
-public class FlowRateObjectiveDataWriterFactory implements FactoryBean<FlowRateObjectiveDataWriter>, DisposableBean {
+public class NumericSQIObjectiveDataWriterFactory implements FactoryBean<NumericSQIObjectiveDataWriter>, DisposableBean {
     private Topic topic;
-    private FlowRateObjectiveDataWriter instance;
+    private NumericSQIObjectiveDataWriter instance;
 
     private final DomainParticipant participant;
     private final Publisher publisher;
 
     @Override
-    public FlowRateObjectiveDataWriter getObject() throws Exception {
+    public NumericSQIObjectiveDataWriter getObject() throws Exception {
         if(instance == null) {
-            topic = TopicUtil.findOrCreateTopic(participant, ice.FlowRateObjectiveTopic.VALUE,  ice.FlowRateObjectiveTypeSupport.class);
-            instance = (FlowRateObjectiveDataWriter) publisher.create_datawriter_with_profile(topic, QosProfiles.ice_library,
+            topic = TopicUtil.findOrCreateTopic(participant, ice.NumericSQIObjectiveTopic.VALUE,  ice.NumericSQIObjectiveTypeSupport.class);
+            instance = (NumericSQIObjectiveDataWriter) publisher.create_datawriter_with_profile(topic, QosProfiles.ice_library,
                     QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
         }
         return instance;
@@ -33,7 +32,7 @@ public class FlowRateObjectiveDataWriterFactory implements FactoryBean<FlowRateO
 
     @Override
     public Class<?> getObjectType() {
-        return FlowRateObjectiveDataWriter.class;
+        return NumericSQIObjectiveDataWriter.class;
     }
 
     @Override
@@ -41,7 +40,7 @@ public class FlowRateObjectiveDataWriterFactory implements FactoryBean<FlowRateO
         return true;
     }
 
-    public FlowRateObjectiveDataWriterFactory(DomainParticipant participant, Publisher publisher) {
+    public NumericSQIObjectiveDataWriterFactory(DomainParticipant participant, Publisher publisher) {
         this.participant = participant;
         this.publisher = publisher;
     }

@@ -36,14 +36,10 @@ public class DDLGen {
 			CommonTokenStream tokens=new CommonTokenStream(lexer);
 			IDLParser parser=new IDLParser(tokens);
 			ParseTree tree=parser.definition();
-			//System.out.println(tree.toStringTree(parser));
 			ParseTreeWalker walker=new ParseTreeWalker();
 			IDLToDDL listener=new IDLToDDL();
 			walker.walk(listener, tree);
-			System.err.println();
-			System.out.println();
 			typedefs=listener.getTypedefs();
-			System.err.println("typedefs is "+typedefs);
 			structs=listener.getStructs();
 			
 			generateDDL();
@@ -81,17 +77,13 @@ public class DDLGen {
 							ddl.append("\n");
 						}
 					}
-					//ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
 				} else {
 					ddl.append("\t"+member.memberName+" ");
 					ddl.append( decodeType(member.memberType) );
 					ddl.append( i<struct.members.size()-1 ? ",\n" : "\n");
-					//ddl.append(",\n");
 				}
-				
 			}
 			ddl.append(");\n");
-			System.out.println(ddl);
 		    Path path = Paths.get(BASE_DIRECTORY + struct.name + ".sql");
 		    Path directoryPath = Paths.get(BASE_DIRECTORY);
 		    try {
@@ -118,7 +110,6 @@ public class DDLGen {
 		if(m.matches()) {
 			idlType="blob";
 		}
-		
 		return idlType;
 	}
 }
