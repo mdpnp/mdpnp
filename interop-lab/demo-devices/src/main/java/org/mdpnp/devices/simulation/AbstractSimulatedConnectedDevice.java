@@ -17,6 +17,7 @@ import ice.GlobalAlarmLimitObjective;
 import ice.GlobalSimulationObjective;
 import ice.LocalAlarmLimitObjective;
 import ice.Numeric;
+import ice.NumericSQI;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -132,7 +133,17 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     @Override
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
         super.numericSample(holder, newValue, time);
-        String identifier = holder.data.metric_id + "-" + holder.data.instance_id;
+        processPatientAlert(holder, newValue);
+    }
+    
+    @Override
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, NumericSQI sqi, DeviceClock.Reading time) {
+        super.numericSample(holder, newValue, sqi, time);
+        processPatientAlert(holder, newValue);
+    }
+
+	private void processPatientAlert(InstanceHolder<Numeric> holder, float newValue) {
+		String identifier = holder.data.metric_id + "-" + holder.data.instance_id;
         InstanceHolder<ice.AlarmLimit> lowAlarmLimit = this.alarmLimit.get(alarmLimitKey(holder.data.metric_id, ice.LimitType.low_limit));
         InstanceHolder<ice.AlarmLimit> highAlarmLimit = this.alarmLimit.get(alarmLimitKey(holder.data.metric_id, ice.LimitType.high_limit));
         
@@ -155,7 +166,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
             log.trace("For " + identifier + " is in range " + newValue + " in [" + (null==lowAlarmLimit?"?":""+lowAlarmLimit.data.value)+"-"+(null==highAlarmLimit?"?":highAlarmLimit.data.value));
             writePatientAlert(identifier, "NORMAL");
         }
-    }
+	}
     
     @Override
     public void unsetAlarmLimit(String metricId, ice.LimitType limit_type) {

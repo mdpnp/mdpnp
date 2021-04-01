@@ -18,12 +18,14 @@ import com.rti.dds.topic.Topic;
 import ice.ConnectionState;
 import ice.FlowRateObjectiveDataReader;
 import ice.Numeric;
+import ice.NumericSQI;
 
 public class TestDevice extends AbstractSimulatedConnectedDevice {
 	
 	private static int fakeComPortNumber=1;
 	
 	private float currentFlowRate=1.0f;
+	private NumericSQI currentSQI = new NumericSQI();
 	
 	private FlowRateObjectiveDataReader flowRateReader;
 	private Topic flowRateTopic;
@@ -74,7 +76,7 @@ public class TestDevice extends AbstractSimulatedConnectedDevice {
 		//We have access to "executor" - a scheduled executor service	 
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
-				numericSample(flowRateHolder, currentFlowRate , defaultClock.instant());
+				numericSample(flowRateHolder, currentFlowRate, currentSQI, defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);
 	}

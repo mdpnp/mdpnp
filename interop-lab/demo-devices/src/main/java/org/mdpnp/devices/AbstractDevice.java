@@ -19,6 +19,7 @@ import ice.DeviceIdentityTypeSupport;
 import ice.LocalAlarmLimitObjectiveDataWriter;
 import ice.Numeric;
 import ice.NumericDataWriter;
+import ice.NumericSQI;
 import ice.NumericTypeSupport;
 import ice.SampleArray;
 import ice.SampleArrayDataWriter;
@@ -347,7 +348,12 @@ public abstract class AbstractDevice {
     }
 
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
-        holder.data.value = newValue;
+        numericSample(holder, newValue, new NumericSQI(), time);
+    }
+    
+    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, NumericSQI sqi, DeviceClock.Reading time) {
+    	holder.data.value = newValue;
+    	holder.data.sqi = sqi;
         if(time.hasDeviceTime()) {
             Time_t t = DomainClock.toDDSTime(time.getDeviceTime());
             holder.data.device_time.sec = t.sec;
