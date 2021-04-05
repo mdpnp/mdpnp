@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
@@ -59,6 +60,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	
 	private float currentFlowRate=1.0f;
 	private NumericSQI currentSQI = new NumericSQI();
+	private NumberWithJitter<Float> accuracy = new NumberWithJitter<Float>(95.0, 0.25, 90.0, 100.0);
 	
 	private FlowRateObjectiveDataReader flowRateReader;
 	private NumericSQIObjectiveDataReader sqiDataReader;
@@ -184,6 +186,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	}
 	
 	private void setCurrentSQI(NumericSQIObjective sqi) {
+		accuracy = new NumberWithJitter<Float>(sqi.newAccuracy, 0.25, 90.0, 100.0);
 		currentSQI.accuracy = sqi.newAccuracy;
 		currentSQI.accuracy_duration=sqi.newAccuracy_duration;
 		currentSQI.completeness=sqi.newCompleteness;
@@ -223,6 +226,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 		//int a[]= {0}, d[]= {0}, c[]= {0},f[]= {0},p[]= {0};
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
+				currentSQI.accuracy = accuracy.floatValue();
 				numericSample(flowRateHolder, currentFlowRate, currentSQI, defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);

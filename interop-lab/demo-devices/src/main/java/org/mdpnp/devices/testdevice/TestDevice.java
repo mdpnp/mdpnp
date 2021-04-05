@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.devices.simulation.pump.SimControllablePump;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ public class TestDevice extends AbstractSimulatedConnectedDevice {
 	
 	private float currentFlowRate=1.0f;
 	private NumericSQI currentSQI = new NumericSQI();
+	private NumberWithJitter<Float> accuracy = new NumberWithJitter<Float>(95.0, 0.25, 90.0, 100.0);
 	
 	private FlowRateObjectiveDataReader flowRateReader;
 	private Topic flowRateTopic;
@@ -76,6 +78,7 @@ public class TestDevice extends AbstractSimulatedConnectedDevice {
 		//We have access to "executor" - a scheduled executor service	 
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
+				currentSQI.accuracy = accuracy.floatValue();
 				numericSample(flowRateHolder, currentFlowRate, currentSQI, defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);

@@ -132,7 +132,7 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
 
     @Override
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
-        super.numericSample(holder, newValue, time);
+        super.numericSample(holder, newValue, new NumericSQI(), time);
         processPatientAlert(holder, newValue);
     }
     

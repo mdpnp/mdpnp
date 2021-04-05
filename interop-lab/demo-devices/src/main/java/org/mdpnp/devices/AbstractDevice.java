@@ -483,7 +483,10 @@ public abstract class AbstractDevice {
     }
 
     protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
-
+    	return numericSample(holder, newValue, new NumericSQI(), metric_id, vendor_metric_id, instance_id, unit_id, time);
+    }
+    
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
         if (holder != null && (!holder.data.metric_id.equals(metric_id) || !holder.data.vendor_metric_id.equals(vendor_metric_id) || holder.data.instance_id != instance_id || !holder.data.unit_id.equals(unit_id))) {
             unregisterNumericInstance(holder);
             holder = null;
@@ -492,7 +495,7 @@ public abstract class AbstractDevice {
             if (null == holder) {
                 holder = createNumericInstance(metric_id, vendor_metric_id, instance_id, unit_id);
             }
-            numericSample(holder, newValue, time);
+            numericSample(holder, newValue, sqi, time);
         } else {
             if (null != holder) {
                 unregisterNumericInstance(holder);
