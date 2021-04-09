@@ -20,3 +20,4 @@ org.mdpnp.apps.testapp.closedloopcontrol.ClosedLoopControlTestApplicationFactory
 org.mdpnp.apps.testapp.bpcontrol.BPControllerApplicationFactory
 org.mdpnp.apps.testapp.bpcontrol.timing.BPTimingTestApplicationFactory
 org.mdpnp.apps.testapp.openemr.OpenEMRTestApplicationFactory
+org.mdpnp.apps.testapp.networkmonitor.NetworkMonitorAppFactory

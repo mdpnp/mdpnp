@@ -87,6 +87,13 @@
         <constructor-arg ref="publisher" />
         <constructor-arg ref="domainParticipant" />
     </bean>
+    
+    <!-- This is needed for ICE aware apps and devices which can respond to a SafetyFallback
+    -->
+    <bean id="safetyFallbackObjectiveWriter" class="org.mdpnp.rtiapi.data.SafetyFallbackObjectiveDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
 
     <!--
     Do not start right away. Delegate to the LifecycleController to do it at the very end avter all beans

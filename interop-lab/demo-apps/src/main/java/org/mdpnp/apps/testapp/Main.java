@@ -83,15 +83,14 @@ public class Main {
 	}
 	
 	static class MouseTimer extends Thread {
-		
+		int COUNTDOWN_FROM = System.getProperty("mdpnp.timeout") == null ? 30
+				: Integer.parseInt(System.getProperty("mdpnp.timeout"));
 		private IceApplication whatToLock;
 		
 		MouseTimer(IceApplication whatToLock) {
 			this.whatToLock=whatToLock;
 			setName("MouseTimerMain");
 		}
-		 
-		private final int COUNTDOWN_FROM=30;
 		
 		private int seconds=COUNTDOWN_FROM;
 		

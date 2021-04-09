@@ -426,6 +426,7 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString requestor;
     float newFlowRate;
+    float fallBackRate;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist FlowRateObjective unique_device_identifier
   const string FlowRateObjectiveTopic = "FlowRateObjective";
@@ -671,6 +672,30 @@ struct BPPauseResumeObjective {
   };
   const string FROAAlarmTopic = "FROAAlarm";
 
+  /**
+    * Type of SafetyFallback 
+    */
+  enum SafetyFallbackType {
+   device_network_quality,
+   system_network_quality,
+   other
+  }; 
+  
+  /**
+    * SK - Topic for Alerting of a SafetyFallback Condition
+    * The "Safety Fallback Detection" app will publish a SafetyFallbackObjective.
+    *
+    * Stability: 1 - Experimental
+    */
+  struct SafetyFallbackObjective {
+    string<256> identifier; //@key
+    UniqueDeviceIdentifier unique_device_identifier;
+    Time_t presentation_time;
+    SafetyFallbackType safety_fallback_type;
+    string<256> message;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist SafetyFallbackObjective identifier
+  const string SafetyFallbackObjectiveTopic = "SafetyFallbackObjective";
 };
 
 
