@@ -52,6 +52,10 @@
 	    	<Label text="Infusion Rate (ml/hour)"/>
 	    	<Spinner fx:id="infusionRate"/>
 	    </VBox>
+	    <VBox spacing="2" fx:id="fallbackVBox">
+	    	<Label text="Fallback Infusion Rate (ml/hour)"/>
+	    	<Spinner fx:id="fallbackInfusionRate"/>
+	    </VBox>
 	    <Label>Please select a pump</Label>
 	    <ComboBox fx:id="pumps" promptText="choose"/>
 	    <Label>Please select a BP source</Label>

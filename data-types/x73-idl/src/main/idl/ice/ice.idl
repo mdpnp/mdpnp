@@ -426,7 +426,7 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString requestor;
     float newFlowRate;
-    float fallBackRate;
+    float fallbackRate;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist FlowRateObjective unique_device_identifier
   const string FlowRateObjectiveTopic = "FlowRateObjective";

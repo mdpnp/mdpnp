@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.networkmonitor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -13,15 +14,24 @@ import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
+import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
 
+import ice.SafetyFallbackObjective;
 import ice.SafetyFallbackObjectiveDataWriter;
+import ice.SafetyFallbackObjectiveTopic;
+import ice.SafetyFallbackObjectiveTypeSupport;
 import ice.SafetyFallbackType;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -45,19 +55,40 @@ public class NetworkMonitorApp {
 	@FXML TableView<Map.Entry<String, Double>> averagesTable;
 	private NumericFxList numericList;
 	private SampleArrayFxList sampleFxList;
-	private Subscriber subscriber;
+	private Subscriber assignedSubscriber;	//Use a slightly different name here to avoid poss conflict with any other subscriber variable.
+	private Subscriber constructorSubscriber;
 	private EventLoop eventLoop;
-	private ApplicationContext context;
-	private SafetyFallbackObjectiveDataWriter objectiveWriter;
+	private ApplicationContext parentContext;
 	private Multimap<String, NetworkQualityMetric> deviceNetworkQualityMetrics;
 	private ObservableMap<String, Double> deviceAverages;
 	private ObservableList<Entry<String, Double>> data;
+	
+	/**
+	 * A domain participant for publishing things in DDS if required.
+	 */
+	private DomainParticipant participant;
+	private Topic safetyFallbackObjectiveTopic;
+	
+	/**
+	 * DDS publisher for anything we want to publish.
+	 */
+	private Publisher publisher;
+	private SafetyFallbackObjectiveDataWriter safetyFallbackObjectiveWriter;
+	
+	/**
+	 * Instance handle for SafetyFallbackObjective
+	 */
+	private InstanceHandle_t safetyFallbackObjectiveHandle;
+	
+	private Map<String,Date> sentNotifications;
 	
 	public NetworkMonitorApp() {
 		SAMPLE_SIZE = System.getProperty("mdpnp.network.monitor.samplesize") == null ? SAMPLE_SIZE_DEFAULT
 				: Integer.parseInt(System.getProperty("mdpnp.network.monitor.samplesize"));
 		LATENCY_THRESHOLD = System.getProperty("mdpnp.network.monitor.latencythreshold") == null ? LATENCY_THRESHOLD_DEFAULT
 				: Integer.parseInt(System.getProperty("mdpnp.network.monitor.latencythreshold"));
+		
+		sentNotifications = new HashMap<String,Date>();
 	}
 	
 	public void activate() {
@@ -93,10 +124,9 @@ public class NetworkMonitorApp {
 		averagesTable.autosize();
 	}
 	
-	public void set(ApplicationContext context, Subscriber subscriber, SafetyFallbackObjectiveDataWriter objectiveWriter, NumericFxList numericFxList, SampleArrayFxList sampleFxList) {
-		this.context = context;
-		this.subscriber = subscriber;
-		this.objectiveWriter = objectiveWriter;
+	public void set(ApplicationContext context, Subscriber subscriber, NumericFxList numericFxList, SampleArrayFxList sampleFxList) {
+		this.parentContext = context;
+		this.assignedSubscriber = subscriber;
 		this.numericList = numericFxList;
 		this.sampleFxList = sampleFxList;
 	}
@@ -190,26 +220,42 @@ public class NetworkMonitorApp {
 	}
 	
 	public void sendSafetyFallbackMessage(SafetyFallbackType type, String deviceId, Double average) {
-		ice.SafetyFallbackObjective objective=new ice.SafetyFallbackObjective();
-		objective.identifier = UUID.randomUUID().toString();
-		objective.unique_device_identifier = deviceId;
-		objective.safety_fallback_type = type;
-		switch(type.value()) {
-		case SafetyFallbackType._device_network_quality:
-			objective.message = "Device Network Quality has deteriorated and has triggered a SafetyFallback";
-			break;
-		case SafetyFallbackType._system_network_quality:
-			objective.message = "System Network Quality has deteriorated and has triggered a SafetyFallback";
-			break;
-		case SafetyFallbackType._other:
-			objective.message = "SafetyFallback has been triggered for non-network-related reason";
-			break;
-		default:
-			objective.message = "SafetyFallback has been triggered for an unknown reason";
+		Date sentDate = sentNotifications.get(deviceId+type.toString());
+		if(sentDate == null || sentDate.before(new Date(System.currentTimeMillis() - 30000))) {
+			SafetyFallbackObjective safetyFallbackObjective = new SafetyFallbackObjective();
+			safetyFallbackObjective.identifier = UUID.randomUUID().toString();
+			safetyFallbackObjective.unique_device_identifier = deviceId;
+			safetyFallbackObjective.safety_fallback_type = type;
+			switch(type.value()) {
+			case SafetyFallbackType._device_network_quality:
+				safetyFallbackObjective.message = "Device Network Quality has deteriorated and has triggered a SafetyFallback";
+				break;
+			case SafetyFallbackType._system_network_quality:
+				safetyFallbackObjective.message = "System Network Quality has deteriorated and has triggered a SafetyFallback";
+				break;
+			case SafetyFallbackType._other:
+				safetyFallbackObjective.message = "SafetyFallback has been triggered for non-network-related reason";
+				break;
+			default:
+				safetyFallbackObjective.message = "SafetyFallback has been triggered for an unknown reason";
+			}
+			
+			participant=assignedSubscriber.get_participant();
+			
+			SafetyFallbackObjectiveTypeSupport.register_type(participant, SafetyFallbackObjectiveTypeSupport.get_type_name());
+			
+			safetyFallbackObjectiveTopic=TopicUtil.findOrCreateTopic(participant, SafetyFallbackObjectiveTopic.VALUE, SafetyFallbackObjectiveTypeSupport.class);
+			
+			publisher=parentContext.getBean("publisher", Publisher.class);
+			safetyFallbackObjectiveWriter=(SafetyFallbackObjectiveDataWriter)publisher.create_datawriter_with_profile(safetyFallbackObjectiveTopic, QosProfiles.ice_library,
+	                QosProfiles.state, null, StatusKind.STATUS_MASK_NONE);
+			
+			safetyFallbackObjectiveHandle=safetyFallbackObjectiveWriter.register_instance(safetyFallbackObjective);
+			
+			sentNotifications.put(deviceId+type.toString(), new Date());
+			safetyFallbackObjectiveWriter.write(safetyFallbackObjective, safetyFallbackObjectiveHandle);
+			System.out.println("Fallback Initiated by " + deviceId + " with average of " + average);
 		}
-		
-		objectiveWriter.write(objective, InstanceHandle_t.HANDLE_NIL);
-		System.out.println("Fallback Initiated by " + deviceId + " with average of " + average);
 	}
 	
 	public void stop() {

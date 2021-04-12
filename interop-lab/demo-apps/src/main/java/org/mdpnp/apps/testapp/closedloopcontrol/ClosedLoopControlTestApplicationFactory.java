@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.apps.testapp.IceApplicationProvider;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
-import org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -41,6 +41,8 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
 		
 		final SampleArrayFxList sampleList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
 		
+		final SafetyFallbackObjectiveFxList safetyFallbackObjectiveList = parentContext.getBean("safetyFallbackObjectiveList", SafetyFallbackObjectiveFxList.class);
+		
 		final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
 
         final EventLoop eventLoop = (EventLoop) parentContext.getBean("eventLoop");
@@ -61,7 +63,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
        
         final ClosedLoopControlTestApplication controller = ((ClosedLoopControlTestApplication) loader.getController());
         
-        controller.set(parentContext, deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler, vitalModel, subscriber, emr);
+        controller.set(parentContext, deviceListModel, numericList, sampleList, safetyFallbackObjectiveList, objectiveWriter, mdsHandler, vitalModel, subscriber, emr);
         
         controller.start(eventLoop, subscriber);
 		

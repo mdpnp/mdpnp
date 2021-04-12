@@ -12,7 +12,6 @@ import org.springframework.context.ApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;
 
-import ice.SafetyFallbackObjectiveDataWriter;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
@@ -34,7 +33,6 @@ public class NetworkMonitorAppFactory implements IceApplicationProvider {
 	@Override
 	public IceApp create(ApplicationContext parentContext) throws IOException {
 		final DeviceListModel deviceListModel = parentContext.getBean("deviceListModel", DeviceListModel.class);
-		final SafetyFallbackObjectiveDataWriter objectiveWriter=(SafetyFallbackObjectiveDataWriter) parentContext.getBean("safetyFallbackObjectiveWriter");
 		final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
 		final SampleArrayFxList sampleList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
 		final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
@@ -45,7 +43,7 @@ public class NetworkMonitorAppFactory implements IceApplicationProvider {
        
         final NetworkMonitorApp controller = ((NetworkMonitorApp) loader.getController());
 
-        controller.set(parentContext, subscriber, objectiveWriter, numericList, sampleList);
+        controller.set(parentContext, subscriber, numericList, sampleList);
         controller.start(eventLoop, subscriber);
         
 		return new IceApplicationProvider.IceApp() {

@@ -287,7 +287,6 @@ public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
 				//if data is being emitted or not.
 				if(running) {
 					int f=100;
-					System.err.println("Using frequency "+f+" in controllable BP monitor");
 					sampleHolder = sampleArraySample(sampleHolder, bpFloats[which%len], rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, "", 0, 
 							rosetta.MDC_DIM_DIMLESS.VALUE, f, defaultClock.instant());
 					which++;
