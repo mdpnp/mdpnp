@@ -85,6 +85,8 @@ import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -220,6 +222,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private IntegerProperty systolicProperty=new SimpleIntegerProperty();
 	private IntegerProperty diastolicProperty=new SimpleIntegerProperty();
+	private BooleanProperty fallbackModeEnabled = new SimpleBooleanProperty();
 	
 	private boolean pleaseStopAlgo;
 	private Thread algoThread;
@@ -236,7 +239,6 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private static final int fiveMinutes= 1000 * 60 * 5;
 	
 	private boolean running;
-	private boolean fallbackModeEnabled;
 	
 	//TODO: Make all algos implement an interface so we can dynamically find them.
 	/**
@@ -565,28 +567,47 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 		});
 		
+		fallbackModeEnabled.addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				disable(newValue);		
+			}
+		});
+		
 		safetyFallbackObjectiveList.addListener(new ListChangeListener<SafetyFallbackObjectiveFx>() {
 			public void onChanged(Change<? extends SafetyFallbackObjectiveFx> change) {
 				while (change.next()) {
 					Device selectedPump = pumps.getSelectionModel().getSelectedItem();
-					if (!fallbackModeEnabled && selectedPump != null) {
+					if (!fallbackModeEnabled.get() && selectedPump != null && running) {
 						change.getAddedSubList().forEach(n -> {
 							if (n.getSafety_fallback_type() == SafetyFallbackType.system_network_quality) {
-								fallbackModeEnabled = true;
+								fallbackModeEnabled.set(true);
 								double fallbackInfusionRateValue = (double) fallbackInfusionRate.getValue();
 								setFlowRate((float) fallbackInfusionRateValue, (float) fallbackInfusionRateValue);
+								String systemFallbackMessage = "System Network Fallback Fallback Occurred\nEntering Safety Mode";
 								System.err.println(
-										"System Network Fallback Notification Occurred, Entering Into Safety Mode");
+										systemFallbackMessage);
+								javafx.application.Platform.runLater(()-> {
+									Alert alert=new Alert(AlertType.ERROR,systemFallbackMessage);
+									alert.show();
+								});
+								return;
 							} else if (n.getSafety_fallback_type() == SafetyFallbackType.device_network_quality) {
 								Device bp = bpsources.getSelectionModel().getSelectedItem();
 								String unique_device_identifier = n.getUnique_device_identifier();
 								if ((selectedPump.getUDI().equals(unique_device_identifier))
 										|| (bp != null && bp.getUDI().equals(unique_device_identifier))) {
-									fallbackModeEnabled = true;
+									fallbackModeEnabled.set(true);
 									double fallbackInfusionRateValue = (double) fallbackInfusionRate.getValue();
 									setFlowRate((float) fallbackInfusionRateValue, (float) fallbackInfusionRateValue);
+									String deviceFallbackMessage = "Device Network Fallback Occurred\nEntering Safety Mode";
 									System.err.println(
-											"Device Network Fallback Notification Occurred, Entering Into Safety Mode");
+											deviceFallbackMessage);
+									javafx.application.Platform.runLater(()-> {
+										Alert alert=new Alert(AlertType.ERROR,deviceFallbackMessage);
+										alert.show();
+									});
+									return;
 								}
 							}
 						});
@@ -1104,7 +1125,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		algoThread=new Thread() {
 			@Override
 			public void run() {
-				fallbackModeEnabled = false;
+				fallbackModeEnabled.set(false);
 				try {
 					double infusionRateValue=(double)infusionRate.getValue();
 					double fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
@@ -1118,7 +1139,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
 						
-						if(fallbackModeEnabled) {
+						if(fallbackModeEnabled.get()) {
 						// Don't set if fallback enabled
 						} else if( currentSys < compare ) {
 //							System.err.println("Need to increase the pump speed");
@@ -1169,7 +1190,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		
 		algoThread=new Thread() {
 			public void run() {
-				fallbackModeEnabled = false;
+				fallbackModeEnabled.set(false);
 				try {
 					//TODO: factor out this initial step to something that can be shared?
 					double infusionRateValue=(double)infusionRate.getValue();
@@ -1179,7 +1200,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
 						
-						if(fallbackModeEnabled) {
+						if(fallbackModeEnabled.get()) {
 							// Don't set if fallback enabled
 						} else if( currentSys < compare ) {
 							float newFlowRate=(float)(100 + 2 * ( (int) targetSystolic.getValue() - currentSys));
@@ -1744,6 +1765,17 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 	}
 	
-	
+	private void disable(Boolean value) {
+		bpsources.setDisable(value);
+		pumps.setDisable(value);
+		algos.setDisable(value);
+		targetSystolic.setDisable(value);
+		targetDiastolic.setDisable(value);
+		systolicAlarm.setDisable(value);
+		diastolicAlarm.setDisable(value);
+		infusionRate.setDisable(value);
+		fallbackInfusionRate.setDisable(value);
+		startButton.setDisable(value);
+	}
 
 }

@@ -132,7 +132,7 @@ public class NetworkMonitorApp {
 		column3.setSortable(true);
 		column3.setEditable(false);
 		column3.setResizable(false);
-		column3.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> new SimpleStringProperty(p.getValue().getValue().toString()));
+		column3.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> new SimpleStringProperty(String.format("%.3f", p.getValue().getValue())));
 		
 		averagesTable.getColumns().setAll(column1, column2, column3);
 		averagesTable.autosize();
