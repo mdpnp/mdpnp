@@ -15,9 +15,11 @@
      <children>
       <TableView fx:id="averagesTable" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <columns>
-      <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="350.0" text="DeviceId">
+      <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="320.0" text="DeviceId">
       </TableColumn>
-      <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="285.0" text="Average Latency">
+      <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="400.0" text="Device Model">
+      </TableColumn>
+      <TableColumn maxWidth="5000.0" minWidth="10.0" prefWidth="185.0" text="Average Latency (ms)">
       </TableColumn>
       </columns>
       </TableView>

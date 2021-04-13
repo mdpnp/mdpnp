@@ -13,6 +13,8 @@ import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
+import org.mdpnp.apps.testapp.Device;
+import org.mdpnp.apps.testapp.DeviceListModel;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
@@ -55,6 +57,8 @@ public class NetworkMonitorApp {
 	@FXML TableView<Map.Entry<String, Double>> averagesTable;
 	private NumericFxList numericList;
 	private SampleArrayFxList sampleFxList;
+	private DeviceListModel deviceListModel;
+	private Map<String, Device> devices = new HashMap<String,Device>();
 	private Subscriber assignedSubscriber;	//Use a slightly different name here to avoid poss conflict with any other subscriber variable.
 	private Subscriber constructorSubscriber;
 	private EventLoop eventLoop;
@@ -104,34 +108,63 @@ public class NetworkMonitorApp {
 		column1.setText("DeviceId");
 		column1.setMinWidth(10);
 		column1.setMaxWidth(5000);
-		column1.setPrefWidth(350);
+		column1.setPrefWidth(320);
 		column1.setSortable(true);
 		column1.setEditable(false);
 		column1.setResizable(false);
 		column1.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> new SimpleStringProperty(p.getValue().getKey()));
 		
 		TableColumn<Map.Entry<String, Double>, String> column2 = new TableColumn<Map.Entry<String, Double>, String>();
-		column2.setText("Average Latency");
+		column2.setText("Device Model");
 		column2.setMinWidth(10);
 		column2.setMaxWidth(5000);
-		column2.setPrefWidth(285);
+		column2.setPrefWidth(400);
 		column2.setSortable(true);
 		column2.setEditable(false);
 		column2.setResizable(false);
-		column2.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> new SimpleStringProperty(p.getValue().getValue().toString()));
+		column2.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> devices.get(p.getValue().getKey()).modelProperty());
 		
-		averagesTable.getColumns().setAll(column1, column2);
+		TableColumn<Map.Entry<String, Double>, String> column3 = new TableColumn<Map.Entry<String, Double>, String>();
+		column3.setText("Average Latency (ms)");
+		column3.setMinWidth(10);
+		column3.setMaxWidth(5000);
+		column3.setPrefWidth(185);
+		column3.setSortable(true);
+		column3.setEditable(false);
+		column3.setResizable(false);
+		column3.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> new SimpleStringProperty(p.getValue().getValue().toString()));
+		
+		averagesTable.getColumns().setAll(column1, column2, column3);
 		averagesTable.autosize();
 	}
 	
-	public void set(ApplicationContext context, Subscriber subscriber, NumericFxList numericFxList, SampleArrayFxList sampleFxList) {
+	public void set(ApplicationContext context, Subscriber subscriber, DeviceListModel deviceListModel, NumericFxList numericFxList, SampleArrayFxList sampleFxList) {
 		this.parentContext = context;
 		this.assignedSubscriber = subscriber;
+		this.deviceListModel = deviceListModel;
 		this.numericList = numericFxList;
 		this.sampleFxList = sampleFxList;
 	}
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
+		deviceListModel.getContents().forEach( d-> {
+			devices.put(d.getUDI(),d);
+		});
+		
+		deviceListModel.getContents().addListener(new ListChangeListener<Device>() {
+			@Override
+			public void onChanged(Change<? extends Device> change) {
+				while(change.next()) {
+					change.getAddedSubList().forEach( d -> {
+						devices.put(d.getUDI(),d);
+					});
+					change.getRemoved().forEach( d-> {
+						devices.remove(d.getUDI());
+					});
+				}
+			}
+		});
+		
 		deviceNetworkQualityMetrics = MultimapBuilder.treeKeys().treeSetValues().build();
 		deviceAverages = FXCollections.observableHashMap();
 		data = FXCollections.observableArrayList(new ArrayList<>(deviceAverages.entrySet()));

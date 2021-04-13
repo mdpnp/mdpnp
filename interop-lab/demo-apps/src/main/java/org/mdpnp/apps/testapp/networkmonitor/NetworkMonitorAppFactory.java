@@ -18,7 +18,8 @@ import javafx.scene.Parent;
 public class NetworkMonitorAppFactory implements IceApplicationProvider {
 
 	private IceApplicationProvider.AppType type=new IceApplicationProvider.AppType(
-			"Network Monitor App", "NoNetworkMonitor", (URL) NetworkMonitorAppFactory.class.getResource("networkmonitorapp.png"), 0.75, false
+			
+			"Network Monitor", "NoNetworkMonitor", (URL) NetworkMonitorAppFactory.class.getResource("networkmonitorapp.png"), 0.75, false
 		);
 
 	public NetworkMonitorAppFactory() {
@@ -43,7 +44,7 @@ public class NetworkMonitorAppFactory implements IceApplicationProvider {
        
         final NetworkMonitorApp controller = ((NetworkMonitorApp) loader.getController());
 
-        controller.set(parentContext, subscriber, numericList, sampleList);
+        controller.set(parentContext, subscriber, deviceListModel, numericList, sampleList);
         controller.start(eventLoop, subscriber);
         
 		return new IceApplicationProvider.IceApp() {
@@ -71,6 +72,16 @@ public class NetworkMonitorAppFactory implements IceApplicationProvider {
 			@Override
 			public void activate(ApplicationContext context) {
 				controller.activate();
+			}
+			
+			@Override
+			public int getPreferredWidth() {
+				return 910;
+			}
+
+			@Override
+			public int getPreferredHeight() {
+				return 400;
 			}
 		};
 	}
