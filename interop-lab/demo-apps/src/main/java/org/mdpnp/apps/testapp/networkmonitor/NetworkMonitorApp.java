@@ -48,6 +48,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableCell;
+import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
@@ -107,7 +108,10 @@ public class NetworkMonitorApp {
 	@SuppressWarnings("unchecked")
 	private void setupTable() {
 		averagesTable.setEditable(false);
+		TableViewSelectionModel<Entry<String, Double>> defaultSelectionModel = averagesTable.getSelectionModel();
+		averagesTable.setSelectionModel(defaultSelectionModel);
 		averagesTable.setItems(data);
+		averagesTable.sort();
 		
 		TableColumn<Map.Entry<String, Double>, String> column1 = new TableColumn<Map.Entry<String, Double>, String>();
 		column1.setText("DeviceId");
@@ -301,6 +305,17 @@ public class NetworkMonitorApp {
 			if (!found) {
 				dataList.add(deviceAverage);
 			}
+		}
+	}
+	
+	public void triggerSystemFallback() {
+		sendSafetyFallbackMessage(SafetyFallbackType.system_network_quality, null, new Double(LATENCY_THRESHOLD));
+	}
+	
+	public void triggerDeviceFallback() {
+		Entry<String, Double> selectedItem = averagesTable.getSelectionModel().getSelectedItem();
+		if(selectedItem != null) {
+			sendSafetyFallbackMessage(SafetyFallbackType.device_network_quality, selectedItem.getKey(), selectedItem.getValue());
 		}
 	}
 	
