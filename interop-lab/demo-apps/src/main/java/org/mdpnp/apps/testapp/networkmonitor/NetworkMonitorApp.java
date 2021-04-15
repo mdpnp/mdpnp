@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -46,6 +47,9 @@ import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TableCell;
+import javafx.scene.paint.Color;
+import javafx.util.Callback;
 
 public class NetworkMonitorApp {
 	private static final int LATENCY_THRESHOLD_DEFAULT = 600;
@@ -65,7 +69,8 @@ public class NetworkMonitorApp {
 	private ApplicationContext parentContext;
 	private Multimap<String, NetworkQualityMetric> deviceNetworkQualityMetrics;
 	private ObservableMap<String, Double> deviceAverages;
-	private ObservableList<Entry<String, Double>> data;
+	private List<Entry<String, Double>> dataList = new ArrayList<>();
+	private ObservableList<Entry<String, Double>> data = FXCollections.observableList(dataList);
 	
 	/**
 	 * A domain participant for publishing things in DDS if required.
@@ -101,8 +106,8 @@ public class NetworkMonitorApp {
 	
 	@SuppressWarnings("unchecked")
 	private void setupTable() {
-		averagesTable.setItems(data);
 		averagesTable.setEditable(false);
+		averagesTable.setItems(data);
 		
 		TableColumn<Map.Entry<String, Double>, String> column1 = new TableColumn<Map.Entry<String, Double>, String>();
 		column1.setText("DeviceId");
@@ -133,6 +138,39 @@ public class NetworkMonitorApp {
 		column3.setEditable(false);
 		column3.setResizable(false);
 		column3.setCellValueFactory((TableColumn.CellDataFeatures<Map.Entry<String, Double>, String> p) -> new SimpleStringProperty(String.format("%.3f", p.getValue().getValue())));
+		column3.setCellFactory(new Callback<TableColumn<Map.Entry<String, Double>, String>, TableCell<Map.Entry<String, Double>, String>>() {
+
+			@Override
+			public TableCell<Entry<String, Double>, String> call(TableColumn<Entry<String, Double>, String> param) {
+				return new TableCell<Entry<String, Double>, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        if (!empty) {
+                            int currentIndex = indexProperty()
+                                    .getValue() < 0 ? 0
+                                    : indexProperty().getValue();
+                            Double value = param
+                                    .getTableView().getItems()
+                                    .get(currentIndex).getValue();
+                            if (value > LATENCY_THRESHOLD) {
+                                setTextFill(Color.RED);
+                                setStyle("-fx-font-weight: bold");
+                                setText(String.format("%.3f",value));
+                            } else if (value < LATENCY_THRESHOLD){
+                                setTextFill(Color.GREEN);
+                                setStyle("-fx-font-weight: bold");
+                                setText(String.format("%.3f",value));
+                            } else {
+                                setTextFill(Color.BLACK);
+                                setStyle("-fx-font-weight: bold");
+                                setText(String.format("%.3f",value));
+                            }
+                        }
+                    }
+                };
+			}
+			
+		});
 		
 		averagesTable.getColumns().setAll(column1, column2, column3);
 		averagesTable.autosize();
@@ -167,7 +205,6 @@ public class NetworkMonitorApp {
 		
 		deviceNetworkQualityMetrics = MultimapBuilder.treeKeys().treeSetValues().build();
 		deviceAverages = FXCollections.observableHashMap();
-		data = FXCollections.observableArrayList(new ArrayList<>(deviceAverages.entrySet()));
 		
 		numericList.addListener(new ListChangeListener<NumericFx>() {
 			@Override
@@ -248,8 +285,23 @@ public class NetworkMonitorApp {
 				deviceAverages.put(deviceId, (deviceAverage * oldCount + delta)/count);
 			}
 		}
-		data.clear();
-		deviceAverages.entrySet().stream().forEachOrdered(o -> data.add(o));
+		deviceAverages.entrySet().forEach(n -> addOrUpdate(n));
+		averagesTable.refresh();		
+	}
+	
+	private void addOrUpdate(Entry<String, Double> deviceAverage) {
+		if (dataList != null && deviceAverage != null) {
+			boolean found = false;
+			for (Entry<String, Double> entry : dataList) {
+				if (entry.getKey().equals(deviceAverage.getKey())) {
+					found = true;
+					entry.setValue(deviceAverage.getValue());
+				}
+			}
+			if (!found) {
+				dataList.add(deviceAverage);
+			}
+		}
 	}
 	
 	public void sendSafetyFallbackMessage(SafetyFallbackType type, String deviceId, Double average) {

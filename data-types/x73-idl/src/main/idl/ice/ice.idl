@@ -695,7 +695,7 @@ struct BPPauseResumeObjective {
     string<256> message;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist SafetyFallbackObjective identifier
-  const string SafetyFallbackObjectiveTopic = "SafetyFallbackObjective";
+  const string SafetyFallbackObjectiveTopic = "START_FALLBACK";
 };
 
 
