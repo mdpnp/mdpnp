@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
@@ -309,13 +311,16 @@ public class NetworkMonitorApp {
 	}
 	
 	public void triggerSystemFallback() {
-		sendSafetyFallbackMessage(SafetyFallbackType.system_network_quality, null, new Double(LATENCY_THRESHOLD));
+		List<String> deviceList = deviceListModel.getContents().stream().map(n -> n.getUDI()).collect(Collectors.toList());
+		deviceList.forEach(n -> {
+			addDeviceMetric(n, new Date(), 100000);
+		});
 	}
 	
 	public void triggerDeviceFallback() {
 		Entry<String, Double> selectedItem = averagesTable.getSelectionModel().getSelectedItem();
 		if(selectedItem != null) {
-			sendSafetyFallbackMessage(SafetyFallbackType.device_network_quality, selectedItem.getKey(), selectedItem.getValue());
+			addDeviceMetric(selectedItem.getKey(), new Date(), 100000);
 		}
 	}
 	
