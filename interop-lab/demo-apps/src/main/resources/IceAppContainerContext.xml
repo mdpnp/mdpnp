@@ -164,6 +164,14 @@
         <property name="qosLibrary"><value>ice_library</value></property>
         <property name="qosProfile"><value>state</value></property>
     </bean>
+    
+    <bean id="dataQualityErrorObjectiveList" class="org.mdpnp.apps.fxbeans.DataQualityErrorObjectiveFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.DataQualityErrorObjectiveTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>
            
     <!-- This wrapper adds a validation flag to each numeric by containment -->
     <bean id="validationOracle" class="org.mdpnp.apps.testapp.validate.ValidationOracleFactory" lazy-init="false">

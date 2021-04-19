@@ -695,7 +695,32 @@ struct BPPauseResumeObjective {
     string<256> message;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist SafetyFallbackObjective identifier
-  const string SafetyFallbackObjectiveTopic = "START_FALLBACK";
+  const string SafetyFallbackObjectiveTopic = "SYS_FALLBACK";
+
+  /**
+    * Type of DataQualityAttribute 
+    */
+  enum DataQualityAttributeType {
+    accuracy,
+    completeness,
+    consistency,
+    credibility,
+    currentness
+  }; 
+
+  /**
+    * SK - Topic for Alerting of a Data Quality Error Condition
+    * The "Data Quality Error Detection" app will publish a DataQualityErrorObjective.
+    *
+    * Stability: 1 - Experimental
+    */
+  struct DataQualityErrorObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    MetricIdentifier metric_id; //@key
+    DataQualityAttributeType data_quality_attribute_type;
+    float value;
+    Time_t presentation_time;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist DataQualityErrorObjective unique_device_identifier metric_id
+  const string DataQualityErrorObjectiveTopic = "DATA_QUALITY_ERROR";
 };
-
-
