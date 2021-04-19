@@ -76,7 +76,7 @@ public class DataQualityMonitorAppFactory implements IceApplicationProvider {
 			
 			@Override
 			public int getPreferredWidth() {
-				return 910;
+				return 1570;
 			}
 
 			@Override
