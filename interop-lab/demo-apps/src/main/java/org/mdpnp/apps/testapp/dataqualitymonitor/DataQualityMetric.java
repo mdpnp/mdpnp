@@ -6,27 +6,28 @@ import java.util.Objects;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 
-import ice.Numeric;
-import ice.SampleArray;
-
 public class DataQualityMetric implements Comparable<DataQualityMetric> {
 	private String deviceId;
 	private String metricId;
 	private Date presentationDate;
 	private NumericFx numeric;
 	private SampleArrayFx sampleArray;
+	private int sampleCount;
+	private double frequency;
 
 	public DataQualityMetric() {
 	}
 
 	public DataQualityMetric(String deviceId, String metricId, Date presentationDate, NumericFx numeric,
-			SampleArrayFx sampleArray) {
+			SampleArrayFx sampleArray, int sampleCount, double frequency) {
 		super();
 		this.deviceId = deviceId;
 		this.metricId = metricId;
 		this.presentationDate = presentationDate;
 		this.numeric = numeric;
 		this.sampleArray = sampleArray;
+		this.sampleCount =  sampleCount;
+		this.frequency = frequency;
 	}
 
 	public String getDeviceId() {
@@ -68,10 +69,26 @@ public class DataQualityMetric implements Comparable<DataQualityMetric> {
 	public void setSampleArray(SampleArrayFx sampleArray) {
 		this.sampleArray = sampleArray;
 	}
+	
+	public int getSampleCount() {
+		return sampleCount;
+	}
+
+	public void setSampleCount(int sampleCount) {
+		this.sampleCount = sampleCount;
+	}
+
+	public double getFrequency() {
+		return frequency;
+	}
+
+	public void setFrequency(double frequency) {
+		this.frequency = frequency;
+	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(deviceId, metricId, numeric, presentationDate, sampleArray);
+		return Objects.hash(deviceId, frequency, metricId, numeric, presentationDate, sampleArray, sampleCount);
 	}
 
 	@Override
@@ -83,15 +100,10 @@ public class DataQualityMetric implements Comparable<DataQualityMetric> {
 			return false;
 		}
 		DataQualityMetric other = (DataQualityMetric) obj;
-		return Objects.equals(deviceId, other.deviceId) && Objects.equals(metricId, other.metricId)
-				&& Objects.equals(numeric, other.numeric) && Objects.equals(presentationDate, other.presentationDate)
-				&& Objects.equals(sampleArray, other.sampleArray);
-	}
-
-	@Override
-	public String toString() {
-		return "DataQualityMetric [deviceId=" + deviceId + ", metricId=" + metricId + ", presentationDate="
-				+ presentationDate + ", numeric=" + numeric + ", sampleArray=" + sampleArray + "]";
+		return Objects.equals(deviceId, other.deviceId) && frequency == other.frequency
+				&& Objects.equals(metricId, other.metricId) && Objects.equals(numeric, other.numeric)
+				&& Objects.equals(presentationDate, other.presentationDate)
+				&& Objects.equals(sampleArray, other.sampleArray) && sampleCount == other.sampleCount;
 	}
 
 	@Override

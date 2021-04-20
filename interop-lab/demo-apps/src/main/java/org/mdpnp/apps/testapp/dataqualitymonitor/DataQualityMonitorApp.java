@@ -51,6 +51,10 @@ import javafx.scene.control.TreeTableView.TreeTableViewSelectionModel;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
+import rosetta.MDC_PULS_RATE_NON_INV;
+import rosetta.MDC_PRESS_CUFF_DIA;
+import rosetta.MDC_PRESS_CUFF_SYS;
+
 public class DataQualityMonitorApp {
 	private static final String KEY_COMBO = "::::";
 	private static final int SAMPLE_SIZE_DEFAULT = 30;
@@ -482,8 +486,19 @@ public class DataQualityMonitorApp {
 	private void addDeviceMetric(String deviceId, String metricId, Date presentationDate, NumericFx numeric,
 			SampleArrayFx sampleArray) {
 		String deviceMetricIdKey = getDeviceMetricKey(deviceId, metricId);
-		Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).put(deviceMetricIdKey,
-				new DataQualityMetric(deviceId, metricId, presentationDate, numeric, sampleArray));
+		int sampleCount = 0;
+		double frequency = 0;
+		if (sampleArray != null) {
+			sampleCount = sampleCount + sampleArray.getValues().length;
+			frequency = sampleArray.getFrequency();
+		}
+		if (numeric != null) {
+			sampleCount++;
+			frequency = frequency + numeric.getSQI_frequency();
+		}
+
+		Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).put(deviceMetricIdKey, new DataQualityMetric(
+				deviceId, metricId, presentationDate, numeric, sampleArray, sampleCount, frequency));
 		Collection<DataQualityMetric> collection = deviceNetworkQualityMetrics.get(deviceMetricIdKey);
 
 		Optional<DataQualityMetric> findFirst = null;
@@ -518,6 +533,7 @@ public class DataQualityMonitorApp {
 			String metricId = deviceIdAndMetricId.get(1);
 			wrapper.setDeviceId(deviceId);
 			wrapper.setMetricId(metricId);
+			wrapper.setDeviceModel(deviceListModel.getByUniqueDeviceIdentifier(deviceId).getModel());
 			boolean update = data.contains(wrapper);
 			if (update) {
 				DataQualityDisplayWrapper wrapperCopy = new DataQualityDisplayWrapper();
@@ -527,13 +543,41 @@ public class DataQualityMonitorApp {
 					return e.equals(wrapperCopy);
 				}).findFirst().orElse(null);
 				wrapper.setAccuracy(determineAccuracy(collection));
-				wrapper.setCompleteness(0.0);
+				if (wrapper.getDeviceModel().contains("NIBP")) {
+					switch (metricId) {
+					case MDC_PULS_RATE_NON_INV.VALUE:
+					case MDC_PRESS_CUFF_DIA.VALUE:
+					case MDC_PRESS_CUFF_SYS.VALUE:
+						Double timeDifferenceNIBP = determineTimeDifferenceNIBP(deviceId);
+						wrapper.setCompleteness(
+								timeDifferenceNIBP != null && timeDifferenceNIBP < 1 && timeDifferenceNIBP >= 0
+										? 100.000
+										: 0.000);
+						break;
+					}
+				} else {
+					wrapper.setCompleteness(determineCompleteness(collection));
+				}
 				wrapper.setConsistency(0.0);
 				wrapper.setCredibility(0.0);
 				wrapper.setCurrentness(0.0);
 			} else {
 				wrapper.setAccuracy(determineAccuracy(collection));
-				wrapper.setCompleteness(0.0);
+				if (wrapper.getDeviceModel().contains("NIBP")) {
+					switch (metricId) {
+					case MDC_PULS_RATE_NON_INV.VALUE:
+					case MDC_PRESS_CUFF_DIA.VALUE:
+					case MDC_PRESS_CUFF_SYS.VALUE:
+						Double timeDifferenceNIBP = determineTimeDifferenceNIBP(deviceId);
+						wrapper.setCompleteness(
+								timeDifferenceNIBP != null && timeDifferenceNIBP < 1 && timeDifferenceNIBP >= 0
+										? 100.000
+										: 0.000);
+						break;
+					}
+				} else {
+					wrapper.setCompleteness(determineCompleteness(collection));
+				}
 				wrapper.setConsistency(0.0);
 				wrapper.setCredibility(0.0);
 				wrapper.setCurrentness(0.0);
@@ -558,6 +602,36 @@ public class DataQualityMonitorApp {
 		});
 	}
 
+	private Double determineTimeDifferenceNIBP(String deviceId) {
+		Collection<DataQualityMetric> prNIBP = deviceNetworkQualityMetrics
+				.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE_NON_INV.VALUE));
+		Collection<DataQualityMetric> diastolicNIBP = deviceNetworkQualityMetrics
+				.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_DIA.VALUE));
+		Collection<DataQualityMetric> systolicNIBP = deviceNetworkQualityMetrics
+				.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_SYS.VALUE));
+		Date dbpDate = diastolicNIBP.stream().map(q -> {
+			return q.getPresentationDate();
+		}).max(Date::compareTo).orElse(null);
+		Date sbpDate = systolicNIBP.stream().map(q -> {
+			return q.getPresentationDate();
+		}).max(Date::compareTo).orElse(null);
+		Date prDate = prNIBP.stream().map(q -> {
+			return q.getPresentationDate();
+		}).max(Date::compareTo).orElse(null);
+		if (dbpDate != null && sbpDate != null && prDate != null) {
+			List<Date> dates = new ArrayList<Date>();
+			dates.add(dbpDate);
+			dates.add(sbpDate);
+			dates.add(prDate);
+			Date max = dates.stream().max(Date::compareTo).get();
+			Date min = dates.stream().min(Date::compareTo).get();
+			double seconds = (max.getTime() - min.getTime()) / 1000.0;
+			return seconds;
+		} else {
+			return null;
+		}
+	}
+
 	private Double determineAccuracy(Collection<DataQualityMetric> collection) {
 		return collection.stream().mapToDouble(n -> {
 			NumericFx numeric = n.getNumeric();
@@ -573,10 +647,34 @@ public class DataQualityMonitorApp {
 		}).average().orElse(0);
 	}
 
+	private Double determineCompleteness(Collection<DataQualityMetric> collection) {
+		return collection.stream().mapToDouble(n -> {
+			Date minDate = collection.stream().map(p -> {
+				return p.getPresentationDate();
+			}).min(Date::compareTo).get();
+			Date maxDate = collection.stream().map(p -> {
+				return p.getPresentationDate();
+			}).max(Date::compareTo).get();
+			double elapsedTime = (maxDate.getTime() - minDate.getTime()) / 1000;
+			double sumOfSamples = collection.stream().mapToInt(p -> {
+				return p.getSampleCount();
+			}).sum();
+
+			double perfectSumOfSamples = n.getFrequency() * elapsedTime;
+			return sumOfSamples / perfectSumOfSamples * 100.000f;
+		}).average().orElse(0);
+	}
+
 	private void checkWrapper(DataQualityDisplayWrapper wrapper) {
-		if (wrapper.getAccuracy() < ACCURACY_THRESHOLD) {
+		Double accuracy = wrapper.getAccuracy();
+		if (accuracy != null && accuracy < ACCURACY_THRESHOLD) {
 			sendDataQualityErrorMessage(DataQualityAttributeType.accuracy, wrapper.getDeviceId(), wrapper.getMetricId(),
-					wrapper.getAccuracy());
+					accuracy);
+		}
+		Double completeness = wrapper.getCompleteness();
+		if (completeness != null && completeness < COMPLETENESS_THRESHOLD) {
+			sendDataQualityErrorMessage(DataQualityAttributeType.completeness, wrapper.getDeviceId(), wrapper.getMetricId(),
+					completeness);
 		}
 	}
 
@@ -611,8 +709,8 @@ public class DataQualityMonitorApp {
 
 			sentNotifications.put(deviceId + metricId + type.toString(), new Date());
 			dataQualityErrorObjectiveWriter.write(dataQualityErrorObjective, dataQualityErrorObjectiveHandle);
-			System.out.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
-					+ " with value of " + String.format("%.3f", average));
+//			System.out.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
+//					+ " with value of " + String.format("%.3f", average));
 		}
 	}
 
