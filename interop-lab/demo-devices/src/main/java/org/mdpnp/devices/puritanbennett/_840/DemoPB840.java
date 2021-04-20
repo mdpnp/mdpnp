@@ -1,6 +1,7 @@
 package org.mdpnp.devices.puritanbennett._840;
 
 import ice.ConnectionState;
+import ice.NumericSQI;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,12 +48,14 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
             flowSampleArray =
                     sampleArraySample(flowSampleArray, flow,
+                    				  new NumericSQI(),
                                       rosetta.MDC_FLOW_AWAY.VALUE,
                                       rosetta.MDC_FLOW_AWAY.VALUE, 0,
                                       rosetta.MDC_DIM_L_PER_MIN.VALUE, 50,
                                       sampleTime);
             pressureSampleArray =
                     sampleArraySample(pressureSampleArray, pressure,
+                    		          new NumericSQI(),
                                       rosetta.MDC_PRESS_AWAY.VALUE,
                                       rosetta.MDC_PRESS_AWAY.VALUE, 0,
                                       rosetta.MDC_DIM_CM_H2O.VALUE, 50,

@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.NumericSQI;
+
 /**
  * @author Jeff Plourde
  *
@@ -109,7 +111,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             String ecg = nameOfECGWave(label);
             
             if (ecg != null) {
-                ecgWave = sampleArraySample(ecgWave, data, count, ecg, label, 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+                ecgWave = sampleArraySample(ecgWave, data, new NumericSQI(), count, ecg, label, 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
             } else {
                 if (ecgWave != null) {
                     unregisterSampleArrayInstance(ecgWave);
@@ -124,27 +126,27 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
             // This is less than ideal but if the device is reporting etCO2 we'll treat this as a capnogram
             // otherwise it is from respiratory impedance
             if(null != etco2 && etco2.data.value > 0) {
-                co2Wave = sampleArraySample(co2Wave, data, count, rosetta.MDC_AWAY_CO2.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
-                impThorWave = sampleArraySample(impThorWave, null, 0, rosetta.MDC_IMPED_TTHOR.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+                co2Wave = sampleArraySample(co2Wave, data, new NumericSQI(), count, rosetta.MDC_AWAY_CO2.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+                impThorWave = sampleArraySample(impThorWave, null, new NumericSQI(), 0, rosetta.MDC_IMPED_TTHOR.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
             } else {
-                impThorWave = sampleArraySample(impThorWave, data, count, rosetta.MDC_IMPED_TTHOR.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
-                co2Wave = sampleArraySample(co2Wave, null, 0, rosetta.MDC_AWAY_CO2.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+                impThorWave = sampleArraySample(impThorWave, data, new NumericSQI(), count, rosetta.MDC_IMPED_TTHOR.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+                co2Wave = sampleArraySample(co2Wave, null, new NumericSQI(), 0, rosetta.MDC_AWAY_CO2.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
             }
         }
 
         @Override
         protected void receivePlethWave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
-            plethWave = sampleArraySample(plethWave, data, count, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+            plethWave = sampleArraySample(plethWave, data, new NumericSQI(), count, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
         }
 
         @Override
         protected void receiveP1Wave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
-            p1Wave = sampleArraySample(p1Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+            p1Wave = sampleArraySample(p1Wave, data, new NumericSQI(), count, rosetta.MDC_PRESS_BLD.VALUE, "", 0, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
         }
 
         @Override
         protected void receiveP2Wave(DeviceClock.Reading timeStamp, Float[] data, int count, int frequency) {
-            p2Wave = sampleArraySample(p2Wave, data, count, rosetta.MDC_PRESS_BLD.VALUE, "", 1, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
+            p2Wave = sampleArraySample(p2Wave, data, new NumericSQI(), count, rosetta.MDC_PRESS_BLD.VALUE, "", 1, rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timeStamp);
         }
 
         @Override

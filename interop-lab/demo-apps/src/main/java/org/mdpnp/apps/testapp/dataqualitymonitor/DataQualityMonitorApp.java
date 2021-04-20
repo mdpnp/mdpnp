@@ -639,8 +639,7 @@ public class DataQualityMonitorApp {
 			if (numeric != null) {
 				return numeric.getSQI_accuracy();
 			} else if (sampleArray != null) {
-				// TODO: Do something when SQI added to SampleArray
-				return Math.random();
+				return sampleArray.getSQI_accuracy();
 			} else {
 				return 0;
 			}
@@ -709,8 +708,8 @@ public class DataQualityMonitorApp {
 
 			sentNotifications.put(deviceId + metricId + type.toString(), new Date());
 			dataQualityErrorObjectiveWriter.write(dataQualityErrorObjective, dataQualityErrorObjectiveHandle);
-//			System.out.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
-//					+ " with value of " + String.format("%.3f", average));
+			System.err.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
+					+ " with value of " + String.format("%.3f", average));
 		}
 	}
 

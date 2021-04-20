@@ -13,6 +13,7 @@
 package org.mdpnp.devices.zephyr.biopatch;
 
 import ice.ConnectionState;
+import ice.NumericSQI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,7 +86,7 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
         
         @Override
         protected void receiveECGDataPacket(DeviceClock.Reading timeofday, Number[] values) {
-            ecgTrace = sampleArraySample(ecgTrace, values, ice.MDC_ECG_LEAD_I.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, 250, timeofday);
+            ecgTrace = sampleArraySample(ecgTrace, values,  new NumericSQI(), ice.MDC_ECG_LEAD_I.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, 250, timeofday);
         }
         
         @Override

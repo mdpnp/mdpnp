@@ -359,7 +359,7 @@ public class NetworkMonitorApp {
 			
 			sentNotifications.put(deviceId+type.toString(), new Date());
 			safetyFallbackObjectiveWriter.write(safetyFallbackObjective, safetyFallbackObjectiveHandle);
-			System.out.println("Fallback Initiated by " + deviceId + " with average of " + average);
+			System.err.println("Fallback Initiated by " + deviceId + " with average of " + average);
 		}
 	}
 	

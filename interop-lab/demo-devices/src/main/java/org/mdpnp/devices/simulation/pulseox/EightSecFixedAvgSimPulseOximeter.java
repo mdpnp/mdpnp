@@ -12,16 +12,16 @@
  ******************************************************************************/
 package org.mdpnp.devices.simulation.pulseox;
 
-import ice.GlobalSimulationObjective;
-
 import org.mdpnp.devices.DeviceClock;
-import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+
+import ice.GlobalSimulationObjective;
+import ice.NumericSQI;
 
 /**
  * @author Jeff Plourde
@@ -67,7 +67,7 @@ public class EightSecFixedAvgSimPulseOximeter extends AbstractSimulatedConnected
             //be used anyway.
             //System.err.println("Doing 0 for averagingTime");
             numericSample(averagingTime, 8, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
+            pleth = sampleArraySample(pleth, plethValues, new NumericSQI(), rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }

@@ -14,6 +14,7 @@ package org.mdpnp.devices.oridion.capnostream;
 
 import ice.AlarmLimit;
 import ice.LocalAlarmLimitObjective;
+import ice.NumericSQI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -460,6 +461,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
                 // filter line not connected
                 // TODO should we flush a partially filled buffer first?
                 DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, null,
+                		 									   new NumericSQI(),
                                                                rosetta.MDC_AWAY_CO2.VALUE, "",
                                                                units(this.currentUnits), 20,
                                                                sampleTime);
@@ -471,6 +473,7 @@ public class DemoCapnostream20 extends AbstractDelegatingSerialDevice<Capnostrea
             if (realtimeBufferCount == realtimeBuffer.length) {
                 realtimeBufferCount = 0;
                 DemoCapnostream20.this.co2 = sampleArraySample(DemoCapnostream20.this.co2, realtimeBuffer,
+                		 									   new NumericSQI(),
                                                                rosetta.MDC_AWAY_CO2.VALUE, "",
                                                                units(this.currentUnits), 20,
                                                                sampleTime);

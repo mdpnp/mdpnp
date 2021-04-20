@@ -227,6 +227,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
 				currentSQI.accuracy = accuracy.floatValue();
+				currentSQI.frequency = 1.03448f;
 				numericSample(flowRateHolder, currentFlowRate, currentSQI, defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);
