@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
@@ -33,6 +34,7 @@ import com.rti.dds.topic.Topic;
 import ice.ConnectionState;
 import ice.FlowRateObjectiveDataReader;
 import ice.Numeric;
+import ice.NumericSQI;
 import ice.NumericSQIObjective;
 import ice.NumericSQIObjectiveDataReader;
 import javafx.beans.value.*;
@@ -57,6 +59,8 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	private static int fakeComPortNumber=1;
 	
 	private float currentFlowRate=1.0f;
+	private NumericSQI currentSQI = new NumericSQI();
+	private NumberWithJitter<Float> accuracy = new NumberWithJitter<Float>(95.0, 0.25, 90.0, 100.0);
 	
 	private FlowRateObjectiveDataReader flowRateReader;
 	private NumericSQIObjectiveDataReader sqiDataReader;
@@ -64,8 +68,6 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	private Topic numericSQITopic;
 	private QueryCondition flowRateQueryCondition;
 	private QueryCondition sqiQueryCondition;
-	
-	private float accuracy, accuracy_duration, completeness, frequency, precision;
 	
 	private DeviceClock defaultClock;
 	
@@ -152,7 +154,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
                             SampleInfo si = (SampleInfo) info_seq.get(i);
                             ice.NumericSQIObjective data = (ice.NumericSQIObjective) data_seq.get(i);
                             if (si.valid_data) {
-                        		setSQI(data);
+                        		setCurrentSQI(data);
                             }
                         }
                     } catch (RETCODE_NO_DATA noData) {
@@ -183,12 +185,13 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 		
 	}
 	
-	private void setSQI(NumericSQIObjective sqi) {
-		accuracy=sqi.newAccuracy;
-		accuracy_duration=sqi.newAccuracy_duration;
-		completeness=sqi.newCompleteness;
-		frequency=sqi.newFrequency;
-		precision=sqi.newPrecision;
+	private void setCurrentSQI(NumericSQIObjective sqi) {
+		accuracy = new NumberWithJitter<Float>(sqi.newAccuracy, 0.25, 90.0, 100.0);
+		currentSQI.accuracy = sqi.newAccuracy;
+		currentSQI.accuracy_duration=sqi.newAccuracy_duration;
+		currentSQI.completeness=sqi.newCompleteness;
+		currentSQI.frequency=sqi.newFrequency;
+		currentSQI.precision=sqi.newPrecision;
 	}
 	
 	@Override
@@ -223,17 +226,8 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 		//int a[]= {0}, d[]= {0}, c[]= {0},f[]= {0},p[]= {0};
 		flowRateEmitter=executor.scheduleAtFixedRate(new Runnable() {
 			public void run() {
-				
-				/*
-				 * Eventually there should be a version of numericSample where the NumericSQI is passed in next to the value
-				 * which in this case is currentFlowRate.  For now we will fill it in in the holder
-				 */
-				flowRateHolder.data.sqi.accuracy=accuracy;
-				flowRateHolder.data.sqi.accuracy_duration=accuracy_duration;
-				flowRateHolder.data.sqi.completeness=completeness;
-				flowRateHolder.data.sqi.frequency=frequency;
-				flowRateHolder.data.sqi.precision=precision;
-				numericSample(flowRateHolder, currentFlowRate , defaultClock.instant());
+				currentSQI.accuracy = accuracy.floatValue();
+				numericSample(flowRateHolder, currentFlowRate, currentSQI, defaultClock.instant());
 			}
 		}, 5, 1, TimeUnit.SECONDS);
 		

@@ -87,6 +87,13 @@
         <constructor-arg ref="publisher" />
         <constructor-arg ref="domainParticipant" />
     </bean>
+    
+    <!-- This is needed for ICE aware apps and devices which can respond to a SafetyFallback
+    -->
+    <bean id="safetyFallbackObjectiveWriter" class="org.mdpnp.rtiapi.data.SafetyFallbackObjectiveDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
 
     <!--
     Do not start right away. Delegate to the LifecycleController to do it at the very end avter all beans
@@ -148,8 +155,24 @@
         <property name="eventLoop" ref="eventLoop"/>
         <property name="qosLibrary"><value>ice_library</value></property>
         <property name="qosProfile"><value>state</value></property>
-    </bean>    
+    </bean>
+        
+    <bean id="safetyFallbackObjectiveList" class="org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.SafetyFallbackObjectiveTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>
     
+    <bean id="dataQualityErrorObjectiveList" class="org.mdpnp.apps.fxbeans.DataQualityErrorObjectiveFxListFactory" lazy-init="false">
+        <property name="topicName"><util:constant static-field="ice.DataQualityErrorObjectiveTopic.VALUE"/></property>
+        <property name="subscriber" ref="subscriber"/>
+        <property name="eventLoop" ref="eventLoop"/>
+        <property name="qosLibrary"><value>ice_library</value></property>
+        <property name="qosProfile"><value>state</value></property>
+    </bean>
+           
     <!-- This wrapper adds a validation flag to each numeric by containment -->
     <bean id="validationOracle" class="org.mdpnp.apps.testapp.validate.ValidationOracleFactory" lazy-init="false">
         <property name="numericList" ref="numericList"/>

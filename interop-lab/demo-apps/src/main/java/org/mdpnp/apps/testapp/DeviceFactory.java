@@ -658,8 +658,4 @@ public class DeviceFactory {
                 return new SimControllableBPMonitor(subscriber, publisher, eventLoop);
         }
     }
-    
-    
-
-
 }

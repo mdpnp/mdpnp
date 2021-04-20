@@ -13,6 +13,7 @@
 package org.mdpnp.devices.philips.intellivue;
 
 import ice.ConnectionState;
+import ice.NumericSQI;
 import ice.SampleArray;
 
 import java.io.BufferedReader;
@@ -644,7 +645,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 RosettaUnits.units(unit), sampleTime));
                     } else {
                         putNumericUpdate(ov, handle,
-                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), metricId, ov.toString(), handle,
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), new NumericSQI(), metricId, ov.toString(), handle,
                                     RosettaUnits.units(unit), sampleTime));
                     }
                 } else {

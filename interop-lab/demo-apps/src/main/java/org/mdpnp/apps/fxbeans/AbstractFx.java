@@ -29,7 +29,6 @@ public abstract class AbstractFx<D extends Copyable> implements Updatable<D> {
         setReception_timestamp(new Date(receptLong));
         long delta=(receptLong-sourceLong);
         setDelta(delta);
-        System.err.println("set delta to "+delta);
     }
     
     @Override

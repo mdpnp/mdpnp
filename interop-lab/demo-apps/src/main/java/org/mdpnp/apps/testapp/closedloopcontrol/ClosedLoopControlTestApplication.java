@@ -26,6 +26,9 @@ import javax.json.JsonArrayBuilder;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
+import org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFx;
+import org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFxList;
+import org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFxListFactory;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.Device;
@@ -41,7 +44,6 @@ import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceDriverProvider;
-import org.mdpnp.devices.DeviceIdentityBuilder;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
@@ -61,7 +63,6 @@ import org.springframework.context.support.AbstractApplicationContext;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.DataWriter;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
@@ -77,12 +78,15 @@ import ice.FlowRateObjectiveDataWriter;
 import ice.FroaAlarmType;
 import ice.MDSConnectivity;
 import ice.Patient;
+import ice.SafetyFallbackType;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -122,6 +126,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private DeviceListModel dlm;
 	private NumericFxList numeric;
 	private SampleArrayFxList samples;
+	private SafetyFallbackObjectiveFxList safetyFallbackObjectiveList;
 	private FlowRateObjectiveDataWriter writer;
 	private MDSHandler mdsHandler;
 	private VitalModel vitalModel;
@@ -145,6 +150,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	@FXML private ToggleGroup operatingMode;
 	@FXML private Toggle openRadio;
 	@FXML private Spinner infusionRate;
+	@FXML private Spinner fallbackInfusionRate;
 	@FXML private BorderPane main;
 	@FXML private Label lastPumpUpdate;
 	@FXML private Label lastBPUpdate;
@@ -216,6 +222,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	
 	private IntegerProperty systolicProperty=new SimpleIntegerProperty();
 	private IntegerProperty diastolicProperty=new SimpleIntegerProperty();
+	private BooleanProperty fallbackModeEnabled = new SimpleBooleanProperty();
 	
 	private boolean pleaseStopAlgo;
 	private Thread algoThread;
@@ -293,12 +300,13 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private FROAAlarm diastolicDDSAlarm;
 	
 	//Need a context here...
-	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples,
+	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, SafetyFallbackObjectiveFxList safetyFallbackObjectiveList,
 			FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber, EMRFacade emr) {
 		this.parentContext=parentContext;
 		this.dlm=dlm;
 		this.numeric=numeric;
 		this.samples=samples;
+		this.safetyFallbackObjectiveList = safetyFallbackObjectiveList;
 		this.writer=writer;
 		this.mdsHandler=mdsHandler;
 		this.vitalModel=vitalModel;
@@ -424,6 +432,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		SpinnerValueFactory.DoubleSpinnerValueFactory rateFactory=new SpinnerValueFactory.DoubleSpinnerValueFactory(MIN_FLOW_RATE, MAX_FLOW_RATE);
 		rateFactory.setAmountToStepBy(0.1);
 		infusionRate.setValueFactory(rateFactory);
+		SpinnerValueFactory.DoubleSpinnerValueFactory fbRateFactory=new SpinnerValueFactory.DoubleSpinnerValueFactory(MIN_FLOW_RATE, MAX_FLOW_RATE);
+		fbRateFactory.setAmountToStepBy(0.1);
+		fallbackInfusionRate.setValueFactory(fbRateFactory);
 		
 		/*
 		 * We use bindBidirectional here because systolicProperty and diastolicProperty and numbers,
@@ -500,7 +511,19 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	BPDeviceChangeListener bpDeviceChangeListener=new BPDeviceChangeListener();
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
-		
+		SafetyFallbackObjectiveFxListFactory nFact = new SafetyFallbackObjectiveFxListFactory();
+        nFact.setEventLoop(eventLoop);
+        nFact.setSubscriber(subscriber);
+        nFact.setQosLibrary(QosProfiles.ice_library);
+        nFact.setQosProfile(QosProfiles.state);
+        nFact.setTopicName(ice.SafetyFallbackObjectiveTopic.VALUE);
+        
+        try {
+			safetyFallbackObjectiveList = nFact.getObject();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		//Rely on addition of metrics to add devices...
 		numeric.addListener(new ListChangeListener<NumericFx>() {
 			@Override
@@ -541,6 +564,55 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 					});
 				}
 				
+			}
+		});
+		
+		fallbackModeEnabled.addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				disable(newValue);		
+			}
+		});
+		
+		safetyFallbackObjectiveList.addListener(new ListChangeListener<SafetyFallbackObjectiveFx>() {
+			public void onChanged(Change<? extends SafetyFallbackObjectiveFx> change) {
+				while (change.next()) {
+					Device selectedPump = pumps.getSelectionModel().getSelectedItem();
+					if (!fallbackModeEnabled.get() && selectedPump != null && running) {
+						change.getAddedSubList().forEach(n -> {
+							if (n.getSafety_fallback_type() == SafetyFallbackType.system_network_quality) {
+								fallbackModeEnabled.set(true);
+								double fallbackInfusionRateValue = (double) fallbackInfusionRate.getValue();
+								setFlowRate((float) fallbackInfusionRateValue, (float) fallbackInfusionRateValue);
+								String systemFallbackMessage = "System Network Fallback Fallback Occurred\nEntering Safety Mode";
+								System.err.println(
+										systemFallbackMessage);
+								javafx.application.Platform.runLater(()-> {
+									Alert alert=new Alert(AlertType.ERROR,systemFallbackMessage);
+									alert.show();
+								});
+								return;
+							} else if (n.getSafety_fallback_type() == SafetyFallbackType.device_network_quality) {
+								Device bp = bpsources.getSelectionModel().getSelectedItem();
+								String unique_device_identifier = n.getUnique_device_identifier();
+								if ((selectedPump.getUDI().equals(unique_device_identifier))
+										|| (bp != null && bp.getUDI().equals(unique_device_identifier))) {
+									fallbackModeEnabled.set(true);
+									double fallbackInfusionRateValue = (double) fallbackInfusionRate.getValue();
+									setFlowRate((float) fallbackInfusionRateValue, (float) fallbackInfusionRateValue);
+									String deviceFallbackMessage = "Device Network Fallback Occurred\nEntering Safety Mode";
+									System.err.println(
+											deviceFallbackMessage);
+									javafx.application.Platform.runLater(()-> {
+										Alert alert=new Alert(AlertType.ERROR,deviceFallbackMessage);
+										alert.show();
+									});
+									return;
+								}
+							}
+						});
+					}
+				}
 			}
 		});
 		
@@ -858,12 +930,16 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	}
 	
 	private boolean checkInfusionRate() {
-		double infusionRateValue=(double)infusionRate.getValue();
-		if(infusionRateValue>=LOWER_INFUSION_LIMIT && infusionRateValue<=UPPER_INFUSION_LIMIT) {
+		double infusionRateValue = (double) infusionRate.getValue();
+		double fallbackInfusionRateValue = (double) fallbackInfusionRate.getValue();
+		if (infusionRateValue >= LOWER_INFUSION_LIMIT && infusionRateValue <= UPPER_INFUSION_LIMIT
+				&& fallbackInfusionRateValue >= LOWER_INFUSION_LIMIT
+				&& fallbackInfusionRateValue <= UPPER_INFUSION_LIMIT) {
 			return true;
 		} else {
-			//Simpler to do the alert here as we know what mode we are in.
-			Alert alert=new Alert(AlertType.ERROR,"In open-loop mode, infusion rate must be between "+LOWER_INFUSION_LIMIT+" and "+UPPER_INFUSION_LIMIT,ButtonType.OK);
+			// Simpler to do the alert here as we know what mode we are in.
+			Alert alert = new Alert(AlertType.ERROR, "In open-loop mode, infusion rate and fallback infusion rate must be between "
+					+ LOWER_INFUSION_LIMIT + " and " + UPPER_INFUSION_LIMIT, ButtonType.OK);
 			alert.showAndWait();
 			return false;
 		}
@@ -969,8 +1045,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         		flowRateFromSelectedPump[0].sqi_accuracyProperty(),
         		flowRateFromSelectedPump[0].sqi_accuracy_durationProperty(),
         		flowRateFromSelectedPump[0].sqi_completenessProperty(),
-        		flowRateFromSelectedPump[0].sqi_precisionProperty(),
         		flowRateFromSelectedPump[0].sqi_frequencyProperty(),
+        		flowRateFromSelectedPump[0].sqi_precisionProperty(),
         		flowRateFromSelectedPump[0].deltaProperty()
     		)
 		);
@@ -1004,7 +1080,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		appConfig.bp_numeric=numericBPDevice.getUniqueDeviceIdentifier();
 		appConfig.pump_udi=pump.getUDI();
 		double rate=(double)infusionRate.getValue();
+		double fallbackRate=(double)fallbackInfusionRate.getValue();
 		appConfig.inf_rate=(float)rate;
+		appConfig.fb_inf_rate=(float)fallbackRate;
 		appConfig.sessionid=sessionid;
 		try {
 			appConfig.patientid=Integer.parseInt(mrnString);
@@ -1047,9 +1125,11 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		algoThread=new Thread() {
 			@Override
 			public void run() {
+				fallbackModeEnabled.set(false);
 				try {
 					double infusionRateValue=(double)infusionRate.getValue();
-					setFlowRate((float)infusionRateValue);
+					double fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
+					setFlowRate((float)infusionRateValue, (float)fallbackInfusionRateValue);
 //					System.err.println("Set initial speed in Simons Simple Algo");
 					//Now, we check the BP.
 					//Continually check the BP against the target;
@@ -1058,11 +1138,15 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						//TODO: Why doesn't this just use the property?
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
-						if( currentSys < compare ) {
+						
+						if(fallbackModeEnabled.get()) {
+						// Don't set if fallback enabled
+						} else if( currentSys < compare ) {
 //							System.err.println("Need to increase the pump speed");
 							//Need to increase the pump speed.
 							float delta=(float)(infusionRateValue*0.1);
-							setFlowRate((float)(infusionRateValue+delta));
+							fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
+							setFlowRate((float)(infusionRateValue+delta),(float)fallbackInfusionRateValue);
 							infusionRateValue=infusionRateValue+delta;
 							//TODO: How should we record this - as a new instance of AppConfig, or not?
 						} else {
@@ -1071,7 +1155,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
 							infusionRateValue=(double)infusionRate.getValue();
 							if(flowRateFromSelectedPump[0].getValue()!=infusionRateValue) {
-								setFlowRate((float)infusionRateValue);
+								fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
+								setFlowRate((float)infusionRateValue, (float)fallbackInfusionRateValue);
 							}
 //							objective.newFlowRate=(float)infusionRateValue;
 //							objective.unique_device_identifier=pumpUDI;
@@ -1105,23 +1190,30 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		
 		algoThread=new Thread() {
 			public void run() {
+				fallbackModeEnabled.set(false);
 				try {
 					//TODO: factor out this initial step to something that can be shared?
 					double infusionRateValue=(double)infusionRate.getValue();
-					setFlowRate((float)infusionRateValue);
+					double fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
+					setFlowRate((float)infusionRateValue, (float)fallbackInfusionRateValue);
 					while(true) {
 						int currentSys=Integer.parseInt(currentSystolic.getText());
 						int compare=((int)targetSystolic.getValue()-5);
-						if( currentSys < compare ) {
+						
+						if(fallbackModeEnabled.get()) {
+							// Don't set if fallback enabled
+						} else if( currentSys < compare ) {
 							float newFlowRate=(float)(100 + 2 * ( (int) targetSystolic.getValue() - currentSys));
-							setFlowRate(newFlowRate);
+							fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
+							setFlowRate(newFlowRate,(float)fallbackInfusionRateValue);
 							infusionRateValue=newFlowRate;
 						} else {
 //							System.err.println("Setting the pump speed back to default");
 							//Current BP is OK.  Set the speed to default.
 							//!!!!GET A CLASS CAST HERE DOUBLE CANNOT BE CAST TO FLOAT!
 							infusionRateValue=(double)infusionRate.getValue();
-							setFlowRate((float)infusionRateValue);
+							fallbackInfusionRateValue=(double)fallbackInfusionRate.getValue();
+							setFlowRate((float)infusionRateValue,(float) fallbackInfusionRateValue);
 //							objective.newFlowRate=(float)infusionRateValue;
 //							objective.unique_device_identifier=pumpUDI;
 //							writer.write(objective, InstanceHandle_t.HANDLE_NIL);
@@ -1140,11 +1232,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		
 	}
 	
-	private void setFlowRate(float newRate) {
+	private void setFlowRate(float newRate, float fallbackRate) {
 		Device selectedPump=pumps.getSelectionModel().getSelectedItem();
 		String pumpUDI=selectedPump.getUDI();
 		FlowRateObjective objective=new FlowRateObjective();
 		objective.newFlowRate=newRate;
+		objective.fallbackRate=fallbackRate;
 		objective.unique_device_identifier=pumpUDI;
 		try {
 			if(flowStatement==null) {
@@ -1396,7 +1489,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			appConfig.bp_numeric=numericBPDevice.getUniqueDeviceIdentifier();
 			appConfig.pump_udi=pump.getUDI();
 			double rate=(double)infusionRate.getValue();
+			double fallbackRate=(double)fallbackInfusionRate.getValue();
 			appConfig.inf_rate=(float)rate;
+			appConfig.fb_inf_rate=(float)fallbackRate;
 			appConfig.sessionid=sessionid;
 			try {
 				appConfig.patientid=Integer.parseInt(mrnString);
@@ -1550,6 +1645,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		 */
 		float inf_rate;
 		/**
+		 * Fallback Infusion rate
+		 */
+		float fb_inf_rate;
+		/**
 		 * The ID of the patient.
 		 */
 		int patientid;
@@ -1603,7 +1702,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			numericBPDevice=null;
 		}
 	}
-	
+
 	class CircularBuffer {
 		int size;
 		int index;
@@ -1666,6 +1765,17 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 	}
 	
-	
+	private void disable(Boolean value) {
+		bpsources.setDisable(value);
+		pumps.setDisable(value);
+		algos.setDisable(value);
+		targetSystolic.setDisable(value);
+		targetDiastolic.setDisable(value);
+		systolicAlarm.setDisable(value);
+		diastolicAlarm.setDisable(value);
+		infusionRate.setDisable(value);
+		fallbackInfusionRate.setDisable(value);
+		startButton.setDisable(value);
+	}
 
 }
