@@ -2,9 +2,11 @@ package org.mdpnp.apps.fxbeans;
 
 import java.util.Date;
 
+import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -142,6 +144,76 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
     public SampleArrayFx() {
     }
     
+    private FloatProperty sqi_accuracy;
+    public final FloatProperty sqi_accuracyProperty() {
+    	if(null == sqi_accuracy) {
+    		sqi_accuracy=new SimpleFloatProperty(this, "sqi_accuracy");
+    	}
+    	return this.sqi_accuracy;
+    }
+    public final float getSQI_accuracy() {
+    	return this.sqi_accuracyProperty().get();
+    }
+    public final void setSQI_accuracy(final float accuracy) {
+    	this.sqi_accuracyProperty().set(accuracy);
+    }
+    
+    private FloatProperty sqi_accuracy_duration;
+    public final FloatProperty sqi_accuracy_durationProperty() {
+    	if(null == sqi_accuracy_duration) {
+    		sqi_accuracy_duration=new SimpleFloatProperty(this, "sqi_accuracy_duration");
+    	}
+    	return this.sqi_accuracy_duration;
+    }
+    public final float getSQI_accuracy_duration() {
+    	return this.sqi_accuracy_durationProperty().get();
+    }
+    public final void setSQI_accuracy_duration(final float accuracy_duration) {
+    	this.sqi_accuracy_durationProperty().set(accuracy_duration);
+    }
+    
+    private FloatProperty sqi_completeness;
+    public final FloatProperty sqi_completenessProperty() {
+    	if(null == sqi_completeness) {
+    		sqi_completeness=new SimpleFloatProperty(this, "sqi_completeness");
+    	}
+    	return this.sqi_completeness;
+    }
+    public final float getSQI_completeness() {
+    	return this.sqi_completenessProperty().get();
+    }
+    public final void setSQI_completeness(final float completeness) {
+    	this.sqi_completenessProperty().set(completeness);
+    }
+    
+    private FloatProperty sqi_precision;
+    public final FloatProperty sqi_precisionProperty() {
+    	if(null == sqi_precision) {
+    		sqi_precision=new SimpleFloatProperty(this, "sqi_precision");
+    	}
+    	return this.sqi_precision;
+    }
+    public final float getSQI_precision() {
+    	return this.sqi_precisionProperty().get();
+    }
+    public final void setSQI_precision(final float precision) {
+    	this.sqi_precisionProperty().set(precision);
+    }
+    
+    private FloatProperty sqi_frequency;
+    public final FloatProperty sqi_frequencyProperty() {
+    	if(null == sqi_frequency) {
+    		sqi_frequency=new SimpleFloatProperty(this, "sqi_frequency");
+    	}
+    	return this.sqi_frequency;
+    }
+    public final float getSQI_frequency() {
+    	return this.sqi_frequencyProperty().get();
+    }
+    public final void setSQI_frequency(final float frequency) {
+    	this.sqi_frequencyProperty().set(frequency);
+    }
+    
     public void update(ice.SampleArray v, SampleInfo s) {
         
         setUnique_device_identifier(v.unique_device_identifier);
@@ -150,6 +222,14 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
         setInstance_id(v.instance_id);
         setUnit_id(v.unit_id);
         setFrequency(v.frequency);
+        
+        setSQI_accuracy(v.sqi.accuracy);
+        setSQI_accuracy_duration(v.sqi.accuracy_duration);
+        setSQI_completeness(v.sqi.completeness);
+        setSQI_frequency(v.sqi.frequency);
+        setSQI_precision(v.sqi.precision);
+        
+        
         Number[] values = new Number[v.values.userData.size()];
         for(int i = 0; i < values.length; i++) {
             values[i] = v.values.userData.getFloat(i);
