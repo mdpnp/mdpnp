@@ -14,6 +14,7 @@ package org.mdpnp.devices.draeger.medibus;
 
 import ice.ConnectionState;
 import ice.LimitType;
+import ice.NumericSQI;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -514,7 +515,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                                     if (realtimeBuffer[i].size() > BUFFER_SAMPLES) {
                                         realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
                                     }
-                                    sampleArraySample(sa, realtimeBuffer[i], deviceClock.instant());
+                                    sampleArraySample(sa, realtimeBuffer[i], new NumericSQI(), deviceClock.instant());
                                 }
                             }
                         } else {
@@ -541,7 +542,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                                         realtimeBuffer[i].subList(0, realtimeBuffer[i].size() - BUFFER_SAMPLES).clear();
                                     }
                                     sampleArrayUpdates.put(code,
-                                            sampleArraySample(sa, realtimeBuffer[i], metric_id, codeToString(code), 0, units(code), realtimeFrequency[i], deviceClock.instant()));
+                                            sampleArraySample(sa, realtimeBuffer[i], new NumericSQI(), metric_id, codeToString(code), 0, units(code), realtimeFrequency[i], deviceClock.instant()));
                                 }
                             }
                         }

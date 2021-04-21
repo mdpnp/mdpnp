@@ -13,6 +13,7 @@
 package org.mdpnp.devices.nonin.pulseox;
 
 import ice.ConnectionState;
+import ice.NumericSQI;
 import ice.SampleArray;
 
 import java.io.IOException;
@@ -183,6 +184,7 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
                 // By emitting 3 packets (75 frames) per second we can create more consistent timestamps
                 
                 pleth = sampleArraySample(pleth, plethBuffer,
+                		new NumericSQI(),
                         rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE,
                         NoninPulseOx.FREQUENCY, timeStamp);

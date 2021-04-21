@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.dataqualitymonitor;
 import java.util.Objects;
 
 public class DataQualityDisplayWrapper {
+	private String deviceModel;
 	private String deviceId;
 	private String metricId;
 	private Double accuracy;
@@ -15,9 +16,10 @@ public class DataQualityDisplayWrapper {
 		// TODO Auto-generated constructor stub
 	}
 
-	public DataQualityDisplayWrapper(String deviceId, String metricId, Double accuracy, Double completeness,
-			Double consistency, Double credibility, Double currentness) {
+	public DataQualityDisplayWrapper(String deviceModel, String deviceId, String metricId, Double accuracy,
+			Double completeness, Double consistency, Double credibility, Double currentness) {
 		super();
+		this.deviceModel = deviceModel;
 		this.deviceId = deviceId;
 		this.metricId = metricId;
 		this.accuracy = accuracy;
@@ -25,6 +27,14 @@ public class DataQualityDisplayWrapper {
 		this.consistency = consistency;
 		this.credibility = credibility;
 		this.currentness = currentness;
+	}
+
+	public String getDeviceModel() {
+		return deviceModel;
+	}
+
+	public void setDeviceModel(String deviceModel) {
+		this.deviceModel = deviceModel;
 	}
 
 	public String getDeviceId() {
@@ -102,8 +112,8 @@ public class DataQualityDisplayWrapper {
 
 	@Override
 	public String toString() {
-		return "DataQualityDisplayWrapper [deviceId=" + deviceId + ", metricId=" + metricId + ", accuracy=" + accuracy
-				+ ", completeness=" + completeness + ", consistency=" + consistency + ", credibility=" + credibility
-				+ ", currentness=" + currentness + "]";
+		return "DataQualityDisplayWrapper [deviceModel=" + deviceModel + ", deviceId=" + deviceId + ", metricId="
+				+ metricId + ", accuracy=" + accuracy + ", completeness=" + completeness + ", consistency="
+				+ consistency + ", credibility=" + credibility + ", currentness=" + currentness + "]";
 	}
 }

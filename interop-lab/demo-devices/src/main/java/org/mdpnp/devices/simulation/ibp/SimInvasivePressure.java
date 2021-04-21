@@ -13,10 +13,12 @@
 package org.mdpnp.devices.simulation.ibp;
 
 import ice.GlobalSimulationObjective;
+import ice.NumericSQI;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
 import org.mdpnp.devices.simulation.GlobalSimulationObjectiveListener;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.rtiapi.data.EventLoop;
 
 import com.rti.dds.publication.Publisher;
@@ -28,11 +30,26 @@ import com.rti.dds.subscription.Subscriber;
  */
 public class SimInvasivePressure extends AbstractSimulatedConnectedDevice {
 
+	private static final double DEFAULT_JITTER_CEILING = 100.0;
+	private static final double DEFAULT_JITTER_FLOOR = 90.0;
+	private static final double DEFAULT_JITTER_STEP_AMT = 0.25;
+	private static final double DEFAULT_JITTER_START = 95.0;
+	
     protected final InstanceHolder<ice.Numeric> systolic;
     protected final InstanceHolder<ice.Numeric> diastolic;
     private InstanceHolder<ice.SampleArray> wave;
     private final SimulatedInvasiveBloodPressure pressure;
-
+    
+    protected NumericSQI currentPressureSQI = new NumericSQI();
+    protected NumericSQI currentSPressureSQI = new NumericSQI();
+    protected NumericSQI currentDPressureSQI = new NumericSQI();
+    
+    private NumberWithJitter<Float> pressureJitter = new NumberWithJitter<Float>(DEFAULT_JITTER_START, DEFAULT_JITTER_STEP_AMT,
+			DEFAULT_JITTER_FLOOR, DEFAULT_JITTER_CEILING);
+    private NumberWithJitter<Float> pressureSJitter = new NumberWithJitter<Float>(DEFAULT_JITTER_START, DEFAULT_JITTER_STEP_AMT,
+			DEFAULT_JITTER_FLOOR, DEFAULT_JITTER_CEILING);
+    private NumberWithJitter<Float> pressureDJitter = new NumberWithJitter<Float>(DEFAULT_JITTER_START, DEFAULT_JITTER_STEP_AMT,
+			DEFAULT_JITTER_FLOOR, DEFAULT_JITTER_CEILING);
 
     private class SimulatedInvasiveBloodPressureExt extends SimulatedInvasiveBloodPressure {
 
@@ -42,9 +59,15 @@ public class SimInvasivePressure extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receivePressure(DeviceClock.Reading sampleTime, int systolic, int diastolic, Number[] waveValues, int frequency) {
-            numericSample(SimInvasivePressure.this.systolic, systolic, sampleTime);
-            numericSample(SimInvasivePressure.this.diastolic, diastolic, sampleTime);
-            wave = sampleArraySample(wave, waveValues, rosetta.MDC_PRESS_BLD.VALUE, "", 0, 
+        	currentSPressureSQI.accuracy = pressureSJitter.floatValue();
+        	currentSPressureSQI.frequency = 1.03448f;
+        	numericSample(SimInvasivePressure.this.systolic, systolic, currentSPressureSQI, sampleTime);
+        	currentDPressureSQI.accuracy = pressureDJitter.floatValue();
+        	currentDPressureSQI.frequency = 1.03448f;
+            numericSample(SimInvasivePressure.this.diastolic, diastolic, currentDPressureSQI, sampleTime);
+            currentPressureSQI.accuracy = pressureJitter.floatValue();
+            currentPressureSQI.frequency = frequency;
+            wave = sampleArraySample(wave, waveValues, currentPressureSQI, rosetta.MDC_PRESS_BLD.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }

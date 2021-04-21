@@ -19,6 +19,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.NumericSQI;
+
 /**
  * @author Jeff Plourde
  *
@@ -37,7 +39,7 @@ public class MultiSimPulseOximeter extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receivePulseOx(DeviceClock.Reading timestamp, int heartRate, int SpO2, Number[] plethValues, int frequency) {
-            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues,
+            pleth[ordinal] = sampleArraySample(pleth[ordinal], plethValues, new NumericSQI(),
                                                rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", ordinal,
                                                rosetta.MDC_DIM_DIMLESS.VALUE, frequency, timestamp);
         }

@@ -13,6 +13,7 @@
 package org.mdpnp.devices.simulation.nibp;
 
 import ice.Numeric;
+import ice.NumericSQI;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
@@ -29,39 +30,42 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
 
     protected InstanceHolder<Numeric> systolic, diastolic, pulse, inflation, nextInflationTime, state;
     // TODO needs to subscribe to an objective state for triggering a NIBP
+    
+    protected NumericSQI currentPulseSQI = new NumericSQI(), currentSBPSQI = new NumericSQI(),
+    		currentDBPSQI = new NumericSQI(), currentPressureCuffSQI = new NumericSQI();
 
     private final SimulatedNoninvasiveBloodPressure bloodPressure = new SimulatedNoninvasiveBloodPressure() {
         @Override
         protected void beginDeflation() {
-            numericSample(state, ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE, clock.instant());
+            numericSample(state, ice.MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP.VALUE, currentPressureCuffSQI, clock.instant());
         }
 
         @Override
         protected void beginInflation() {
-            numericSample(state, ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE, clock.instant());
+            numericSample(state, ice.MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS.VALUE, currentPressureCuffSQI, clock.instant());
         }
 
         @Override
         protected void endDeflation() {
-            numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE, clock.instant());
+            numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE, currentPressureCuffSQI, clock.instant());
         }
 
         @Override
         protected void updateInflation(int inflation) {
-            numericSample(DemoSimulatedBloodPressure.this.inflation, inflation, clock.instant());
+            numericSample(DemoSimulatedBloodPressure.this.inflation, inflation, currentPressureCuffSQI, clock.instant());
         }
 
         @Override
         protected void updateNextInflationTime(long nextInflationTime) {
-            numericSample(DemoSimulatedBloodPressure.this.nextInflationTime, nextInflationTime, clock.instant());
+            numericSample(DemoSimulatedBloodPressure.this.nextInflationTime, nextInflationTime, currentPressureCuffSQI, clock.instant());
         }
 
         @Override
         protected void updateReading(int systolic, int diastolic, int pulse) {
             DeviceClock.Reading sampleTime = clock.instant();
-            numericSample(DemoSimulatedBloodPressure.this.systolic, systolic, sampleTime);
-            numericSample(DemoSimulatedBloodPressure.this.diastolic, diastolic, sampleTime);
-            numericSample(DemoSimulatedBloodPressure.this.pulse, pulse, sampleTime);
+            numericSample(DemoSimulatedBloodPressure.this.systolic, systolic, currentSBPSQI, sampleTime);
+            numericSample(DemoSimulatedBloodPressure.this.diastolic, diastolic, currentDBPSQI, sampleTime);
+            numericSample(DemoSimulatedBloodPressure.this.pulse, pulse, currentPulseSQI, sampleTime);
         }
     };
 
@@ -71,6 +75,15 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
         super(subscriber, publisher, eventLoop);
         deviceIdentity.model = "NIBP (Simulated)";
         writeDeviceIdentity();
+        
+        currentPulseSQI.accuracy = 95.0f;
+        currentSBPSQI.accuracy = 95.0f;
+        currentDBPSQI.accuracy = 95.0f;
+        currentPressureCuffSQI.accuracy = 100.0f;
+        
+        currentPulseSQI.frequency = 0.005555555555556f;
+        currentSBPSQI.frequency = 0.005555555555556f;
+        currentDBPSQI.frequency = 0.005555555555556f;
 
         state = createNumericInstance(rosetta.MDC_PRESS_CUFF.VALUE, "");
         systolic = createNumericInstance(rosetta.MDC_PRESS_CUFF_SYS.VALUE, "");
@@ -82,7 +95,7 @@ public class DemoSimulatedBloodPressure extends AbstractSimulatedConnectedDevice
         // pulse =
         // createNumericInstance(ice.Physio.MDC_PULS_RATE_NON_INV.value());
 
-        numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE, clock.instant());
+        numericSample(state, ice.MDC_EVT_STAT_OFF.VALUE, currentPressureCuffSQI, clock.instant());
     }
 
     @Override

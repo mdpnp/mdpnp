@@ -13,6 +13,7 @@
 package org.mdpnp.devices.simulation.co2;
 
 import ice.GlobalSimulationObjective;
+import ice.NumericSQI;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
@@ -40,7 +41,7 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receiveCO2(DeviceClock.Reading sampleTime, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
-            co2 = sampleArraySample(co2, co2Values, rosetta.MDC_AWAY_CO2.VALUE, "", 0, 
+            co2 = sampleArraySample(co2, co2Values, new NumericSQI(), rosetta.MDC_AWAY_CO2.VALUE, "", 0, 
                     rosetta.MDC_DIM_MMHG.VALUE, frequency, sampleTime);
             numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
             numericSample(etCO2, etCO2Value, sampleTime);

@@ -13,6 +13,7 @@
 package org.mdpnp.devices.simulation.pulseox;
 
 import ice.GlobalSimulationObjective;
+import ice.NumericSQI;
 
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
@@ -68,7 +69,7 @@ public class FourSecNoSoftAvgSimPulseOximeter extends AbstractSimulatedConnected
             //System.err.println("Doing 0 for averagingTime");
             //ICE Software should not use this value as canGetAveragingTimes is 0
             numericSample(averagingTime, 0, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
+            pleth = sampleArraySample(pleth, plethValues, new NumericSQI(), rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }

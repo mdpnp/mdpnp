@@ -813,7 +813,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 if(null == c) {
                                     putSampleArrayUpdate(ov, handle, null);
                                 } else {
-                                    sampleArraySample(sa, c, fakeSampleTime);
+                                    sampleArraySample(sa, c, new NumericSQI(), fakeSampleTime);
                                 }
                             }
                         } else {
@@ -823,6 +823,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 putSampleArrayUpdate(
                                         ov, handle,
                                         sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(samples, metric_id+" "+handle),
+                                        new NumericSQI(),
                                         metric_id, ov.toString(), handle, 
                                         RosettaUnits.units(unitCode),
                                         (int)(1000L / rt.toMilliseconds()), fakeSampleTime));
