@@ -5,12 +5,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.mdpnp.devices.DeviceClock;
-import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 import org.mdpnp.devices.simulation.AbstractSimulatedConnectedDevice;
+import org.mdpnp.devices.simulation.NumberWithJitter;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
-import org.mdpnp.rtiapi.data.EventLoop.ConditionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,6 @@ import com.rti.dds.topic.Topic;
 import ice.BPObjectiveDataReader;
 import ice.BPPauseResumeObjectiveDataReader;
 import ice.ConnectionState;
-import ice.Numeric;
 import ice.NumericSQI;
 import ice.SampleArray;
 
@@ -48,6 +47,14 @@ import ice.SampleArray;
  */
 public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
 
+	private static final double DEFAULT_JITTER_CEILING = 100.0;
+	private static final double DEFAULT_JITTER_FLOOR = 90.0;
+	private static final double DEFAULT_JITTER_STEP_AMT = 0.25;
+	private static final double DEFAULT_JITTER_START = 95.0;
+	
+	private Number accuracyJitter = new NumberWithJitter<Float>(DEFAULT_JITTER_START, DEFAULT_JITTER_STEP_AMT,
+			DEFAULT_JITTER_FLOOR, DEFAULT_JITTER_CEILING);
+	
 	private static int fakeComPortNumber=1;
 
 	private DeviceClock defaultClock;
@@ -56,6 +63,8 @@ public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
 
 	ScheduledFuture<?> sampleEmitter;
 
+	protected NumericSQI currentPressureSQI = new NumericSQI();
+	
 	private float defaultSys=120;
 	private float defaultDia=80;
 	private float currentSys;
@@ -288,7 +297,8 @@ public class SimControllableBPMonitor extends AbstractSimulatedConnectedDevice {
 				//if data is being emitted or not.
 				if(running) {
 					int f=100;
-					sampleHolder = sampleArraySample(sampleHolder, bpFloats[which%len], new NumericSQI(), rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, "", 0, 
+					currentPressureSQI.accuracy = accuracyJitter.floatValue();
+					sampleHolder = sampleArraySample(sampleHolder, bpFloats[which%len], currentPressureSQI, rosetta.MDC_PRESS_BLD_ART_ABP.VALUE, "", 0, 
 							rosetta.MDC_DIM_DIMLESS.VALUE, f, defaultClock.instant());
 					which++;
 				}
