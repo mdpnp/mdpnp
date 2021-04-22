@@ -24,10 +24,60 @@ public class DataQualityMetric implements Comparable<DataQualityMetric> {
 		this.deviceId = deviceId;
 		this.metricId = metricId;
 		this.presentationDate = presentationDate;
-		this.numeric = numeric;
-		this.sampleArray = sampleArray;
-		this.sampleCount =  sampleCount;
+
+		if (numeric != null) {
+			this.numeric = copyNumericFx(numeric);
+		}
+
+		if (sampleArray != null) {
+			this.sampleArray = copySampleArrayFx(sampleArray);
+		}
+
+		this.sampleCount = sampleCount;
 		this.frequency = frequency;
+	}
+
+	private NumericFx copyNumericFx(NumericFx numeric) {
+		NumericFx num = new NumericFx();
+		num.setDelta(numeric.getDelta());
+		num.setDevice_time(numeric.getDevice_time());
+		num.setInstance_id(numeric.getInstance_id());
+		num.setMetric_id(numeric.getMetric_id());
+		num.setPresentation_time(numeric.getPresentation_time());
+		num.setReception_timestamp(numeric.getReception_timestamp());
+		num.setSource_timestamp(numeric.getSource_timestamp());
+		num.setSQI_accuracy(numeric.getSQI_accuracy());
+		num.setSQI_accuracy_duration(numeric.getSQI_accuracy_duration());
+		num.setSQI_completeness(numeric.getSQI_completeness());
+		num.setSQI_frequency(numeric.getSQI_frequency());
+		num.setSQI_precision(numeric.getSQI_precision());
+		num.setUnique_device_identifier(numeric.getUnique_device_identifier());
+		num.setUnit_id(numeric.getUnit_id());
+		num.setValue(numeric.getValue());
+		num.setVendor_metric_id(numeric.getVendor_metric_id());
+		return num;
+	}
+
+	private SampleArrayFx copySampleArrayFx(SampleArrayFx sampleArray) {
+		SampleArrayFx sample = new SampleArrayFx();
+		sample.setDelta(sampleArray.getDelta());
+		sample.setDevice_time(sampleArray.getDevice_time());
+		sample.setFrequency(sampleArray.getFrequency());
+		sample.setInstance_id(sampleArray.getInstance_id());
+		sample.setMetric_id(sampleArray.getMetric_id());
+		sample.setPresentation_time(sampleArray.getPresentation_time());
+		sample.setReception_timestamp(sampleArray.getReception_timestamp());
+		sample.setSource_timestamp(sampleArray.getSource_timestamp());
+		sample.setSQI_accuracy(sampleArray.getSQI_accuracy());
+		sample.setSQI_accuracy_duration(sampleArray.getSQI_accuracy_duration());
+		sample.setSQI_completeness(sampleArray.getSQI_completeness());
+		sample.setSQI_frequency(sampleArray.getSQI_frequency());
+		sample.setSQI_precision(sampleArray.getSQI_precision());
+		sample.setUnique_device_identifier(sampleArray.getUnique_device_identifier());
+		sample.setUnit_id(sampleArray.getUnit_id());
+		sample.setVendor_metric_id(sampleArray.getVendor_metric_id());
+		sample.valuesProperty().setValue(sampleArray.getValues());
+		return sample;
 	}
 
 	public String getDeviceId() {
@@ -69,7 +119,7 @@ public class DataQualityMetric implements Comparable<DataQualityMetric> {
 	public void setSampleArray(SampleArrayFx sampleArray) {
 		this.sampleArray = sampleArray;
 	}
-	
+
 	public int getSampleCount() {
 		return sampleCount;
 	}

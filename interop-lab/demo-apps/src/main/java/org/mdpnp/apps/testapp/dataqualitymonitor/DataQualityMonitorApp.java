@@ -1,13 +1,19 @@
 package org.mdpnp.apps.testapp.dataqualitymonitor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
@@ -20,6 +26,7 @@ import org.mdpnp.rtiapi.data.TopicUtil;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -36,6 +43,9 @@ import ice.DataQualityErrorObjective;
 import ice.DataQualityErrorObjectiveDataWriter;
 import ice.DataQualityErrorObjectiveTopic;
 import ice.DataQualityErrorObjectiveTypeSupport;
+import ice.MDC_ECG_LEAD_I;
+import ice.MDC_ECG_LEAD_II;
+import ice.MDC_ECG_LEAD_III;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -50,10 +60,15 @@ import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeTableView.TreeTableViewSelectionModel;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
-
-import rosetta.MDC_PULS_RATE_NON_INV;
+import rosetta.MDC_ECG_HEART_RATE;
+import rosetta.MDC_FLOW_FLUID_PUMP;
+import rosetta.MDC_PRESS_BLD_ART_ABP_DIA;
+import rosetta.MDC_PRESS_BLD_ART_ABP_SYS;
+import rosetta.MDC_PRESS_BLD_MEAN;
 import rosetta.MDC_PRESS_CUFF_DIA;
 import rosetta.MDC_PRESS_CUFF_SYS;
+import rosetta.MDC_PULS_OXIM_PULS_RATE;
+import rosetta.MDC_PULS_RATE_NON_INV;
 
 public class DataQualityMonitorApp {
 	private static final String KEY_COMBO = "::::";
@@ -63,11 +78,14 @@ public class DataQualityMonitorApp {
 	private static int ACCURACY_THRESHOLD = 90;
 	private static int COMPLETENESS_THRESHOLD = 95;
 
-	// TODO: Will vary by data type, and need to be dynamic, just including 'some'
-	// values for now
-	private static int CONSISTENCY_THRESHOLD = 95;
-	private static int CREDIBILITY_THRESHOLD = 95;
-	private static int CURRENTNESS_THRESHOLD = 95;
+	private static int CONSISTENCY_THRESHOLD = 20;
+	private static int PULSE_CONSISTENCY_THRESHOLD = 20;
+	private static int BP_CONSISTENCY_THRESHOLD = 20;
+	private static int INFUSION_RATE_CONSISTENCY_THRESHOLD = 30;
+	private static int CREDIBILITY_THRESHOLD = 1;
+	private static int CURRENTNESS_THRESHOLD = 10;
+	private static double BP_CONSISTENCY_WINDOW = 60.0f;
+	private static double PULSE_CONSISTENCY_WINDOW = 30.0f;
 
 	@FXML
 	TreeTableView<DataQualityDisplayWrapper> averagesTable;
@@ -125,7 +143,7 @@ public class DataQualityMonitorApp {
 		averagesTable.setShowRoot(false);
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column1 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column1.setText("DeviceId");
+		column1.setText("Device");
 		column1.setMinWidth(10);
 		column1.setMaxWidth(5000);
 		column1.setPrefWidth(320);
@@ -134,7 +152,7 @@ public class DataQualityMonitorApp {
 		column1.setResizable(false);
 		column1.setCellValueFactory(
 				(TreeTableColumn.CellDataFeatures<DataQualityDisplayWrapper, String> p) -> new SimpleStringProperty(
-						p.getValue().getValue().getDeviceId()));
+						p.getValue().getValue().getName()));
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column2 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
 		column2.setText("MetricId");
@@ -271,12 +289,30 @@ public class DataQualityMonitorApp {
 									DataQualityDisplayWrapper treeItemValue = treeItem.getValue();
 									if (treeItem.getChildren().isEmpty() && treeItemValue.getConsistency() != null) {
 										double value = treeItem.getValue().getConsistency();
-										if (value > CURRENTNESS_THRESHOLD) {
-											setTextFill(Color.GREEN);
+										int thresholdToUse = 0;
+										switch (treeItemValue.getMetricId()) {
+										case MDC_PULS_RATE_NON_INV.VALUE:
+										case MDC_PRESS_CUFF_DIA.VALUE:
+										case MDC_PRESS_CUFF_SYS.VALUE:
+											thresholdToUse = BP_CONSISTENCY_THRESHOLD;
+											break;
+										case MDC_PULS_OXIM_PULS_RATE.VALUE:
+										case MDC_ECG_HEART_RATE.VALUE:
+											thresholdToUse = PULSE_CONSISTENCY_THRESHOLD;
+											break;
+										case MDC_FLOW_FLUID_PUMP.VALUE:
+											thresholdToUse = INFUSION_RATE_CONSISTENCY_THRESHOLD;
+											break;
+										default:
+											thresholdToUse = CONSISTENCY_THRESHOLD;
+											break;
+										}
+										if (value > thresholdToUse) {
+											setTextFill(Color.RED);
 											setStyle("-fx-font-weight: bold");
 											setText(String.format("%.3f", value));
-										} else if (value < CURRENTNESS_THRESHOLD) {
-											setTextFill(Color.RED);
+										} else if (value < thresholdToUse) {
+											setTextFill(Color.GREEN);
 											setStyle("-fx-font-weight: bold");
 											setText(String.format("%.3f", value));
 										} else {
@@ -319,7 +355,7 @@ public class DataQualityMonitorApp {
 									DataQualityDisplayWrapper treeItemValue = treeItem.getValue();
 									if (treeItem.getChildren().isEmpty() && treeItemValue.getCredibility() != null) {
 										double value = treeItem.getValue().getCredibility();
-										if (value > CREDIBILITY_THRESHOLD) {
+										if (value >= CREDIBILITY_THRESHOLD) {
 											setTextFill(Color.GREEN);
 											setStyle("-fx-font-weight: bold");
 											setText(String.format("%.3f", value));
@@ -367,11 +403,11 @@ public class DataQualityMonitorApp {
 									if (treeItem.getChildren().isEmpty() && treeItemValue.getCurrentness() != null) {
 										double value = treeItem.getValue().getCurrentness();
 										if (value > CURRENTNESS_THRESHOLD) {
-											setTextFill(Color.GREEN);
+											setTextFill(Color.RED);
 											setStyle("-fx-font-weight: bold");
 											setText(String.format("%.3f", value));
 										} else if (value < CURRENTNESS_THRESHOLD) {
-											setTextFill(Color.RED);
+											setTextFill(Color.GREEN);
 											setStyle("-fx-font-weight: bold");
 											setText(String.format("%.3f", value));
 										} else {
@@ -468,6 +504,7 @@ public class DataQualityMonitorApp {
 			TreeItem<DataQualityDisplayWrapper> siblingRoot = new TreeItem<DataQualityDisplayWrapper>();
 			DataQualityDisplayWrapper wrapper = new DataQualityDisplayWrapper();
 			wrapper.setDeviceId(d.getUDI());
+			wrapper.setName(d.getModel() + "-" + d.getUDI());
 			siblingRoot.setValue(wrapper);
 			deviceSiblingRoots.add(siblingRoot);
 			root.getChildren().add(siblingRoot);
@@ -525,8 +562,9 @@ public class DataQualityMonitorApp {
 	}
 
 	private void buildTree() {
-		deviceNetworkQualityMetrics.keySet().forEach(p -> {
-			Collection<DataQualityMetric> collection = deviceNetworkQualityMetrics.get(p);
+		Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).keySet().forEach(p -> {
+			Collection<DataQualityMetric> collection = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(p);
 			DataQualityDisplayWrapper wrapper = new DataQualityDisplayWrapper();
 			List<String> deviceIdAndMetricId = parseDeviceIdAndMetricId(p);
 			String deviceId = deviceIdAndMetricId.get(0);
@@ -543,44 +581,16 @@ public class DataQualityMonitorApp {
 					return e.equals(wrapperCopy);
 				}).findFirst().orElse(null);
 				wrapper.setAccuracy(determineAccuracy(collection));
-				if (wrapper.getDeviceModel().contains("NIBP")) {
-					switch (metricId) {
-					case MDC_PULS_RATE_NON_INV.VALUE:
-					case MDC_PRESS_CUFF_DIA.VALUE:
-					case MDC_PRESS_CUFF_SYS.VALUE:
-						Double timeDifferenceNIBP = determineTimeDifferenceNIBP(deviceId);
-						wrapper.setCompleteness(
-								timeDifferenceNIBP != null && timeDifferenceNIBP < 1 && timeDifferenceNIBP >= 0
-										? 100.000
-										: 0.000);
-						break;
-					}
-				} else {
-					wrapper.setCompleteness(determineCompleteness(collection));
-				}
-				wrapper.setConsistency(0.0);
-				wrapper.setCredibility(0.0);
-				wrapper.setCurrentness(0.0);
+				setCompleteness(collection, wrapper, deviceId, metricId);
+				setConsistency(collection, wrapper, deviceId, metricId);
+				setCredibility(collection, wrapper, deviceId, metricId);
+				setCurrentness(collection, wrapper, deviceId, metricId);
 			} else {
 				wrapper.setAccuracy(determineAccuracy(collection));
-				if (wrapper.getDeviceModel().contains("NIBP")) {
-					switch (metricId) {
-					case MDC_PULS_RATE_NON_INV.VALUE:
-					case MDC_PRESS_CUFF_DIA.VALUE:
-					case MDC_PRESS_CUFF_SYS.VALUE:
-						Double timeDifferenceNIBP = determineTimeDifferenceNIBP(deviceId);
-						wrapper.setCompleteness(
-								timeDifferenceNIBP != null && timeDifferenceNIBP < 1 && timeDifferenceNIBP >= 0
-										? 100.000
-										: 0.000);
-						break;
-					}
-				} else {
-					wrapper.setCompleteness(determineCompleteness(collection));
-				}
-				wrapper.setConsistency(0.0);
-				wrapper.setCredibility(0.0);
-				wrapper.setCurrentness(0.0);
+				setCompleteness(collection, wrapper, deviceId, metricId);
+				setConsistency(collection, wrapper, deviceId, metricId);
+				setCredibility(collection, wrapper, deviceId, metricId);
+				setCurrentness(collection, wrapper, deviceId, metricId);
 				data.add(wrapper);
 			}
 			checkWrapper(wrapper);
@@ -600,6 +610,22 @@ public class DataQualityMonitorApp {
 				}
 			});
 		});
+	}
+
+	private void setCompleteness(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
+			String deviceId, String metricId) {
+		switch (metricId) {
+		case MDC_PULS_RATE_NON_INV.VALUE:
+		case MDC_PRESS_CUFF_DIA.VALUE:
+		case MDC_PRESS_CUFF_SYS.VALUE:
+			Double timeDifferenceNIBP = determineTimeDifferenceNIBP(deviceId);
+			wrapper.setCompleteness(
+					timeDifferenceNIBP != null && timeDifferenceNIBP < 1 && timeDifferenceNIBP >= 0 ? 100.000 : 0.000);
+			break;
+		default:
+			wrapper.setCompleteness(determineCompleteness(collection));
+			break;
+		}
 	}
 
 	private Double determineTimeDifferenceNIBP(String deviceId) {
@@ -664,16 +690,214 @@ public class DataQualityMonitorApp {
 		}).average().orElse(0);
 	}
 
+	@SuppressWarnings("unchecked")
+	private void setCredibility(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
+			String deviceId, String metricId) {
+		switch (metricId) {
+		case MDC_PRESS_BLD_ART_ABP_DIA.VALUE:
+		case MDC_PRESS_BLD_ART_ABP_SYS.VALUE:
+			Collection<DataQualityMetric> diastolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_ART_ABP_DIA.VALUE));
+			Collection<DataQualityMetric> systolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_ART_ABP_SYS.VALUE));
+
+			if (diastolicNIBP != null && diastolicNIBP.size() > 0 && systolicNIBP != null && systolicNIBP.size() > 0) {
+				float diastolic = Iterables.getLast(diastolicNIBP).getNumeric().getValue();
+				float systolic = Iterables.getLast(systolicNIBP).getNumeric().getValue();
+
+				double credible = 1.0;
+				double pm = diastolic + (systolic - diastolic) / 3;
+				if (diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
+					credible = 0.0;
+				}
+				wrapper.setCredibility(credible);
+			}
+			break;
+		case MDC_ECG_HEART_RATE.VALUE:
+			Collection<DataQualityMetric> heartRateECG = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
+			if (heartRateECG != null && heartRateECG.size() > 0) {
+				float heartRate = Iterables.getLast(heartRateECG).getNumeric().getValue();
+				double credible = 1.0;
+				if (heartRate < 20 || heartRate > 200) {
+					credible = 0.0;
+				}
+				wrapper.setCredibility(credible);
+			}
+			break;
+		}
+	}
+
+	private void setCurrentness(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
+			String deviceId, String metricId) {
+
+		DataQualityMetric first = Iterables.getFirst(collection, new DataQualityMetric());
+		if (first.getNumeric() != null) {
+			wrapper.setCurrentness(collection.stream().mapToDouble(n -> {
+				return Double.valueOf(n.getNumeric().getDelta());
+			}).average().orElse(0.0));
+		} else {
+			wrapper.setCurrentness(collection.stream().mapToDouble(n -> {
+				return n.getSampleArray().getDelta();
+			}).average().orElse(0.0));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void setConsistency(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
+			String deviceId, String metricId) {
+		switch (metricId) {
+		case MDC_PRESS_CUFF_DIA.VALUE:
+		case MDC_PRESS_CUFF_SYS.VALUE:
+		case MDC_PRESS_BLD_MEAN.VALUE:
+			Collection<DataQualityMetric> diastolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_DIA.VALUE));
+			Collection<DataQualityMetric> systolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_SYS.VALUE));
+			Collection<DataQualityMetric> meanIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_MEAN.VALUE));
+			if (diastolicNIBP != null && diastolicNIBP.size() > 0 && systolicNIBP != null && systolicNIBP.size() > 0
+					&& meanIBP != null && meanIBP.size() > 0) {
+				Date meanIBPDate = meanIBP.stream().map(q -> {
+					return q.getPresentationDate();
+				}).max(Date::compareTo).orElse(null);
+				if (meanIBPDate != null) {
+					Date bpBeforeDate = new Date((long) (meanIBPDate.getTime() - BP_CONSISTENCY_WINDOW * 1000.0));
+					Predicate<? super DataQualityMetric> dateFilterPredicate = n -> {
+						return n.getPresentationDate().after(bpBeforeDate)
+								|| n.getPresentationDate().equals(bpBeforeDate);
+					};
+					ToDoubleFunction<? super DataQualityMetric> wrapperToNumericDoubleMapper = n -> {
+						return n.getNumeric().getValue();
+					};
+					double averageMeanIBP = meanIBP.stream().filter(dateFilterPredicate)
+							.mapToDouble(wrapperToNumericDoubleMapper).average().orElse(0.0);
+					double averageSystolicNIBP = systolicNIBP.stream().filter(dateFilterPredicate)
+							.mapToDouble(wrapperToNumericDoubleMapper).average().orElse(0.0);
+					double averageDiastolicNIBP = diastolicNIBP.stream().filter(dateFilterPredicate)
+							.mapToDouble(wrapperToNumericDoubleMapper).average().orElse(0.0);
+					double calculatedNIBPMAP = ((2.0 * averageDiastolicNIBP) + averageSystolicNIBP) / 3;
+					wrapper.setConsistency(Math.abs(averageMeanIBP - calculatedNIBPMAP));
+				}
+			}
+			break;
+		case MDC_PULS_OXIM_PULS_RATE.VALUE:
+		case MDC_ECG_HEART_RATE.VALUE:
+			Collection<DataQualityMetric> pulseCollection = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PULS_OXIM_PULS_RATE.VALUE));
+			Collection<DataQualityMetric> heartRateCollection = Multimaps
+					.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
+			Collection<DataQualityMetric> decidingCollection = null;
+			if (metricId.equals(MDC_PULS_OXIM_PULS_RATE.VALUE)) {
+				decidingCollection = pulseCollection;
+			} else if (metricId.equals(MDC_ECG_HEART_RATE.VALUE)) {
+				decidingCollection = heartRateCollection;
+			}
+			Date compareDate = decidingCollection.stream().map(q -> {
+				return q.getPresentationDate();
+			}).max(Date::compareTo).orElse(null);
+			if (compareDate != null) {
+				Date beforeDate = new Date((long) (compareDate.getTime() - PULSE_CONSISTENCY_WINDOW * 1000.0));
+				wrapper.setConsistency(
+						stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection, heartRateCollection)));
+			}
+			break;
+		case MDC_ECG_LEAD_I.VALUE:
+		case MDC_ECG_LEAD_II.VALUE:
+		case MDC_ECG_LEAD_III.VALUE:
+			Collection<DataQualityMetric> collectionI = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_ECG_LEAD_I.VALUE));
+			Collection<DataQualityMetric> collectionII = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_ECG_LEAD_II.VALUE));
+			Collection<DataQualityMetric> collectionIII = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_ECG_LEAD_III.VALUE));
+			Collection<DataQualityMetric> decidingCollectionI = null;
+			if (metricId.equals(MDC_ECG_LEAD_I.VALUE)) {
+				decidingCollectionI = collectionI;
+			} else if (metricId.equals(MDC_ECG_LEAD_II.VALUE)) {
+				decidingCollectionI = collectionII;
+			} else if (metricId.equals(MDC_ECG_LEAD_III.VALUE)) {
+				decidingCollectionI = collectionIII;
+			}
+			Date compareDateI = decidingCollectionI.stream().map(q -> {
+				return q.getPresentationDate();
+			}).max(Date::compareTo).orElse(null);
+			if (compareDateI != null) {
+				Date beforeDate = new Date((long) (compareDateI.getTime() - PULSE_CONSISTENCY_WINDOW * 1000.0));
+				wrapper.setConsistency(stdDev(
+						combineAndFilterCollectionsByDate(beforeDate, collectionI, collectionII, collectionIII)));
+			}
+			break;
+		case MDC_FLOW_FLUID_PUMP.VALUE:
+			if (collection.size() >= 2) {
+				Float min = collection.stream().map(n -> {
+					return n.getNumeric().getValue();
+				}).min(Double::compare).get();
+				Float max = collection.stream().map(n -> {
+					return n.getNumeric().getValue();
+				}).max(Double::compare).get();
+				wrapper.setConsistency((double) Math.abs(max - min));
+			}
+			break;
+		}
+	}
+
 	private void checkWrapper(DataQualityDisplayWrapper wrapper) {
+		String metricId = wrapper.getMetricId();
 		Double accuracy = wrapper.getAccuracy();
 		if (accuracy != null && accuracy < ACCURACY_THRESHOLD) {
 			sendDataQualityErrorMessage(DataQualityAttributeType.accuracy, wrapper.getDeviceId(), wrapper.getMetricId(),
 					accuracy);
 		}
+
 		Double completeness = wrapper.getCompleteness();
 		if (completeness != null && completeness < COMPLETENESS_THRESHOLD) {
-			sendDataQualityErrorMessage(DataQualityAttributeType.completeness, wrapper.getDeviceId(), wrapper.getMetricId(),
-					completeness);
+			sendDataQualityErrorMessage(DataQualityAttributeType.completeness, wrapper.getDeviceId(),
+					wrapper.getMetricId(), completeness);
+		}
+
+		Double consistency = wrapper.getConsistency();
+		if (consistency != null) {
+			switch (metricId) {
+			case MDC_PRESS_CUFF_DIA.VALUE:
+			case MDC_PRESS_CUFF_SYS.VALUE:
+			case MDC_PRESS_BLD_MEAN.VALUE:
+				if (consistency > BP_CONSISTENCY_THRESHOLD) {
+					sendDataQualityErrorMessage(DataQualityAttributeType.consistency, wrapper.getDeviceId(),
+							wrapper.getMetricId(), consistency);
+				}
+				break;
+			case MDC_PULS_OXIM_PULS_RATE.VALUE:
+			case MDC_ECG_HEART_RATE.VALUE:
+				if (consistency > PULSE_CONSISTENCY_THRESHOLD) {
+					sendDataQualityErrorMessage(DataQualityAttributeType.consistency, wrapper.getDeviceId(),
+							wrapper.getMetricId(), consistency);
+				}
+				break;
+			case MDC_FLOW_FLUID_PUMP.VALUE:
+				if (consistency > INFUSION_RATE_CONSISTENCY_THRESHOLD) {
+					sendDataQualityErrorMessage(DataQualityAttributeType.consistency, wrapper.getDeviceId(),
+							wrapper.getMetricId(), consistency);
+				}
+				break;
+			}
+		}
+
+		Double credibility = wrapper.getCredibility();
+		if (credibility != null) {
+			if (credibility < CREDIBILITY_THRESHOLD) {
+				sendDataQualityErrorMessage(DataQualityAttributeType.credibility, wrapper.getDeviceId(),
+						wrapper.getMetricId(), credibility);
+			}
+		}
+
+		Double currentness = wrapper.getCurrentness();
+		if (currentness != null) {
+			if (currentness > CURRENTNESS_THRESHOLD) {
+				sendDataQualityErrorMessage(DataQualityAttributeType.currentness, wrapper.getDeviceId(),
+						wrapper.getMetricId(), currentness);
+			}
 		}
 	}
 
@@ -711,6 +935,31 @@ public class DataQualityMonitorApp {
 			System.err.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
 					+ " with value of " + String.format("%.3f", average));
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Double> combineAndFilterCollectionsByDate(Date beforeDate,
+			Collection<DataQualityMetric>... collections) {
+		List<DataQualityMetric> combined = Stream.of(collections).flatMap(Collection::stream).filter(n -> {
+			return n.getPresentationDate().after(beforeDate) || n.getPresentationDate().equals(beforeDate);
+		}).collect(Collectors.toList());
+		if (combined.get(0).getNumeric() != null) {
+			return combined.stream().map(n -> {
+				return Double.valueOf(n.getNumeric().getValue());
+			}).collect(Collectors.toList());
+		} else {
+			return combined.stream().map(n -> {
+				return n.getSampleArray().getValues();
+			}).flatMap(n -> {
+				return Arrays.stream(n);
+			}).map(n -> n.doubleValue()).collect(Collectors.toList());
+		}
+	}
+
+	private double stdDev(List<Double> input) {
+		double[] array = input.stream().mapToDouble(Double::doubleValue).toArray();
+		DescriptiveStatistics ds = new DescriptiveStatistics(array);
+		return ds.getStandardDeviation();
 	}
 
 	public void stop() {
