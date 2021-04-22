@@ -233,7 +233,7 @@ public class DataQualityMonitorApp {
 						p.getValue().getValue().getMetricId()));
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column3 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column3.setText("Accuracy");
+		column3.setText("Accuracy %");
 		column3.setMinWidth(10);
 		column3.setMaxWidth(5000);
 		column3.setPrefWidth(185);
@@ -281,7 +281,7 @@ public class DataQualityMonitorApp {
 				});
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column4 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column4.setText("Completeness");
+		column4.setText("Completeness %");
 		column4.setMinWidth(10);
 		column4.setMaxWidth(5000);
 		column4.setPrefWidth(185);
@@ -307,6 +307,7 @@ public class DataQualityMonitorApp {
 									DataQualityDisplayWrapper treeItemValue = treeItem.getValue();
 									if (treeItem.getChildren().isEmpty() && treeItemValue.getCompleteness() != null) {
 										double value = treeItem.getValue().getCompleteness();
+										value = value > 100.0f ? 100.0f : value;
 										if (value > COMPLETENESS_THRESHOLD) {
 											setTextFill(Color.GREEN);
 											setStyle("-fx-font-weight: bold");
@@ -442,7 +443,7 @@ public class DataQualityMonitorApp {
 				});
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column7 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column7.setText("Currentness");
+		column7.setText("Currentness (ms)");
 		column7.setMinWidth(10);
 		column7.setMaxWidth(5000);
 		column7.setPrefWidth(185);
