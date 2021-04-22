@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.dataqualitymonitor;
 import java.util.Objects;
 
 public class DataQualityDisplayWrapper {
+	private String name;
 	private String deviceModel;
 	private String deviceId;
 	private String metricId;
@@ -27,6 +28,14 @@ public class DataQualityDisplayWrapper {
 		this.consistency = consistency;
 		this.credibility = credibility;
 		this.currentness = currentness;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getDeviceModel() {
