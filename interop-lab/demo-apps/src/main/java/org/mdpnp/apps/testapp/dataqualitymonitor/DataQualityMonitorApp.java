@@ -20,6 +20,8 @@ import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DomainClock;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
@@ -34,6 +36,7 @@ import com.google.common.collect.Multimaps;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.Time_t;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
@@ -137,6 +140,7 @@ public class DataQualityMonitorApp {
 	 */
 	private Publisher publisher;
 	private DataQualityErrorObjectiveDataWriter dataQualityErrorObjectiveWriter;
+	protected final DeviceClock clock = new DeviceClock.WallClock();
 
 	/**
 	 * Instance handle for SafetyFallbackObjective
@@ -985,6 +989,7 @@ public class DataQualityMonitorApp {
 			dataQualityErrorObjective.metric_id = metricId;
 			dataQualityErrorObjective.unique_device_identifier = deviceId;
 			dataQualityErrorObjective.data_quality_attribute_type = type;
+			dataQualityErrorObjective.presentation_time.copy_from(getTime());
 
 			participant = assignedSubscriber.get_participant();
 
@@ -1007,6 +1012,14 @@ public class DataQualityMonitorApp {
 			System.err.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
 					+ " with value of " + String.format("%.3f", average));
 		}
+	}
+
+	private ice.Time_t getTime() {
+		Time_t ddsTime = DomainClock.toDDSTime(clock.instant().getTime());
+		ice.Time_t iceTime = (ice.Time_t) ice.Time_t.create();
+		iceTime.nanosec = ddsTime.nanosec;
+		iceTime.sec = ddsTime.sec;
+		return iceTime;
 	}
 
 	@SuppressWarnings("unchecked")
