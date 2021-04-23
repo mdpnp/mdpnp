@@ -71,21 +71,44 @@ import rosetta.MDC_PULS_OXIM_PULS_RATE;
 import rosetta.MDC_PULS_RATE_NON_INV;
 
 public class DataQualityMonitorApp {
-	private static final String KEY_COMBO = "::::";
+
 	private static final int SAMPLE_SIZE_DEFAULT = 30;
+	private static final float PULSE_CONSISTENCY_WINDOW_DEFAULT = 30.0f;
+	private static final float BP_CONSISTENCY_WINDOW_DEFAULT = 60.0f;
+	private static final int CURRENTNESS_THRESHOLD_DEFAULT = 10;
+	private static final int CREDIBILITY_THRESHOLD_DEFAULT = 1;
+	private static final int INFUSION_RATE_CONSISTENCY_THRESHOLD_DEFAULT = 30;
+	private static final int BP_CONSISTENCY_THRESHOLD_DEFAULT = 20;
+	private static final int PULSE_CONSISTENCY_THRESHOLD_DEFAULT = 20;
+	private static final int CONSISTENCY_THRESHOLD_DEFAULT = 20;
+	private static final int COMPLETENESS_THRESHOLD_DEFAULT = 95;
+	private static final int ACCURACY_THRESHOLD_DEFAULT = 90;
+
+	private static final String MDPNP_MONITOR_DATAQUALITY_SAMPLE_SIZE = "mdpnp.monitor.dataquality.samplesize";
+	private static final String MDPNP_MONITOR_DATAQUALITY_ACCURACY_THRESHOLD = "mdpnp.monitor.dataquality.accuracythreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_COMPLETENESS_THRESHOLD = "mdpnp.monitor.dataquality.completenessthreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_CONSISTENCY_THRESHOLD = "mdpnp.monitor.dataquality.consistencythreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_THRESHOLD = "mdpnp.monitor.dataquality.pulseconsistencythreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_THRESHOLD = "mdpnp.monitor.dataquality.bpconsistencythreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_INFUSION_RATE_CONSISTENCY_THRESHOLD = "mdpnp.monitor.dataquality.infusionrateconsistencythreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_CREDIBILITY_THRESHOLD = "mdpnp.monitor.dataquality.credibilitythreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_CURRENTNESS_THRESHOLD = "mdpnp.monitor.dataquality.currentnessthreshold";
+	private static final String MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_WINDOW = "mdpnp.monitor.dataquality.bpconsistencywindow";
+	private static final String MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_WINDOW = "mdpnp.monitor.dataquality.pulseconsistencywindow";
+
+	private static final String KEY_COMBO = "::::";
 
 	private static int SAMPLE_SIZE;
-	private static int ACCURACY_THRESHOLD = 90;
-	private static int COMPLETENESS_THRESHOLD = 95;
-
-	private static int CONSISTENCY_THRESHOLD = 20;
-	private static int PULSE_CONSISTENCY_THRESHOLD = 20;
-	private static int BP_CONSISTENCY_THRESHOLD = 20;
-	private static int INFUSION_RATE_CONSISTENCY_THRESHOLD = 30;
-	private static int CREDIBILITY_THRESHOLD = 1;
-	private static int CURRENTNESS_THRESHOLD = 10;
-	private static double BP_CONSISTENCY_WINDOW = 60.0f;
-	private static double PULSE_CONSISTENCY_WINDOW = 30.0f;
+	private static int ACCURACY_THRESHOLD;
+	private static int COMPLETENESS_THRESHOLD;
+	private static int CONSISTENCY_THRESHOLD;
+	private static int PULSE_CONSISTENCY_THRESHOLD;
+	private static int BP_CONSISTENCY_THRESHOLD;
+	private static int INFUSION_RATE_CONSISTENCY_THRESHOLD;
+	private static int CREDIBILITY_THRESHOLD;
+	private static int CURRENTNESS_THRESHOLD;
+	private static double BP_CONSISTENCY_WINDOW;
+	private static double PULSE_CONSISTENCY_WINDOW;
 
 	@FXML
 	TreeTableView<DataQualityDisplayWrapper> averagesTable;
@@ -123,8 +146,51 @@ public class DataQualityMonitorApp {
 	private Map<String, Date> sentNotifications;
 
 	public DataQualityMonitorApp() {
-		SAMPLE_SIZE = System.getProperty("mdpnp.network.monitor.samplesize") == null ? SAMPLE_SIZE_DEFAULT
-				: Integer.parseInt(System.getProperty("mdpnp.network.monitor.samplesize"));
+
+		SAMPLE_SIZE = System.getProperty(MDPNP_MONITOR_DATAQUALITY_SAMPLE_SIZE) == null ? SAMPLE_SIZE_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_SAMPLE_SIZE));
+
+		ACCURACY_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_ACCURACY_THRESHOLD) == null
+				? ACCURACY_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_ACCURACY_THRESHOLD));
+
+		COMPLETENESS_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_COMPLETENESS_THRESHOLD) == null
+				? COMPLETENESS_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_COMPLETENESS_THRESHOLD));
+
+		CONSISTENCY_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_CONSISTENCY_THRESHOLD) == null
+				? CONSISTENCY_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_CONSISTENCY_THRESHOLD));
+
+		PULSE_CONSISTENCY_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_THRESHOLD) == null
+				? PULSE_CONSISTENCY_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_THRESHOLD));
+
+		BP_CONSISTENCY_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_THRESHOLD) == null
+				? BP_CONSISTENCY_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_THRESHOLD));
+
+		INFUSION_RATE_CONSISTENCY_THRESHOLD = System
+				.getProperty(MDPNP_MONITOR_DATAQUALITY_INFUSION_RATE_CONSISTENCY_THRESHOLD) == null
+						? INFUSION_RATE_CONSISTENCY_THRESHOLD_DEFAULT
+						: Integer.parseInt(
+								System.getProperty(MDPNP_MONITOR_DATAQUALITY_INFUSION_RATE_CONSISTENCY_THRESHOLD));
+
+		CREDIBILITY_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_CREDIBILITY_THRESHOLD) == null
+				? CREDIBILITY_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_CREDIBILITY_THRESHOLD));
+
+		CURRENTNESS_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_CURRENTNESS_THRESHOLD) == null
+				? CURRENTNESS_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_CURRENTNESS_THRESHOLD));
+
+		BP_CONSISTENCY_WINDOW = System.getProperty(MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_WINDOW) == null
+				? BP_CONSISTENCY_WINDOW_DEFAULT
+				: Double.parseDouble(System.getProperty(MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_WINDOW));
+
+		PULSE_CONSISTENCY_WINDOW = System.getProperty(MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_WINDOW) == null
+				? PULSE_CONSISTENCY_WINDOW_DEFAULT
+				: Double.parseDouble(System.getProperty(MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_WINDOW));
 
 		sentNotifications = new HashMap<String, Date>();
 	}
@@ -167,7 +233,7 @@ public class DataQualityMonitorApp {
 						p.getValue().getValue().getMetricId()));
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column3 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column3.setText("Accuracy");
+		column3.setText("Accuracy %");
 		column3.setMinWidth(10);
 		column3.setMaxWidth(5000);
 		column3.setPrefWidth(185);
@@ -215,7 +281,7 @@ public class DataQualityMonitorApp {
 				});
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column4 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column4.setText("Completeness");
+		column4.setText("Completeness %");
 		column4.setMinWidth(10);
 		column4.setMaxWidth(5000);
 		column4.setPrefWidth(185);
@@ -241,6 +307,7 @@ public class DataQualityMonitorApp {
 									DataQualityDisplayWrapper treeItemValue = treeItem.getValue();
 									if (treeItem.getChildren().isEmpty() && treeItemValue.getCompleteness() != null) {
 										double value = treeItem.getValue().getCompleteness();
+										value = value > 100.0f ? 100.0f : value;
 										if (value > COMPLETENESS_THRESHOLD) {
 											setTextFill(Color.GREEN);
 											setStyle("-fx-font-weight: bold");
@@ -376,7 +443,7 @@ public class DataQualityMonitorApp {
 				});
 
 		TreeTableColumn<DataQualityDisplayWrapper, String> column7 = new TreeTableColumn<DataQualityDisplayWrapper, String>();
-		column7.setText("Currentness");
+		column7.setText("Currentness (ms)");
 		column7.setMinWidth(10);
 		column7.setMaxWidth(5000);
 		column7.setPrefWidth(185);
@@ -504,7 +571,6 @@ public class DataQualityMonitorApp {
 			TreeItem<DataQualityDisplayWrapper> siblingRoot = new TreeItem<DataQualityDisplayWrapper>();
 			DataQualityDisplayWrapper wrapper = new DataQualityDisplayWrapper();
 			wrapper.setDeviceId(d.getUDI());
-			wrapper.setName(d.getModel() + "-" + d.getUDI());
 			siblingRoot.setValue(wrapper);
 			deviceSiblingRoots.add(siblingRoot);
 			root.getChildren().add(siblingRoot);
@@ -596,7 +662,13 @@ public class DataQualityMonitorApp {
 			checkWrapper(wrapper);
 		});
 		root.getChildren().forEach(n -> {
-			String deviceId = n.getValue().getDeviceId();
+			DataQualityDisplayWrapper wrapper = n.getValue();
+			String deviceId = wrapper.getDeviceId();
+			if(wrapper.getDeviceModel() == null || wrapper.getDeviceModel().isEmpty()) {
+				wrapper.setDeviceModel((deviceListModel.getByUniqueDeviceIdentifier(deviceId).getModel()));
+				wrapper.setName(wrapper.getDeviceModel() + "-" + wrapper.getDeviceId());
+			}
+			
 			data.stream().filter(s -> {
 				return s.getDeviceId().equals(deviceId);
 			}).forEach(match -> {
@@ -690,7 +762,6 @@ public class DataQualityMonitorApp {
 		}).average().orElse(0);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void setCredibility(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
 			String deviceId, String metricId) {
 		switch (metricId) {
@@ -714,6 +785,7 @@ public class DataQualityMonitorApp {
 			}
 			break;
 		case MDC_ECG_HEART_RATE.VALUE:
+		case MDC_PULS_RATE_NON_INV.VALUE:
 			Collection<DataQualityMetric> heartRateECG = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
 			if (heartRateECG != null && heartRateECG.size() > 0) {
