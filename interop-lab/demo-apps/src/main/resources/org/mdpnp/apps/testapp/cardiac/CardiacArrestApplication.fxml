@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.collections.*?> 
+<?import org.mdpnp.apps.testapp.cardiac.CardiacParameter?>
+<?import org.mdpnp.apps.testapp.cardiac.CardiacCellFactory?>
+
+<GridPane alignment="CENTER" hgap="10.0" vgap="10.0"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="org.mdpnp.apps.testapp.cardiac.CardiacArrestApplication">
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+    </padding>
+    <Label style="-fx-font: NORMAL 20 Tahoma;" text="Cardiac Arrest Monitoring"                
+        GridPane.columnIndex="0" GridPane.rowIndex="0">
+    </Label>
+    <TableView fx:id="tableView" GridPane.columnIndex="0" 
+        GridPane.rowIndex="1" prefWidth="800">
+        <columns>
+          <TableColumn text="Waveform">
+            <cellValueFactory><PropertyValueFactory property="metricId" />
+            </cellValueFactory>
+          </TableColumn>
+          <TableColumn text="Accuracy">
+            <cellValueFactory><PropertyValueFactory property="accuracy" />
+            </cellValueFactory>
+            <cellFactory>
+              <CardiacCellFactory alignment="center">
+               </CardiacCellFactory>
+            </cellFactory>
+          </TableColumn>
+          <TableColumn text="Completeness">
+            <cellValueFactory><PropertyValueFactory property="completeness" />
+            </cellValueFactory>
+            <cellFactory>
+              <CardiacCellFactory alignment="center">
+               </CardiacCellFactory>
+            </cellFactory>
+          </TableColumn>
+          <TableColumn text="Currentness">
+            <cellValueFactory><PropertyValueFactory property="currentness" />
+            </cellValueFactory>
+            <cellFactory>
+              <CardiacCellFactory alignment="center">
+               </CardiacCellFactory>
+            </cellFactory>
+          </TableColumn>
+          <TableColumn text="Credibility">
+            <cellValueFactory><PropertyValueFactory property="credibility" />
+            </cellValueFactory>
+            <cellFactory>
+              <CardiacCellFactory alignment="center">
+               </CardiacCellFactory>
+            </cellFactory>
+          </TableColumn>
+          <TableColumn text="Consistency">
+            <cellValueFactory><PropertyValueFactory property="consistency" />
+            </cellValueFactory>
+            <cellFactory>
+              <CardiacCellFactory alignment="center">
+               </CardiacCellFactory>
+            </cellFactory>
+          </TableColumn>
+     </columns>
+     <items>
+     <FXCollections fx:factory="observableArrayList" fx:id="tableRows">
+        <!--<CardiacParameter metricId="MDC_PULSE" accuracy="true" completeness="true" currentness="true"
+        	credibility="false" consistency="true"/>-->
+    </FXCollections>
+</items>
+     
+     
+     
+    </TableView>
+    
+    <Label fx:id="ecgHrLabel" GridPane.columnIndex="0" 
+        GridPane.rowIndex="2">Current ECG HR Average</Label>
+    <Label fx:id="piLabel" GridPane.columnIndex="0" 
+        GridPane.rowIndex="3">Perfusion Index Present</Label>
+    <Label fx:id="systolicLabel" GridPane.columnIndex="0" 
+        GridPane.rowIndex="4">Systolic BP</Label>
+    <Label fx:id="inversionLabel" GridPane.columnIndex="0" 
+        GridPane.rowIndex="5">Systolic BP</Label>
+    
+    
+</GridPane>

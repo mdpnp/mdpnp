@@ -23,3 +23,4 @@ org.mdpnp.apps.testapp.openemr.OpenEMRTestApplicationFactory
 org.mdpnp.apps.testapp.networkmonitor.NetworkMonitorAppFactory
 org.mdpnp.apps.testapp.dataqualitymonitor.DataQualityMonitorAppFactory
 org.mdpnp.apps.testapp.sqialarmproducer.SQIAlarmGeneratorAppFactory
+org.mdpnp.apps.testapp.cardiac.CardiacArrestApplicationFactory
