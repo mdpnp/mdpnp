@@ -26,7 +26,7 @@ import javafx.scene.Parent;
 public class SQIAlarmGeneratorAppFactory implements IceApplicationProvider {
 
 	private IceApplicationProvider.AppType type=new IceApplicationProvider.AppType(
-			"SQI Alarms", "NoSQIAlarms", (URL) SQIAlarmGeneratorAppFactory.class.getResource("infpump.png"), 0.75, false
+			"SQI Alarms", "NoSQIAlarms", (URL) SQIAlarmGeneratorAppFactory.class.getResource("sqi.png"), 0.75, false
 		);
 
 	@Override
