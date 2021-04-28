@@ -65,6 +65,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import rosetta.MDC_ECG_HEART_RATE;
 import rosetta.MDC_FLOW_FLUID_PUMP;
+import rosetta.MDC_PRESS_BLD_ART_ABP;
 import rosetta.MDC_PRESS_BLD_ART_ABP_DIA;
 import rosetta.MDC_PRESS_BLD_ART_ABP_SYS;
 import rosetta.MDC_PRESS_BLD_DIA;
@@ -793,6 +794,17 @@ public class DataQualityMonitorApp {
 	private void setCredibility(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
 			String deviceId, String metricId) {
 		switch (metricId) {
+		case MDC_PRESS_BLD_ART_ABP.VALUE:
+			Device device = deviceListModel.getByUniqueDeviceIdentifier(deviceId);
+			String model = device.getMakeAndModel();
+			DataQualityMetric abp = Iterables.getLast(collection);
+			float[] minAndMax = getMinAndMax(abp.getSampleArray().getValues());
+			if(model != null && model.startsWith("Multiparameter (Simulated)")) {
+				wrapper.setCredibility(bpCredible(minAndMax[0]/5.000f, minAndMax[1]/5.000f) ? 1.00 : 0.00);
+			} else {
+				wrapper.setCredibility(bpCredible(minAndMax[0], minAndMax[1]) ? 1.00 : 0.00);
+			}
+			break;
 		case MDC_PRESS_BLD_ART_ABP_DIA.VALUE:
 		case MDC_PRESS_BLD_ART_ABP_SYS.VALUE:
 		case MDC_PRESS_BLD_SYS.VALUE:
@@ -807,17 +819,10 @@ public class DataQualityMonitorApp {
 			systolicNIBP = systolicNIBP == null || systolicNIBP.size() == 0
 					? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_SYS.VALUE))
 					: systolicNIBP;
-
 			if (diastolicNIBP != null && diastolicNIBP.size() > 0 && systolicNIBP != null && systolicNIBP.size() > 0) {
 				float diastolic = Iterables.getLast(diastolicNIBP).getNumeric().getValue();
 				float systolic = Iterables.getLast(systolicNIBP).getNumeric().getValue();
-
-				double credible = 1.0;
-				double pm = diastolic + (systolic - diastolic) / 3;
-				if (diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
-					credible = 0.0;
-				}
-				wrapper.setCredibility(credible);
+				wrapper.setCredibility(bpCredible(diastolic, systolic) ? 1.00 : 0.00);
 			}
 			break;
 		case MDC_PULS_OXIM_PULS_RATE.VALUE:
@@ -847,6 +852,11 @@ public class DataQualityMonitorApp {
 			}
 			break;
 		}
+	}
+
+	private boolean bpCredible(float diastolic, float systolic) {
+		double pm = diastolic + (systolic - diastolic) / 3;
+		return !(diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200);
 	}
 
 	private void setCurrentness(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
@@ -919,11 +929,9 @@ public class DataQualityMonitorApp {
 			Collection<DataQualityMetric> heartRateCollection = Multimaps
 					.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
-			Collection<DataQualityMetric> prNINV = Multimaps
-					.synchronizedMultimap(deviceNetworkQualityMetrics)
+			Collection<DataQualityMetric> prNINV = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE_NON_INV.VALUE));
-			Collection<DataQualityMetric> pr = Multimaps
-					.synchronizedMultimap(deviceNetworkQualityMetrics)
+			Collection<DataQualityMetric> pr = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE.VALUE));
 			Collection<DataQualityMetric> decidingCollection = null;
 			if (metricId.equals(MDC_PULS_OXIM_PULS_RATE.VALUE)) {
@@ -940,8 +948,8 @@ public class DataQualityMonitorApp {
 			}).max(Date::compareTo).orElse(null);
 			if (compareDate != null) {
 				Date beforeDate = new Date((long) (compareDate.getTime() - PULSE_CONSISTENCY_WINDOW * 1000.0));
-				wrapper.setConsistency(
-						stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection, heartRateCollection, prNINV, pr)));
+				wrapper.setConsistency(stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection,
+						heartRateCollection, prNINV, pr)));
 			} else {
 				wrapper.setConsistency(null);
 			}
@@ -1115,6 +1123,18 @@ public class DataQualityMonitorApp {
 		double[] array = input.stream().mapToDouble(Double::doubleValue).toArray();
 		DescriptiveStatistics ds = new DescriptiveStatistics(array);
 		return ds.getStandardDeviation();
+	}
+
+	private float[] getMinAndMax(Number[] numbers) {
+		float[] minAndMax = new float[] { numbers[0].floatValue(), numbers[0].floatValue() };
+		for (int i = 1; i < numbers.length; i++) {
+			if (numbers[i].floatValue() < minAndMax[0])
+				minAndMax[0] = numbers[i].floatValue();
+			if (numbers[i].floatValue() > minAndMax[1])
+				minAndMax[1] = numbers[i].floatValue();
+		}
+
+		return minAndMax;
 	}
 
 	public void stop() {
