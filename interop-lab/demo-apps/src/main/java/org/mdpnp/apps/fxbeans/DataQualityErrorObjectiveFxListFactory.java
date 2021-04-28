@@ -24,7 +24,7 @@ private DataQualityErrorObjectiveFxList instance;
 
     @Override
     public Class<?> getObjectType() {
-        return SafetyFallbackObjectiveFxList.class;
+        return DataQualityErrorObjectiveFxList.class;
     }
 
     @Override
