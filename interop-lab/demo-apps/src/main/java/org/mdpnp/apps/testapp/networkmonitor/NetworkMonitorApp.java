@@ -95,10 +95,10 @@ public class NetworkMonitorApp {
 	private Map<String,Date> sentNotifications;
 	
 	public NetworkMonitorApp() {
-		SAMPLE_SIZE = System.getProperty("mdpnp.network.monitor.samplesize") == null ? SAMPLE_SIZE_DEFAULT
-				: Integer.parseInt(System.getProperty("mdpnp.network.monitor.samplesize"));
-		LATENCY_THRESHOLD = System.getProperty("mdpnp.network.monitor.latencythreshold") == null ? LATENCY_THRESHOLD_DEFAULT
-				: Integer.parseInt(System.getProperty("mdpnp.network.monitor.latencythreshold"));
+		SAMPLE_SIZE = System.getProperty("mdpnp.monitor.network.samplesize") == null ? SAMPLE_SIZE_DEFAULT
+				: Integer.parseInt(System.getProperty("mdpnp.monitor.network.samplesize"));
+		LATENCY_THRESHOLD = System.getProperty("mdpnp.monitor.network.latencythreshold") == null ? LATENCY_THRESHOLD_DEFAULT
+				: Integer.parseInt(System.getProperty("mdpnp.monitor.network.latencythreshold"));
 		
 		sentNotifications = new HashMap<String,Date>();
 	}
