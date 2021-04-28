@@ -100,7 +100,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
         // TODO This should not be triggered as a numeric; it's a bad idea
         currentReading=deviceClock.instant();
         startInspiratoryCycleUpdate = numericSample(startInspiratoryCycleUpdate, 0,
-                                                    ice.MDC_START_INSPIRATORY_CYCLE.VALUE, "",
+                                                    new NumericSQI(), ice.MDC_START_INSPIRATORY_CYCLE.VALUE, "",
                                                     rosetta.MDC_DIM_DIMLESS.VALUE, deviceClock.instant());
         log.info("Publishing startInspiratoryCycleUpdate sample");
             if(previousReading!=null) {
@@ -110,7 +110,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
             log.info("delta is "+delta);
             float rate=millisPerMinute/delta;
             derivedRespiratoryRate = numericSample(derivedRespiratoryRate, rate,
-                                                   ice.ICE_DERIVED_RESPIRATORY_RATE.VALUE, "",
+                                                   new NumericSQI(), ice.ICE_DERIVED_RESPIRATORY_RATE.VALUE, "",
                                                    rosetta.MDC_DIM_BREATH.VALUE, new ReadingImpl(System.currentTimeMillis()-1000));
             log.info("Publishing derivedRate sample with value "+rate);
         }
@@ -120,7 +120,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
     protected void processStartExpCycle() {
         // TODO ditto the bad idea-ness of using Numeric topic for this
         startExpiratoryCycleUpdate = numericSample(startExpiratoryCycleUpdate, 0,
-                                                   ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
+                                                   new NumericSQI(), ice.MDC_START_EXPIRATORY_CYCLE.VALUE,
                                                    "", rosetta.MDC_DIM_DIMLESS.VALUE,
                                                    deviceClock.instant());
     }
@@ -303,7 +303,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         log.error("Bad number format for device setting " + d.code + " " + nfe.getMessage());
                     }
                     settingUpdates.put(d.code,
-                                       numericSample(settingUpdates.get(d.code), f, metric, codeToString(d.code), units(d.code), deviceClock.instant()));
+                                       numericSample(settingUpdates.get(d.code), f, new NumericSQI(), metric, codeToString(d.code), units(d.code), deviceClock.instant()));
                 }
             }
         }
@@ -322,7 +322,7 @@ public abstract class AbstractDraegerVent extends AbstractDelegatingSerialDevice
                         log.error("Bad measured data number format " + d.code + " " + nfe.getMessage());
                     }
                     numericUpdates.put(d.code,
-                                       numericSample(numericUpdates.get(d.code), f, metric, codeToString(d.code), units(d.code), deviceClock.instant()));
+                                       numericSample(numericUpdates.get(d.code), f, new NumericSQI(), metric, codeToString(d.code), units(d.code), deviceClock.instant()));
                 }
             }
         }

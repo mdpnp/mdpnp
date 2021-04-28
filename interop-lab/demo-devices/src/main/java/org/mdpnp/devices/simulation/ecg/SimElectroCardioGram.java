@@ -77,15 +77,15 @@ public class SimElectroCardioGram extends AbstractSimulatedConnectedDevice {
 
             try {
                 // TODO should get better data that's actually in millivolts
-                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, new NumericSQI(), ice.MDC_ECG_LEAD_I.VALUE, "", 0,
+                SimElectroCardioGram.this.i = sampleArraySample(SimElectroCardioGram.this.i, iValues, getSQI(), ice.MDC_ECG_LEAD_I.VALUE, "", 0,
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, new NumericSQI(), ice.MDC_ECG_LEAD_II.VALUE, "", 0, 
+                SimElectroCardioGram.this.ii = sampleArraySample(SimElectroCardioGram.this.ii, iiValues, getSQI(), ice.MDC_ECG_LEAD_II.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, new NumericSQI(), ice.MDC_ECG_LEAD_III.VALUE, "", 0, 
+                SimElectroCardioGram.this.iii = sampleArraySample(SimElectroCardioGram.this.iii, iiiValues, getSQI(), ice.MDC_ECG_LEAD_III.VALUE, "", 0, 
                         rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
 
-                numericSample(heartRate, (float) heartRateValue, sampleTime);
-                numericSample(respiratoryRate, (float) respiratoryRateValue, sampleTime);
+                numericSample(heartRate, (float) heartRateValue, getSQI(), sampleTime);
+                numericSample(respiratoryRate, (float) respiratoryRateValue, getSQI(), sampleTime);
             } catch (Throwable t) {
                 log.error("Error simulating ECG data", t);
             }

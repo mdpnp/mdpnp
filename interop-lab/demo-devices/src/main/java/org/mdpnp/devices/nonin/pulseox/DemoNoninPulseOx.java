@@ -203,50 +203,50 @@ public class DemoNoninPulseOx extends AbstractDelegatingSerialDevice<NoninPulseO
             
             if (currentPacket.getCurrentStatus().isArtifact() || currentPacket.getCurrentStatus().isSensorAlarm()
                     || currentPacket.getCurrentStatus().isOutOfTrack()) {
-                pulse = numericSample(pulse, (Integer) null, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
+                pulse = numericSample(pulse, (Integer) null, new NumericSQI(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                SpO2 = numericSample(SpO2, (Integer) null, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
+                SpO2 = numericSample(SpO2, (Integer) null, new NumericSQI(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, (Integer) null, "NONIN_AVG_HR_4BEAT", 
+                avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, (Integer) null, new NumericSQI(), "NONIN_AVG_HR_4BEAT", 
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                avgSpO2FourBeat = numericSample(avgSpO2FourBeat, (Integer) null, "NONIN_AVG_SPO2_4BEAT", 
+                avgSpO2FourBeat = numericSample(avgSpO2FourBeat, (Integer) null, new NumericSQI(), "NONIN_AVG_SPO2_4BEAT", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, (Integer) null, "NONIN_SPO2_4BEAT_FAST", 
+                avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, (Integer) null, new NumericSQI(), "NONIN_SPO2_4BEAT_FAST", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                SpO2BeatToBeat = numericSample(SpO2BeatToBeat, (Integer) null, "NONIN_SPO2_BTB", 
+                SpO2BeatToBeat = numericSample(SpO2BeatToBeat, (Integer) null, new NumericSQI(), "NONIN_SPO2_BTB", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, (Integer)null, "NONIN_AVG_HR_8BEAT",
+                avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, (Integer)null, new NumericSQI(), "NONIN_AVG_HR_8BEAT",
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, null);
-                avgSpO2EightBeat = numericSample(avgSpO2EightBeat, (Integer)null, "NONIN_SPO2_8BEAT", 
+                avgSpO2EightBeat = numericSample(avgSpO2EightBeat, (Integer)null, new NumericSQI(), "NONIN_SPO2_8BEAT", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, (Integer) null, "NONIN_SPO2_8BEAT_FOR_DISPLAY", 
+                avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, (Integer) null, new NumericSQI(), "NONIN_SPO2_8BEAT_FOR_DISPLAY", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, (Integer) null, "NONIN_HR_4BEAT_FOR_DISPLAY", 
+                avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, (Integer) null, new NumericSQI(), "NONIN_HR_4BEAT_FOR_DISPLAY", 
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, (Integer) null, "NONIN_HR_8BEAT_FOR_DISPLAY",
+                avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, (Integer) null, new NumericSQI(), "NONIN_HR_8BEAT_FOR_DISPLAY",
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
             } else {
-                pulse = numericSample(pulse, maxOut(getHeartRate(), MAX_HR), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
+                pulse = numericSample(pulse, maxOut(getHeartRate(), MAX_HR), new NumericSQI(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, 
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                SpO2 = numericSample(SpO2, maxOut(getSpO2(), MAX_SPO2), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
+                SpO2 = numericSample(SpO2, maxOut(getSpO2(), MAX_SPO2), new NumericSQI(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, maxOut(getAvgHeartRateFourBeat(), MAX_HR), "NONIN_AVG_HR_4BEAT",
+                avgHeartRateFourBeat = numericSample(avgHeartRateFourBeat, maxOut(getAvgHeartRateFourBeat(), MAX_HR), new NumericSQI(), "NONIN_AVG_HR_4BEAT",
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                avgSpO2FourBeat = numericSample(avgSpO2FourBeat, maxOut(getAvgSpO2FourBeat(), MAX_SPO2), "NONIN_AVG_SPO2_4BEAT", 
+                avgSpO2FourBeat = numericSample(avgSpO2FourBeat, maxOut(getAvgSpO2FourBeat(), MAX_SPO2), new NumericSQI(), "NONIN_AVG_SPO2_4BEAT", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, maxOut(getAvgSpO2FourBeatFast(), MAX_SPO2), "NONIN_SPO2_4BEAT_FAST",
+                avgSpO2FourBeatFast = numericSample(avgSpO2FourBeatFast, maxOut(getAvgSpO2FourBeatFast(), MAX_SPO2), new NumericSQI(), "NONIN_SPO2_4BEAT_FAST",
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                SpO2BeatToBeat = numericSample(SpO2BeatToBeat, maxOut(getSpO2BeatToBeat(), MAX_SPO2), "NONIN_SPO2_BTB", 
+                SpO2BeatToBeat = numericSample(SpO2BeatToBeat, maxOut(getSpO2BeatToBeat(), MAX_SPO2), new NumericSQI(), "NONIN_SPO2_BTB", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, maxOut(getAvgHeartRateEightBeat(), MAX_HR), "NONIN_AVG_HR_8BEAT",
+                avgHeartRateEightBeat = numericSample(avgHeartRateEightBeat, maxOut(getAvgHeartRateEightBeat(), MAX_HR), new NumericSQI(), "NONIN_AVG_HR_8BEAT",
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                avgSpO2EightBeat = numericSample(avgSpO2EightBeat, maxOut(getAvgSpO2EightBeat(), MAX_SPO2), "NONIN_SPO2_8BEAT",
+                avgSpO2EightBeat = numericSample(avgSpO2EightBeat, maxOut(getAvgSpO2EightBeat(), MAX_SPO2), new NumericSQI(), "NONIN_SPO2_8BEAT",
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, maxOut(getAvgSpO2EightBeatForDisplay(), MAX_SPO2), "NONIN_SPO2_8BEAT_FOR_DISPLAY", 
+                avgSpO2EightBeatForDisplay = numericSample(avgSpO2EightBeatForDisplay, maxOut(getAvgSpO2EightBeatForDisplay(), MAX_SPO2), new NumericSQI(), "NONIN_SPO2_8BEAT_FOR_DISPLAY", 
                         "", rosetta.MDC_DIM_PERCENT.VALUE, timeStamp);
-                avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, maxOut(getAvgHeartRateFourBeatForDisplay(), MAX_HR), "NONIN_HR_4BEAT_FOR_DISPLAY", 
+                avgHeartRateFourBeatForDisplay = numericSample(avgHeartRateFourBeatForDisplay, maxOut(getAvgHeartRateFourBeatForDisplay(), MAX_HR), new NumericSQI(), "NONIN_HR_4BEAT_FOR_DISPLAY", 
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
-                avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, maxOut(getAvgHeartRateEightBeatForDisplay(), MAX_HR), "NONIN_HR_8BEAT_FOR_DISPLAY", 
+                avgHeartRateEightBeatForDisplay = numericSample(avgHeartRateEightBeatForDisplay, maxOut(getAvgHeartRateEightBeatForDisplay(), MAX_HR), new NumericSQI(), "NONIN_HR_8BEAT_FOR_DISPLAY", 
                         "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
             }
 

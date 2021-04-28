@@ -41,10 +41,10 @@ public class SimCapnometer extends AbstractSimulatedConnectedDevice {
 
         @Override
         protected void receiveCO2(DeviceClock.Reading sampleTime, Number[] co2Values, int respiratoryRateValue, int etCO2Value, int frequency) {
-            co2 = sampleArraySample(co2, co2Values, new NumericSQI(), rosetta.MDC_AWAY_CO2.VALUE, "", 0, 
+            co2 = sampleArraySample(co2, co2Values, getSQI(), rosetta.MDC_AWAY_CO2.VALUE, "", 0, 
                     rosetta.MDC_DIM_MMHG.VALUE, frequency, sampleTime);
-            numericSample(respiratoryRate, respiratoryRateValue, sampleTime);
-            numericSample(etCO2, etCO2Value, sampleTime);
+            numericSample(respiratoryRate, respiratoryRateValue, getSQI(), sampleTime);
+            numericSample(etCO2, etCO2Value, getSQI(), sampleTime);
 
         }
     }

@@ -79,9 +79,9 @@ public class DemoBioPatch extends AbstractDelegatingSerialDevice<BioPatch> {
         protected void receiveGeneralDataPacket(DeviceClock.Reading timeofday, int sequenceNumber, Integer heartrate, Float resprate, Float skintemp) {
             reportConnected("Received General Data Packet");
             log.warn("sequenceNumber="+sequenceNumber+" timeofday="+timeofday+" heartrate="+heartrate+" respirationRate="+resprate+" skinTemp="+skintemp);
-            heartRate = numericSample(heartRate, heartrate, rosetta.MDC_ECG_HEART_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeofday);
-            respirationRate = numericSample(respirationRate, resprate, rosetta.MDC_TTHOR_RESP_RATE.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, timeofday);
-            skinTemperature = numericSample(skinTemperature, skintemp, rosetta.MDC_TEMP_SKIN.VALUE, "", rosetta.MDC_DIM_DEGC.VALUE, timeofday);
+            heartRate = numericSample(heartRate, heartrate, new NumericSQI(), rosetta.MDC_ECG_HEART_RATE.VALUE, "", rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeofday);
+            respirationRate = numericSample(respirationRate, resprate, new NumericSQI(), rosetta.MDC_TTHOR_RESP_RATE.VALUE, "", rosetta.MDC_DIM_DIMLESS.VALUE, timeofday);
+            skinTemperature = numericSample(skinTemperature, skintemp, new NumericSQI(), rosetta.MDC_TEMP_SKIN.VALUE, "", rosetta.MDC_DIM_DEGC.VALUE, timeofday);
         }
         
         @Override

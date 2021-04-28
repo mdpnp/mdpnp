@@ -101,7 +101,7 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         
         @Override
         protected void receiveEndTidalCO2(DeviceClock.Reading timeStamp, Integer value, String label, String alarm) {
-            etco2 = numericSample(etco2, value, rosetta.MDC_AWAY_CO2_ET.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            etco2 = numericSample(etco2, value, new NumericSQI(), rosetta.MDC_AWAY_CO2_ET.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
             alarmIfPresent("ETCO2", alarm);
         }
 
@@ -152,63 +152,63 @@ public class DemoIvy450C extends AbstractDelegatingSerialDevice<AnsarB> {
         @Override
         protected void receiveHeartRate(DeviceClock.Reading timeStamp, Integer value, String label, String alarm) {
             // should be ECG heart rate? or should it .. depends upon mode
-            heartRate = numericSample(heartRate, value, rosetta.MDC_ECG_HEART_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            heartRate = numericSample(heartRate, value, new NumericSQI(), rosetta.MDC_ECG_HEART_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
             alarmIfPresent("HR", alarm);
         }
 
         @Override
         protected void receiveNIBP(DeviceClock.Reading timeStamp, Integer systolic, Integer diastolic, Integer mean, Integer pulse, String label, String alarm) {
-            nibpSystolic = numericSample(nibpSystolic, systolic, rosetta.MDC_PRESS_CUFF_SYS.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
-            nibpDiastolic = numericSample(nibpDiastolic, diastolic, rosetta.MDC_PRESS_CUFF_DIA.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
-            nibpPulse = numericSample(nibpPulse, pulse, rosetta.MDC_PULS_RATE_NON_INV.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
-            nibpMean = numericSample(nibpMean, mean, rosetta.MDC_PRESS_CUFF_MEAN.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            nibpSystolic = numericSample(nibpSystolic, systolic, new NumericSQI(), rosetta.MDC_PRESS_CUFF_SYS.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            nibpDiastolic = numericSample(nibpDiastolic, diastolic, new NumericSQI(), rosetta.MDC_PRESS_CUFF_DIA.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            nibpPulse = numericSample(nibpPulse, pulse, new NumericSQI(), rosetta.MDC_PULS_RATE_NON_INV.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            nibpMean = numericSample(nibpMean, mean, new NumericSQI(), rosetta.MDC_PRESS_CUFF_MEAN.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
             alarmIfPresent("NIBP", alarm);
         }
 
         @Override
         protected void receivePressure1(DeviceClock.Reading timeStamp, Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
-            ibpSystolic1 = numericSample(ibpSystolic1, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, label, 0, timeStamp);
-            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, label, 0, timeStamp);
-            ibpMean1 = numericSample(ibpMean1, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, label, 0, timeStamp);
+            ibpSystolic1 = numericSample(ibpSystolic1, systolic, new NumericSQI(), rosetta.MDC_PRESS_BLD_SYS.VALUE, label, 0, timeStamp);
+            ibpDiastolic1 = numericSample(ibpDiastolic1, diastolic, new NumericSQI(), rosetta.MDC_PRESS_BLD_DIA.VALUE, label, 0, timeStamp);
+            ibpMean1 = numericSample(ibpMean1, mean, new NumericSQI(), rosetta.MDC_PRESS_BLD_MEAN.VALUE, label, 0, timeStamp);
             alarmIfPresent("P1", alarm);
         }
 
         @Override
         protected void receivePressure2(DeviceClock.Reading timeStamp, Integer systolic, Integer diastolic, Integer mean, String label, String alarm) {
-            ibpSystolic2 = numericSample(ibpSystolic2, systolic, rosetta.MDC_PRESS_BLD_SYS.VALUE, label, 1, timeStamp);
-            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, rosetta.MDC_PRESS_BLD_DIA.VALUE, label, 1, timeStamp);
-            ibpMean2 = numericSample(ibpMean2, mean, rosetta.MDC_PRESS_BLD_MEAN.VALUE, label, 1, timeStamp);
+            ibpSystolic2 = numericSample(ibpSystolic2, systolic, new NumericSQI(), rosetta.MDC_PRESS_BLD_SYS.VALUE, label, 1, timeStamp);
+            ibpDiastolic2 = numericSample(ibpDiastolic2, diastolic, new NumericSQI(), rosetta.MDC_PRESS_BLD_DIA.VALUE, label, 1, timeStamp);
+            ibpMean2 = numericSample(ibpMean2, mean, new NumericSQI(), rosetta.MDC_PRESS_BLD_MEAN.VALUE, label, 1, timeStamp);
             alarmIfPresent("P2", alarm);
         }
 
         @Override
         protected void receiveRespiratoryRate(DeviceClock.Reading timeStamp, Integer value, String label, String alarm) {
             if(null != etco2 && etco2.data.value > 0) {
-                co2RespiratoryRate = numericSample(co2RespiratoryRate, value, rosetta.MDC_CO2_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
-                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null, rosetta.MDC_TTHOR_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, value, new NumericSQI(), rosetta.MDC_CO2_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, (Integer)null,new NumericSQI(), rosetta.MDC_TTHOR_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
             } else {
-                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, rosetta.MDC_TTHOR_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
-                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, rosetta.MDC_CO2_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+                tthorRespiratoryRate = numericSample(tthorRespiratoryRate, value, new NumericSQI(), rosetta.MDC_TTHOR_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+                co2RespiratoryRate = numericSample(co2RespiratoryRate, (Integer)null, new NumericSQI(), rosetta.MDC_CO2_RESP_RATE.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
             }
             alarmIfPresent("RR", alarm);
         }
 
         @Override
         protected void receiveSpO2(DeviceClock.Reading timeStamp, Integer value, String label, Integer pulseRate, String alarm) {
-            spo2 = numericSample(spo2, value, rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
-            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, label, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
+            spo2 = numericSample(spo2, value, new NumericSQI(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, label, rosetta.MDC_DIM_DIMLESS.VALUE, timeStamp);
+            DemoIvy450C.this.pulseRate = numericSample(DemoIvy450C.this.pulseRate, pulseRate, new NumericSQI(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, label, rosetta.MDC_DIM_BEAT_PER_MIN.VALUE, timeStamp);
             alarmIfPresent("SPO2", alarm);
         }
 
         @Override
         protected void receiveTemperature1(DeviceClock.Reading timeStamp, Float value, String label, String alarm) {
-            t1 = numericSample(t1, value, rosetta.MDC_TEMP_BLD.VALUE, label, 0, timeStamp);
+            t1 = numericSample(t1, value, new NumericSQI(), rosetta.MDC_TEMP_BLD.VALUE, label, 0, timeStamp);
             alarmIfPresent("T1", alarm);
         }
 
         @Override
         protected void receiveTemperature2(DeviceClock.Reading timeStamp, Float value, String label, String alarm) {
-            t2 = numericSample(t2, value, rosetta.MDC_TEMP_BLD.VALUE, label, 1, timeStamp);
+            t2 = numericSample(t2, value, new NumericSQI(), rosetta.MDC_TEMP_BLD.VALUE, label, 1, timeStamp);
             alarmIfPresent("T2", alarm);
         }
     }

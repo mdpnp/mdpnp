@@ -20,6 +20,8 @@ import org.mdpnp.apps.fxbeans.SampleArrayFx;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.Device;
 import org.mdpnp.apps.testapp.DeviceListModel;
+import org.mdpnp.devices.DeviceClock;
+import org.mdpnp.devices.DomainClock;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.rtiapi.data.QosProfiles;
 import org.mdpnp.rtiapi.data.TopicUtil;
@@ -34,6 +36,7 @@ import com.google.common.collect.Multimaps;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.Time_t;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
@@ -62,16 +65,22 @@ import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import rosetta.MDC_ECG_HEART_RATE;
 import rosetta.MDC_FLOW_FLUID_PUMP;
+import rosetta.MDC_PRESS_BLD_ART_ABP;
 import rosetta.MDC_PRESS_BLD_ART_ABP_DIA;
 import rosetta.MDC_PRESS_BLD_ART_ABP_SYS;
+import rosetta.MDC_PRESS_BLD_DIA;
 import rosetta.MDC_PRESS_BLD_MEAN;
+import rosetta.MDC_PRESS_BLD_SYS;
 import rosetta.MDC_PRESS_CUFF_DIA;
 import rosetta.MDC_PRESS_CUFF_SYS;
+import rosetta.MDC_PULS_OXIM_PERF_REL;
 import rosetta.MDC_PULS_OXIM_PULS_RATE;
+import rosetta.MDC_PULS_RATE;
 import rosetta.MDC_PULS_RATE_NON_INV;
 
 public class DataQualityMonitorApp {
 
+	private static final long TIME_BETWEEN_REPOSTING_DQM_ERRORS_DEFAULT = 60000L;
 	private static final int SAMPLE_SIZE_DEFAULT = 30;
 	private static final float PULSE_CONSISTENCY_WINDOW_DEFAULT = 30.0f;
 	private static final float BP_CONSISTENCY_WINDOW_DEFAULT = 60.0f;
@@ -95,6 +104,7 @@ public class DataQualityMonitorApp {
 	private static final String MDPNP_MONITOR_DATAQUALITY_CURRENTNESS_THRESHOLD = "mdpnp.monitor.dataquality.currentnessthreshold";
 	private static final String MDPNP_MONITOR_DATAQUALITY_BP_CONSISTENCY_WINDOW = "mdpnp.monitor.dataquality.bpconsistencywindow";
 	private static final String MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_WINDOW = "mdpnp.monitor.dataquality.pulseconsistencywindow";
+	private static final String MDPNP_MONITOR_DATAQUALITY_TIME_BETWEEN_REPOSTING_DQM_ERRORS = "mdpnp.monitor.dataquality.timebetweendqmerrors";
 
 	private static final String KEY_COMBO = "::::";
 
@@ -109,6 +119,7 @@ public class DataQualityMonitorApp {
 	private static int CURRENTNESS_THRESHOLD;
 	private static double BP_CONSISTENCY_WINDOW;
 	private static double PULSE_CONSISTENCY_WINDOW;
+	private static long TIME_BETWEEN_REPOSTING_DQM_ERRORS;
 
 	@FXML
 	TreeTableView<DataQualityDisplayWrapper> averagesTable;
@@ -137,6 +148,7 @@ public class DataQualityMonitorApp {
 	 */
 	private Publisher publisher;
 	private DataQualityErrorObjectiveDataWriter dataQualityErrorObjectiveWriter;
+	protected final DeviceClock clock = new DeviceClock.WallClock();
 
 	/**
 	 * Instance handle for SafetyFallbackObjective
@@ -192,6 +204,11 @@ public class DataQualityMonitorApp {
 				? PULSE_CONSISTENCY_WINDOW_DEFAULT
 				: Double.parseDouble(System.getProperty(MDPNP_MONITOR_DATAQUALITY_PULSE_CONSISTENCY_WINDOW));
 
+		TIME_BETWEEN_REPOSTING_DQM_ERRORS = System
+				.getProperty(MDPNP_MONITOR_DATAQUALITY_TIME_BETWEEN_REPOSTING_DQM_ERRORS) == null
+						? TIME_BETWEEN_REPOSTING_DQM_ERRORS_DEFAULT
+						: Long.parseLong(
+								System.getProperty(MDPNP_MONITOR_DATAQUALITY_TIME_BETWEEN_REPOSTING_DQM_ERRORS));
 		sentNotifications = new HashMap<String, Date>();
 	}
 
@@ -361,6 +378,8 @@ public class DataQualityMonitorApp {
 										case MDC_PULS_RATE_NON_INV.VALUE:
 										case MDC_PRESS_CUFF_DIA.VALUE:
 										case MDC_PRESS_CUFF_SYS.VALUE:
+										case MDC_PRESS_BLD_SYS.VALUE:
+										case MDC_PRESS_BLD_DIA.VALUE:
 											thresholdToUse = BP_CONSISTENCY_THRESHOLD;
 											break;
 										case MDC_PULS_OXIM_PULS_RATE.VALUE:
@@ -607,8 +626,7 @@ public class DataQualityMonitorApp {
 		Optional<DataQualityMetric> findFirst = null;
 		int count = collection.size();
 		if (count > SAMPLE_SIZE) {
-			findFirst = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).get(deviceMetricIdKey).stream()
-					.findFirst();
+			findFirst = deviceNetworkQualityMetrics.get(deviceMetricIdKey).stream().findFirst();
 			if (findFirst != null && findFirst.isPresent()) {
 				DataQualityMetric first = findFirst.get();
 				Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).get(deviceMetricIdKey).remove(first);
@@ -628,9 +646,8 @@ public class DataQualityMonitorApp {
 	}
 
 	private void buildTree() {
-		Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).keySet().forEach(p -> {
-			Collection<DataQualityMetric> collection = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
-					.get(p);
+		deviceNetworkQualityMetrics.keySet().forEach(p -> {
+			Collection<DataQualityMetric> collection = deviceNetworkQualityMetrics.get(p);
 			DataQualityDisplayWrapper wrapper = new DataQualityDisplayWrapper();
 			List<String> deviceIdAndMetricId = parseDeviceIdAndMetricId(p);
 			String deviceId = deviceIdAndMetricId.get(0);
@@ -664,11 +681,11 @@ public class DataQualityMonitorApp {
 		root.getChildren().forEach(n -> {
 			DataQualityDisplayWrapper wrapper = n.getValue();
 			String deviceId = wrapper.getDeviceId();
-			if(wrapper.getDeviceModel() == null || wrapper.getDeviceModel().isEmpty()) {
+			if (wrapper.getDeviceModel() == null || wrapper.getDeviceModel().isEmpty()) {
 				wrapper.setDeviceModel((deviceListModel.getByUniqueDeviceIdentifier(deviceId).getModel()));
 				wrapper.setName(wrapper.getDeviceModel() + "-" + wrapper.getDeviceId());
 			}
-			
+
 			data.stream().filter(s -> {
 				return s.getDeviceId().equals(deviceId);
 			}).forEach(match -> {
@@ -687,9 +704,10 @@ public class DataQualityMonitorApp {
 	private void setCompleteness(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
 			String deviceId, String metricId) {
 		switch (metricId) {
-		case MDC_PULS_RATE_NON_INV.VALUE:
 		case MDC_PRESS_CUFF_DIA.VALUE:
 		case MDC_PRESS_CUFF_SYS.VALUE:
+		case MDC_PRESS_BLD_SYS.VALUE:
+		case MDC_PRESS_BLD_DIA.VALUE:
 			Double timeDifferenceNIBP = determineTimeDifferenceNIBP(deviceId);
 			wrapper.setCompleteness(
 					timeDifferenceNIBP != null && timeDifferenceNIBP < 1 && timeDifferenceNIBP >= 0 ? 100.000 : 0.000);
@@ -707,6 +725,15 @@ public class DataQualityMonitorApp {
 				.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_DIA.VALUE));
 		Collection<DataQualityMetric> systolicNIBP = deviceNetworkQualityMetrics
 				.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_SYS.VALUE));
+		prNIBP = prNIBP == null || prNIBP.size() == 0
+				? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE))
+				: prNIBP;
+		diastolicNIBP = diastolicNIBP == null || diastolicNIBP.size() == 0
+				? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_DIA.VALUE))
+				: diastolicNIBP;
+		systolicNIBP = systolicNIBP == null || systolicNIBP.size() == 0
+				? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_SYS.VALUE))
+				: systolicNIBP;
 		Date dbpDate = diastolicNIBP.stream().map(q -> {
 			return q.getPresentationDate();
 		}).max(Date::compareTo).orElse(null);
@@ -731,7 +758,7 @@ public class DataQualityMonitorApp {
 	}
 
 	private Double determineAccuracy(Collection<DataQualityMetric> collection) {
-		return collection.stream().mapToDouble(n -> {
+		double average = collection.stream().mapToDouble(n -> {
 			NumericFx numeric = n.getNumeric();
 			SampleArrayFx sampleArray = n.getSampleArray();
 			if (numeric != null) {
@@ -742,6 +769,8 @@ public class DataQualityMonitorApp {
 				return 0;
 			}
 		}).average().orElse(0);
+
+		return average == 0.000 ? null : average;
 	}
 
 	private Double determineCompleteness(Collection<DataQualityMetric> collection) {
@@ -765,31 +794,43 @@ public class DataQualityMonitorApp {
 	private void setCredibility(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
 			String deviceId, String metricId) {
 		switch (metricId) {
+		case MDC_PRESS_BLD_ART_ABP.VALUE:
+			Device device = deviceListModel.getByUniqueDeviceIdentifier(deviceId);
+			String model = device.getMakeAndModel();
+			DataQualityMetric abp = Iterables.getLast(collection);
+			float[] minAndMax = getMinAndMax(abp.getSampleArray().getValues());
+			if(model != null && model.startsWith("Multiparameter (Simulated)")) {
+				wrapper.setCredibility(bpCredible(minAndMax[0]/5.000f, minAndMax[1]/5.000f) ? 1.00 : 0.00);
+			} else {
+				wrapper.setCredibility(bpCredible(minAndMax[0], minAndMax[1]) ? 1.00 : 0.00);
+			}
+			break;
 		case MDC_PRESS_BLD_ART_ABP_DIA.VALUE:
 		case MDC_PRESS_BLD_ART_ABP_SYS.VALUE:
-			Collection<DataQualityMetric> diastolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+		case MDC_PRESS_BLD_SYS.VALUE:
+		case MDC_PRESS_BLD_DIA.VALUE:
+			Collection<DataQualityMetric> diastolicNIBP = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_ART_ABP_DIA.VALUE));
-			Collection<DataQualityMetric> systolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			diastolicNIBP = diastolicNIBP == null || diastolicNIBP.size() == 0
+					? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_DIA.VALUE))
+					: diastolicNIBP;
+			Collection<DataQualityMetric> systolicNIBP = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_ART_ABP_SYS.VALUE));
-
+			systolicNIBP = systolicNIBP == null || systolicNIBP.size() == 0
+					? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_SYS.VALUE))
+					: systolicNIBP;
 			if (diastolicNIBP != null && diastolicNIBP.size() > 0 && systolicNIBP != null && systolicNIBP.size() > 0) {
 				float diastolic = Iterables.getLast(diastolicNIBP).getNumeric().getValue();
 				float systolic = Iterables.getLast(systolicNIBP).getNumeric().getValue();
-
-				double credible = 1.0;
-				double pm = diastolic + (systolic - diastolic) / 3;
-				if (diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
-					credible = 0.0;
-				}
-				wrapper.setCredibility(credible);
+				wrapper.setCredibility(bpCredible(diastolic, systolic) ? 1.00 : 0.00);
 			}
 			break;
+		case MDC_PULS_OXIM_PULS_RATE.VALUE:
 		case MDC_ECG_HEART_RATE.VALUE:
 		case MDC_PULS_RATE_NON_INV.VALUE:
-			Collection<DataQualityMetric> heartRateECG = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
-					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
-			if (heartRateECG != null && heartRateECG.size() > 0) {
-				float heartRate = Iterables.getLast(heartRateECG).getNumeric().getValue();
+		case MDC_PULS_RATE.VALUE:
+			if (collection != null && collection.size() > 0) {
+				float heartRate = Iterables.getLast(collection).getNumeric().getValue();
 				double credible = 1.0;
 				if (heartRate < 20 || heartRate > 200) {
 					credible = 0.0;
@@ -797,7 +838,25 @@ public class DataQualityMonitorApp {
 				wrapper.setCredibility(credible);
 			}
 			break;
+		case MDC_PULS_OXIM_PERF_REL.VALUE:
+			Collection<DataQualityMetric> perfusionIndex = deviceNetworkQualityMetrics
+					.get(getDeviceMetricKey(deviceId, MDC_PULS_OXIM_PERF_REL.VALUE));
+			if (perfusionIndex != null && perfusionIndex.size() > 0) {
+				double credible = 1.0;
+				double perfusionIndexRateAverage = perfusionIndex.stream().mapToDouble(n -> n.getNumeric().getValue())
+						.average().orElse(0.0);
+				if (perfusionIndexRateAverage < 0.3) {
+					credible = 0.0;
+				}
+				wrapper.setCredibility(credible);
+			}
+			break;
 		}
+	}
+
+	private boolean bpCredible(float diastolic, float systolic) {
+		double pm = diastolic + (systolic - diastolic) / 3;
+		return !(diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200);
 	}
 
 	private void setCurrentness(Collection<DataQualityMetric> collection, DataQualityDisplayWrapper wrapper,
@@ -821,12 +880,20 @@ public class DataQualityMonitorApp {
 		switch (metricId) {
 		case MDC_PRESS_CUFF_DIA.VALUE:
 		case MDC_PRESS_CUFF_SYS.VALUE:
+		case MDC_PRESS_BLD_SYS.VALUE:
+		case MDC_PRESS_BLD_DIA.VALUE:
 		case MDC_PRESS_BLD_MEAN.VALUE:
-			Collection<DataQualityMetric> diastolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			Collection<DataQualityMetric> diastolicNIBP = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_DIA.VALUE));
-			Collection<DataQualityMetric> systolicNIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			diastolicNIBP = diastolicNIBP == null || diastolicNIBP.size() == 0
+					? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_DIA.VALUE))
+					: diastolicNIBP;
+			Collection<DataQualityMetric> systolicNIBP = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PRESS_CUFF_SYS.VALUE));
-			Collection<DataQualityMetric> meanIBP = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			systolicNIBP = systolicNIBP == null || systolicNIBP.size() == 0
+					? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_SYS.VALUE))
+					: systolicNIBP;
+			Collection<DataQualityMetric> meanIBP = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_MEAN.VALUE));
 			if (diastolicNIBP != null && diastolicNIBP.size() > 0 && systolicNIBP != null && systolicNIBP.size() > 0
 					&& meanIBP != null && meanIBP.size() > 0) {
@@ -855,34 +922,46 @@ public class DataQualityMonitorApp {
 			break;
 		case MDC_PULS_OXIM_PULS_RATE.VALUE:
 		case MDC_ECG_HEART_RATE.VALUE:
-			Collection<DataQualityMetric> pulseCollection = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+		case MDC_PULS_RATE_NON_INV.VALUE:
+		case MDC_PULS_RATE.VALUE:
+			Collection<DataQualityMetric> pulseCollection = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PULS_OXIM_PULS_RATE.VALUE));
 			Collection<DataQualityMetric> heartRateCollection = Multimaps
 					.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
+			Collection<DataQualityMetric> prNINV = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE_NON_INV.VALUE));
+			Collection<DataQualityMetric> pr = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE.VALUE));
 			Collection<DataQualityMetric> decidingCollection = null;
 			if (metricId.equals(MDC_PULS_OXIM_PULS_RATE.VALUE)) {
 				decidingCollection = pulseCollection;
 			} else if (metricId.equals(MDC_ECG_HEART_RATE.VALUE)) {
 				decidingCollection = heartRateCollection;
+			} else if (metricId.equals(MDC_PULS_RATE_NON_INV.VALUE)) {
+				decidingCollection = prNINV;
+			} else if (metricId.equals(MDC_PULS_RATE.VALUE)) {
+				decidingCollection = pr;
 			}
 			Date compareDate = decidingCollection.stream().map(q -> {
 				return q.getPresentationDate();
 			}).max(Date::compareTo).orElse(null);
 			if (compareDate != null) {
 				Date beforeDate = new Date((long) (compareDate.getTime() - PULSE_CONSISTENCY_WINDOW * 1000.0));
-				wrapper.setConsistency(
-						stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection, heartRateCollection)));
+				wrapper.setConsistency(stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection,
+						heartRateCollection, prNINV, pr)));
+			} else {
+				wrapper.setConsistency(null);
 			}
 			break;
 		case MDC_ECG_LEAD_I.VALUE:
 		case MDC_ECG_LEAD_II.VALUE:
 		case MDC_ECG_LEAD_III.VALUE:
-			Collection<DataQualityMetric> collectionI = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			Collection<DataQualityMetric> collectionI = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_LEAD_I.VALUE));
-			Collection<DataQualityMetric> collectionII = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			Collection<DataQualityMetric> collectionII = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_LEAD_II.VALUE));
-			Collection<DataQualityMetric> collectionIII = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
+			Collection<DataQualityMetric> collectionIII = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_LEAD_III.VALUE));
 			Collection<DataQualityMetric> decidingCollectionI = null;
 			if (metricId.equals(MDC_ECG_LEAD_I.VALUE)) {
@@ -934,6 +1013,8 @@ public class DataQualityMonitorApp {
 			switch (metricId) {
 			case MDC_PRESS_CUFF_DIA.VALUE:
 			case MDC_PRESS_CUFF_SYS.VALUE:
+			case MDC_PRESS_BLD_SYS.VALUE:
+			case MDC_PRESS_BLD_DIA.VALUE:
 			case MDC_PRESS_BLD_MEAN.VALUE:
 				if (consistency > BP_CONSISTENCY_THRESHOLD) {
 					sendDataQualityErrorMessage(DataQualityAttributeType.consistency, wrapper.getDeviceId(),
@@ -980,11 +1061,13 @@ public class DataQualityMonitorApp {
 	public void sendDataQualityErrorMessage(DataQualityAttributeType type, String deviceId, String metricId,
 			Double average) {
 		Date sentDate = sentNotifications.get(deviceId + metricId + type.toString());
-		if (sentDate == null || sentDate.before(new Date(System.currentTimeMillis() - 30000))) {
+		if (sentDate == null
+				|| sentDate.before(new Date(System.currentTimeMillis() - TIME_BETWEEN_REPOSTING_DQM_ERRORS))) {
 			DataQualityErrorObjective dataQualityErrorObjective = new DataQualityErrorObjective();
 			dataQualityErrorObjective.metric_id = metricId;
 			dataQualityErrorObjective.unique_device_identifier = deviceId;
 			dataQualityErrorObjective.data_quality_attribute_type = type;
+			dataQualityErrorObjective.presentation_time.copy_from(getTime());
 
 			participant = assignedSubscriber.get_participant();
 
@@ -1007,6 +1090,14 @@ public class DataQualityMonitorApp {
 			System.err.println("Data Quality Error: " + type.name() + " " + deviceId + " " + metricId
 					+ " with value of " + String.format("%.3f", average));
 		}
+	}
+
+	private ice.Time_t getTime() {
+		Time_t ddsTime = DomainClock.toDDSTime(clock.instant().getTime());
+		ice.Time_t iceTime = (ice.Time_t) ice.Time_t.create();
+		iceTime.nanosec = ddsTime.nanosec;
+		iceTime.sec = ddsTime.sec;
+		return iceTime;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1032,6 +1123,18 @@ public class DataQualityMonitorApp {
 		double[] array = input.stream().mapToDouble(Double::doubleValue).toArray();
 		DescriptiveStatistics ds = new DescriptiveStatistics(array);
 		return ds.getStandardDeviation();
+	}
+
+	private float[] getMinAndMax(Number[] numbers) {
+		float[] minAndMax = new float[] { numbers[0].floatValue(), numbers[0].floatValue() };
+		for (int i = 1; i < numbers.length; i++) {
+			if (numbers[i].floatValue() < minAndMax[0])
+				minAndMax[0] = numbers[i].floatValue();
+			if (numbers[i].floatValue() > minAndMax[1])
+				minAndMax[1] = numbers[i].floatValue();
+		}
+
+		return minAndMax;
 	}
 
 	public void stop() {

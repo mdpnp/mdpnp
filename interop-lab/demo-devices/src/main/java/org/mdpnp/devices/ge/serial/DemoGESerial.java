@@ -13,6 +13,7 @@
 package org.mdpnp.devices.ge.serial;
 
 import ice.ConnectionState;
+import ice.NumericSQI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -183,7 +184,7 @@ public class DemoGESerial extends AbstractDelegatingSerialDevice<GESerial> {
             String metric_id = numericParamLookup(partype, parcode, index);
             if(null != metric_id) {
 //                System.err.println("Updating " + metric_id + " to " + value);
-                numerics.put(param, numericSample(numerics.get(param), null==value?null:(int)value, metric_id, metric_id, 0, rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime));
+                numerics.put(param, numericSample(numerics.get(param), null==value?null:(int)value, new NumericSQI(), metric_id, metric_id, 0, rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime));
             }
         }
     }

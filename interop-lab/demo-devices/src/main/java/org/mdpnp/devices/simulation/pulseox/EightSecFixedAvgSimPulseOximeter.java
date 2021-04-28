@@ -54,20 +54,20 @@ public class EightSecFixedAvgSimPulseOximeter extends AbstractSimulatedConnected
 
         @Override
         protected void receivePulseOx(DeviceClock.Reading sampleTime, int heartRate, int SpO2, Number[] plethValues, int frequency) {
-            numericSample(pulse, heartRate, sampleTime);
-            numericSample(EightSecFixedAvgSimPulseOximeter.this.SpO2, SpO2, sampleTime);
-            numericSample(operCanSetAveragingTime, 0, sampleTime);
-            numericSample(softCanSetAveragingTime, 0, sampleTime);
+            numericSample(pulse, heartRate, getSQI(), sampleTime);
+            numericSample(EightSecFixedAvgSimPulseOximeter.this.SpO2, SpO2, getSQI(), sampleTime);
+            numericSample(operCanSetAveragingTime, 0, getSQI(), sampleTime);
+            numericSample(softCanSetAveragingTime, 0, getSQI(), sampleTime);
             //Indicate that we cannot supply the averaging time.
             //System.err.println("Doing 0 for canGetAveragingTime");
-            numericSample(canGetAveragingTime, 1, sampleTime);
+            numericSample(canGetAveragingTime, 1, getSQI(), sampleTime);
             //Still need to decide how to indicate an unknown or invalid value
             //for cases where it should be gettable.  Return -1 in this case,
             //remembering that when returning 0 for "canGet", this should not
             //be used anyway.
             //System.err.println("Doing 0 for averagingTime");
-            numericSample(averagingTime, 8, sampleTime);
-            pleth = sampleArraySample(pleth, plethValues, new NumericSQI(), rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
+            numericSample(averagingTime, 8, getSQI(), sampleTime);
+            pleth = sampleArraySample(pleth, plethValues, getSQI(), rosetta.MDC_PULS_OXIM_PLETH.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
         }
     }

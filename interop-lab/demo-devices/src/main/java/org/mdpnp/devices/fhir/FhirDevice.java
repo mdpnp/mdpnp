@@ -9,6 +9,8 @@ import ca.uhn.fhir.model.primitive.DateTimeDt;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import ice.Numeric;
+import ice.NumericSQI;
+
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -84,7 +86,7 @@ public abstract class FhirDevice extends AbstractConnectedDevice {
         for (Observation obs : data) {
             try {
                 ObservationConverter.NumericObservation ice = observationConvertor.observationOnIce(obs);
-                numericSample(ice.holder, (float)ice.value, ice.time);
+                numericSample(ice.holder, (float)ice.value, new NumericSQI(), ice.time);
             } catch (Exception ex) {
                 log.error("Failed to convert/publish observation " + obs, ex);
             }
