@@ -173,7 +173,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
                 numericInstances.put(name,
                         numericSample(numericInstances.get(name),
                                       parseFloat(value),
-                                      canonicalName, name,
+                                      new NumericSQI(), canonicalName, name,
                                       unitsMap.get(units),
                                       sampleTime));
             } catch (NumberFormatException nfe) {

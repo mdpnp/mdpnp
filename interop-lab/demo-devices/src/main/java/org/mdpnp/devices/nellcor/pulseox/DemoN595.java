@@ -30,6 +30,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.NumericSQI;
+
 /**
  * @author Jeff Plourde
  *
@@ -52,17 +54,17 @@ public class DemoN595 extends AbstractSerialDevice {
             DeviceClock.Reading sampleTime= super.instant();
 
             pulse = numericSample(pulse, getHeartRate(),
-                                  rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "",
+                                  new NumericSQI(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "",
                                   rosetta.MDC_DIM_BEAT_PER_MIN.VALUE,
                                   sampleTime);
 
             spo2 = numericSample(spo2, getSpO2(),
-                                 rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "",
+                                 new NumericSQI(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "",
                                  rosetta.MDC_DIM_PERCENT.VALUE,
                                  sampleTime);
 
             pulseAmplitude = numericSample(pulseAmplitude, getPulseAmplitude(),
-                                           "NELLCOR_PULSE_AMPLITUDE", "",
+                                           new NumericSQI(), "NELLCOR_PULSE_AMPLITUDE", "",
                                            rosetta.MDC_DIM_DIMLESS.VALUE,
                                            sampleTime);
 

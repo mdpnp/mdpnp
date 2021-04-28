@@ -13,6 +13,7 @@
 package org.mdpnp.devices.simulation;
 
 import ice.DeviceIdentity;
+import ice.NumericSQI;
 
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceIdentityBuilder;
@@ -24,6 +25,17 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractSimulatedDevice extends AbstractDevice {
+	private static final double DEFAULT_JITTER_CEILING = 100.0;
+	private static final double DEFAULT_JITTER_FLOOR = 90.0;
+	private static final double DEFAULT_JITTER_STEP_AMT = 0.25;
+	private static final double DEFAULT_JITTER_START = 95.0;
+	
+	// Used to simulate accuracy SQI across all simulated devices
+	protected NumberWithJitter<Float> accuracyJitter = new NumberWithJitter<Float>(DEFAULT_JITTER_START, DEFAULT_JITTER_STEP_AMT,
+			DEFAULT_JITTER_FLOOR, DEFAULT_JITTER_CEILING);
+	
+	private NumericSQI defaultSQI = new NumericSQI();
+	
     private static final Logger log = LoggerFactory.getLogger(AbstractSimulatedDevice.class);
 
     public static void randomUDI(DeviceIdentity di) {
@@ -35,6 +47,11 @@ public abstract class AbstractSimulatedDevice extends AbstractDevice {
         super(subscriber, publisher, eventLoop);
         randomUDI(deviceIdentity);
         writeDeviceIdentity();
+    }
+    
+    public NumericSQI getSQI() {
+    	defaultSQI.accuracy = accuracyJitter.floatValue();
+    	return defaultSQI;
     }
 }
 

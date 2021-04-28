@@ -37,7 +37,7 @@ public class SimThermometer extends AbstractSimulatedConnectedDevice {
         protected void receiveTemp1(float temperature1, DeviceClock.Reading time) {
         	Tag tag=new Tag("ICE_METRIC_TYPE", "TEMPERATURE");
             // TODO assign a unit type
-            SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, rosetta.MDC_TEMP_BLD.VALUE, "", 0, 
+            SimThermometer.this.temperature1 = numericSample(SimThermometer.this.temperature1, temperature1, getSQI(), rosetta.MDC_TEMP_BLD.VALUE, "", 0, 
                     rosetta.MDC_DIM_DIMLESS.VALUE, time);
         }
 

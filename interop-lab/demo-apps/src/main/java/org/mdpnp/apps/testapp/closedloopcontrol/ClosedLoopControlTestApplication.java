@@ -77,6 +77,7 @@ import ice.FlowRateObjective;
 import ice.FlowRateObjectiveDataWriter;
 import ice.FroaAlarmType;
 import ice.MDSConnectivity;
+import ice.NumericSQI;
 import ice.Patient;
 import ice.SafetyFallbackType;
 import javafx.animation.Animation;
@@ -349,9 +350,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
             DeviceClock.Reading sampleTime = clock.instant();
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
-            systolic = numericSample(systolic, (int) Math.round(systolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 
+            systolic = numericSample(systolic, (int) Math.round(systolicProperty.floatValue()), new NumericSQI(), rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 
                     rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, 0, rosetta.MDC_DIM_MMHG.VALUE, sampleTime);
-            diastolic = numericSample(diastolic, (int) Math.round(diastolicProperty.floatValue()), rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 
+            diastolic = numericSample(diastolic, (int) Math.round(diastolicProperty.floatValue()), new NumericSQI(), rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 
                     rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, 0, rosetta.MDC_DIM_MMHG.VALUE, sampleTime);
 		}
 	}

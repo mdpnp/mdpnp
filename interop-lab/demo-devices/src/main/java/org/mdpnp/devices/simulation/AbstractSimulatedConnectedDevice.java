@@ -32,6 +32,17 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractSimulatedConnectedDevice extends AbstractConnectedDevice implements GlobalSimulationObjectiveListener {
+	private static final double DEFAULT_JITTER_CEILING = 100.0;
+	private static final double DEFAULT_JITTER_FLOOR = 90.0;
+	private static final double DEFAULT_JITTER_STEP_AMT = 0.25;
+	private static final double DEFAULT_JITTER_START = 95.0;
+	
+	// Used to simulate accuracy SQI across all simulated connected devices
+	protected NumberWithJitter<Float> accuracyJitter = new NumberWithJitter<Float>(DEFAULT_JITTER_START, DEFAULT_JITTER_STEP_AMT,
+			DEFAULT_JITTER_FLOOR, DEFAULT_JITTER_CEILING);
+	
+	private NumericSQI defaultSQI = new NumericSQI();
+	
     protected Throwable t;
 
     protected final GlobalSimulationObjectiveMonitor monitor;
@@ -131,12 +142,6 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
     }
 
     @Override
-    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
-        super.numericSample(holder, newValue, new NumericSQI(), time);
-        processPatientAlert(holder, newValue);
-    }
-    
-    @Override
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, NumericSQI sqi, DeviceClock.Reading time) {
         super.numericSample(holder, newValue, sqi, time);
         processPatientAlert(holder, newValue);
@@ -174,5 +179,8 @@ public abstract class AbstractSimulatedConnectedDevice extends AbstractConnected
         super.unsetAlarmLimit(metricId, limit_type);
     }
     
-    
+    public NumericSQI getSQI() {
+    	defaultSQI.accuracy = accuracyJitter.floatValue();
+    	return defaultSQI;
+    }
 }

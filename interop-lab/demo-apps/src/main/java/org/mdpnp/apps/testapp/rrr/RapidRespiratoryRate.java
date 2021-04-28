@@ -56,6 +56,8 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
 
+import ice.NumericSQI;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
@@ -95,7 +97,7 @@ public class RapidRespiratoryRate implements Runnable {
             DeviceClock.Reading sampleTime = clock.instant();
             // TODO clearly a synchronization issue here.
             // enforce a singular calling thread or synchronize accesses
-            this.rate = numericSample(this.rate, (int) Math.round(rate), rosetta.MDC_CO2_RESP_RATE.VALUE, 
+            this.rate = numericSample(this.rate, (int) Math.round(rate), new NumericSQI(), rosetta.MDC_CO2_RESP_RATE.VALUE, 
                     rosetta.MDC_CO2_RESP_RATE.VALUE, 0, rosetta.MDC_DIM_DIMLESS.VALUE, sampleTime);
         }
     }

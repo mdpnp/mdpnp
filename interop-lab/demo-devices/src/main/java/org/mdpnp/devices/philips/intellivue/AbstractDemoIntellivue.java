@@ -641,7 +641,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                     UnitCode unit = UnitCode.valueOf(observed.getUnitCode().getType());
 
                     if (observed.getMsmtState().isUnavailable()) {
-                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, metricId, ov.toString(), handle, 
+                        putNumericUpdate(ov, handle, numericSample(getNumericUpdate(ov, handle), (Float) null, new NumericSQI(), metricId, ov.toString(), handle, 
                                 RosettaUnits.units(unit), sampleTime));
                     } else {
                         putNumericUpdate(ov, handle,

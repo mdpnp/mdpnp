@@ -74,6 +74,7 @@ import rosetta.MDC_PRESS_CUFF_DIA;
 import rosetta.MDC_PRESS_CUFF_SYS;
 import rosetta.MDC_PULS_OXIM_PERF_REL;
 import rosetta.MDC_PULS_OXIM_PULS_RATE;
+import rosetta.MDC_PULS_RATE;
 import rosetta.MDC_PULS_RATE_NON_INV;
 
 public class DataQualityMonitorApp {
@@ -629,7 +630,7 @@ public class DataQualityMonitorApp {
 				DataQualityMetric first = findFirst.get();
 				Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics).get(deviceMetricIdKey).remove(first);
 				// TODO: Performance improvement to not re-calculate data quality attribute from
-				// scratch and useOn bui changed values to simplify complexity
+				// scratch and use changed values to simplify complexity
 			}
 		} else {
 
@@ -756,7 +757,7 @@ public class DataQualityMonitorApp {
 	}
 
 	private Double determineAccuracy(Collection<DataQualityMetric> collection) {
-		return collection.stream().mapToDouble(n -> {
+		double average = collection.stream().mapToDouble(n -> {
 			NumericFx numeric = n.getNumeric();
 			SampleArrayFx sampleArray = n.getSampleArray();
 			if (numeric != null) {
@@ -767,6 +768,8 @@ public class DataQualityMonitorApp {
 				return 0;
 			}
 		}).average().orElse(0);
+
+		return average == 0.000 ? null : average;
 	}
 
 	private Double determineCompleteness(Collection<DataQualityMetric> collection) {
@@ -817,15 +820,12 @@ public class DataQualityMonitorApp {
 				wrapper.setCredibility(credible);
 			}
 			break;
+		case MDC_PULS_OXIM_PULS_RATE.VALUE:
 		case MDC_ECG_HEART_RATE.VALUE:
 		case MDC_PULS_RATE_NON_INV.VALUE:
-			Collection<DataQualityMetric> heartRateECG = deviceNetworkQualityMetrics
-					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
-			heartRateECG = heartRateECG == null || heartRateECG.size() == 0
-					? deviceNetworkQualityMetrics.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE_NON_INV.VALUE))
-					: heartRateECG;
-			if (heartRateECG != null && heartRateECG.size() > 0) {
-				float heartRate = Iterables.getLast(heartRateECG).getNumeric().getValue();
+		case MDC_PULS_RATE.VALUE:
+			if (collection != null && collection.size() > 0) {
+				float heartRate = Iterables.getLast(collection).getNumeric().getValue();
 				double credible = 1.0;
 				if (heartRate < 20 || heartRate > 200) {
 					credible = 0.0;
@@ -841,18 +841,6 @@ public class DataQualityMonitorApp {
 				double perfusionIndexRateAverage = perfusionIndex.stream().mapToDouble(n -> n.getNumeric().getValue())
 						.average().orElse(0.0);
 				if (perfusionIndexRateAverage < 0.3) {
-					credible = 0.0;
-				}
-				wrapper.setCredibility(credible);
-			}
-			break;
-		case MDC_PULS_OXIM_PULS_RATE.VALUE:
-			Collection<DataQualityMetric> pulseOximPulseRate = deviceNetworkQualityMetrics
-					.get(getDeviceMetricKey(deviceId, MDC_PULS_OXIM_PULS_RATE.VALUE));
-			if (pulseOximPulseRate != null && pulseOximPulseRate.size() > 0) {
-				double credible = 1.0;
-				float lastPulse = Iterables.getLast(pulseOximPulseRate).getNumeric().getValue();
-				if (lastPulse < 20.0f || lastPulse > 200.0f) {
 					credible = 0.0;
 				}
 				wrapper.setCredibility(credible);
@@ -924,16 +912,28 @@ public class DataQualityMonitorApp {
 			break;
 		case MDC_PULS_OXIM_PULS_RATE.VALUE:
 		case MDC_ECG_HEART_RATE.VALUE:
+		case MDC_PULS_RATE_NON_INV.VALUE:
+		case MDC_PULS_RATE.VALUE:
 			Collection<DataQualityMetric> pulseCollection = deviceNetworkQualityMetrics
 					.get(getDeviceMetricKey(deviceId, MDC_PULS_OXIM_PULS_RATE.VALUE));
 			Collection<DataQualityMetric> heartRateCollection = Multimaps
 					.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
+			Collection<DataQualityMetric> prNINV = Multimaps
+					.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE_NON_INV.VALUE));
+			Collection<DataQualityMetric> pr = Multimaps
+					.synchronizedMultimap(deviceNetworkQualityMetrics)
+					.get(getDeviceMetricKey(deviceId, MDC_PULS_RATE.VALUE));
 			Collection<DataQualityMetric> decidingCollection = null;
 			if (metricId.equals(MDC_PULS_OXIM_PULS_RATE.VALUE)) {
 				decidingCollection = pulseCollection;
 			} else if (metricId.equals(MDC_ECG_HEART_RATE.VALUE)) {
 				decidingCollection = heartRateCollection;
+			} else if (metricId.equals(MDC_PULS_RATE_NON_INV.VALUE)) {
+				decidingCollection = prNINV;
+			} else if (metricId.equals(MDC_PULS_RATE.VALUE)) {
+				decidingCollection = pr;
 			}
 			Date compareDate = decidingCollection.stream().map(q -> {
 				return q.getPresentationDate();
@@ -941,7 +941,9 @@ public class DataQualityMonitorApp {
 			if (compareDate != null) {
 				Date beforeDate = new Date((long) (compareDate.getTime() - PULSE_CONSISTENCY_WINDOW * 1000.0));
 				wrapper.setConsistency(
-						stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection, heartRateCollection)));
+						stdDev(combineAndFilterCollectionsByDate(beforeDate, pulseCollection, heartRateCollection, prNINV, pr)));
+			} else {
+				wrapper.setConsistency(null);
 			}
 			break;
 		case MDC_ECG_LEAD_I.VALUE:

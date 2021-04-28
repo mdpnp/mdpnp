@@ -339,10 +339,6 @@ public abstract class AbstractDevice {
         }
         return holder;
     }
-
-    protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
-        numericSample(holder, newValue, new NumericSQI(), time);
-    }
     
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, NumericSQI sqi, DeviceClock.Reading time) {
     	holder.data.value = newValue;
@@ -453,30 +449,26 @@ public abstract class AbstractDevice {
 
     
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, String unit_id, DeviceClock.Reading time) {
-        return numericSample(holder, null == newValue ? null : newValue.floatValue(), metric_id, vendor_metric_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, String unit_id, DeviceClock.Reading time) {
+        return numericSample(holder, null == newValue ? null : newValue.floatValue(), sqi, metric_id, vendor_metric_id, unit_id, time);
     }
 
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, int instance_id, DeviceClock.Reading time) {
-        return numericSample(holder, null == newValue ? null : newValue.floatValue(), metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, int instance_id, DeviceClock.Reading time) {
+        return numericSample(holder, null == newValue ? null : newValue.floatValue(), sqi, metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
     }
     
     // For convenience
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
-        return numericSample(holder, null == newValue ? null : newValue.floatValue(), metric_id, vendor_metric_id, instance_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Integer newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
+        return numericSample(holder, null == newValue ? null : newValue.floatValue(), sqi, metric_id, vendor_metric_id, instance_id, unit_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, String unit_id, DeviceClock.Reading time) {
-        return numericSample(holder, newValue, metric_id, vendor_metric_id, 0, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, String unit_id, DeviceClock.Reading time) {
+        return numericSample(holder, newValue, sqi, metric_id, vendor_metric_id, 0, unit_id, time);
     }
 
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, DeviceClock.Reading time) {
-        return numericSample(holder, newValue, metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
-    }
-
-    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
-    	return numericSample(holder, newValue, new NumericSQI(), metric_id, vendor_metric_id, instance_id, unit_id, time);
+    protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, int instance_id, DeviceClock.Reading time) {
+        return numericSample(holder, newValue, sqi, metric_id, vendor_metric_id, instance_id, rosetta.MDC_DIM_DIMLESS.VALUE, time);
     }
     
     protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {

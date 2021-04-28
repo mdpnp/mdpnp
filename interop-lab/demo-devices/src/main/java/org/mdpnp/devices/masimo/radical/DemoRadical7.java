@@ -26,6 +26,8 @@ import org.mdpnp.rtiapi.data.EventLoop;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.NumericSQI;
+
 /**
  * @author Jeff Plourde
  *
@@ -51,11 +53,11 @@ public class DemoRadical7 extends AbstractSerialDevice {
             DeviceClock.Reading sampleTime = super.instant();
 
             pulseUpdate = numericSample(pulseUpdate, getHeartRate(),
-                                        rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "",
+                                        new NumericSQI(), rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "",
                                         rosetta.MDC_DIM_BEAT_PER_MIN.VALUE,
                                         sampleTime);
             spo2Update = numericSample(spo2Update, getSpO2(),
-                                       rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "",
+                                       new NumericSQI(), rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "",
                                        rosetta.MDC_DIM_PERCENT.VALUE,
                                        sampleTime);
             String guid = getUniqueId();

@@ -25,6 +25,7 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 import ice.Numeric;
+import ice.NumericSQI;
 
 public class MSeriesScale extends AbstractSerialDevice {
 	
@@ -133,7 +134,7 @@ public class MSeriesScale extends AbstractSerialDevice {
 			float f=getFloatFromLine(lineWithValue);
 			//Publish a metric...
 			Reading r=defaultClock.instant();
-			numericSample(holder, f, rosetta.MDC_ATTR_PT_WEIGHT.VALUE , rosetta.MDC_ATTR_PT_WEIGHT.VALUE, 0, rosetta.MDC_DIM_G.VALUE, new DeviceClock.CombinedReading(r, r));
+			numericSample(holder, f, new NumericSQI(), rosetta.MDC_ATTR_PT_WEIGHT.VALUE , rosetta.MDC_ATTR_PT_WEIGHT.VALUE, 0, rosetta.MDC_DIM_G.VALUE, new DeviceClock.CombinedReading(r, r));
 			if(!connected) {
 				reportConnected("data was received");
 			}
