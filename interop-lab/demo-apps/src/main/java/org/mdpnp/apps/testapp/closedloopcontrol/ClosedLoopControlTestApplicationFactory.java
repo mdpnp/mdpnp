@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.closedloopcontrol;
 import java.io.IOException;
 import java.net.URL;
 
+import org.mdpnp.apps.fxbeans.DataQualityErrorObjectiveFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
@@ -43,6 +44,8 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
 		
 		final SafetyFallbackObjectiveFxList safetyFallbackObjectiveList = parentContext.getBean("safetyFallbackObjectiveList", SafetyFallbackObjectiveFxList.class);
 		
+		final DataQualityErrorObjectiveFxList dqeList = parentContext.getBean("dataQualityErrorObjectiveList", DataQualityErrorObjectiveFxList.class)	;
+		
 		final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
 
         final EventLoop eventLoop = (EventLoop) parentContext.getBean("eventLoop");
@@ -63,7 +66,7 @@ public class ClosedLoopControlTestApplicationFactory implements IceApplicationPr
        
         final ClosedLoopControlTestApplication controller = ((ClosedLoopControlTestApplication) loader.getController());
         
-        controller.set(parentContext, deviceListModel, numericList, sampleList, safetyFallbackObjectiveList, objectiveWriter, mdsHandler, vitalModel, subscriber, emr);
+        controller.set(parentContext, deviceListModel, numericList, sampleList, safetyFallbackObjectiveList, dqeList, objectiveWriter, mdsHandler, vitalModel, subscriber, emr);
         
         controller.start(eventLoop, subscriber);
 		

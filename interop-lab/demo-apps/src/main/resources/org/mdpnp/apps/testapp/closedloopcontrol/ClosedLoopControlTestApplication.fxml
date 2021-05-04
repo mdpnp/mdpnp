@@ -58,8 +58,10 @@
 	    </VBox>
 	    <Label>Please select a pump</Label>
 	    <ComboBox fx:id="pumps" promptText="choose"/>
-	    <Label>Please select a BP source</Label>
+	    <Label>Please select a Primary BP source</Label>
 	    <ComboBox fx:id="bpsources" promptText="choose"/>
+	    <Label>Please select a Secondary BP source</Label>
+	    <ComboBox fx:id="bpsources2" promptText="choose"/>
 	    <Label>Please select an algorithm</Label>
 	    <ComboBox fx:id="algos" promptText="choose"/>
 	    <Label text="Sys"/>

@@ -24,6 +24,8 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 
+import org.mdpnp.apps.fxbeans.DataQualityErrorObjectiveFx;
+import org.mdpnp.apps.fxbeans.DataQualityErrorObjectiveFxList;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SafetyFallbackObjectiveFx;
@@ -84,6 +86,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -127,6 +130,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private NumericFxList numeric;
 	private SampleArrayFxList samples;
 	private SafetyFallbackObjectiveFxList safetyFallbackObjectiveList;
+	private DataQualityErrorObjectiveFxList dqeList;
 	private FlowRateObjectiveDataWriter writer;
 	private MDSHandler mdsHandler;
 	private VitalModel vitalModel;
@@ -137,6 +141,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private DateAxis dateAxis;
 		
 	@FXML private ComboBox<Device> bpsources;
+	@FXML private ComboBox<Device> bpsources2;
 	@FXML private ComboBox<Device> pumps;
 	@FXML private ComboBox<String> algos;
 	@FXML private TextField currentDiastolic;
@@ -207,7 +212,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	};
 	
 	private HashMap<String, Parent> udiToPump=new HashMap<>();
-	
+
+	private ArrayList<String> backupBPMetrics=new ArrayList<String>();
+
 	/**
 	 * The "current" patient, used to determine if the patient has changed
 	 */
@@ -298,24 +305,39 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 * Systolic alarm instance
 	 */
 	private FROAAlarm diastolicDDSAlarm;
-	
+
+	private SimpleFloatProperty backupDia;
+	private SimpleFloatProperty backupSys;
+
 	//Need a context here...
 	public void set(ApplicationContext parentContext, DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, SafetyFallbackObjectiveFxList safetyFallbackObjectiveList,
-			FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber, EMRFacade emr) {
+			DataQualityErrorObjectiveFxList dqeList, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler, VitalModel vitalModel, Subscriber subscriber, EMRFacade emr) {
 		this.parentContext=parentContext;
 		this.dlm=dlm;
 		this.numeric=numeric;
 		this.samples=samples;
 		this.safetyFallbackObjectiveList = safetyFallbackObjectiveList;
+		this.dqeList = dqeList;
 		this.writer=writer;
 		this.mdsHandler=mdsHandler;
 		this.vitalModel=vitalModel;
 		this.assignedSubscriber=subscriber;
 		this.emr=emr;
 		configureFields();
-		configureRTILogging();
+		//configureRTILogging();
+		addBackupBPMetrics();
+
+		backupDia=new SimpleFloatProperty();
+		backupSys=new SimpleFloatProperty();
 	}
 	
+	private void addBackupBPMetrics() {
+		backupBPMetrics.add(rosetta.MDC_PRESS_BLD_DIA.VALUE);
+		backupBPMetrics.add(rosetta.MDC_PRESS_BLD_SYS.VALUE);
+		backupBPMetrics.add(rosetta.MDC_PRESS_CUFF_SYS.VALUE);
+		backupBPMetrics.add(rosetta.MDC_PRESS_CUFF_DIA.VALUE);
+	}
+
 	private void configureRTILogging() {
 		com.rti.ndds.config.Logger logger=com.rti.ndds.config.Logger.get_instance();
 		try {
@@ -509,7 +531,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	}
 
 	BPDeviceChangeListener bpDeviceChangeListener=new BPDeviceChangeListener();
-	
+	private boolean doNotFallback;
+
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
 		SafetyFallbackObjectiveFxListFactory nFact = new SafetyFallbackObjectiveFxListFactory();
         nFact.setEventLoop(eventLoop);
@@ -517,7 +540,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         nFact.setQosLibrary(QosProfiles.ice_library);
         nFact.setQosProfile(QosProfiles.state);
         nFact.setTopicName(ice.SafetyFallbackObjectiveTopic.VALUE);
-        
+
         try {
 			safetyFallbackObjectiveList = nFact.getObject();
 		} catch (Exception e) {
@@ -533,12 +556,67 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 						if(n.getMetric_id().equals(FLOW_RATE)) {
 							pumps.getItems().add(dlm.getByUniqueDeviceIdentifier(n.getUnique_device_identifier()));
 						}
+						if(backupBPMetrics.contains(n.getMetric_id())) {
+							ObservableList bp2=bpsources2.getItems();
+							Device testDevice=dlm.getByUniqueDeviceIdentifier(n.getUnique_device_identifier());
+							if(!bp2.contains(testDevice)) {
+								bp2.add(testDevice);
+							}
+							if(n.getMetric_id().equals(rosetta.MDC_PRESS_BLD_DIA.VALUE) || n.getMetric_id().equals(rosetta.MDC_PRESS_CUFF_DIA.VALUE)) {
+								n.valueProperty().addListener(new ChangeListener<Number>() {
 
-					});
-				}
-			}
-		});
-		
+									@Override
+									public void changed(ObservableValue<? extends Number> observable, Number oldValue,
+											Number newValue) {
+										backupDia.set(newValue.floatValue());
+									}
+
+								});
+								backupDia.set(n.getValue());
+							}
+
+							if(n.getMetric_id().equals(rosetta.MDC_PRESS_BLD_SYS.VALUE) || n.getMetric_id().equals(rosetta.MDC_PRESS_CUFF_SYS.VALUE)) {
+								n.valueProperty().addListener(new ChangeListener<Number>() {
+
+									@Override
+									public void changed(ObservableValue<? extends Number> observable, Number oldValue,
+											Number newValue) {
+										backupSys.set(newValue.floatValue());
+									}
+
+								});
+								backupSys.set(n.getValue());
+							}
+
+						}
+						if(n.getMetric_id().equals("CARDIAC_ARREST_NOTIFICATION")) {
+							n.valueProperty().addListener(new ChangeListener<Number>() {
+								@Override
+								public void changed(ObservableValue<? extends Number> observable, Number oldValue,
+										Number newValue) {
+									if(newValue.floatValue()==1) {
+										System.err.println("Set doNotFallback to true 2");
+										doNotFallback=true;
+									} else {
+										System.err.println("Set doNotFallback to false 2");
+										doNotFallback=false;
+									}
+								}
+							});
+							if(n.getValue()==1) {
+								System.err.println("Set doNotFallback to true 1");
+								doNotFallback=true;
+							} else {
+								System.err.println("Set doNotFallback to false 1");
+								doNotFallback=false;
+							}
+						}
+					});	//End of addedSubList
+				}	//End of change.next
+			}	//End of onChanged
+		});	//End of addListener
+
+
 		//...and removal of devices to remove devices.
 		dlm.getContents().addListener(new ListChangeListener<Device>() {
 			@Override
@@ -547,11 +625,12 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 					change.getRemoved().forEach( d-> {
 						bpsources.getItems().remove(d);
 						pumps.getItems().remove(d);
+						bpsources2.getItems().remove(d);
 					});
 				}
 			}
 		});
-		
+
 		//Similarly, rely on metrics to add BP devices.
 		samples.addListener(new ListChangeListener<SampleArrayFx>() {
 			@Override
@@ -566,14 +645,14 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				
 			}
 		});
-		
+
 		fallbackModeEnabled.addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
 				disable(newValue);		
 			}
 		});
-		
+
 		safetyFallbackObjectiveList.addListener(new ListChangeListener<SafetyFallbackObjectiveFx>() {
 			public void onChanged(Change<? extends SafetyFallbackObjectiveFx> change) {
 				while (change.next()) {
@@ -615,10 +694,10 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				}
 			}
 		});
-		
+
 		bpsources.getSelectionModel().selectedItemProperty().addListener(bpDeviceChangeListener);
 		listenerPresent=true;
-		
+
 		bpsources.setCellFactory(new Callback<ListView<Device>,ListCell<Device>>() {
 
 			@Override
@@ -627,7 +706,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 			
 		});
-		
+
 		bpsources.setConverter(new StringConverter<Device>() {
 
 			@Override
@@ -643,7 +722,32 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 			
 		});
-		
+
+		bpsources2.setCellFactory(new Callback<ListView<Device>,ListCell<Device>>() {
+
+			@Override
+			public ListCell<Device> call(ListView<Device> device) {
+				return new DeviceListCell();
+			}
+
+		});
+
+		bpsources2.setConverter(new StringConverter<Device>() {
+
+			@Override
+			public Device fromString(String arg0) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String toString(Device device) {
+				// TODO Auto-generated method stub
+				return device.getModel()+"("+device.getComPort()+")";
+			}
+
+		});
+
 		pumps.setCellFactory(new Callback<ListView<Device>,ListCell<Device>>() {
 
 			@Override
@@ -652,7 +756,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 			
 		});
-		
+
 		pumps.setConverter(new StringConverter<Device>() {
 
 			@Override
@@ -666,9 +770,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 				// TODO Auto-generated method stub
 				return device.getModel()+"("+device.getComPort()+")";
 			}
-			
+
 		});
-		
+
 		mdsHandler.addPatientListener(new PatientListener() {
 
 			@Override
@@ -677,7 +781,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			}
 			
 		});
-		
+
 		mdsHandler.addConnectivityListener(new MDSListener() {
 
 			@Override
@@ -714,8 +818,51 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			
 		});
 		
+		dqeList.addListener(new ListChangeListener<DataQualityErrorObjectiveFx>() {
+
+			@Override
+			public void onChanged(Change<? extends DataQualityErrorObjectiveFx> c) {
+				while(c.next()) {
+					c.getAddedSubList().forEach( d -> {
+						String errorUDI=d.getUnique_device_identifier();
+						Device bp = bpsources.getSelectionModel().getSelectedItem();
+						if(bp!=null) {
+							String bpMetricUDI=bp.getUDI();
+							
+							String errorMetric=d.getMetric_id();
+							if(errorUDI.equals(bpMetricUDI) /* && errorMetric.equals(ARTERIAL) */ ) {
+								if( ! doNotFallback ) {
+									Alert alert=new Alert(AlertType.ERROR,"Unreliable data error for BP Source.  Switching to fallback",ButtonType.OK);
+									alert.showAndWait();
+									switchBPSource();
+								} else {
+									Alert alert=new Alert(AlertType.ERROR,"Data quality error - but Cardiac Arreset Detected.  Not falling back",ButtonType.OK);
+									alert.showAndWait();
+								}
+							}
+
+						}
+					});
+				}
+				
+			}
+			
+		});
+		
        	dbconn = SQLLogging.getConnection();
 
+	}
+	
+	private void switchBPSource() {
+		//What do we need to do here?
+		currentBPSample.valuesProperty().removeListener(bpArrayListener);
+		try {
+			diastolicProperty.bind(backupDia);
+			systolicProperty.bind(backupSys);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("problem switching to backup BP",e);
+		}
 	}
 	
 	private void setPatientNameLabel() {
@@ -761,6 +908,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		}
 		return minAndMax;
 	}
+	
+	//Run this all the time and just check if it's required.
 	
 	class SampleValuesChangeListener implements ChangeListener<Number[]> {
 
