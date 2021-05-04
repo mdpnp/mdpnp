@@ -22,19 +22,18 @@ import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 import javafx.collections.*;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-
+import javafx.scene.paint.Color;
 
 import com.rti.dds.subscription.Subscriber;
 
 import ice.DataQualityAttributeType;
 import ice.FlowRateObjectiveDataWriter;
-
-import javafx.beans.property.SimpleBooleanProperty;
 
 public class CardiacArrestApplication {
 
@@ -74,7 +73,8 @@ public class CardiacArrestApplication {
 	/**
 	 * The number of samples to be used for ECG HR average
 	 */
-	private static final int ECG_SAMPLE_COUNT=30;
+	private static final int ECG_SAMPLE_COUNT=5;
+	//private static final int ECG_SAMPLE_COUNT=30;
 	
 	/**
 	 * The cardiac inversion threshold value for SVT.
@@ -82,9 +82,25 @@ public class CardiacArrestApplication {
 	private static final float SVT_THRESHOLD=150;
 	
 	/**
+	 * The low heart rate threshold
+	 */
+	private static final float LOW_ECG_HR_THRESHOLD=20;
+	
+	/**
 	 * The cardiac inversion threshold value for Systolic BP.
 	 */
-	private static final float SYS_THRESHOLD=80;
+	private static final float SYS_THRESHOLD=25;
+	//private static final float SYS_THRESHOLD=80;
+	
+	/**
+	 * The threshold at which the non ECG pulse signal is low
+	 */
+	private static final float LOW_PULSE_THRESHOLD=30;
+	
+	/**
+	 * The perfusion index threshold
+	 */
+	private static final float PERF_THRESHOLD=0.3f;
 	
 	/**
 	 * The array of ECH HR values to be averaged.
@@ -136,7 +152,26 @@ public class CardiacArrestApplication {
 	 */
 	private SimpleStringProperty okForCardiacInversionProperty;
 	
+	/**
+	 * Metric ID for invasive BP from MX800
+	 */
+	//private final String ARTERIAL=rosetta.MDC_PRESS_BLD_ART_ABP.VALUE;
+	
+	/**
+	 * Alternative to metric for systolic, because with MX800 we derive the systolic from the waveform.
+	 */
+	//private IntegerProperty systolicProperty=new SimpleIntegerProperty();
+	
+	/**
+	 * The pulse rate property - whatever other pulse source we are using as well as the ECG
+	 */
+	private SimpleFloatProperty pulseRateProperty=new SimpleFloatProperty(); 
+	
 	private NumericFx systolicNumeric;
+	
+	private Thread monitorThread;
+	
+	private boolean pleaseStop;
 	
 	public CardiacArrestApplication() {
 		ECG_METRICS.add("MDC_ECG_LEAD_I");
@@ -144,11 +179,14 @@ public class CardiacArrestApplication {
 		ECG_METRICS.add("MDC_ECG_LEAD_III");
 		ECG_METRICS.add("MDC_ECG_HEART_RATE");
 		
-		PPG_METRICS.add("MDS_PULSE_OXIM_PLETH");
+		PPG_METRICS.add("MDC_PULSE_OXIM_PLETH");
+		PPG_METRICS.add("MDC_PULSE_OXIM_PULS_RATE");
+		PPG_METRICS.add("MDC_PULS_OXIM_PERF_REL");
 		
 		IBP_METRICS.add("MDC_PRESS_BLD_ART_ABP_SYS");
 		IBP_METRICS.add("MDC_PRESS_BLD_ART_ABP_DIA");
 		IBP_METRICS.add("MDC_PRESS_BLD");	//AVERAGE?
+		//IBP_METRICS.add(ARTERIAL);
 		
 		ecgAverageProperty=new SimpleFloatProperty();
 		plethPresentProperty=new SimpleBooleanProperty(true);
@@ -171,7 +209,10 @@ public class CardiacArrestApplication {
 		
 		ecgHrLabel.textProperty().bind(Bindings.format("%d second average ECG HR %s", ECG_SAMPLE_COUNT, ecgAverageProperty));
 		piLabel.textProperty().bind(Bindings.format("Pleth present: %s", plethPresentProperty ));
-		inversionLabel.textProperty().bind(Bindings.format("Perform cardiac inversion: %s", okForCardiacInversionProperty));
+		//inversionLabel.textProperty().bind(Bindings.format("Perform cardioversion: %s", okForCardiacInversionProperty));
+		inversionLabel.textProperty().bind(Bindings.format("Cardiac Arrest: %s", okForCardiacInversionProperty));
+		//systolicLabel.textProperty().bind(Bindings.format("Current Systolic BP: %s", systolicProperty));
+		
 		
 		/*
 		 * For the time being, we will just use a single listener to the other properties, and when that changes,
@@ -179,18 +220,75 @@ public class CardiacArrestApplication {
 		 * that the ecgAverageProperty will be updated once per second.  That's a good driver for evaluating the
 		 * rest of the conditions.
 		 */
+		//THIS DOESN'T WORK WHEN THE VALUES ARE STABLE.  LISTEN TO THE TIME CHANGE ON SOMETHING INSTEAD OR JUST SLEEP
+		//FOR A SECOND IN A WHILE LOOP
+		/*
 		ecgAverageProperty.addListener( new ChangeListener<Number>() {
 
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-				if( newValue.floatValue() > SVT_THRESHOLD && plethPresentProperty.get() && systolicNumeric.getValue() < SYS_THRESHOLD) {
-					okForCardiacInversionProperty.set("YES");
+				if(
+					newValue.floatValue() < LOW_ECG_HR_THRESHOLD && 
+					pulseRateProperty.floatValue() < LOW_PULSE_THRESHOLD &&
+					systolicNumeric.getValue() < SYS_THRESHOLD
+						
+				) {
+						okForCardiacInversionProperty.set("YES");
+						//inversionLabel
+						//ALERT - RULE OUT CARDIAC ARREST
+						//THEN SEND MESSAGE
 				}
 				
 			}
 			
 		});
-
+		*/
+		monitorThread=new Thread() {
+			public void run() {
+				while(true) {
+					try {
+						sleep(1000);
+					} catch (InterruptedException ie) {
+						if(pleaseStop) {
+							return;
+						}
+					}
+					if(
+							ecgAverageProperty!=null && ecgAverageProperty.floatValue() < LOW_ECG_HR_THRESHOLD && 
+							pulseRateProperty!=null && pulseRateProperty.floatValue() < LOW_PULSE_THRESHOLD &&
+							systolicNumeric!=null && systolicNumeric.getValue() < SYS_THRESHOLD
+								
+						) {
+						Platform.runLater(new Runnable() {
+							public void run() {
+								okForCardiacInversionProperty.set("YES");
+								inversionLabel.setTextFill(Color.RED);
+								postNotification();
+							}
+						});
+							
+					} else {
+						Platform.runLater(new Runnable() {
+							public void run() {
+								okForCardiacInversionProperty.set("NO");
+								inversionLabel.setTextFill(Color.BLACK);
+							}
+						});
+					}
+				}
+			}
+		};
+		monitorThread.start();
+		
+	}
+	
+	private void postNotification() {
+		NumericFx n=new NumericFx();
+		n.setMetric_id("CARDIAC_ARREST_NOTIFICATION");
+		n.setPresentation_time(new Date());
+		n.setUnique_device_identifier("CA_APP");
+		n.setValue(1);
+		numericList.add(n);
 	}
 
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
@@ -209,7 +307,8 @@ public class CardiacArrestApplication {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
+		pleaseStop=true;
+		monitorThread.interrupt();
 		
 	}
 	
@@ -241,9 +340,18 @@ public class CardiacArrestApplication {
 							addAverageListener(n);
 						}
 						
+						if(metricId.equals("MDC_PULSE_OXIM_PULS_RATE")) {
+							setPulseProperty(n);
+						}
+						
 						if(metricId.equals("MDC_PRESS_BLD_ART_ABP_SYS")) {
 							setSystolicParam(n);
 						}
+						if(metricId.equals("MDC_PULS_OXIM_PERF_REL")) {
+							addPerfListener(n);
+						}
+						
+						//
 						
 					});	//End of getAddedSubList().forEach()
 					c.getRemoved().forEach(n -> {
@@ -271,6 +379,9 @@ public class CardiacArrestApplication {
 						if( ! interested(metricId) ) {
 							return;
 						}
+//						if( metricId.equals(ARTERIAL) ) {
+//							addMaxMinListener(n);
+//						}
 						boolean found=false;
 						for(int i=0;i<tableRows.size();i++) {
 							if(tableRows.get(i).getMetricId().equals(metricId)) {
@@ -294,6 +405,7 @@ public class CardiacArrestApplication {
 					});
 				}
 			}
+
 		});
 		
 		System.err.println("In CAA.addListeners, initial list size is "+dqeList.size());
@@ -338,6 +450,35 @@ public class CardiacArrestApplication {
 		});
 	}
 	
+	class SampleValuesChangeListener implements ChangeListener<Number[]> {
+
+		@Override
+		public void changed(ObservableValue<? extends Number[]> observable, Number[] oldValue, Number[] newValue) {
+			//Ignore the old values.  Just get new ones.
+			float[] minMax=getMinAndMax(newValue);
+			
+		}
+		
+	}
+	
+	SampleValuesChangeListener bpArrayListener=new SampleValuesChangeListener();
+	
+	private void addMaxMinListener(SampleArrayFx s) {
+		s.valuesProperty().addListener(bpArrayListener);
+	}
+	
+	private float[] getMinAndMax(Number[] numbers) {
+		float[] minAndMax=new float[] {numbers[0].floatValue(),numbers[0].floatValue()};
+		for(int i=1;i<numbers.length;i++) {
+			if(numbers[i].floatValue()<minAndMax[0]) minAndMax[0]=numbers[i].floatValue();
+			if(numbers[i].floatValue()>minAndMax[1]) minAndMax[1]=numbers[i].floatValue();
+		}
+		//diastolicProperty.set((int)minAndMax[0]);
+		//systolicProperty.set((int)minAndMax[1]);
+		//This getMinAndMax method is called before the start button is pressed, in which case the numericBPDevice
+		//won't have been created yet, hence the null check.
+		return minAndMax;
+	}
 	/**
 	 * 
 	 * @param n
@@ -348,7 +489,7 @@ public class CardiacArrestApplication {
 			@Override
 			public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
 				float currentVal=n.getValue();
-				if(ecgHrCount>29) {
+				if(ecgHrCount>ECG_SAMPLE_COUNT) {
 					enoughSamplesForAverage=true;
 				}
 				if ( ecgHrCount == Integer.MAX_VALUE ) {
@@ -368,9 +509,34 @@ public class CardiacArrestApplication {
 		n.presentation_timeProperty().addListener(averageListener);
 	}
 	
+	/**
+	 * Bind our pulse rate property to the selected value.
+	 * @param n
+	 */
+	private void setPulseProperty(NumericFx n) {
+		pulseRateProperty.bind(n.valueProperty());
+	}
+	
 	private void setSystolicParam(NumericFx n) {
 		systolicNumeric=n;
 		systolicLabel.textProperty().bind(Bindings.format("Current Systolic BP: %s", systolicNumeric.valueProperty()));
+	}
+	
+	private void addPerfListener(NumericFx n) {
+		n.presentation_timeProperty().addListener(new ChangeListener<Date>() {
+
+			@Override
+			public void changed(ObservableValue<? extends Date> observable, Date oldValue, Date newValue) {
+				float val=n.getValue();
+				if(val<PERF_THRESHOLD) {
+					plethPresentProperty.set(false);
+				} else {
+					plethPresentProperty.set(true);
+				}
+				
+			}
+			
+		});
 	}
 	
 	private void removeAverageListener(NumericFx n) {

@@ -25,7 +25,7 @@ import javafx.scene.Parent;
 public class CardiacArrestApplicationFactory implements IceApplicationProvider {
 	
 	private IceApplicationProvider.AppType type=new IceApplicationProvider.AppType(
-			"Cardiac Inversion", "NoCardiac", (URL) CardiacArrestApplicationFactory.class.getResource("cardiac.jpg"), 1.0, false
+			"Cardiac Arrest Detection", "NoCardiac", (URL) CardiacArrestApplicationFactory.class.getResource("cardiac.jpg"), 1.0, false
 		);
 
 	@Override
