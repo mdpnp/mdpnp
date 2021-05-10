@@ -735,9 +735,17 @@ public class DataQualityMonitorApp {
 			NumericFx numeric = n.getNumeric();
 			SampleArrayFx sampleArray = n.getSampleArray();
 			if (numeric != null) {
-				return numeric.getSQI_accuracy();
+				float testAccuracy=numeric.getSQI_accuracy();
+				if(testAccuracy<0) {
+					return 1;
+				}
+				else return testAccuracy;
 			} else if (sampleArray != null) {
-				return sampleArray.getSQI_accuracy();
+				float testAccuracy=sampleArray.getSQI_accuracy();
+				if(testAccuracy<0) {
+					return 1;
+				}
+				else return testAccuracy;
 			} else {
 				return 0;
 			}
@@ -746,6 +754,9 @@ public class DataQualityMonitorApp {
 
 	private Double determineCompleteness(Collection<DataQualityMetric> collection) {
 		return collection.stream().mapToDouble(n -> {
+			if(n.getFrequency()<0) {
+				return 100f;
+			}
 			Date minDate = collection.stream().map(p -> {
 				return p.getPresentationDate();
 			}).min(Date::compareTo).get();
@@ -756,7 +767,7 @@ public class DataQualityMonitorApp {
 			double sumOfSamples = collection.stream().mapToInt(p -> {
 				return p.getSampleCount();
 			}).sum();
-
+			
 			double perfectSumOfSamples = n.getFrequency() * elapsedTime;
 			return sumOfSamples / perfectSumOfSamples * 100.000f;
 		}).average().orElse(0);

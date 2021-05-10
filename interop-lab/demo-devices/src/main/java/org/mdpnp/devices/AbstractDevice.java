@@ -341,7 +341,13 @@ public abstract class AbstractDevice {
     }
 
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
-        numericSample(holder, newValue, new NumericSQI(), time);
+    	NumericSQI sqi=new NumericSQI();
+    	sqi.accuracy=-1;
+    	sqi.frequency=-1;
+    	sqi.accuracy_duration=-1;
+    	sqi.completeness=-1;
+    	sqi.precision=-1;
+        numericSample(holder, newValue, sqi, time);
     }
     
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, NumericSQI sqi, DeviceClock.Reading time) {
