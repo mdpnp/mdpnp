@@ -26,13 +26,20 @@ public class SQLDatabaseValidator {
 	}
 
 	private static String getTableNameFromResourcePath(String path) {
-		String[] pathComponents = path.split(fileSeparator);
+		String[] pathComponents = path.split(escape(fileSeparator));
 		final String fileName = pathComponents != null && pathComponents.length > 0
 				? pathComponents[pathComponents.length - 1]
 				: "";
 		final int fileNameLength = fileName.length();
 		return fileNameLength >= FILE_ENDING.length() + 1 ? fileName.substring(0, fileNameLength - FILE_ENDING.length())
 				: null;
+	}
+
+	private static String escape(String input) {
+		if(input.charAt(0)=='\\') {
+			return "\\\\";
+		}
+		return input;
 	}
 
 	private static boolean tableExists(String tableName) throws SQLException, DatabaseConnectionException {
