@@ -107,7 +107,7 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
-
+	
     protected final InstanceHolder<SampleArray> getSampleArrayUpdate(ObservedValue ov, int handle) {
         Map<Integer, InstanceHolder<SampleArray>> forObservedValue = sampleArrayUpdates.get(ov);
         if (null == forObservedValue) {
@@ -165,6 +165,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
     private long lastKeepAlive = 0L;
     private long lastMessageSentTime = 0L;
     
+    private static final NumericSQI noSQIData=new NumericSQI();
     
     private enum DisconnectState {
         Initial,
@@ -645,7 +646,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 RosettaUnits.units(unit), sampleTime));
                     } else {
                         putNumericUpdate(ov, handle,
-                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), new NumericSQI(), metricId, ov.toString(), handle,
+                                numericSample(getNumericUpdate(ov, handle), observed.getValue().floatValue(), noSQIData, metricId, ov.toString(), handle,
                                     RosettaUnits.units(unit), sampleTime));
                     }
                 } else {
@@ -813,7 +814,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 if(null == c) {
                                     putSampleArrayUpdate(ov, handle, null);
                                 } else {
-                                    sampleArraySample(sa, c, new NumericSQI(), fakeSampleTime);
+                                    sampleArraySample(sa, c, noSQIData, fakeSampleTime);
                                 }
                             }
                         } else {
@@ -823,7 +824,7 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
                                 putSampleArrayUpdate(
                                         ov, handle,
                                         sampleArraySample(getSampleArrayUpdate(ov, handle), sampleCache.emitSamples(samples, metric_id+" "+handle),
-                                        new NumericSQI(),
+                                        noSQIData,
                                         metric_id, ov.toString(), handle, 
                                         RosettaUnits.units(unitCode),
                                         (int)(1000L / rt.toMilliseconds()), fakeSampleTime));
@@ -1013,6 +1014,8 @@ public abstract class AbstractDemoIntellivue extends AbstractConnectedDevice {
         };
         watchdogTask.setInterval(WATCHDOG_INTERVAL);
         networkLoop.add(watchdogTask);
+        
+        noSQIData.accuracy=noSQIData.accuracy_duration=noSQIData.completeness=noSQIData.frequency=noSQIData.precision=-1;
 
     }
 
