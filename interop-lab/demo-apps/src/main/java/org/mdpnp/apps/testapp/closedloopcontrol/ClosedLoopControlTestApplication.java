@@ -81,6 +81,7 @@ import ice.FroaAlarmType;
 import ice.MDSConnectivity;
 import ice.Patient;
 import ice.SafetyFallbackType;
+import impl.org.controlsfx.i18n.SimpleLocalizedStringProperty;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -120,6 +121,8 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
+
+import javafx.beans.property.SimpleStringProperty;
 
 public class ClosedLoopControlTestApplication implements EventHandler<ActionEvent> {
 	
@@ -163,6 +166,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	@FXML private Button startButton;
 	@FXML private Label patientNameLabel;
 	@FXML private Label currentPumpSpeed;
+	@FXML private Label currentBpSourceLabel;
 	
 	
 	private final String FLOW_RATE=rosetta.MDC_FLOW_FLUID_PUMP.VALUE;
@@ -582,6 +586,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 									public void changed(ObservableValue<? extends Number> observable, Number oldValue,
 											Number newValue) {
 										backupSys.set(newValue.floatValue());
+										System.err.println("Calculating backup BP mean using systolic "+newValue.floatValue()+" and dia "+backupDia.floatValue());
+										float meanCalc=(newValue.floatValue()+(2*backupDia.floatValue()))/3;
+										currentMean.setText(Integer.toString((int)meanCalc));
 									}
 
 								});
@@ -830,7 +837,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							String bpMetricUDI=bp.getUDI();
 							
 							String errorMetric=d.getMetric_id();
-							if(errorUDI.equals(bpMetricUDI) /* && errorMetric.equals(ARTERIAL) */ ) {
+							if(errorMetric.startsWith(ARTERIAL)/*errorUDI.equals(bpMetricUDI)  && errorMetric.equals(ARTERIAL) */ ) {
 								if( ! doNotFallback ) {
 									Alert alert=new Alert(AlertType.ERROR,"Unreliable data error for BP Source.  Switching to fallback",ButtonType.OK);
 									alert.showAndWait();
@@ -839,6 +846,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 									Alert alert=new Alert(AlertType.ERROR,"Data quality error - but Cardiac Arreset Detected.  Not falling back",ButtonType.OK);
 									alert.showAndWait();
 								}
+							} else {
+								
 							}
 
 						}
@@ -859,6 +868,9 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		try {
 			diastolicProperty.bind(backupDia);
 			systolicProperty.bind(backupSys);
+			float meanCalc=(backupSys.floatValue()+(2*backupDia.floatValue()))/3;
+			currentMean.setText(Integer.toString((int)meanCalc));
+			bpSourceProperty.set("SECONDARY");
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error("problem switching to backup BP",e);
@@ -1134,6 +1146,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	}
 	
 	NumericFx[] flowRateFromSelectedPump=new NumericFx[1];
+	
+	SimpleStringProperty bpSourceProperty=new SimpleStringProperty();
 
 	private void runForMode() {
 		//Get a whole graph thing...
@@ -1148,7 +1162,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
         	
         	Parent node = loader.load();
             Chart chart = loader.getController();
-
+            chart.setShowDeviceName(false);
+            
             long now = System.currentTimeMillis();
             now -= now % 1000;
             dateAxis=new DateAxis(new Date(now - interval), new Date(now));
@@ -1201,10 +1216,19 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 		);
         currentPumpSpeed.textProperty().bind(Bindings.format("Current flow rate (ml/hour) %.2f", flowRateFromSelectedPump[0].valueProperty()));
         currentPumpSpeed.setFont(Font.font(24));
+        bpSourceProperty.set("PRIMARY");
+        currentBpSourceLabel.textProperty().bind(Bindings.format("Current BP Source %s", bpSourceProperty));
+        currentBpSourceLabel.setFont(Font.font(24));
 		if(openRadio.isSelected()) {
 			
 		} else {
 			closedLoopAlgo();
+		}
+		
+		if(currentBPSample!=null) {
+			diastolicProperty.unbind();
+			systolicProperty.unbind();
+			currentBPSample.valuesProperty().addListener(bpArrayListener);
 		}
 		
 		createNumericDevice();

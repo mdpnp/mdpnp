@@ -737,13 +737,13 @@ public class DataQualityMonitorApp {
 			if (numeric != null) {
 				float testAccuracy=numeric.getSQI_accuracy();
 				if(testAccuracy<0) {
-					return 1;
+					return 100f;
 				}
 				else return testAccuracy;
 			} else if (sampleArray != null) {
 				float testAccuracy=sampleArray.getSQI_accuracy();
 				if(testAccuracy<0) {
-					return 1;
+					return 100f;
 				}
 				else return testAccuracy;
 			} else {
@@ -784,15 +784,25 @@ public class DataQualityMonitorApp {
 					.get(getDeviceMetricKey(deviceId, MDC_PRESS_BLD_ART_ABP_SYS.VALUE));
 
 			if (diastolicNIBP != null && diastolicNIBP.size() > 0 && systolicNIBP != null && systolicNIBP.size() > 0) {
-				float diastolic = Iterables.getLast(diastolicNIBP).getNumeric().getValue();
-				float systolic = Iterables.getLast(systolicNIBP).getNumeric().getValue();
+				/*
+				 * Make an array of credibility values, the same size as the list of diastolics.  During the processing,
+				 * we'll check that each diastolic has a matching systolic - or rather, one at the same position in the
+				 * list.  DO WE NEED SYNCHRONIZATION HERE?  CHECK THE DOCS.  WE MAY WELL NEED THAT.
+				 */
+				double finalCredible=0;
+				for(int i=0;i<diastolicNIBP.size();i++) {
+					float diastolic = Iterables.get(diastolicNIBP,i).getNumeric().getValue();
+					float systolic = Iterables.get(systolicNIBP,i).getNumeric().getValue();
 
-				double credible = 1.0;
-				double pm = diastolic + (systolic - diastolic) / 3;
-				if (diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
-					credible = 0.0;
+					double credible = 1.0;
+					double pm = diastolic + (systolic - diastolic) / 3;
+					if (diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
+						credible = 0.0;
+					}
+					finalCredible+=credible;
 				}
-				wrapper.setCredibility(credible);
+				finalCredible=finalCredible/diastolicNIBP.size();
+				wrapper.setCredibility(finalCredible);
 			}
 			break;
 		case MDC_ECG_HEART_RATE.VALUE:
@@ -800,12 +810,22 @@ public class DataQualityMonitorApp {
 			Collection<DataQualityMetric> heartRateECG = Multimaps.synchronizedMultimap(deviceNetworkQualityMetrics)
 					.get(getDeviceMetricKey(deviceId, MDC_ECG_HEART_RATE.VALUE));
 			if (heartRateECG != null && heartRateECG.size() > 0) {
-				float heartRate = Iterables.getLast(heartRateECG).getNumeric().getValue();
-				double credible = 1.0;
-				if (heartRate < 20 || heartRate > 200) {
-					credible = 0.0;
+				/*
+				 * Make an array of credibility values, the same size as the list of diastolics.  During the processing,
+				 * we'll check that each diastolic has a matching systolic - or rather, one at the same position in the
+				 * list.  DO WE NEED SYNCHRONIZATION HERE?  CHECK THE DOCS.  WE MAY WELL NEED THAT.
+				 */
+				double finalCredible=0;
+				for(int i=0;i<heartRateECG.size();i++) {
+					double credible = 1.0;
+					float heartRate = Iterables.get(heartRateECG,i).getNumeric().getValue();
+					if (heartRate < 20 || heartRate > 200) {
+						credible = 0.0;
+					}
+					finalCredible+=credible;
 				}
-				wrapper.setCredibility(credible);
+				finalCredible=finalCredible/heartRateECG.size();
+				wrapper.setCredibility(finalCredible);
 			}
 			break;
 		}

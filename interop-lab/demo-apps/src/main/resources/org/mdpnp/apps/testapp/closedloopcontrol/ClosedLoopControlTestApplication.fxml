@@ -20,6 +20,7 @@
 			  <Label fx:id="lastBPUpdate">Last BP update</Label>
 			  <Label fx:id="lastPumpSQI">BP SQI</Label>
 			  <Label fx:id="currentPumpSpeed">Current Pump Speed</Label>
+			  <Label fx:id="currentBpSourceLabel">Current BP Source</Label>
 			</children>
           </VBox>
 		</children>
