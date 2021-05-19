@@ -31,7 +31,16 @@ public class Chart {
     @FXML Button removeButton;
     @FXML BorderPane main;
     
-    // TODO externalize this setting
+    private boolean showDeviceName=true;
+
+    public boolean isShowDeviceName() {
+		return showDeviceName;
+	}
+	public void setShowDeviceName(boolean showDeviceName) {
+		this.showDeviceName = showDeviceName;
+	}
+
+	// TODO externalize this setting
     private static final int MAX_POINTS = 25000;
     
     private Vital vital;
@@ -86,9 +95,17 @@ public class Chart {
         
         String humanReadable=HumanReadable.MetricLabels.get(vsl.v.getMetricId());
         if(null!=humanReadable) {
-        	vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getDevice().getMakeAndModel()+"\n"+humanReadable));
+        	if(showDeviceName) {
+        		vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getDevice().getMakeAndModel()+"\n"+humanReadable));
+        	} else {
+        		vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(humanReadable));
+        	}
         } else {
-        	vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getDevice().getMakeAndModel()+"\n"+vsl.v.getMetricId()));
+        	if(showDeviceName) {
+        		vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getDevice().getMakeAndModel()+"\n"+vsl.v.getMetricId()));
+        	} else {
+        		vsl.s.nameProperty().bind(new ReadOnlyStringWrapper(vsl.v.getMetricId()));
+        	}
         }
         series.add(vsl.s);
         vsl.v.timestampProperty().addListener(vsl.l = new ChangeListener<Date>() {
