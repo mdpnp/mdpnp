@@ -76,7 +76,7 @@ public class DataQualityMonitorApp {
 	private static final float PULSE_CONSISTENCY_WINDOW_DEFAULT = 30.0f;
 	private static final float BP_CONSISTENCY_WINDOW_DEFAULT = 60.0f;
 	private static final int CURRENTNESS_THRESHOLD_DEFAULT = 10;
-	private static final int CREDIBILITY_THRESHOLD_DEFAULT = 1;
+	private static final float CREDIBILITY_THRESHOLD_DEFAULT = 1;
 	private static final int INFUSION_RATE_CONSISTENCY_THRESHOLD_DEFAULT = 30;
 	private static final int BP_CONSISTENCY_THRESHOLD_DEFAULT = 20;
 	private static final int PULSE_CONSISTENCY_THRESHOLD_DEFAULT = 20;
@@ -105,7 +105,7 @@ public class DataQualityMonitorApp {
 	private static int PULSE_CONSISTENCY_THRESHOLD;
 	private static int BP_CONSISTENCY_THRESHOLD;
 	private static int INFUSION_RATE_CONSISTENCY_THRESHOLD;
-	private static int CREDIBILITY_THRESHOLD;
+	private static float CREDIBILITY_THRESHOLD;
 	private static int CURRENTNESS_THRESHOLD;
 	private static double BP_CONSISTENCY_WINDOW;
 	private static double PULSE_CONSISTENCY_WINDOW;
@@ -178,7 +178,9 @@ public class DataQualityMonitorApp {
 
 		CREDIBILITY_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_CREDIBILITY_THRESHOLD) == null
 				? CREDIBILITY_THRESHOLD_DEFAULT
-				: Integer.parseInt(System.getProperty(MDPNP_MONITOR_DATAQUALITY_CREDIBILITY_THRESHOLD));
+				: Float.parseFloat(System.getProperty(MDPNP_MONITOR_DATAQUALITY_CREDIBILITY_THRESHOLD));
+		
+		System.err.println("Credibility threshold is "+CREDIBILITY_THRESHOLD);
 
 		CURRENTNESS_THRESHOLD = System.getProperty(MDPNP_MONITOR_DATAQUALITY_CURRENTNESS_THRESHOLD) == null
 				? CURRENTNESS_THRESHOLD_DEFAULT
@@ -796,7 +798,7 @@ public class DataQualityMonitorApp {
 
 					double credible = 1.0;
 					double pm = diastolic + (systolic - diastolic) / 3;
-					if (diastolic <= 20 || systolic >= 300 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
+					if (diastolic <= 20 || systolic >= 295 || (systolic - diastolic) < 20 || pm < 30 || pm > 200) {
 						credible = 0.0;
 					}
 					finalCredible+=credible;
