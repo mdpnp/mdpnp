@@ -428,6 +428,7 @@ module ice {
     LongString requestor;
     float newFlowRate;
     float fallbackRate;
+    float interval;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist FlowRateObjective unique_device_identifier
   const string FlowRateObjectiveTopic = "FlowRateObjective";
@@ -481,7 +482,16 @@ struct BPPauseResumeObjective {
   #pragma keylist BPObjective unique_device_identifier
   const string BPPauseResumeObjectiveTopic = "BPPauseResumeObjective";
 
-   
+/**
+ * SK - topic to tell a non invasive BP monitor device to take to stop taking the BP measurement.
+*/
+ struct TakeOrStopBPObjective {
+	UniqueDeviceIdentifier unique_device_identifier;	//@key
+	boolean take_or_stop;	//True to take BP, false to stop
+};
+  #pragma keylist TakeOrStopBPObjective unique_device_identifier
+  const string TakeOrStopBPObjectiveTopic = "TakeOrStopBPObjective";
+
   /**
    * Speculative topic used for the PCA demonstration. Only currently used by infusion 
    * pump simulators. But this is meant to represent the current state of an infusion 

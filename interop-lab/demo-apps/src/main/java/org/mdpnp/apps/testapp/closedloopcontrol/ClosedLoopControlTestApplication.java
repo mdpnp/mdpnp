@@ -79,8 +79,16 @@ import ice.FlowRateObjective;
 import ice.FlowRateObjectiveDataWriter;
 import ice.FroaAlarmType;
 import ice.MDSConnectivity;
+import ice.Numeric;
+import ice.NumericDataWriter;
+import ice.NumericTopic;
+import ice.NumericTypeSupport;
 import ice.Patient;
 import ice.SafetyFallbackType;
+import ice.TakeOrStopBPObjective;
+import ice.TakeOrStopBPObjectiveDataWriter;
+import ice.TakeOrStopBPObjectiveTopic;
+import ice.TakeOrStopBPObjectiveTypeSupport;
 import impl.org.controlsfx.i18n.SimpleLocalizedStringProperty;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -135,6 +143,7 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	private SafetyFallbackObjectiveFxList safetyFallbackObjectiveList;
 	private DataQualityErrorObjectiveFxList dqeList;
 	private FlowRateObjectiveDataWriter writer;
+	private TakeOrStopBPObjectiveDataWriter takeStopWriter;
 	private MDSHandler mdsHandler;
 	private VitalModel vitalModel;
 	private EMRFacade emr;
@@ -280,6 +289,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 */
 	private Topic froaAlarmTopic;
 	
+	private Topic takeOrStopTopic;
+	
 	/**
 	 * DataWriter to use for FROA alarms.
 	 */
@@ -299,6 +310,8 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 	 * Instance handle for diastolic alarm
 	 */
 	private InstanceHandle_t diaAlarmHandle;
+	
+	private InstanceHandle_t takeOrStopHandle;
 	
 	/**
 	 * Systolic alarm instance
@@ -602,19 +615,19 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 								public void changed(ObservableValue<? extends Number> observable, Number oldValue,
 										Number newValue) {
 									if(newValue.floatValue()==1) {
-										System.err.println("Set doNotFallback to true 2");
+										System.err.println(System.currentTimeMillis()+" Set doNotFallback to true 2");
 										doNotFallback=true;
 									} else {
-										System.err.println("Set doNotFallback to false 2");
+										System.err.println(System.currentTimeMillis()+" Set doNotFallback to false 2");
 										doNotFallback=false;
 									}
 								}
 							});
 							if(n.getValue()==1) {
-								System.err.println("Set doNotFallback to true 1");
+								System.err.println(System.currentTimeMillis()+" Set doNotFallback to true 1");
 								doNotFallback=true;
 							} else {
-								System.err.println("Set doNotFallback to false 1");
+								System.err.println(System.currentTimeMillis()+" Set doNotFallback to false 1");
 								doNotFallback=false;
 							}
 						}
@@ -838,13 +851,28 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 							
 							String errorMetric=d.getMetric_id();
 							if(errorMetric.startsWith(ARTERIAL)/*errorUDI.equals(bpMetricUDI)  && errorMetric.equals(ARTERIAL) */ ) {
+								try {
+									Thread.sleep(7500);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								System.err.println(System.currentTimeMillis()+" alert is for "+errorMetric+" issue of type "+d.getData_quality_attribute_type().toString()+" and doNotFallback is "+doNotFallback);
 								if( ! doNotFallback ) {
-									Alert alert=new Alert(AlertType.ERROR,"Unreliable data error for BP Source.  Switching to fallback",ButtonType.OK);
+									Alert alert=new Alert(AlertType.ERROR,"Unreliable data error for BP Source for " + errorMetric + " issues of type "+d.getData_quality_attribute_type().toString()+" Switching to fallback",ButtonType.OK);
 									alert.showAndWait();
 									switchBPSource();
 								} else {
-									Alert alert=new Alert(AlertType.ERROR,"Data quality error - but Cardiac Arreset Detected.  Not falling back",ButtonType.OK);
-									alert.showAndWait();
+									if( ! fallbackCountdown.isAlive()) {
+										fallbackCountdown.start();
+									}
+									if(fallbackCountdown.shouldShowAlert()) {
+										//Show another alert.
+										Alert alert=new Alert(AlertType.ERROR,"Data quality error "+errorMetric+" of type "+d.getData_quality_attribute_type().toString()+ "- but Cardiac Arreset Detected.  Not falling back",ButtonType.OK);
+										alert.showAndWait();
+										fallbackCountdown.resetCountdown();
+									}
+									//else, don't show an alarm...
 								}
 							} else {
 								
@@ -862,8 +890,35 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 
 	}
 	
+	
+	
+	class FallbackCountdown extends Thread {
+		
+		private int fallbackCountdownFrom=-1;
+		
+		public void run() { 
+			try { 
+				sleep(1000);
+				fallbackCountdownFrom--;
+			} catch (InterruptedException ie) {
+				return;
+			}
+		}
+		
+		boolean shouldShowAlert() {
+			return fallbackCountdownFrom<1;
+		}
+		
+		void resetCountdown() {
+			fallbackCountdownFrom=60;
+		}
+	}
+	
+	private FallbackCountdown fallbackCountdown=new FallbackCountdown();
+	
 	private void switchBPSource() {
 		//What do we need to do here?
+		System.err.println(System.currentTimeMillis()+" Executing switchBPSource");
 		currentBPSample.valuesProperty().removeListener(bpArrayListener);
 		try {
 			diastolicProperty.bind(backupDia);
@@ -871,6 +926,34 @@ public class ClosedLoopControlTestApplication implements EventHandler<ActionEven
 			float meanCalc=(backupSys.floatValue()+(2*backupDia.floatValue()))/3;
 			currentMean.setText(Integer.toString((int)meanCalc));
 			bpSourceProperty.set("SECONDARY");
+			
+			Device d=bpsources2.getSelectionModel().getSelectedItem();
+			String udi=d.getUDI();
+			
+			TakeOrStopBPObjective obj=new TakeOrStopBPObjective();
+			obj.take_or_stop=true;
+			obj.unique_device_identifier=udi;
+			
+			if(participant==null) {
+				participant=assignedSubscriber.get_participant();
+			}
+			TakeOrStopBPObjectiveTypeSupport.register_type(participant, TakeOrStopBPObjectiveTypeSupport.get_type_name());
+			
+			if(takeOrStopTopic==null) {
+				takeOrStopTopic=TopicUtil.findOrCreateTopic(participant, TakeOrStopBPObjectiveTopic.VALUE, TakeOrStopBPObjectiveTypeSupport.class);
+			}
+			
+			if(takeStopWriter==null) {
+				takeStopWriter=(TakeOrStopBPObjectiveDataWriter)publisher.create_datawriter_with_profile(takeOrStopTopic, QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
+			}
+			
+			if(takeOrStopHandle==null) {
+				takeOrStopHandle=takeStopWriter.register_instance(obj);
+			}
+			takeStopWriter.write(obj, takeOrStopHandle);
+			System.err.println("Published take or stop for CARDIAC_ARREST_APPLICATION");
+			
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error("problem switching to backup BP",e);
