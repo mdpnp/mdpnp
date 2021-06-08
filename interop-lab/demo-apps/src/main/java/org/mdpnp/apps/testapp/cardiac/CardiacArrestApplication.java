@@ -20,6 +20,8 @@ import org.mdpnp.apps.testapp.patient.EMRFacade;
 import org.mdpnp.apps.testapp.vital.VitalModel;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.mdpnp.rtiapi.data.QosProfiles;
+import org.mdpnp.rtiapi.data.TopicUtil;
 import org.springframework.context.ApplicationContext;
 import javafx.collections.*;
 import javafx.application.Platform;
@@ -30,10 +32,19 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
 
 import ice.DataQualityAttributeType;
 import ice.FlowRateObjectiveDataWriter;
+import ice.Numeric;
+import ice.NumericDataWriter;
+import ice.NumericTopic;
+import ice.NumericTypeSupport;
 
 public class CardiacArrestApplication {
 
@@ -41,6 +52,12 @@ public class CardiacArrestApplication {
 	private NumericFxList numericList;
 	private SampleArrayFxList sampleList;
 	private DataQualityErrorObjectiveFxList dqeList;
+	private Publisher publisher;
+	private Subscriber subscriber;
+	private NumericDataWriter numericWriter;
+	private Topic numericTopic;
+	private DomainParticipant participant;
+	private InstanceHandle_t numericHandle;
 	
 	@FXML
 	private ObservableList<CardiacParameter> tableRows;
@@ -84,7 +101,7 @@ public class CardiacArrestApplication {
 	/**
 	 * The low heart rate threshold
 	 */
-	private static final float LOW_ECG_HR_THRESHOLD=20;
+	private static final float LOW_ECG_HR_THRESHOLD=25;
 	
 	/**
 	 * The cardiac inversion threshold value for Systolic BP.
@@ -197,11 +214,14 @@ public class CardiacArrestApplication {
 	public void set(ApplicationContext parentContext, DeviceListModel deviceListModel, NumericFxList numericList,
 			SampleArrayFxList sampleList, SafetyFallbackObjectiveFxList safetyFallbackObjectiveList,
 			MDSHandler mdsHandler, VitalModel vitalModel,
-			Subscriber subscriber, EMRFacade emr, DataQualityErrorObjectiveFxList dataQualityErrorObjectiveList) {
+			Subscriber subscriber, EMRFacade emr, DataQualityErrorObjectiveFxList dataQualityErrorObjectiveList,
+			Publisher publisher) {
 		this.deviceListModel=deviceListModel;
 		this.numericList=numericList;
 		this.sampleList=sampleList;
 		this.dqeList=dataQualityErrorObjectiveList;
+		this.publisher=publisher;
+		this.subscriber=subscriber;
 		
 		//CardiacParameter param=new CardiacParameter("CODE_ROW", true, false, true, true, true);
 		//tableRows.add(param);
@@ -254,16 +274,16 @@ public class CardiacArrestApplication {
 						}
 					}
 					if(
-							ecgAverageProperty!=null && ecgAverageProperty.floatValue() < LOW_ECG_HR_THRESHOLD && 
-							pulseRateProperty!=null && pulseRateProperty.floatValue() < LOW_PULSE_THRESHOLD &&
-							systolicNumeric!=null && systolicNumeric.getValue() < SYS_THRESHOLD
+							ecgAverageProperty!=null && ecgAverageProperty.floatValue() <= LOW_ECG_HR_THRESHOLD && 
+							//pulseRateProperty!=null && pulseRateProperty.floatValue() <= LOW_PULSE_THRESHOLD &&
+							systolicNumeric!=null && systolicNumeric.getValue() <= SYS_THRESHOLD
 								
 						) {
+						postNotification();
 						Platform.runLater(new Runnable() {
 							public void run() {
 								okForCardiacInversionProperty.set("YES");
 								inversionLabel.setTextFill(Color.RED);
-								postNotification();
 							}
 						});
 							
@@ -283,12 +303,38 @@ public class CardiacArrestApplication {
 	}
 	
 	private void postNotification() {
+		/*
 		NumericFx n=new NumericFx();
 		n.setMetric_id("CARDIAC_ARREST_NOTIFICATION");
 		n.setPresentation_time(new Date());
 		n.setUnique_device_identifier("CA_APP");
 		n.setValue(1);
 		numericList.add(n);
+		*/
+		
+		Numeric numeric=new Numeric();
+		numeric.unique_device_identifier="CA_APP";
+		numeric.value=1;
+		numeric.metric_id="CARDIAC_ARREST_NOTIFICATION";
+		
+		if(participant==null) {
+			participant=subscriber.get_participant();
+		}
+		NumericTypeSupport.register_type(participant, NumericTypeSupport.get_type_name());
+		
+		if(numericTopic==null) {
+			numericTopic=TopicUtil.findOrCreateTopic(participant, NumericTopic.VALUE, NumericTypeSupport.class);
+		}
+		
+		if(numericWriter==null) {
+			numericWriter=(NumericDataWriter)publisher.create_datawriter_with_profile(numericTopic, QosProfiles.ice_library, QosProfiles.numeric_data, null, StatusKind.STATUS_MASK_NONE);
+		}
+		
+		if(numericHandle==null) {
+			numericHandle=numericWriter.register_instance(numeric);
+		}
+		numericWriter.write(numeric, numericHandle);
+		System.err.println("Published numeric for CARDIAC_ARREST_APPLICATION");
 	}
 
 	public void start(EventLoop eventLoop, Subscriber subscriber) {

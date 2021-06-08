@@ -15,6 +15,7 @@ import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.ApplicationContext;
 
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
 import ice.DataQualityErrorObjectiveDataWriter;
@@ -46,6 +47,8 @@ public class CardiacArrestApplicationFactory implements IceApplicationProvider {
 		final SafetyFallbackObjectiveFxList safetyFallbackObjectiveList = parentContext.getBean("safetyFallbackObjectiveList", SafetyFallbackObjectiveFxList.class);
 		
 		final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
+		
+		final Publisher publisher = (Publisher) parentContext.getBean("publisher");
 
         final EventLoop eventLoop = (EventLoop) parentContext.getBean("eventLoop");
         
@@ -64,7 +67,7 @@ public class CardiacArrestApplicationFactory implements IceApplicationProvider {
        
         final CardiacArrestApplication controller = ((CardiacArrestApplication) loader.getController());
         
-        controller.set(parentContext, deviceListModel, numericList, sampleList, safetyFallbackObjectiveList, mdsHandler, vitalModel, subscriber, emr, dqeList);
+        controller.set(parentContext, deviceListModel, numericList, sampleList, safetyFallbackObjectiveList, mdsHandler, vitalModel, subscriber, emr, dqeList, publisher);
         
         controller.start(eventLoop, subscriber);
 		
