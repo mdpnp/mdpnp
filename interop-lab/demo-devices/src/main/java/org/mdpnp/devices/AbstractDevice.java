@@ -482,7 +482,9 @@ public abstract class AbstractDevice {
     }
 
     protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
-    	return numericSample(holder, newValue, new NumericSQI(), metric_id, vendor_metric_id, instance_id, unit_id, time);
+    	NumericSQI nsqi=new NumericSQI();
+    	nsqi.accuracy=nsqi.accuracy_duration=nsqi.completeness=nsqi.frequency=nsqi.precision=-1;
+    	return numericSample(holder, newValue, nsqi, metric_id, vendor_metric_id, instance_id, unit_id, time);
     }
     
     protected InstanceHolder<Numeric> numericSample(InstanceHolder<Numeric> holder, Float newValue, NumericSQI sqi, String metric_id, String vendor_metric_id, int instance_id, String unit_id, DeviceClock.Reading time) {
