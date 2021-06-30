@@ -1,0 +1,668 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.0,2dic14,ajm CODEGENII-400 Incorrect alignment in C/C++ for optional member. Refactor in java
+##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##2.0,24sept13,ajm CODEGENII-92 Support for optional members
+##10a,13jun13,ajm CODEGENII-109 joining the type variables in the constructMap 
+##10a,8mar13, ajm CODEGENII-30 and CODEGENII-87 Code reviews and Xtypes in Java 
+##10a,6feb12,ajm CODEGENII-30 Starting review of the templates to match the
+## guidelines we are following for C/C++
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,31oct12, ajm RTIDDSGEN-34 support for the first set of copy directives (java ones)
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,14sep11,jmt Refactor typedef
+##10a,29ag11,jmt Fixing macros consistency by adding the missing parameters
+##10a,29ag11,jmt Refactor of variables and cleaning loops
+##10a,25ag11,jmt Adding support for arrays of sequences.
+##10a,22ag11,jmt Adding support for sequences.
+##10a,10ag11,jmt Adding support for arrays of basic types
+##10a,08ag11,jmt Adding support for constant types
+##10a,05ag11,jmt Modification of the history header (a comment missing)
+##10a,04ag11,jmt Adding all the basic type and testing them
+##           ajm Fixing the bug for a struct without a module
+##10a,04ag11,jmt adding modification history header
+##10a,02ag11,jmt New dessing using auxiliary files for the macros
+##10a,02ag11,jmt Moved to be under the path "resource/templates/java/"
+##10a,02ag11,jmt created
+##========================================================================*/*#
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+#* This file contains macros used by more than one     *#
+#* template.                                           *#
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+
+
+#macro(assignTypeVariables $constructMap $extensibility)
+#*--*##if (!$constructMap.memberFieldMapList.initialized)
+#*----*##set($constructMap.memberFieldMapList.initialized="true") ##We check that this set is only done once
+#*----*##foreach ($member in $constructMap.memberFieldMapList)
+#*------*##assignMemberVariables ($member $extensibility $constructMap)
+#*----*##end##foreach
+#*--*##end##if
+#*--*##if (!$constructMap.typeCodeMemberFieldMapList.initialized)
+#*----*##set($constructMap.typeCodeMemberFieldMapList.initialized="true") ##We check that this set is only done once
+#*----*##foreach ($member in $constructMap.typeCodeMemberFieldMapList)
+#*------*##assignMemberVariables ($member $extensibility)
+#*----*##end##foreach
+#*--*##end##if
+#end##macro
+
+#macro(assignMemberVariables $member $extensibility $constructMap)
+#*--*##if (!$member.initialized)
+#*----*##set($member.initialized="true") ##We check that this set is only done once
+#*----*##if($member.typeName)## to avoid warnings because of the directive members
+#*------*##if($extensibility.equals("MUTABLE_EXTENSIBILITY")|| $member.isOptional)
+#*-------*##set($member.currentAlignment="(xcdr1? 0 : currentAlignment)")
+#*-----*##else
+#*-------*##set($member.currentAlignment="currentAlignment")
+#*-------*##end
+#*----*##if($extensibility.equals("MUTABLE_EXTENSIBILITY") || $member.isOptional)
+#*----*##assignNeedExtendedId($member)
+#*----*##end
+#if($member.typeKind=="user" ||$member.typeKind=="enum" )
+ #set($member.typeClass=$member.typeName)  
+ #set($member.defaultValue="null")
+#set($member.nativeTypeSeq="${member.nativeTypeFQName}${envMap.typeSeqSuffix}")
+#elseif($member.typeName=="char")  #*
+*#  
+#set($member.typeClass="Character")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_CHAR")
+#set($member.nativeTypeSeq="CharSeq")
+#set($member.typeEnum="CdrPrimitiveType.BYTE")
+#set($member.elementSerializeMethod="writeChar")
+#set($member.arraySerializeMethod="writeCharArray")
+#set($member.sequenceSerializeMethod="writeCharSeq")
+#set($member.elementDeserializeMethod="readChar")
+#set($member.arrayDeserializeMethod="readCharArray")
+#set($member.sequenceDeserializeMethod="readCharSequence")
+#set($member.elementSkipMethod="skipChar")
+#set($member.arraySkipMethod="skipCharArray")
+#set($member.sequenceSkipMethod="skipCharSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.CHAR_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.CHAR_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getCharMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getCharArrayMaxSizeSerialized")
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getCharSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getCharSequenceSerializedSize")
+    
+#elseif($member.typeName=="wchar") #*
+*# 
+#set($member.typeClass="Character")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_WCHAR")
+#set($member.nativeTypeSeq="WcharSeq")
+#set($member.typeEnum="CdrPrimitiveType.CHAR")
+#set($member.elementSerializeMethod="writeWchar")
+#set($member.arraySerializeMethod="writeWcharArray")
+#set($member.sequenceSerializeMethod="writeWcharSeq")
+#set($member.elementDeserializeMethod="readWchar")
+#set($member.arrayDeserializeMethod="readWcharArray")
+#set($member.sequenceDeserializeMethod="readWcharSequence")
+#set($member.elementSkipMethod="skipWchar")
+#set($member.arraySkipMethod="skipWcharArray")
+#set($member.sequenceSkipMethod="skipWcharSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.WCHAR_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.WCHAR_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getWCharMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getWCharArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getWCharSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getWCharSequenceSerializedSize")
+
+#elseif($member.typeName=="octet" || $member.typeName.equals("int8") || $member.typeName.equals("uint8"))  #*
+*#  
+#set($member.typeClass="Byte")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_OCTET")
+#set($member.nativeTypeSeq="ByteSeq")
+#set($member.typeEnum="CdrPrimitiveType.BYTE")
+#set($member.elementSerializeMethod="writeByte")
+#set($member.arraySerializeMethod="writeByteArray")
+#set($member.sequenceSerializeMethod="writeByteSeq")
+#set($member.elementDeserializeMethod="readByte")
+#set($member.arrayDeserializeMethod="readByteArray")
+#set($member.sequenceDeserializeMethod="readByteSequence")
+#set($member.elementSkipMethod="skipByte")
+#set($member.arraySkipMethod="skipByteArray")
+#set($member.sequenceSkipMethod="skipByteSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.BYTE_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.BYTE_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getByteMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getByteArrayMaxSizeSerialized")
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getByteSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getByteSequenceSerializedSize")
+
+#elseif($member.typeName=="short")  #*
+*# 
+#set($member.typeClass="Short")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_SHORT")                   
+#set($member.nativeTypeSeq="ShortSeq")
+#set($member.typeEnum="CdrPrimitiveType.SHORT")
+#set($member.elementSerializeMethod="writeShort")
+#set($member.arraySerializeMethod="writeShortArray")
+#set($member.sequenceSerializeMethod="writeShortSeq")
+#set($member.elementDeserializeMethod="readShort")
+#set($member.arrayDeserializeMethod="readShortArray")
+#set($member.sequenceDeserializeMethod="readShortSequence")
+#set($member.elementSkipMethod="skipShort")
+#set($member.arraySkipMethod="skipShortArray")
+#set($member.sequenceSkipMethod="skipShortSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.SHORT_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.SHORT_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getShortMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getShortArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getShortSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getShortSequenceSerializedSize")
+
+#elseif($member.typeName=="long") #*
+*#   
+#set($member.typeClass="Integer")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_LONG")
+#set($member.nativeTypeSeq="IntSeq")
+#set($member.typeEnum="CdrPrimitiveType.INT")
+#set($member.elementSerializeMethod="writeInt")
+#set($member.arraySerializeMethod="writeIntArray")
+#set($member.sequenceSerializeMethod="writeIntSeq")
+#set($member.elementDeserializeMethod="readInt")
+#set($member.arrayDeserializeMethod="readIntArray")
+#set($member.sequenceDeserializeMethod="readIntSequence")
+#set($member.elementSkipMethod="skipInt")
+#set($member.arraySkipMethod="skipIntArray")
+#set($member.sequenceSkipMethod="skipIntSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.INT_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.INT_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getIntMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getIntArrayMaxSizeSerialized")      
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getIntSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getIntSequenceSerializedSize") 
+
+#elseif($member.typeName=="long long") #*
+*#  
+#set($member.typeClass="Long")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_LONGLONG")
+#set($member.nativeTypeSeq="LongSeq")
+#set($member.typeEnum="CdrPrimitiveType.LONG")
+#set($member.elementSerializeMethod="writeLong")
+#set($member.arraySerializeMethod="writeLongArray")
+#set($member.sequenceSerializeMethod="writeLongSeq")
+#set($member.elementDeserializeMethod="readLong")
+#set($member.arrayDeserializeMethod="readLongArray")
+#set($member.sequenceDeserializeMethod="readLongSequence")
+#set($member.elementSkipMethod="skipLong")
+#set($member.arraySkipMethod="skipLongArray")
+#set($member.sequenceSkipMethod="skipLongSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.LONG_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.LONG_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getLongMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getLongArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getLongSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getLongSequenceSerializedSize")   
+
+#elseif($member.typeName=="float") #*
+*#  
+#set($member.typeClass="Float")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_FLOAT")   
+#set($member.nativeTypeSeq="FloatSeq")
+#set($member.typeEnum="CdrPrimitiveType.FLOAT")
+#set($member.elementSerializeMethod="writeFloat")
+#set($member.arraySerializeMethod="writeFloatArray")
+#set($member.sequenceSerializeMethod="writeFloatSeq")
+#set($member.elementDeserializeMethod="readFloat")
+#set($member.arrayDeserializeMethod="readFloatArray")
+#set($member.sequenceDeserializeMethod="readFloatSequence")
+#set($member.elementSkipMethod="skipFloat")
+#set($member.arraySkipMethod="skipFloatArray")
+#set($member.sequenceSkipMethod="skipFloatSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.FLOAT_KIND]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.FLOAT_KIND]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getFloatMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getFloatArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getFloatSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getFloatSequenceSerializedSize")
+
+
+#elseif($member.typeName=="double")  #*
+*#  
+#set($member.typeClass="Double")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_DOUBLE")
+#set($member.nativeTypeSeq="DoubleSeq")
+#set($member.typeEnum="CdrPrimitiveType.DOUBLE")
+#set($member.elementSerializeMethod="writeDouble")
+#set($member.arraySerializeMethod="writeDoubleArray")
+#set($member.sequenceSerializeMethod="writeDoubleSeq")
+#set($member.elementDeserializeMethod="readDouble")
+#set($member.arrayDeserializeMethod="readDoubleArray")
+#set($member.sequenceDeserializeMethod="readDoubleSequence")
+#set($member.elementSkipMethod="skipDouble")
+#set($member.arraySkipMethod="skipDoubleArray")
+#set($member.sequenceSkipMethod="skipDoubleSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.DOUBLE]")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.DOUBLE]")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getDoubleMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getDoubleArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getDoubleSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getDoubleSequenceSerializedSize")
+
+#elseif($member.typeName=="boolean")  #*
+*# 
+#set($member.typeClass="Boolean")
+#set($member.defaultValue="false")
+#set($member.typeCode="TypeCode.TC_BOOLEAN")
+#set($member.nativeTypeSeq="BooleanSeq")
+#set($member.typeEnum="CdrPrimitiveType.BOOLEAN")
+#set($member.elementSerializeMethod="writeBoolean")
+#set($member.arraySerializeMethod="writeBooleanArray")
+#set($member.sequenceSerializeMethod="writeBooleanSeq")
+#set($member.elementDeserializeMethod="readBoolean")
+#set($member.arrayDeserializeMethod="readBooleanArray")
+#set($member.sequenceDeserializeMethod="readBooleanSequence")
+#set($member.arraySkipMethod="skipBooleanArray")
+#set($member.sequenceSkipMethod="skipBooleanSequence")
+#set($member.elementSkipMethod="skipBoolean")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.BOOLEAN_KIND")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.BOOLEAN_KIND")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getBooleanMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getBooleanArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getBooleanSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getBooleanSequenceSerializedSize")
+
+#elseif($member.typeName=="long double") #*
+*#  
+#set($member.typeClass="Double")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_LONGDOUBLE")
+#set($member.nativeTypeSeq="LongDoubleSeq")
+#set($member.typeEnum="CdrPrimitiveType.LONG_DOUBLE")
+#set($member.elementSerializeMethod="writeLongDouble")
+#set($member.arraySerializeMethod="writeLongDoubleArray")
+#set($member.sequenceSerializeMethod="writeLongDoubleSeq")
+#set($member.elementDeserializeMethod="readLongDouble")
+#set($member.arrayDeserializeMethod="readLongDoubleArray")
+#set($member.sequenceDeserializeMethod="readLongDoubleSequence")
+#set($member.elementSkipMethod="skipLongDouble")
+#set($member.arraySkipMethod="skipLongDoubleArray")
+#set($member.sequenceSkipMethod="skipLongDoubleSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.LONGDOUBLE_KIND")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.LONGDOUBLE_KIND")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getLongDoubleMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getLongDoubleArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getLongDoubleSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getLongDoubleSequenceSerializedSize")
+
+#elseif($member.typeName=="unsigned long long") #*
+*#   
+#set($member.typeClass="Long")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_ULONGLONG") 
+#set($member.nativeTypeSeq="LongSeq")
+#set($member.typeEnum="CdrPrimitiveType.LONG")
+#set($member.elementSerializeMethod="writeLong")
+#set($member.arraySerializeMethod="writeLongArray")
+#set($member.sequenceSerializeMethod="writeLongSeq")
+#set($member.elementDeserializeMethod="readLong")
+#set($member.arrayDeserializeMethod="readLongArray")
+#set($member.sequenceDeserializeMethod="readLongSequence")
+#set($member.elementSkipMethod="skipLong")
+#set($member.arraySkipMethod="skipLongArray")
+#set($member.sequenceSkipMethod="skipLongSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.LONG_KIND")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.LONG_KIND")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getLongMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getLongArrayMaxSizeSerialized")                
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getLongSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getLongSequenceSerializedSize")
+
+#elseif($member.typeName=="unsigned long") #*
+*#  
+#set($member.typeClass="Integer")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_ULONG")                                                   
+#set($member.nativeTypeSeq="IntSeq")
+#set($member.typeEnum="CdrPrimitiveType.INT")
+#set($member.elementSerializeMethod="writeInt")
+#set($member.arraySerializeMethod="writeIntArray")
+#set($member.sequenceSerializeMethod="writeIntSeq")
+#set($member.elementDeserializeMethod="readInt")
+#set($member.arrayDeserializeMethod="readIntArray")
+#set($member.sequenceDeserializeMethod="readIntSequence")
+#set($member.elementSkipMethod="skipInt")
+#set($member.arraySkipMethod="skipIntArray")
+#set($member.sequenceSkipMethod="skipIntSequence")
+#set($member.elementSize="_cdrPrimitiveType.sizes[CdrPrimitiveType.INT_KIND")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.INT_KIND")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getIntMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getIntArrayMaxSizeSerialized")      
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getIntSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getIntSequenceSerializedSize")
+           
+#elseif($member.typeName=="unsigned short") #*
+*# 
+
+#set($member.typeClass="Short")
+#set($member.defaultValue="0")
+#set($member.typeCode="TypeCode.TC_USHORT")                                                 
+#set($member.nativeTypeSeq="ShortSeq")
+#set($member.typeEnum="CdrPrimitiveType.SHORT")
+#set($member.elementSerializeMethod="writeShort")
+#set($member.arraySerializeMethod="writeShortArray")
+#set($member.sequenceSerializeMethod="writeShortSeq")
+#set($member.elementDeserializeMethod="readShort")
+#set($member.arrayDeserializeMethod="readShortArray")
+#set($member.sequenceDeserializeMethod="readShortSequence")
+#set($member.elementSkipMethod="skipShort")
+#set($member.arraySkipMethod="skipShortArray")
+#set($member.sequenceSkipMethod="skipShortSequence")
+#set($member.elementSize=" _cdrPrimitiveType.sizes[CdrPrimitiveType.SHORT_KIND")
+#set($member.elementAlignment="_cdrPrimitiveType.alignments[CdrPrimitiveType.SHORT_KIND")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getShortMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getShortArrayMaxSizeSerialized")     
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getShortSequenceMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getShortSequenceSerializedSize")
+
+#elseif($member.typeName=="string")  #*
+*#  #set($member.typeClass="String")  #set($member.typeCode="TCKind.TK_STRING")
+#set($member.elementSerializeMethod="writeString")
+#set($member.arraySerializeMethod="writeStringArray")
+#set($member.sequenceSerializeMethod="writeStringSeq")
+#set($member.elementDeserializeMethod="readString")
+#set($member.arrayDeserializeMethod="readStringArray")
+#set($member.sequenceDeserializeMethod="readStringSequence")
+#set($member.elementSkipMethod="skipString")
+#set($member.arraySkipMethod="skipStringArray")
+#set($member.sequenceSkipMethod="skipStringSequence")
+#set($member.elementSize="_cdrPrimitiveType.getStringSerializedSize")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getStringMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getStringArrayMaxSizeSerialized")
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getStringSeqMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getStringSeqSerializedSize")
+#set($member.nativeTypeSeq="StringSeq")
+#set($member.defaultValue="""""")
+
+#elseif($member.typeName=="wstring")  #*
+*# 
+#set($member.typeClass="String") 
+#set($member.typeCode="TCKind.TK_WSTRING")
+#set($member.elementSerializeMethod="writeWstring")
+#set($member.defaultValue="""""")
+#set($member.arraySerializeMethod="writeWstringArray")
+#set($member.sequenceSerializeMethod="writeWstringSeq")
+#set($member.elementDeserializeMethod="readWstring")
+#set($member.arrayDeserializeMethod="readWstringArray")
+#set($member.sequenceDeserializeMethod="readWstringSequence")
+#set($member.elementSkipMethod="skipWstring")
+#set($member.arraySkipMethod="skipWstringArray")
+#set($member.sequenceSkipMethod="skipWstringSequence")
+#set($member.nativeTypeSeq="WstringSeq")
+#set($member.elementSize="_cdrPrimitiveType.getWstringSerializedSize")
+#set($member.elementSizeMethod="_cdrPrimitiveType.getWstringMaxSizeSerialized")
+#set($member.arraySizeMethod="_cdrPrimitiveType.getWstringArrayMaxSizeSerialized")
+#set($member.sequenceSizeMethod="_cdrPrimitiveType.getWstringSeqMaxSizeSerialized")
+#set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getWstringSeqSerializedSize")
+#end
+#end##if
+#*--*##assignTypeCodeMemberAnnotationsVariables ($constructMap $member)
+#end
+#end
+
+
+#macro (getMaxValue $member)
+#*--*##if($member.typeKind!="enum")
+${member.typeClass}.MAX_VALUE#*
+--*##else null#*
+----*##end
+#end
+
+
+#macro (assignNeedExtendedId $member)
+#*--*##if($member.id >16128)
+#*----*##set($member.needExtendedId="true")
+#*--*##elseif((($member.typeKind=="builtin")||($member.isEnum)) 
+               && (!$member.strSize) 
+               && (!$member.seqSize)
+               && (!$member.dimensionList))
+#*----*##set($member.needExtendedId="false")
+#*--*##else
+#*----*##set($member.needExtendedId="dst.useExtendedMemberId")
+#*--*##end
+#end
+
+
+##declareArraydimensionLists
+#macro(declareArraydimensionLists $member)#foreach($element in $member.dimensionList)[$element]#end#end#
+
+#macro(declareEmptyArraydimensionLists $member)#if($member.dimensionList)#foreach($element in $member.dimensionList)[]#end#end#end
+
+#macro(arraydimensionListsWithIndex $member)#if($member.dimensionList)#foreach($element in $member.dimensionList)#*
+*#[i${velocityCount}__]#end#end#end
+
+
+#macro(openForLoopIfArray $member)
+#if($member.dimensionList)
+#foreach($element in $member.dimensionList)
+    for(int i${velocityCount}__ = 0; i${velocityCount}__< $element; ++i${velocityCount}__){
+    
+#end ##for
+#end ##if
+#end ##macro
+
+#macro(closeForLoopIfArray $member)
+#if($member.dimensionList)
+#foreach($element in $member.dimensionList)
+    }
+    
+#end ##for
+#end ##if
+#end ##macro
+
+#macro(openForLoopIfArrayForCopy $member)
+#if($member.dimensionList)
+#foreach($element in $member.dimensionList) 
+#if($velocityCount<$member.dimensionList.size())
+    for(int i${velocityCount}__ = 0; i${velocityCount}__< $element; ++i${velocityCount}__){
+#end
+#end ##for
+#end ##if
+#end ##macro
+
+#macro(closeForLoopIfArrayForCopy $member)
+#if($member.dimensionList)
+#foreach($element in $member.dimensionList)
+#if($velocityCount<$member.dimensionList.size())
+    }
+#end
+#end ##for
+#end ##if
+#end ##macro
+
+
+#macro(arraydimensionListsWithIndexForCopy $member)#if($member.dimensionList)#foreach($element in $member.dimensionList)#*
+*##if($velocityCount<$member.dimensionList.size())[i${velocityCount}__]#end#end#end#end
+
+
+#macro(commaIfNeeded $index $member)
+#if( $index <$member.dimensionList.size() ),#end
+#end
+
+
+
+#macro(arraydimensionListWithMultiplication  $member)#if($member.dimensionList) #foreach($element in $member.dimensionList)#*
+*#($element)#if( $velocityCount <$member.dimensionList.size())*#end#end#end#end
+
+#* This macro prints all the directives that are in the array*#
+#macro (copyAllDirectives $directive)
+$directive.value
+#end
+
+#* This macro prints all the directives that are in the array but the ones that contains the word "begin",
+this is used for the Type File*#
+#macro (copyDirectiveNoBegin $element)
+#if($element.directive!="copy-java-begin" && $element.directive!="copy-java-declaration-begin")
+$element.value
+#end
+#end
+
+#* This macro prints only the generic copy directives (copy and copy-java),
+this is used for the Type Support file*#
+#macro (copyDirective $element)
+#if($element.directive=="copy-java" || $element.directive=="copy")
+$element.value
+#end
+#end
+
+#macro (allocMember $member)
+#if($member.typeKind=="user" || $member.seqSize || $member.dimensionList)
+if (typedDst.${member.name} == null) {
+#*--*##if(($member.seqSize)&& ($member.dimensionList))
+    typedDst.${member.name} = 
+        new $member.nativeTypeSeq #declareArraydimensionLists($member);       
+ #*----*##openForLoopIfArray($member)
+    typedDst.${member.name}#arraydimensionListsWithIndex($member) =
+       new  $member.nativeTypeSeq (#getSeqSize($member, "init"));
+ #*----*##closeForLoopIfArray($member) 
+#*--*##elseif($member.dimensionList)
+    typedDst.${member.name} = 
+        new ${member.nativeTypeFQName} #declareArraydimensionLists($member);
+#*----*##if($member.typeKind=="user")
+ #*----*##openForLoopIfArray($member)
+    typedDst.${member.name}#arraydimensionListsWithIndex($member) =
+      ($member.nativeTypeFQName) ${member.nativeTypeFQName}.create();
+ #*----*##closeForLoopIfArray($member)          
+#*----*##end        
+#*--*##elseif($member.seqSize)
+    typedDst.${member.name} = 
+        new  $member.nativeTypeSeq (#getSeqSize($member, "init"));
+#*--*##elseif($member.typeKind=="user")
+    typedDst.${member.name} = 
+        ($member.nativeTypeFQName) ${member.nativeTypeFQName}.create();
+#end
+}
+#end
+
+#macro (getStrSize $member $kindMethod)
+#*--*##if ($member.strSize=="-1")#*
+-------*##if(!$kindMethod.equals("deserialize")) ##For deserialize we want it empty
+Integer.MAX_VALUE#*
+-------*##end#*
+---*##else
+$member.strSize#*
+---*##end
+#end
+
+#macro (getSeqSize $member $kindMethod)
+#*--*##if ($member.seqSize=="-1")#*
+-------*##if($kindMethod.equals("init") || $kindMethod.equals("copy"))#*
+*#0#*
+-------*##elseif($kindMethod.equals("deserialize")) #*Include deserialize
+*#-1#*
+-------*##else#*
+*#Integer.MAX_VALUE#*
+-------*##end#*
+---*##else#*
+*#$member.seqSize#*
+---*##end
+#end
+#end
+
+##  Macro to set the variables of a member with default and min and max annotations.:
+##      "tcKind", "annotationCast", "defaultAnnotationParameterValue", "minAnnotationParameterValue", "maxAnnotationParameterValue"
+#macro(assignTypeCodeMemberAnnotationsVariables $constructMap $member)
+#*--*##if($member.typeKindResolved=="char")
+#*----*##set($member.tcKind="TCKind.TK_CHAR")
+#*----*##set($member.annotationCast="char")
+#*----*##set($member.defaultAnnotationParameterValue="EMPTY_CHAR")
+#*--*##elseif($member.typeKindResolved=="wchar")
+#*----*##set($member.tcKind="TCKind.TK_WCHAR")
+#*----*##set($member.annotationCast="char")
+#*----*##set($member.defaultAnnotationParameterValue="EMPTY_WCHAR")
+#*--*##elseif($member.typeKindResolved=="boolean")
+#*----*##set($member.tcKind="TCKind.TK_BOOLEAN")
+#*----*##set($member.annotationCast="boolean")
+#*----*##set($member.defaultAnnotationParameterValue="FALSE_BOOLEAN")
+#*--*##elseif($member.typeKindResolved=="octet" || $member.typeKindResolved.equals("int8") || $member.typeKindResolved.equals("uint8"))
+#*----*##set($member.tcKind="TCKind.TK_OCTET")
+#*----*##set($member.annotationCast="short")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_OCTET")
+#*----*##set($member.minAnnotationParameterValue="MIN_OCTET")
+#*----*##set($member.maxAnnotationParameterValue="MAX_OCTET")
+#*--*##elseif($member.typeKindResolved=="short")
+#*----*##set($member.tcKind="TCKind.TK_SHORT")
+#*----*##set($member.annotationCast="short")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_SHORT")
+#*----*##set($member.minAnnotationParameterValue="MIN_SHORT")
+#*----*##set($member.maxAnnotationParameterValue="MAX_SHORT")
+#*--*##elseif($member.typeKindResolved=="unsigned short")
+#*----*##set($member.tcKind="TCKind.TK_USHORT")
+#*----*##set($member.annotationCast="int")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_USHORT")
+#*----*##set($member.minAnnotationParameterValue="MIN_USHORT")
+#*----*##set($member.maxAnnotationParameterValue="MAX_USHORT")
+#*--*##elseif($member.typeKindResolved=="long")
+#*----*##set($member.tcKind="TCKind.TK_LONG")
+#*----*##set($member.annotationCast="int")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_LONG")
+#*----*##set($member.minAnnotationParameterValue="MIN_LONG")
+#*----*##set($member.maxAnnotationParameterValue="MAX_LONG")
+#*--*##elseif($member.typeKindResolved=="unsigned long")
+#*----*##set($member.tcKind="TCKind.TK_ULONG")
+#*----*##set($member.annotationCast="long")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_ULONG")
+#*----*##set($member.minAnnotationParameterValue="MIN_ULONG")
+#*----*##set($member.maxAnnotationParameterValue="MAX_ULONG")
+#*--*##elseif($member.typeKindResolved=="float")
+#*----*##set($member.annotationCast="float")
+#*----*##set($member.tcKind="TCKind.TK_FLOAT")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_FLOAT")
+#*----*##set($member.minAnnotationParameterValue="MIN_FLOAT")
+#*----*##set($member.maxAnnotationParameterValue="MAX_FLOAT")
+#*--*##elseif($member.typeKindResolved=="long long")
+#*----*##set($member.tcKind="TCKind.TK_LONGLONG")
+#*----*##set($member.annotationCast="long")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_LONGLONG")
+#*----*##set($member.minAnnotationParameterValue="MIN_LONGLONG")
+#*----*##set($member.maxAnnotationParameterValue="MAX_LONGLONG")
+#*--*##elseif($member.typeKindResolved=="unsigned long long")
+#*----*##set($member.tcKind="TCKind.TK_ULONGLONG")
+#*----*##set($member.annotationCast="BigInteger")
+#*----*##set($constructMap.requireBigIntegerImport="true")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_ULONGLONG")
+#*----*##set($member.minAnnotationParameterValue="MIN_ULONGLONG")
+#*----*##set($member.maxAnnotationParameterValue="MAX_ULONGLONG")
+#*--*##elseif($member.typeKindResolved=="double")
+#*----*##set($member.annotationCast="double")
+#*----*##set($member.tcKind="TCKind.TK_DOUBLE")
+#*----*##set($member.defaultAnnotationParameterValue="ZERO_DOUBLE")
+#*----*##set($member.minAnnotationParameterValue="MIN_DOUBLE")
+#*----*##set($member.maxAnnotationParameterValue="MAX_DOUBLE")
+#*--*##elseif($member.typeKindResolved=="string")
+#*----*##set($member.annotationCast="String")
+#*----*##set($member.tcKind="TCKind.TK_STRING")
+#*----*##set($member.defaultAnnotationParameterValue="EMPTY_STRING")
+#*--*##elseif($member.typeKindResolved=="wstring")
+#*----*##set($member.annotationCast="String")
+#*----*##set($member.tcKind="TCKind.TK_WSTRING")
+#*----*##set($member.defaultAnnotationParameterValue="EMPTY_WSTRING")
+#*--*##else
+#*----*##set($member.tcKind="TCKind.TK_NULL")
+#*--*##end
+#*--*##if(${member.explicitDefaultValue})
+#*----*##set($member.defaultValue=$member.explicitDefaultValue)
+#*--*##end
+#end
+##------------------------------------------------------------------------------

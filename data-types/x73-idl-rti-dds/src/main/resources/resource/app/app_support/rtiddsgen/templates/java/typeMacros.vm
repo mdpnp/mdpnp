@@ -1,0 +1,743 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,02jun14,ajm CODEGENII-190 Fixing copy_from for optional members
+##2.2,14apr14,vmg CODEGENII-191 Fixing issue with byte and float constants declaration
+##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##2.0,24sept13,ajm Code review
+##2.0,24sept13,ajm CODEGENII-92 Support for optional members
+##10a,13jun13,ajm CODEGENII-109 joining the type variables in the constructMap 
+##10a,26mar13, ajm Fixing bug with the getDefaultDiscriminator for booleans
+##10a,8mar13, ajm CODEGENII-30 and CODEGENII-87 Code reviews and Xtypes in Java
+##10a,6feb12,ajm CODEGENII-30 Starting review of the templates to match the
+## guidelines we are following for C/C++
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##                Change of the getDefaultDiscriminator
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,31oct12, ajm RTIDDSGEN-34 support for the first set of copy directives (java ones)
+##10a,15oct12, ajm Support for the -noCopyable option
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,14oc11,jmt fixed issue when using an enum in an union with only one case
+##10a,12oc11,jmt finished union support
+##10a,10oc11,jmt adding union support
+##10a,10oc11,jmt adding union support
+##10a,26sep11,jmt adding enum support
+##10a,23sep11,jmt fixing issue with serialize an arry of sequences
+##10a,22sep11,jmt adding valuetypes support
+##10a,15sep11,jmt Fixing more typedef issues
+##10a,14sep11,jmt Refactor typedef
+##10a,2sep11,ajm Adding typedef support for sequences and arrays of sequences
+##10a,29ag11,jmt Fixing macros consistency by adding the missing parameters
+##10a,29ag11,ajm Refactor of variables and cleaning loops
+##10a,25ag11,jmt Adding support for arrays of sequences.
+##10a,22ag11,jmt Adding support for sequences.
+##10a,10ag11,jmt Adding support for arrays of basic types 
+##10a,09ag11,ajm Fixing tabulations and length of the lines
+##10a,04ag11,jmt Adding all the basic type and testing them
+##10a,04ag11,jmt adding modification history header
+##10a,02ag11,jmt Moved to be under the path "resource/templates/java/"
+##10a,02ag11,jmt New dessign using auxiliary files for the macros
+##10a,01ag11,jmt created 
+##========================================================================*/*#
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+#* This file contains the logic to work with the basic *#
+#* Idl types in the template "Type.vm"                 *#
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+
+#macro (declareConstant $constructMap)
+
+#*--*##if($constructMap.typeName!="unsigned long long")
+public class $constructMap.name {
+    public static final ${constructMap.nativeTypeFQName} VALUE = #*
+    *##if($constructMap.nativeTypeFQName=="byte"||
+            $constructMap.nativeTypeFQName=="float" ||
+            $constructMap.nativeTypeFQName=="short" ||
+            $constructMap.nativeTypeFQName=="int")#*
+    *# (${constructMap.nativeTypeFQName}) #end#*
+    *#${constructMap.value};
+#*--*##else
+import java.math.BigInteger;
+
+public class $constructMap.name {
+    public static final ${constructMap.nativeTypeFQName} VALUE = #*
+    *#(${constructMap.nativeTypeFQName})(new BigInteger("${constructMap.value}").longValue());
+#*--*##end
+}
+#end
+
+##******************************************************************************
+##  Macro to define members 
+##******************************************************************************
+#macro(declareMembers $memberFieldMapList)
+#*--*##foreach(${member} in $memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyAllDirectives($member)
+##For const that are inside a struct/type
+#*----*##elseif($member.constructKind.equals("const"))
+#*------*##declareConstant($member)
+#*----*##else
+#*------*##if(($member.seqSize)&& ($member.dimensionList))
+public $member.nativeTypeSeq #declareEmptyArraydimensionLists($member) $member.name = #*
+-*# #if($member.isOptional)null #else new $member.nativeTypeSeq #declareArraydimensionLists($member) #end;
+#*------*##elseif($member.dimensionList)
+public ${member.nativeTypeFQName} #declareEmptyArraydimensionLists($member) $member.name= #*
+*##if($member.isOptional)null#else new ${member.nativeTypeFQName} #declareArraydimensionLists($member)#end;
+#*------*##elseif($member.seqSize)
+public $member.nativeTypeSeq $member.name = #*
+*##if($member.isOptional)null #else new ${member.nativeTypeSeq}(#getSeqSize ($member "init"))#end;
+#*------*##elseif(${member.typeKind}=="user")
+#*--------*##if(${member.isEnum})
+public $member.nativeTypeFQName $member.name =#*
+*# #if($member.isOptional)null #else($member.nativeTypeFQName)${member.nativeTypeFQName}.valueOf(${member.defaultValue})#end;
+#*--------*##else
+public $member.nativeTypeFQName $member.name =#*
+*# #if($member.isOptional)null #else($member.nativeTypeFQName)${member.nativeTypeFQName}.create()#end;
+#*--------*##end
+#*------*##elseif($member.strSize)
+public ${member.nativeTypeFQName} $member.name#*
+----------*#= #if($member.isOptional)null#else(${member.nativeTypeFQName})${member.defaultValue}#end; #if($member.strSize!="-1")/* maximum length = ($member.strSize) */#end
+
+#*------*##elseif($member.typeName=="unsigned long long")
+public #if($member.isOptional)$member.typeClass #else${member.nativeTypeFQName}#end $member.name#*
+----------*# = #if($member.isOptional)null#else(${member.nativeTypeFQName})(new BigInteger("${member.defaultValue}").longValue())#end;
+#*------*##else
+public #if($member.isOptional)$member.typeClass #else${member.nativeTypeFQName}#end $member.name#*
+----------*# = #if($member.isOptional)null#else(${member.nativeTypeFQName})${member.defaultValue}#end;
+#*-----*##end    
+#*---*##end
+#*--*##end
+#end
+
+##******************************************************************************
+##  Macro to clear members 
+##******************************************************************************
+#macro(clearMembers $memberFieldMapList)
+#*--*##if($constructMap.constructKind.equals("union"))
+#*----*##clearUnion($memberFieldMapList)
+#*--*##else
+#*----*##foreach(${member} in $memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##copyDirectiveNoBegin($member)
+##For const that are inside a struct/type
+#*------*##elseif(!$member.constructKind.equals("const"))
+#*--------*##clearMember($member)
+#*-----*##end
+#*----*##end
+#*--*##end
+#end
+
+##******************************************************************************
+##  Macro to clear a members 
+##******************************************************************************
+
+#macro(clearMember $member)
+#*----*##if($member.directive)
+#*------*##copyAllDirectives($member)
+##For const that are inside a struct/type
+#*----*##else
+#*------*##if($member.isOptional)
+$member.name=null; 
+#*------*##elseif($member.dimensionList)
+#*----------*##openForLoopIfArray($member)
+#*-----------*##if(${member.isEnum} &&!$member.seqSize)
+${member.name}#arraydimensionListsWithIndex($member) = ${member.nativeTypeFQName}.create();
+#*----------*##elseif($member.seqSize || ${member.typeKind}=="user")
+if ( ${member.name}#arraydimensionListsWithIndex($member) != null) {
+     ${member.name}#arraydimensionListsWithIndex($member).clear();
+}
+#*------------*##else
+${member.name}#arraydimensionListsWithIndex($member) = #if($member.strSize)""#else ${member.defaultValue}#end;
+#*-----------*##end
+#*-----------*##closeForLoopIfArray($member)
+#*--------*##elseif(${member.isEnum} &&!$member.seqSize)
+${member.name} = ${member.nativeTypeFQName}.valueOf($member.defaultValue);
+#*--------*##elseif($member.seqSize || ${member.typeKind}=="user")
+if ($member.name != null) {
+    ${member.name}.clear();
+}
+#*--------*##elseif($member.typeName=="unsigned long long")
+$member.name = (${member.nativeTypeFQName})(new BigInteger("${member.defaultValue}").longValue());
+#*--------*##else
+$member.name = (${member.nativeTypeFQName})${member.defaultValue};
+#*-------*##end    
+#*-----*##end
+#*--*##end
+
+
+
+
+
+#macro (clearUnion $memberFieldMapList)
+#*--*##set($pos = "1")
+#*--*##foreach($member in $memberFieldMapList)
+#*---*##if($member.directive)
+#*---*##copyDirectiveNoBegin ($member)
+#*---*##else
+#*------*##foreach($element in $member.labelList)
+#*------*##initCases($element $pos)
+#*------*##set($pos = "-1")
+#*------*##clearMember($member)
+#*----*##end ## if
+#*------*##end ## for
+#*--*##end ## for
+}
+#end  
+
+##******************************************************************************
+##  Macro to initialize Arrays
+##******************************************************************************
+#macro(initArrayandSeq $memberFieldMapList)
+#*--*##foreach($member in $memberFieldMapList)
+#*-----*##if($member.directive)
+#copyDirectiveNoBegin ($member)
+#*-----*##elseif(!$member.constructKind.equals("const") && !$member.isOptional)
+#*-------*##if($member.dimensionList && $member.seqSize)
+#*-------*##initArrayOfSeq ($member)
+#*-------*##elseif($member.dimensionList)
+#*-------*##initArray($member)
+#*-------*##end
+#*-----*##end
+#*---*##end
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to initialize array of sequences
+##-----------------------------------------------------------------------------
+#macro (initArrayOfSeq $member)
+#*----*##openForLoopIfArray($member)
+${member.name}#arraydimensionListsWithIndex($member)= new ${member.nativeTypeSeq}(#getSeqSize($member "init"));
+#*----*##closeForLoopIfArray($member)
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to initialize arrays of non-basic types or strings 
+##-----------------------------------------------------------------------------
+#macro (initArray $member)
+#*--*##if($member.typeKind=="user")
+#*----*##openForLoopIfArray($member)
+${member.name}#arraydimensionListsWithIndex($member)= ($member.nativeTypeFQName) ${member.nativeTypeFQName}.create();
+#*----*##closeForLoopIfArray($member)
+#*--*##elseif($member.strSize)
+#*----*##openForLoopIfArray($member)
+${member.name}#arraydimensionListsWithIndex($member)= "";       
+#*----*##closeForLoopIfArray($member)
+#*--*##end
+#end
+
+
+##******************************************************************************
+##  Macro to equals the memberFieldMapList of a Type 
+##******************************************************************************
+
+#macro(equalsMemberField $memberFieldMapList)
+#*--*##if($constructMap.constructKind.equals("union"))
+#*----*##equalsMemberUnion()
+#*--*##else
+#*----*##foreach($member in $memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##copyDirectiveNoBegin ($member)
+#*------*##elseif(!$member.constructKind.equals("const"))
+#*----*##if($member.isOptional)
+      if (($member.name == null && otherObj.${member.name} != null) ||
+                ($member.name != null && otherObj.${member.name} == null)) {
+            return false;
+        }
+        if ($member.name != null) {
+#*----*##end ## if
+#*--------*##equalsMember($member)
+#*------*##end ## if
+#*----*##if($member.isOptional)
+        }
+#*-----*##end ## if
+#*-----*##end ## for
+#*--*##end ## if
+#end ## macro
+
+##-----------------------------------------------------------------------------
+##  Macro to equals the memberFieldMapList of a union 
+##-----------------------------------------------------------------------------
+
+#macro (equalsMemberUnion)
+if(_d != otherObj._d) {
+    return false;
+}
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#copyDirectiveNoBegin ($member)
+#*----*##else
+#*--*##set($loopNumber = $velocityCount)
+#*------*##foreach($element in $member.labelList)
+#*--------*##if($loopNumber==1 && $velocityCount==1)
+if (otherObj._d == ($element)){
+#*--------*##elseif(!$element.contains("default"))
+} else if (otherObj._d == ($element)){
+#*-------*##elseif($element.contains("default"))
+} else {
+#*-------*##end
+#*--------*##equalsMember($member)
+#*------*##end ## for
+#*----*##end
+#*--*##end ## for
+}
+#end
+
+##-----------------------------------------------------------------------------
+##  Macro to equals a member
+##-----------------------------------------------------------------------------
+#macro(equalsMember $member)
+#*--*##openForLoopIfArray($member)
+#*--*##if($member.seqSize && $member.dimensionList)
+#*----*##if( $member.strSize || $member.typeKind=="user")
+for(int i__ = 0; i__ < $member.name#arraydimensionListsWithIndex($member).size(); ++i__){
+    if(!${member.name}#arraydimensionListsWithIndex($member).get(i__).equals(otherObj.#*
+-------*#${member.name}#arraydimensionListsWithIndex($member).get(i__))) {
+        return false;
+    }
+}
+#*----*##else
+    if(!${member.name}#arraydimensionListsWithIndex($member).equals(otherObj.#*
+-------*#${member.name}#arraydimensionListsWithIndex($member))) {
+        return false;
+    }
+
+#*----*##end
+#*--*##elseif($member.seqSize || $member.strSize || $member.typeKind=="user")
+if(!${member.name}#arraydimensionListsWithIndex($member).equals(otherObj.${member.name}#arraydimensionListsWithIndex($member))) {
+    return false;
+}
+#*--*##elseif ($member.isOptional && !$member.dimensionList)
+if(!${member.name}.equals(otherObj.${member.name})) {
+    return false;
+}
+#*--*##else
+if($member.name#arraydimensionListsWithIndex($member) != otherObj.$member.name#arraydimensionListsWithIndex($member)) {
+    return false;
+}
+#*--*##end
+#*--*##closeForLoopIfArray($member)
+#end
+
+
+##******************************************************************************
+##  Macro to generate the hasCode of the memberFieldMapList of a Type 
+##******************************************************************************
+
+#macro(hashCode $memberFieldMapList)
+#if($constructMap.constructKind.equals("union"))
+#unionHasCode ($memberFieldMapList)
+#else
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#*-----*##copyDirectiveNoBegin ($member)
+#*-----*##elseif(!$member.constructKind.equals("const"))
+#*-------*##if($member.isOptional)
+if ($member.name != null) {
+#*-------*##end
+#*-----*##hashCodeMember($member)
+#*-------*##if($member.isOptional)
+}
+#*-------*##end
+#*-----*##end ## if
+#*--*##end ## for
+#end ## if
+#end ## macro
+
+
+##-----------------------------------------------------------------------------
+##  Macro to generate the hasCode of an union
+##-----------------------------------------------------------------------------
+
+
+#macro (unionHasCode $memberFieldMapList)
+#*--*##set($pos = "1")
+#*--*##foreach($member in $memberFieldMapList)
+#*---*##if($member.directive)
+#*---*##copyDirectiveNoBegin ($member)
+#*---*##else
+#*------*##foreach($element in $member.labelList)
+#*------*##initCases($element $pos)
+#*------*##set($pos = "-1")
+#*------*##hashCodeMember($member)
+#*----*##end ## if
+#*------*##end ## for
+#*--*##end ## for
+}
+#end               
+
+
+
+##******************************************************************************
+## This is an auxiliary macro that generates the if/else options for an enum
+## taking into account the position of the member in the struct
+##******************************************************************************
+
+#macro (initCases $element $pos)
+#*--*##if($pos==1)
+if (_d == ($element)){
+#*--*##elseif(!$element.contains("default"))
+} else if (_d == ($element)){
+#*--*##else
+} else {
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+##  Macro to generate the hasCode of a member
+##-----------------------------------------------------------------------------
+
+#macro(hashCodeMember $member)
+#*--*##openForLoopIfArray($member)
+#*--*##if($member.strSize || ${member.seqSize} ||$member.typeKind=="user")
+#*----*##if($member.dimensionList && $member.seqSize )
+for(int i__ = 0; i__< $member.name#arraydimensionListsWithIndex($member).size(); ++i__) {
+#*----*##end
+    __result += ${member.name}#arraydimensionListsWithIndex($member).hashCode(); 
+#*----*##if($member.dimensionList && $member.seqSize)
+}
+#*----*##end
+#*--*##elseif($member.nativeTypeFQName=="boolean")
+    __result += ($member.name#arraydimensionListsWithIndex($member) == true)?1:0;
+#*--*##elseif($member.isOptional && !$member.dimensionList) ##CODEGENII-182
+    __result += ${member.name}.hashCode();
+#*--*##else 
+    __result += (int)$member.name#arraydimensionListsWithIndex($member);
+#*--*##end
+#closeForLoopIfArray($member)   
+#end
+
+##******************************************************************************
+##  Macro to copy the the memberFieldMapList of a Type 
+##******************************************************************************
+
+#macro(copy $memberFieldMapList)
+#if($constructMap.constructKind.equals("union"))
+#copyUnion($memberFieldMapList " ")
+#else
+#*--*##foreach($member in $memberFieldMapList)
+#*-----*##if($member.directive)
+#*-----*##copyDirectiveNoBegin ($member)
+#*-----*##elseif(!$member.constructKind.equals("const"))
+#*-------*##if($member.isOptional)
+#*-----*##copyOptionalMember($member " ")
+#*-------*##else
+#*-----*##copyMember($member " ")
+#*-------*##end
+#*----*##end ## if
+#*--*##end ## for
+#end ## if
+#end ## macro
+
+
+##-----------------------------------------------------------------------------
+##  Macro to copy the the memberFieldMapList of an union 
+##-----------------------------------------------------------------------------
+
+#macro(copyUnion $memberFieldMapList $kindCopy)
+#*--*##set($pos = "1")
+#if($constructMap.unionDiscriminatorMap.typeKind=="enum")
+#if ($kindCopy.equals("coypyData"))
+   typedDst._d = ($constructMap.unionDiscriminatorMap.nativeTypeFQName) ${constructMap.unionDiscriminatorMap.nativeTypeFQName}TypeSupport.get_instance().copy_data(typedDst._d,typedSrc._d);
+#else   
+    typedDst._d = ($constructMap.unionDiscriminatorMap.nativeTypeFQName) typedDst._d.copy_from(typedSrc._d);
+#end    
+#else
+    typedDst._d = typedSrc._d;
+#end
+
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoBegin ($member)
+#*----*##else
+#*------*##set($pos = $velocityCount)
+#*------*##foreach($element in $member.labelList)
+#*------*##initCases($element $pos)
+#*------*##set($pos = "-1")
+#*-------*##if($member.isOptional)
+#*-----*##copyOptionalMember($member " ")
+#*-------*##else
+#*-----*##copyMember($member " ")
+#*-------*##end
+#*------*##end ## for
+#*----*##end ## if
+#*--*##end ## for
+               }
+#end
+
+##-----------------------------------------------------------------------------
+##  Macro to copy the a member
+##-----------------------------------------------------------------------------
+
+#macro(copyMember $member $kindCopy)
+#*--*##if($member.seqSize)
+#*----*##openForLoopIfArray($member)
+typedDst.$member.name#arraydimensionListsWithIndex($member).copy_from(typedSrc.$member.name#arraydimensionListsWithIndex($member));
+#*----*##closeForLoopIfArray($member)
+#elseif($member.dimensionList)
+#*--*##if($member.typeKind=="user")
+#*--*##openForLoopIfArray($member)
+#if ($kindCopy.equals("coypyData"))
+typedDst.${member.name}#arraydimensionListsWithIndex($member) = ($member.nativeTypeFQName) #*
+*#${member.nativeTypeFQName}TypeSupport.get_instance().copy_data(typedDst.$member.name#arraydimensionListsWithIndex($member),typedSrc.$member.name#arraydimensionListsWithIndex($member));
+#else
+typedDst.${member.name}#arraydimensionListsWithIndex($member) = ($member.nativeTypeFQName) typedDst.${member.name}#*
+*##arraydimensionListsWithIndex($member).copy_from(typedSrc.$member.name#arraydimensionListsWithIndex($member));
+#end
+#*--*##closeForLoopIfArray($member)
+#*--*##else
+#*--*##openForLoopIfArrayForCopy($member)
+#*--*#         System.arraycopy(typedSrc.${member.name}#arraydimensionListsWithIndexForCopy($member),0,
+#*--*#                         typedDst.${member.name}#arraydimensionListsWithIndexForCopy($member),0,
+#*--*#                         typedSrc.${member.name}#arraydimensionListsWithIndexForCopy($member).length); 
+#*--*##closeForLoopIfArrayForCopy($member)
+#*--*##end
+
+#elseif($member.typeKind=="user")
+#if ($kindCopy.equals("coypyData"))
+typedDst.${member.name} = ($member.nativeTypeFQName) ${member.nativeTypeFQName}TypeSupport.get_instance().copy_data(typedDst.$member.name,typedSrc.$member.name);
+#else
+typedDst.${member.name} = ($member.nativeTypeFQName) typedDst.${member.name}.copy_from(typedSrc.$member.name);
+#end
+#else       
+typedDst.$member.name = typedSrc.$member.name;
+#end        
+#end ##macro
+
+##-----------------------------------------------------------------------------
+##  Macro to copy optional member
+##-----------------------------------------------------------------------------
+
+#macro (copyOptionalMember $member $kindCopy)
+#** The copy for optional primitives is just the copyMember **#
+#if(${member.typeKind}=="user" || $member.seqSize || $member.dimensionList)
+if (typedDst.$member.name == null && typedSrc.$member.name !=null){
+#*------*##if(($member.seqSize)&& ($member.dimensionList))
+typedDst.$member.name = new $member.nativeTypeSeq #declareArraydimensionLists($member) ;
+#*----*##openForLoopIfArray($member)
+typedDst.$member.name #arraydimensionListsWithIndex($member) =
+     new ${member.nativeTypeSeq}(#getSeqSize($member "copy"));
+#*----*##closeForLoopIfArray($member)
+#*------*##elseif($member.dimensionList)
+typedDst.$member.name = 
+    new ${member.nativeTypeFQName} #declareArraydimensionLists($member);
+#*--------*##if(${member.typeKind}=="user")
+#*----*##openForLoopIfArray($member)
+typedDst.${member.name}#arraydimensionListsWithIndex($member) = 
+    (${member.nativeTypeFQName}) ${member.nativeTypeFQName}.create();    
+#*----*##closeForLoopIfArray($member)
+#*--------*##end
+#*------*##elseif($member.seqSize)
+typedDst.$member.name = 
+    new ${member.nativeTypeSeq}(#getSeqSize($member "copy"));
+#*------*##elseif(${member.typeKind}=="user")
+typedDst.$member.name = 
+    ($member.nativeTypeFQName)${member.nativeTypeFQName}.create();
+#*-----*##end 
+}
+if(typedSrc.$member.name !=null){
+#end
+#copyMember($member)
+#if(${member.typeKind}=="user" || $member.seqSize || $member.dimensionList)
+} else{
+    typedDst.$member.name=null;
+}
+#end
+#end
+
+
+   
+
+
+##******************************************************************************
+##  Macro to convert to a String the memberFieldMapList of a Type 
+##******************************************************************************
+
+#macro(toString $constructMap)
+#if($constructMap.constructKind.equals("union"))
+#toStringUnion($constructMap)
+#else
+#*--*##foreach($member in $constructMap.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoBegin ($member)
+#*----*##elseif(!$member.constructKind.equals("const"))
+#*------*##if($member.isOptional)
+if ($member.name != null) {
+#*------*##end ## if
+#*------*##toStringMember($member)
+#*------*##if($member.isOptional)
+} else {
+    CdrHelper.printIndent(strBuffer, indent+1);
+    strBuffer.append("${member.name}: null\n");
+}
+#*------*##end ## if
+#*----*##end ## if
+#*--*##end ## for
+#end ## if
+#end ## macro
+
+##-----------------------------------------------------------------------------
+##  Macro to convert to a String the memberFieldMapList of an union 
+##-----------------------------------------------------------------------------
+
+#macro (toStringUnion $constructMap)
+#if($constructMap.unionDiscriminatorMap.typeKind=="enum")
+#*--*#        strBuffer.append(_d.toString("_d ", indent+1));
+#else
+#*--*#        CdrHelper.printIndent(strBuffer, indent+1);            
+#*--*#        strBuffer.append("_d: ").append(_d).append("\n");
+#end
+#*------*##set($pos = "1")
+#*--*##foreach($member in $constructMap.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoBegin ($member)
+#*----*##else
+#*------*##foreach($element in $member.labelList)
+#*------*##initCases($element $pos)
+#*------*##set($pos = "-1")
+#*------*##toStringMember($member)
+#*------*##end ## for
+#*----*##end ## if
+#*--*##end ## for
+               }
+
+#end
+
+##-----------------------------------------------------------------------------
+##  Macro to convert to a String a member
+##-----------------------------------------------------------------------------
+
+#macro(toStringMember $member)
+#*--*##if($member.seqSize && $member.dimensionList)
+#*----*##toStringArrayOfSeq($member)
+#*--*##elseif($member.seqSize)
+#*----*##toStringSeq($member)
+#*--*##elseif( $member.dimensionList)
+#*----*##toStringArray($member)
+#*--*##elseif($member.typeKind=="user")
+strBuffer.append(${member.name}.toString("$member.name ", indent+1));
+#*--*##else
+CdrHelper.printIndent(strBuffer, indent+1);        
+strBuffer.append("$member.name: ").append($member.name).append("\n");  
+#*--*##end 
+#end ## macro
+
+
+##-----------------------------------------------------------------------------
+##  Macro to convert to an array of seq
+##-----------------------------------------------------------------------------
+
+#macro (toStringArrayOfSeq $member)
+#*--*##if($member.typeKind=="user")
+CdrHelper.printIndent(strBuffer, indent+1);
+strBuffer.append("${member.name}:\n");
+#*----*##openForLoopIfArray($member)        
+CdrHelper.printIndent(strBuffer, indent+2);
+strBuffer.append(#toStringUserArrayAppend($member)+":\n");
+for(int i__ = 0; i__ < $member.name#arraydimensionListsWithIndex($member).size(); ++i__) {
+    strBuffer.append((($member.nativeTypeFQName)$member.name#arraydimensionListsWithIndex($member).get(i__)).
+              toString(Integer.toString(i__),indent+4));
+}
+
+#*----*##closeForLoopIfArray($member)
+#*--*##else
+CdrHelper.printIndent(strBuffer, indent+1);
+strBuffer.append("${member.name}:#if($member.dimensionList)\n#end#if(!$member.dimensionList) #end");
+         
+#*--*##openForLoopIfArray($member)
+CdrHelper.printIndent(strBuffer, indent+2);
+strBuffer.append(#foreach($element in $member.dimensionList)"["+Integer.toString(i${velocityCount}__)+"]"+#end": ");
+
+for(int i__ = 0; i__ < ${member.name}#arraydimensionListsWithIndex($member).size(); ++i__) {
+    if (i__!=0) strBuffer.append(", ");
+        strBuffer.append(${member.name}#arraydimensionListsWithIndex($member).get(i__));
+}
+    strBuffer.append("\n"); 
+#closeForLoopIfArray($member)
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+##  Macro to convert to a  seq
+##-----------------------------------------------------------------------------
+
+#macro (toStringSeq $member)
+CdrHelper.printIndent(strBuffer, indent+1);
+#*--*##if($member.typeKind=="user")
+strBuffer.append("${member.name}:\n");
+for(int i__ = 0; i__ < ${member.name}.size(); ++i__) {
+    strBuffer.append((($member.nativeTypeFQName)${member.name}.get(i__)).toString(Integer.toString(i__),indent+2));
+}
+#*--*##else
+strBuffer.append("$member.name: ");
+for(int i__ = 0; i__ < ${member.name}#arraydimensionListsWithIndex($member).size(); ++i__) {
+    if (i__!=0) strBuffer.append(", ");
+        strBuffer.append(${member.name}#arraydimensionListsWithIndex($member).get(i__));
+    }
+strBuffer.append("\n"); 
+#*--*##end
+#end        
+
+##-----------------------------------------------------------------------------
+##  Macro to convert to an array
+##-----------------------------------------------------------------------------
+
+#macro (toStringArray $member)
+CdrHelper.printIndent(strBuffer, indent+1);
+#*--*##if($member.typeKind=="user")
+strBuffer.append("${member.name}:\n");
+#*--*##else
+strBuffer.append("$member.name: ");
+#*--*##end      
+#*--*##openForLoopIfArray($member)
+#*--*##if($member.typeKind=="user")     
+strBuffer.append(${member.name}#arraydimensionListsWithIndex($member).toString(
+            #toStringUserArrayAppend($member),indent+2));
+#*----*##closeForLoopIfArray($member)
+#*--*##else
+strBuffer.append(${member.name}#arraydimensionListsWithIndex($member)).append(", ");
+#*----*##closeForLoopIfArray($member)
+strBuffer.append("\n");
+#*--*##end
+#end
+
+##----------------------------------------------
+## macro(toStringUserArrayAppend)
+## Auxiliar macro to add the Integer.toString of the
+##array dimensionLists if the member is of user kind 
+##----------------------------------------------
+
+#macro(toStringUserArrayAppend $member)
+#foreach($element in $member.dimensionList)"["+Integer.toString(i${velocityCount}__)+"]"#*
+*##if($member.dimensionList.size()>$velocityCount)+#end#end#end ##macro
+
+
+#macro(addUnionMemberInitializationType $member)
+#if($member.seqSize)#*
+*#$member.nativeTypeSeq #declareEmptyArraydimensionLists($member)#*
+*##elseif($member.typeKind=="user")#*
+*#$member.nativeTypeFQName #declareEmptyArraydimensionLists($member)#*
+*##elseif($member.strSize) String#declareEmptyArraydimensionLists($member)#*
+*##else $member.nativeTypeFQName#declareEmptyArraydimensionLists($member)#*
+*##end ## if
+#end ##macro
+
+
+## Macro to set the initial value of enum using the @default_literal annotation
+#macro(setDefaultEnumValue $constructMap)
+#*--*##if(${constructMap.defaultValue})
+${constructMap.defaultValue}#*
+#*--*##else
+${constructMap.defaultLiteralMember.ordinal}#*
+#*--*##end
+#end

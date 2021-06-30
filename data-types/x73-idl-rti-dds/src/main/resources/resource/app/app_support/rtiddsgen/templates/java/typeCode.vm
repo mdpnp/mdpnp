@@ -1,0 +1,119 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,18dic13,ajm CODEGENII-152 Fixing possible error compilation with an idl with a module named i
+##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##10a,13jun13,ajm CODEGENII-109 joining the type variables in the constructMap 
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,8mar13, ajm CODEGENII-30 and CODEGENII-87 Code reviews and Xtypes in Java
+##10a,6feb12,ajm CODEGENII-30 Starting review of the templates to match the
+## guidelines we are following for C/C++
+##10a,31oct12, ajm RTIDDSGEN-34 support for the first set of copy directives (java ones)
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,11nov11, Refactoring code. Adding FQName variable
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,12oc11,jmt finished union support
+##10a,10oc11,jmt adding union support
+##10a,26sep11,jmt adding enum support
+##10a,22sep11,jmt adding valuetypes support
+##10a,15sep11,jmt Fixing more typedef issues 
+##10a,14sep11,jmt Refactor typedef
+##10a,2sep11,ajm Adding typedef support for sequences and arrays of sequences
+##10a,29ag11,jmt Fixing macros consistency by adding the missing parameters
+##10a,18ag11,jmt Adding //@key for strings and arrays
+##10a,17ag11,jmt Adding //@key
+##10a,12ag11,jmt Adding the brackets in the #separatorIfitisNeeded()
+##10a,05ag11,jmt Modification of the history header (a comment missing)
+##           ajm Fixing the bug for a struct without a module
+##10a,04ag11,jmt Adding all the basic type and testing them
+##10a,04ag11,jmt adding modification history header
+##10a,02ag11,jmt The auxiliary templates are only loaded once
+##10a,02ag11,jmt Moved to be under the path "resource/templates/java/"
+##10a,02ag11,jmt New dessing using auxiliary files for the macros
+##10a,01ag11,jmt created 
+##========================================================================*/*#
+##-----------------------------------------------------------------
+##               
+##             Template for the Java Data Writer file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Variables names
+##
+## $constructMap.packageName : Name of the package where the file will be included
+## $constructMap.name  : Name of the structure related with this file
+## $typecodeName: Name of the main class. Also name of the file
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from .idl using "rtiddsgen".
+  The rtiddsgen tool is part of the RTI Connext distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the RTI Connext manual.
+*/
+
+
+
+ 
+#if ($constructMap.packageName)  
+package $constructMap.packageName;
+#end
+                    
+import com.rti.dds.typecode.*;
+#if ($constructMap.requireBigIntegerImport)
+import java.math.BigInteger;
+#end
+
+
+#foreach($element in $constructMap.directives)
+$element.getValue()
+#end
+
+public class  $constructMap.typecodeName {
+    public static final TypeCode VALUE = getTypeCode();
+
+    private static TypeCode getTypeCode() {
+        TypeCode tc = null;
+##------------------------Elements initialization------------------------------------------
+#*--*##if($constructMap.constructKind.equals("enum"))  ## If is an enum
+        Annotations memberAnnotation;
+        int i=0;
+        EnumMember em[] = new EnumMember[$constructMap.memberCount];
+        
+#*----*##enumTypeCode($constructMap)
+           
+#*--*##elseif($constructMap.constructKind.equals("alias"))
+#*----*##assignMemberVariables($constructMap.typeCodeFirstMember $constructMap.extensibility $constructMap)
+Annotations memberAnnotation;
+
+#*--*##elseif(($constructMap.constructKind.equals("struct"))
+              ||($constructMap.constructKind.equals("valueType"))
+              ||($constructMap.constructKind.equals("union"))) 
+        int __i=0;
+#*----*##typeMember($constructMap) #typeVariable ($constructMap)[]=new #typeMember($constructMap)[$constructMap.memberCount];
+Annotations memberAnnotation;
+        
+#*----*##typeCode($constructMap) 
+#*--*##end
+
+##---------------------------TypeCode initialization---------------------------------------
+
+Annotations annotation = new Annotations();
+annotation.allowed_data_representation_mask($constructMap.dataRepresentationMask);
+
+#*--*##getTypeCodeFactory($constructMap)
+        
+        return tc;
+    }
+}
+
+

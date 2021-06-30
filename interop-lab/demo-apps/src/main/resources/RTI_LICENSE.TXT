@@ -1,0 +1,83 @@
+REAL-TIME INNOVATIONS, INC. 
+SOFTWARE LICENSE FOR NON-COMMERCIAL & PRE-COMMERCIAL USE FOR USE WITH OPENICE
+
+PLEASE READ THIS AGREEMENT CAREFULLY BEFORE DOWNLOADING, INSTALLING, OR USING THIS PRODUCT. THIS AGREEMENT GRANTS THE ORIGINAL LICENSEE OF THE SOFTWARE ("YOU") THE RIGHT TO USE THIS PRODUCT FOR SPECIFIED PURPOSES AND SUPERCEDES ALL OTHER AGREEMENTS WITH RESPECT TO USE OF THE SOFTWARE WITH OPENICE. THIS AGREEMENT STATES THE TERMS AND CONDITIONS UPON WHICH REAL-TIME INNOVATIONS, INC. ("RTI") OFFERS OR ACCEPTS YOUR OFFER TO LICENSE THE SOFTWARE (AS DEFINED IN 1.a. BELOW) TO YOU.  BY DOWNLOADING, INSTALLING, AND/OR USING THIS PRODUCT, YOU ARE AGREEING TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT DOWNLOAD, INSTALL, OR USE THIS PRODUCT.
+ 
+The Software is protected by RTI copyright.  You may use or distribute the Software only under these terms.  
+
+1. Definitions
+a) The "Software" consists of versions 6.0 and 6.1 of the RTI Connext DDS Secure core libraries for Java, documentation, utilities and runtime services for the following platforms: Windows, Linux on Intel Architecture and ARM, MACOS. The Software includes linkable library software binaries, graphical tools, header files, executables, and command line utilities.  
+b) A "Target Application" is a user-developed software program that requires physical incorporation of portions of the Software in object form.
+c) "OpenICE" means the open-source implementation of an Integrated Clinical Environment (ICE) distributed at https://github.com/mdpnp. 
+d) A "Project" is a concerted undertaking by an identified development team to design or produce a Target Application or connected set of Target Applications.
+
+2. Thirty Day Evaluation License
+a) Should Your Project not be eligible to use the Non-Commercial & Pre-Commercial Licensing defined in Section 3 then RTI grants You a temporary license to use the Software for the sole purpose of testing the suitability, performance and usefulness of the Software for Your business needs under the following restrictions:
+i)  This license lasts for an period of thirty (30) days from the date of Your first download or installation of the Software; 
+ii) You may not use the Software for development beyond prototypes, or to produce revenue or commercial benefit;
+iii) You may not redistribute the Software, or any part of the Software, in any form under this license; and
+iv) You may not use the Software to compete with products sold by RTI.
+
+3. Non-Commercial & Pre-Commercial Licensing
+a) Prohibitions applicable to all licenses granted herein except for the Thirty Day Evaluation License.
+i) You may not use the Software as part of any Project that is intended for commercial distribution or for use internally to produce revenue or benefit (together "Commercial Purpose"). Evidence of a Commercial Purpose includes the existence of a customer delivery or production schedule, involvement of production management personnel, installation into production systems, and/or development of financial return goals.  You agree to purchase additional licenses and/or platform support if You choose to use the Software for Commercial Purpose. 
+ii) You may not use the Software to compete with products sold by RTI. 
+iii) You may not combine rights under this License with rights granted by any other license for the Software or other RTI products on the same Project without RTI's express written permission.
+
+b) Development License
+i) Subject to the restrictions set forth within, RTI grants you a limited, royalty free, non-exclusive, nonassignable, nontransferable right to: 
+(1) Develop code that links to and uses the Software with OpenICE, and  
+(2) make copies of the library portions of the Software (in subdirectory "/lib") in object-code form and physically incorporate the copies into a Target Application.  
+ii) Nothing in this License limits Your right to release software that You develop under license terms of Your choosing provided that such code does not contain the any component of the Software other than a) the header files that define the Software's programming interface, and/or b) code created by the rtiddsgen code generator.  
+
+c) Restriction on Redistribution of Development Environment
+i) You may distribute the Software to the OpenICE repository provided that such redistribution (i) remains subject to the terms of this License, (ii) includes this license or a link to this license in any documentation, and (iii) does not include infrastructure services (including, but not limited to, routing services, or persistence services) or graphical tools ("Authorized Redistribution"). For purposes of clarity, infrastructure services do not include RTI's recording service. You must also include this license as "RTI_LICENSE.TXT" in the top-level directory of any Authorized Distribution of the Software or its components. 
+ii) You may not claim copyright on the original or modified works, nor remove RTI's copyright. You must associate RTI's trademarks and no others with the original or modified works.    
+iii) If You have received an Authorized Redistribution and desire to gain access to RTI's suite of graphical tools and infrastructure services, please visit https://www.rti.com
+
+d) Distribution of Target Applications
+i) Only Target Applications that contain neither software development capability nor graphical components of the Software are eligible for distribution under this Clause d.
+ii) You may distribute Target Applications to third-party end users provided that end users are prohibited from using the Target Applications for a Commercial Purpose, and that neither You nor the end users receives any commercial benefit for distributing or using the Target Applications.
+iii) Any such distributions must remain subject to the terms of this License and prominently include this license or a link to this license in any documentation. You may not claim copyright on the original or modified works, nor remove RTI's copyright. You must associate RTI's trademarks and no others with the original works.
+
+4. Rights
+a) The Software is "Commercial Computer Software" as defined by the Federal Acquisition Regulation, and is provided to the Government with "Restricted Rights", subject to the terms of this License.
+b) This License does not grant You any rights in or license to trademarks, patents, service marks, or logos of RTI or other entities.
+
+5. No Support
+a) Except as may be provided or in a separate written agreement between You and RTI, if any, RTI is under no obligation to support, maintain, or update the Software.
+b) You are solely responsible for the support and maintenance of all portions of any Target Applications.
+
+6. No Warranty and Limited Liability
+a) THE SOFTWARE IS PROVIDED AND USED BY YOU OR IN TARGET APPLICATIONS "AS IS".  RTI DISCLAIMS ALL WARRANTIES, EITHER EXPRESS OR IMPLIED, INCLUDING THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.  NO ORAL OR WRITTEN INFORMATION OR ADVICE GIVEN BY RTI, ITS DEALERS, DISTRIBUTORS, AGENTS OR EMPLOYEES SHALL CREATE A WARRANTY.
+b) You are solely responsible for all liability arising out of or in connection with the copying, marketing, performance or other distribution of Your modifications to the Software, or Your Target Applications.
+c) RTI SHALL NOT BE LIABLE FOR ANY DIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES (INCLUDING DAMAGES FOR LOSS OF BUSINESS, PROFITS OR THE LIKE) ARISING OUT OF THE USE OR INABILITY TO USE THE SOFTWARE.
+d)  To the fullest extent permitted by law, RTI shall not be liable to You for any liability arising out of related to this Agreement, whether arising out of or related to breach of contract, tort (including negligence), or otherwise. 
+ 
+7. General 
+a) Downloading, installing, or using the Software, or selecting the online "Accept License Agreement" button is a confirmation of Your agreement that You comply, now and during any use term, with the United States Export Administration and Regulations, and with all local domestic and international export laws and regulations.  These laws include restrictions on destinations, end users and end use.  
+b) If You are an agency of the United States Government, then this License will be governed by the United States federal common law.  Otherwise, this License will be governed by the laws of the State of California except with regard to its choice of law rules.  
+c) No changes to this License will be valid unless made in writing and signed by a corporate officer of RTI. 
+d) You may not use the Software if You are a direct competitor or acting on behalf of a direct competitor of RTI, except with RTI's prior written consent. 
+e) You may not a) use the Software for competitive purposes, including performing performance or vulnerability tests nor b) disclose results of any tests to third parties without RTI's prior written consent.
+
+ 
+
+
+
+
+		
+
+
+
+
+
+
+
+232 E. Java Drive, Sunnyvale, CA 94089			Software License for Non-Commercial Use #4042(Rev.06-19)
+Tel: +1 (408) 990-7400   Fax: +1 (408) 990-7402			Page 2 of 3
+rti.com
+
+
+
+
