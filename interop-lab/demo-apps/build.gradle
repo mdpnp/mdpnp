@@ -249,4 +249,10 @@ run {
       environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
       environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
     }
+    if(localOsName.contains("mac")) {
+      environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+
+    }
 }
