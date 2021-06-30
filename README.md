@@ -36,3 +36,21 @@ __devices/__
 * To be used in conjunction with other components that provide nomenclature, information model translation, and messaging
 
 <a href="https://iconscout.com/icons/infusion-pumps" target="_blank">Infusion pumps Icon</a> by <a href="https://iconscout.com/contributors/icons8">Icons8</a> on <a href="https://iconscout.com">Iconscout</a>
+
+Licensed Components
+-------------------
+
+The code in this branch of the repository relies on an implementation of the DDS standard from [RTI](https://www.rti.com).  RTI have kindly provided licensed materials to support this.  Your use of this version of the code relies on you accepting the terms of this license.  You can read the license [in this file](interop-lab/demo-apps/src/main/resources/RTI_LICENSE.TXT)
+
+Encryption Technologies
+-----------------------
+
+One of the major features of this release is the support of encryption for data transport via the DDS implementation.  Encryption is enabled by default in this release in the QoS (Quality of Service) file [here](data-types/x73-idl-rti-dds/src/main/resources/META-INF/ice_library.xml).  This means that OpenICE will require encryption support libraries.  Due to export restrictions on encryption technnologies, the MDPNP program have chosen not to bundle these required files as part of this release.  The required library is libcrypto.so.1.1 on Linux and libcrypto-1_1-x64.dll on Windows.  You must obtain these libraries separately from this code (although many modern systems will have them installed).
+
+Preset Values
+-------------
+Because encryption is configured out of the box for this version, certain files in the build tree are cryptographically signed.  This means that with encryption enabled, certain settings are effectively fixed.  You must use
+
+10
+
+as the value for the Domain ID when starting the supervisor application.
