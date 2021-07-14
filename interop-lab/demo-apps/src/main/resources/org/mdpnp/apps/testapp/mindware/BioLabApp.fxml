@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.text.*?>
+
+<GridPane fx:controller="org.mdpnp.apps.testapp.mindware.BioLabApp" 
+    xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10" fx:id="rootPane">
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+    
+</GridPane>

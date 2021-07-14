@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.text.*?>
+<?import javafx.collections.*?>
+
+<GridPane fx:controller="org.mdpnp.apps.testapp.mindware.BioLabChannelController" 
+    xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10" fx:id="channelRoot">
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+        <Label fx:id="channelNameLabel" text="Channel Name" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <Label text="User Associated" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <ComboBox fx:id="clinicians" promptText="choose" GridPane.columnIndex="1" GridPane.rowIndex="1">
+         <items>
+            <FXCollections fx:factory="observableArrayList">
+              <String fx:value="Dr. Julian" />
+              <String fx:value="Dr. Dave" />
+              <String fx:value="Dr. Google" />
+            </FXCollections>
+         </items>
+         </ComboBox>
+         <Label text="Metric ID" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+         <TextField fx:id="metricID" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+         <Button fx:id="startStopPublish" text="Publish" onAction="#startStopPublishChannel"
+             GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+         
+        
+    
+</GridPane>
