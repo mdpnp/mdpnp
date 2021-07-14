@@ -25,6 +25,7 @@ import ice.MDSConnectivity;
 import impl.org.controlsfx.i18n.SimpleLocalizedStringProperty;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -44,6 +45,9 @@ public class BioLabChannelController {
 	
 	@FXML
 	private ComboBox clinicians;
+	
+	@FXML
+	private Button startStopPublish;
 
 	/**
 	 * The BioLab channel name for this channel
@@ -91,6 +95,14 @@ public class BioLabChannelController {
 			return;
 		}
 		publishing.set( ! publishing.get() );
+	}
+	
+	public void toggleStopStart() {
+		if(startStopPublish.getText().equals("Publish")) {
+			startStopPublish.setText("Stop");
+		} else {
+			startStopPublish.setText("Publish");
+		}
 	}
 	
 

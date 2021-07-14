@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -34,6 +35,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 
@@ -64,6 +66,9 @@ public class BioLabApp {
 	
 	@FXML
 	private GridPane rootPane;
+	
+	@FXML
+	private Button startButton;
 	
 	/**
 	 * The number of channels specified in a "General Info" packet
@@ -116,11 +121,20 @@ public class BioLabApp {
 	 */
 	private HashMap<String, BioLabDevice> bioLabDeviceByClinician;
 	
+	/**
+	 * A collection of all the adapters we create, so we can stop them easily.
+	 */
+	private HashSet<DeviceDriverProvider.DeviceAdapter> adapters;
+	
 	@FXML
 	TextField ipAddress;
 	
 	@FXML
 	TextField portNumber;
+	
+	private ReceivingThread receivingThread;
+	
+	private boolean pleaseStop;
 	
 	static class GeneralInfo {
 		
@@ -268,6 +282,7 @@ public class BioLabApp {
 		activeChannels=new HashMap<>();
 		channelClinician=new HashMap<>();
 		bioLabDeviceByClinician=new HashMap<>();
+		adapters=new HashSet<>();
 	}
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
@@ -287,7 +302,7 @@ public class BioLabApp {
 				byte receiveBuffer[]=new byte[512];
 				DatagramPacket nextPacket=new DatagramPacket(receiveBuffer, receiveBuffer.length);
 				int totalChannels=0;
-				while(true) {
+				while(true && !pleaseStop) {
 					listenerSocket.receive(nextPacket);
 					int len=nextPacket.getLength();
 	//				System.err.println("nextPacket length is "+len);
@@ -341,6 +356,7 @@ public class BioLabApp {
 									System.err.println("BioLabApp added active channel "+ci.label+" with "+controller.getMetricID().get());
 									channelClinician.put(ci.label, controller.getClinicianName());
 									System.err.println("BioLabApp added channel clinician "+ci.label+" with "+controller.getClinicianName());
+									
 								  } else {
 									//We can collapse all this into one block?
 								  }
@@ -352,7 +368,7 @@ public class BioLabApp {
 									System.err.println("BioLabApp removed channel "+ci.label);
 									channelClinician.remove(ci.label);	//Just to be thorough.
 								}
-								
+								controller.toggleStopStart();
 							}
 				        	
 				        });
@@ -489,6 +505,7 @@ public class BioLabApp {
 
             try {
             	bioLabDeviceAdapter = df.create((AbstractApplicationContext) parentContext);
+            	adapters.add(bioLabDeviceAdapter);
 
                 // TODO Make this more elegant
                 List<String> strings = new ArrayList<String>();
@@ -530,30 +547,51 @@ public class BioLabApp {
      * Uses the IP and port number fields on the UI to start the listening process.
      */
     public void startListening() {
-    	String addrText=ipAddress.getText();
-		System.err.println("addrText style is "+ipAddress.styleProperty().get());
-		String portNumText=portNumber.getText();
-		if(addrText.length()==0 || portNumText.length()==0) {
-			Alert bad=new Alert(AlertType.ERROR,"You must specify an ip address and port number");
-			bad.show();
-			return;
-		}
-		try {
-			addr = InetAddress.getByName(addrText);
-		} catch (UnknownHostException uhe) {
-			Alert bad=new Alert(AlertType.ERROR,"You must specify a valid ip address");
-			bad.show();
-			return;
-		}
-		try {
-			port=Integer.parseInt(portNumText);
-		} catch (NumberFormatException nfe) {
-			Alert bad=new Alert(AlertType.ERROR,"Port must be numeric");
-			bad.show();
-			return;
-		}
-    	ReceivingThread thread=new ReceivingThread();
-		thread.start();
+    	if(receivingThread==null) {
+        	String addrText=ipAddress.getText();
+    		System.err.println("addrText style is "+ipAddress.styleProperty().get());
+    		String portNumText=portNumber.getText();
+    		if(addrText.length()==0 || portNumText.length()==0) {
+    			Alert bad=new Alert(AlertType.ERROR,"You must specify an ip address and port number");
+    			bad.show();
+    			return;
+    		}
+    		try {
+    			addr = InetAddress.getByName(addrText);
+    		} catch (UnknownHostException uhe) {
+    			Alert bad=new Alert(AlertType.ERROR,"You must specify a valid ip address");
+    			bad.show();
+    			return;
+    		}
+    		try {
+    			port=Integer.parseInt(portNumText);
+    		} catch (NumberFormatException nfe) {
+    			Alert bad=new Alert(AlertType.ERROR,"Port must be numeric");
+    			bad.show();
+    			return;
+    		}
+    		startButton.setText("Stop");
+    		receivingThread=new ReceivingThread();
+    		receivingThread.start();
+    	} else {
+    		pleaseStop=true;
+    		receivingThread.interrupt();
+    		receivingThread=null;
+    		startButton.setText("Start");
+    		bioLabDeviceByClinician.values().forEach( d-> {
+    			d.shutdown();
+    			d=null;
+    		});
+    		adapters.forEach( a -> {
+    			a.stop();
+    			a=null;
+    		});
+    		activeChannels.clear();
+    		bioLabDeviceByClinician.clear();
+    		adapters.clear();
+    	}
+    	
+		
     }
 
 
