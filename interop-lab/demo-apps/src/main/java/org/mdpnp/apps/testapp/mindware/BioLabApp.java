@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 
 public class BioLabApp {
@@ -48,7 +52,15 @@ public class BioLabApp {
 	 */
 	private byte CHANNEL_DATA=0x03;
 	
+	/**
+	 * The IP address that we will listen on
+	 */
 	private InetAddress addr;
+	
+	/**
+	 * The port number that we will listen on
+	 */
+	private int port;
 	
 	@FXML
 	private GridPane rootPane;
@@ -104,6 +116,11 @@ public class BioLabApp {
 	 */
 	private HashMap<String, BioLabDevice> bioLabDeviceByClinician;
 	
+	@FXML
+	TextField ipAddress;
+	
+	@FXML
+	TextField portNumber;
 	
 	static class GeneralInfo {
 		
@@ -254,30 +271,19 @@ public class BioLabApp {
 	}
 	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
-		startReceivingThread();
-		
-		
-	}
-	
-	private void startReceivingThread() {
 		try {
-			//We need a separate thread because receiving on the socket blocks.
-			ReceivingThread thread=new ReceivingThread();
-			thread.start();
-			
-			
-			
-		} catch (Exception e) {
-			
+			String addr=InetAddress.getLocalHost().getHostAddress();
+			ipAddress.setText(addr);
+		} catch (UnknownHostException e) {
+			//Just do nothing and let the user sort it out
 		}
+		
+		
 	}
 	
 	class ReceivingThread extends Thread {
 		public void run() {
-			try {
-				//TODO: Get these ports and addresses from the UI
-				addr = InetAddress.getByName("192.168.90.120");
-				DatagramSocket listenerSocket=new DatagramSocket(1778, addr);
+			try(DatagramSocket listenerSocket=new DatagramSocket(port, addr)) {
 				byte receiveBuffer[]=new byte[512];
 				DatagramPacket nextPacket=new DatagramPacket(receiveBuffer, receiveBuffer.length);
 				int totalChannels=0;
@@ -357,7 +363,7 @@ public class BioLabApp {
 				        	//All channels done
 				        	javafx.application.Platform.runLater(new Runnable() {
 								public void run() {
-									int row=0;
+									int row=1;
 									int col=0;
 									for(int i=0;i<parents.length;i++) {
 										rootPane.add(parents[i],col%2,row);
@@ -392,7 +398,6 @@ public class BioLabApp {
 					}
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -519,6 +524,36 @@ public class BioLabApp {
         //connectivity.unique_device_identifier=bioLabDevice.getUniqueDeviceIdentifier();
         //mdsHandler.publish(connectivity);
 //        System.err.println(connectivity.toString("Published device connectivity ",2));
+    }
+    
+    /**
+     * Uses the IP and port number fields on the UI to start the listening process.
+     */
+    public void startListening() {
+    	String addrText=ipAddress.getText();
+		System.err.println("addrText style is "+ipAddress.styleProperty().get());
+		String portNumText=portNumber.getText();
+		if(addrText.length()==0 || portNumText.length()==0) {
+			Alert bad=new Alert(AlertType.ERROR,"You must specify an ip address and port number");
+			bad.show();
+			return;
+		}
+		try {
+			addr = InetAddress.getByName(addrText);
+		} catch (UnknownHostException uhe) {
+			Alert bad=new Alert(AlertType.ERROR,"You must specify a valid ip address");
+			bad.show();
+			return;
+		}
+		try {
+			port=Integer.parseInt(portNumText);
+		} catch (NumberFormatException nfe) {
+			Alert bad=new Alert(AlertType.ERROR,"Port must be numeric");
+			bad.show();
+			return;
+		}
+    	ReceivingThread thread=new ReceivingThread();
+		thread.start();
     }
 
 
