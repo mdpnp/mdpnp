@@ -19,6 +19,8 @@ import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 
@@ -40,6 +42,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 
 public class BioLabApp {
+	
+	/**
+	 * Out logger instance.
+	 */
+	private static final Logger log = LoggerFactory.getLogger(BioLabApp.class);
 	
 	/**
 	 * First byte of data packet representing "General Info"
@@ -147,15 +154,11 @@ public class BioLabApp {
 		GeneralInfo(ByteBuffer byteBuffer) {
 			byte type=byteBuffer.get();	//Discard the type...
 			length=byteBuffer.getInt();
-			System.err.println("gi.length is "+length);
 			version=byteBuffer.getShort();
-			System.err.println("gi.version is "+version);
 			_timebase=byteBuffer.getInt();
-			System.err.println("gi.timebase is "+_timebase);
 			_channelCount=byteBuffer.getShort();
-			System.err.println("gi.channelCount is "+_channelCount);
 			checksum=byteBuffer.getShort();
-			System.err.println("gi.checksum is "+checksum);
+			log.info(toString());
 		}
 
 		@Override
@@ -191,6 +194,7 @@ public class BioLabApp {
 			byteBuffer.get(dst);
 			units=new String(dst);
 			checksum=byteBuffer.getShort();
+			log.info(toString());
 		}
 
 		@Override
@@ -249,7 +253,7 @@ public class BioLabApp {
 		 * 2 bytes channel count
 		 * 2 bytes checksum
 		 */
-		System.err.println("gi packet size is "+gi.length+" with checksum "+gi.checksum);
+		log.info("gi packet size is "+gi.length+" with checksum "+gi.checksum);
 		if(gi.length<=15) {
 			return true;
 		}
@@ -314,24 +318,24 @@ public class BioLabApp {
 					columnIndex[0]=0;
 					rowIndex[0]=0;
 					if(trimmed[0]==GENERAL_INFO) {
-						System.err.println("Got possible GeneralInfo");
-						System.err.println("bytes are "+ArrayUtils.toString(trimmed));
+						log.info("Got possible GeneralInfo");
+						//System.err.println("bytes are "+ArrayUtils.toString(trimmed));
 						GeneralInfo gi=getGeneralInfo(trimmed);
 						if(gi!=null) {
 							//Let's assume it was valid
 							//i+=gi.length;	//Jump forward by the size of the packet as specificed by MindWare
 							channelCount=gi._channelCount;
 							timebase=gi._timebase;
-							System.err.println("Channel Count from General Info is "+channelCount);
+							log.info("Channel Count from General Info is "+channelCount);
 							channelInfos=new ChannelInfo[channelCount];
 							parents=new Parent[channelCount];
 						}
 					} 
 					else if(trimmed[0]==CHANNEL_INFO) {
-						System.err.println("Got possible ChannelInfo");
+						log.info("Got possible ChannelInfo");
 						ChannelInfo ci=getChannelInfo(trimmed);
 						if(ci!=null) {
-							System.err.println("Channel name and number are "+ci.label+" "+ci.channelNumber);
+							log.info("Channel name and number are "+ci.label+" "+ci.channelNumber);
 						}
 						
 						channelInfos[ci.channelNumber-1]=ci;
@@ -350,12 +354,12 @@ public class BioLabApp {
 								if(newValue) {
 								  //We want to start publishing.  ci.label , the BioLab channel will be unique.
 								  if(!activeChannels.containsKey(ci.label)) {
-								    System.err.println("New value for channel "+ci.label);
-									System.err.println("No key for that");
+									log.info("New value for channel "+ci.label);
+									log.info("No key for that");
 									activeChannels.put(ci.label, controller.getMetricID().get());
-									System.err.println("BioLabApp added active channel "+ci.label+" with "+controller.getMetricID().get());
+									log.info("BioLabApp added active channel "+ci.label+" with "+controller.getMetricID().get());
 									channelClinician.put(ci.label, controller.getClinicianName());
-									System.err.println("BioLabApp added channel clinician "+ci.label+" with "+controller.getClinicianName());
+									log.info("BioLabApp added channel clinician "+ci.label+" with "+controller.getClinicianName());
 									
 								  } else {
 									//We can collapse all this into one block?
@@ -365,7 +369,7 @@ public class BioLabApp {
 								} else {
 									//We want to stop publishing.
 									activeChannels.remove(ci.label);
-									System.err.println("BioLabApp removed channel "+ci.label);
+									log.info("BioLabApp removed channel "+ci.label);
 									channelClinician.remove(ci.label);	//Just to be thorough.
 								}
 								controller.toggleStopStart();
@@ -434,7 +438,7 @@ public class BioLabApp {
             deviceIdentity.model = clinicianName;
             deviceIdentity.serial_number = "5678";
             AbstractSimulatedDevice.randomUDI(deviceIdentity);		//TODO: clone the device id, or does that mess everything up?
-            System.err.println("New BioLabDevice had UDI "+deviceIdentity.unique_device_identifier);
+            log.info("New BioLabDevice had UDI "+deviceIdentity.unique_device_identifier);
             writeDeviceIdentity();
 //            System.err.println("NumericBPDeviceConstructor subscriber is "+subscriber);
             instanceHolders=new HashMap<>();
@@ -458,11 +462,11 @@ public class BioLabApp {
 			}
 			if(!instanceHolders.containsKey(metricID)) {
 				int frequency=timebase/ci.divisor;
-				System.err.println("Frequency is "+frequency);
+				log.info("Frequency is "+frequency);
 				InstanceHolder<SampleArray> holder=createSampleArrayInstance(metricID, "", 0, ci.units, frequency);
 				instanceHolders.put(ci.label, holder);
 				sampleArraySample(holder, (Double[])cd.dataPoints.toArray(new Double[0]), biolabClock.instant());
-				System.err.println("Published sampleArraySample for "+metricID);
+				log.info("Published sampleArraySample for "+metricID);
 			} else {
 				InstanceHolder<SampleArray> holder=(InstanceHolder<SampleArray>)instanceHolders.get(ci.label);
 				sampleArraySample(holder, (Double[])cd.dataPoints.toArray(new Double[0]), biolabClock.instant());
@@ -530,7 +534,7 @@ public class BioLabApp {
         BioLabDevice _device=(BioLabDevice)bioLabDeviceAdapter.getDevice();
 
         bioLabDeviceByClinician.put(clinicianName, _device);
-        System.err.println("createBioLabDeviceForClinician added device for "+clinicianName);
+        log.info("createBioLabDeviceForClinician added device for "+clinicianName);
         return _device;
         //We have the device - we must associate it with the correct partition...
         //mdsHandler.
@@ -549,7 +553,6 @@ public class BioLabApp {
     public void startListening() {
     	if(receivingThread==null) {
         	String addrText=ipAddress.getText();
-    		System.err.println("addrText style is "+ipAddress.styleProperty().get());
     		String portNumText=portNumber.getText();
     		if(addrText.length()==0 || portNumText.length()==0) {
     			Alert bad=new Alert(AlertType.ERROR,"You must specify an ip address and port number");
