@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.text.*?>
+
+<GridPane fx:controller="org.mdpnp.apps.testapp.dicom.DicomReplicationApp" 
+    xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10" fx:id="rootPane">
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+    <HBox fx:id="ipDetails" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
+    	<Label text="IP Address"/>
+    	<TextField fx:id="ipAddress"/>
+    	<Label text="Port Number"/>
+    	<TextField fx:id="portNumber">4242</TextField>
+    </HBox>
+    <HBox fx:id="dicomDetails" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.rowSpan="2">
+    	<Label text="Patient Name"/>
+    	<TextField fx:id="patientName">Bowen*</TextField>
+    	<Button fx:id="startButton" onAction="#startProcessing" text="Start"/>
+    </HBox>
+</GridPane>
