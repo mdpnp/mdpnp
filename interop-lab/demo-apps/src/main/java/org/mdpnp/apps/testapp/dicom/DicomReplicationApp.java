@@ -2,6 +2,7 @@ package org.mdpnp.apps.testapp.dicom;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +32,11 @@ import com.rti.dds.subscription.Subscriber;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.transfer.s3.CompletedUpload;
+import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.Upload;
 
 /**
  * All the credit for DICOM related code in this app should go to
@@ -80,16 +86,23 @@ public class DicomReplicationApp {
 	 * Identifier for the local system.  This needs to be configurable later
 	 */
 	private final String OPENICE_AE="OpenICE";
-	//private final String OPENICE_AE="OurFindScu";
 	
-	//private final String GET_AE="JavaClient";
-	
-	//IdentifierHandler singleHandler;
-	
+	/**
+	 * The S3 transfer manager.  We will do many transfers, but they can all use this.
+	 */
+	private S3TransferManager s3TransferManager;
 	
 	public DicomReplicationApp() {
 		knownEntries=new ArrayList<>();
 		//singleHandler=new IdentifierHandler();
+		initS3();
+	}
+	
+	private void initS3() {
+		Region region=Region.US_EAST_1;
+        S3ClientConfiguration clientConfig=S3ClientConfiguration.builder().region(region).build();
+        
+        s3TransferManager=S3TransferManager.builder().s3ClientConfiguration(clientConfig).build();
 	}
 
 	public void set(ApplicationContext parentContext, MDSHandler mdsHandler, Subscriber subscriber) {
@@ -273,8 +286,13 @@ public class DicomReplicationApp {
             	System.err.println("Received file "+testFile.getAbsolutePath()+" has size "+testFile.length());
             }
             
-            //TODO: Send the received data somewhere else.
-
+            String s3Key=filename.substring(filename.lastIndexOf(File.separatorChar)+1);
+            
+            Upload upload=s3TransferManager.upload( b -> b.putObjectRequest(r -> r.bucket("openicedicom").key(s3Key))
+            		.source(Paths.get(filename)));
+            CompletedUpload completedUpload=upload.completionFuture().join();
+            System.out.println("Uploaded "+filename+" to s3 entity "+completedUpload.response().eTag());
+            
         }
 
     }
