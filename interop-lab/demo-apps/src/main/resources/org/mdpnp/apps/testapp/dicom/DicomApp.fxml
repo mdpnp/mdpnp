@@ -10,15 +10,31 @@
 <GridPane fx:controller="org.mdpnp.apps.testapp.dicom.DicomReplicationApp" 
     xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10" fx:id="rootPane">
     <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
-    <HBox fx:id="ipDetails" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
-    	<Label text="IP Address"/>
-    	<TextField fx:id="ipAddress"/>
-    	<Label text="Port Number"/>
-    	<TextField fx:id="portNumber">4242</TextField>
-    </HBox>
-    <HBox fx:id="dicomDetails" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.rowSpan="2">
+    <HBox fx:id="box1" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="1">
     	<Label text="Patient Name"/>
     	<TextField fx:id="patientName">Bowen*</TextField>
-    	<Button fx:id="startButton" onAction="#startProcessing" text="Start"/>
+    	<Label text="DICOM Server IP"/>
+    	<TextField fx:id="ipAddress"/>
+    	<Label text="Port"/>
+    	<TextField fx:id="portNumber">4242</TextField>
     </HBox>
+    <VBox fx:id="box2" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.rowSpan="1">
+    	<Button fx:id="startButton" onAction="#startProcessing" text="Start"/>
+    	<Button fx:id="stopButton" onAction="#stopProcessing" text="Stop"/>
+    </VBox>
+    <HBox fx:id="timeBox" GridPane.columnIndex="0" GridPane.rowIndex="1">
+		<Label text="Starting Time"/>
+		<TextField fx:id="startTime"></TextField>
+		<Label text="End Time"/>
+		<TextField fx:id="endTime"></TextField>
+    </HBox>
+    <TableView fx:id="filesTable" GridPane.columnIndex="0" GridPane.rowIndex="2">
+    	<columns>
+			<TableColumn text="Image Name">
+			</TableColumn>
+    		<TableColumn text="Local File">
+			</TableColumn>
+    	</columns>
+    </TableView>
+    <Button fx:id="viewButton" GridPane.columnIndex="1" GridPane.rowIndex="2" onAction="#viewImage">View Image</Button>
 </GridPane>

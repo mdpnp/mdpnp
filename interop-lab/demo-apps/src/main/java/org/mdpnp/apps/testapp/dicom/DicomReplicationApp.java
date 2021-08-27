@@ -1,11 +1,15 @@
 package org.mdpnp.apps.testapp.dicom;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Observable;
 import java.util.Set;
+
+import javax.swing.JFrame;
 
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -23,6 +27,7 @@ import com.pixelmed.dicom.SpecificCharacterSet;
 import com.pixelmed.dicom.StoredFilePathStrategy;
 import com.pixelmed.dicom.TagFromName;
 import com.pixelmed.dicom.UniqueIdentifierAttribute;
+import com.pixelmed.display.SourceImage;
 import com.pixelmed.network.DicomNetworkException;
 import com.pixelmed.network.FindSOPClassSCU;
 import com.pixelmed.network.GetSOPClassSCU;
@@ -30,8 +35,12 @@ import com.pixelmed.network.IdentifierHandler;
 import com.pixelmed.network.ReceivedObjectHandler;
 import com.rti.dds.subscription.Subscriber;
 
+import javafx.beans.property.*;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.cell.*;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TableView;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.transfer.s3.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
@@ -69,6 +78,9 @@ public class DicomReplicationApp {
 	@FXML
 	private TextField patientName;
 	
+	@FXML
+	private TableView<DicomFileForTable> filesTable;
+	
 	ArrayList<AttributeList> knownEntries;
 	
 	/**
@@ -92,9 +104,15 @@ public class DicomReplicationApp {
 	 */
 	private S3TransferManager s3TransferManager;
 	
+	/**
+	 * The main processing thread.
+	 */
+	private Thread queryThread;
+	
+	private boolean pleaseStop;
+	
 	public DicomReplicationApp() {
 		knownEntries=new ArrayList<>();
-		//singleHandler=new IdentifierHandler();
 		initS3();
 	}
 	
@@ -120,6 +138,9 @@ public class DicomReplicationApp {
 		String dicomServer=ipAddress.getText();
 		String dicomPort=portNumber.getText();
 		
+		filesTable.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("imageName"));
+		filesTable.getColumns().get(1).setCellValueFactory(new PropertyValueFactory<>("localFile"));
+		
 		try {
             // use the default character set for VR encoding - override this as necessary
             final SpecificCharacterSet specificCharacterSet = new SpecificCharacterSet((String[])null);
@@ -143,10 +164,10 @@ public class DicomReplicationApp {
            
             
             
-            Thread queryThread=new Thread() {
+            queryThread=new Thread() {
             	@Override
             	public void run() {
-            		while(true) {
+            		while(!pleaseStop) {
 	            		try {
 	            			System.err.println("Thread start");
 							new FindSOPClassSCU(dicomServer,
@@ -169,12 +190,12 @@ public class DicomReplicationApp {
 	            		try {
 							sleep(60000);
 						} catch (InterruptedException ie) {
-							System.err.println("Interrupted...");
+							if(pleaseStop) {
+								System.err.println("stop request");
+							}
 							return;
 						}
             		}
-            		
-            		
             	}
             	
             };
@@ -186,6 +207,12 @@ public class DicomReplicationApp {
             log.error("Top Level Exception",e);
         }
 		
+	}
+	
+	public void stopProcessing() {
+		System.err.println("Stop called");
+		pleaseStop=true;
+		queryThread.interrupt();
 	}
 	
 	class OpenICEIdentifierHandler extends IdentifierHandler {
@@ -286,15 +313,60 @@ public class DicomReplicationApp {
             	System.err.println("Received file "+testFile.getAbsolutePath()+" has size "+testFile.length());
             }
             
-            String s3Key=filename.substring(filename.lastIndexOf(File.separatorChar)+1);
+            String s3Key="patient99/"+filename.substring(filename.lastIndexOf(File.separatorChar)+1);
             
             Upload upload=s3TransferManager.upload( b -> b.putObjectRequest(r -> r.bucket("openicedicom").key(s3Key))
             		.source(Paths.get(filename)));
             CompletedUpload completedUpload=upload.completionFuture().join();
             System.out.println("Uploaded "+filename+" to s3 entity "+completedUpload.response().eTag());
             
+            DicomFileForTable dfft=new DicomFileForTable(s3Key, filename);
+            filesTable.getItems().add(dfft);
+            
         }
 
     }
+	
+	public void viewImage() {
+		DicomFileForTable dfft=filesTable.getSelectionModel().getSelectedItem();
+		String fileName=dfft.localFile;
+		
+		try {
+	        JFrame frame = new JFrame();
+	        SourceImage sImg = new SourceImage(fileName);
+	        System.out.println("Number of frames: " + sImg.getNumberOfFrames());
+	        DicomViewerPanel singleImagePanel = new DicomViewerPanel(sImg);
+	        frame.add(singleImagePanel);
+	        frame.setBackground(Color.BLACK);
+	        frame.setSize(sImg.getWidth(),sImg.getHeight());
+	        frame.setTitle("Demo for view, scroll and window width/level operations");
+	        frame.setVisible(true);
+	
+	    } catch (Exception e) {
+	        e.printStackTrace(); //in real life, do something about this exception
+	    }
+		
+		
+		
+		
+	}
+	
+	public class DicomFileForTable {
+		private String imageName;
+		private String localFile;
+		
+		public DicomFileForTable(String imageName, String localFile) {
+			this.imageName=imageName;
+			this.localFile=localFile;
+		}
+
+		public String getImageName() {
+			return imageName;
+		}
+
+		public String getLocalFile() {
+			return localFile;
+		}
+	}
 
 }
