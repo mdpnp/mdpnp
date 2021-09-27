@@ -16,8 +16,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.NumberFormat;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import ice.GlobalSimulationObjective;
@@ -75,6 +77,7 @@ import com.rti.dds.topic.Topic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Jeff Plourde
@@ -92,6 +95,19 @@ public class ScenarioSimControl implements InitializingBean
     @FXML TextField speedField;
     
     private File selectedFile;
+    
+    /**
+     * A list of ECG rhythm values that are known to VitalsBridge.  We keep these in an ArrayList, so that when one
+     * is specified in the script, we can look up the index for it, and then publish the index as a numeric metric.
+     * The VitalsBridge receiving device can reverse the process to revert back to the String value that is required
+     * in order to publish the proprietary command to the VitalsBridge.<br/><br/>
+     * 
+     * Needless to say, that requires that the VitalsBridge has exactly the same order of elements.  Needless to say,
+     * that means that these should be stored in a common class.  Needless to say, they are not.  Yet.
+     */
+    private ArrayList<String> vitalsBridgeECG=new ArrayList<>();
+    
+    private String VB_ECG_METRIC="VB_ECG_RHYTHM";
     
     static final class NumericValue {
         public final String name, metricId;
@@ -144,6 +160,56 @@ public class ScenarioSimControl implements InitializingBean
         this.eventLoop = eventLoop;
         this.subscriber = subscriber;
         this.publisher = publisher;
+        
+        populateVitalsBridgeMetrics();
+    }
+    
+    private final void populateVitalsBridgeMetrics() {
+    	String[] vitals=new String[] {
+    			"Ignore",
+    			"AFib",
+    			"Aflutter4to1",
+    			"Aflutter3to1",
+    			"Aflutter2to1",
+    			"Asystole",
+    			"AVBlock1stDegree",
+    			"AVBlock2ndDegreeType1_3to2",
+    			"AVBlock2ndDegreeType1_4to3",
+    			"AVBlock2ndDegreeType1_5to4",
+    			"AVBlock2ndDegreeType2_3to2",
+    			"AVBlock2ndDegreeType2_4to3",
+    			"AVBlock2ndDegreeType2_5to4",
+    			"AVBlock3rdDegree",
+    			"BundleBranchBlockRight",
+    			"BundleBranchBlockLeft",
+    			"EctopicAtrial",
+    			"HyperkalemiaBase",
+    			"HyperkalemiaMild",
+    			"HyperkalemiaModerate",
+    			"HyperkalemiaSevere",
+    			"Idioventricular",
+    			"LVH_1",
+    			"LVH_2",
+    			"LVHStressed",
+    			"NormalSinus",
+    			"Paced1",
+    			"Paced2",
+    			"STElevationInferiorAMIBaseline",
+    			"STElevationInferiorAMIMild",
+    			"STElevationInferiorAMIModerate",
+    			"STElevationInferiorAMISevere",
+    			"STElevationAnteriorAMIBaseline",
+    			"STElevationAnteriorAMIMild",
+    			"STElevationAnteriorAMIMModerate",
+    			"STElevationAnteriorAMISevere",
+    			"STElevationAnteriorAMILate",
+    			"STDepressionIschemia",
+    			"STDepressionPostIschemia",
+    			"TorsadeDePointes",
+    			"VFib",
+    			"VentricularStandstill"
+    	};
+    	vitalsBridgeECG.addAll(Arrays.asList(vitals));
     }
 
     /**
@@ -205,7 +271,16 @@ public class ScenarioSimControl implements InitializingBean
 				TimeAndMetric tr=new TimeAndMetric();
 				tr.interval=Long.parseLong(parts[0]);
 				tr.metric=parts[1];
-				tr.value=Float.parseFloat(parts[2]);
+				if(tr.metric.equals(VB_ECG_METRIC)) {
+					//Special handling for ECG Metric rhythm.  Look up the index of the value
+					tr.value=vitalsBridgeECG.indexOf(parts[2]);
+					if(tr.value==-1) {
+						log.warn("Unknown ECG RHYTHM "+parts[2]+" in control script");
+						continue;
+					}
+				} else {
+					tr.value=Float.parseFloat(parts[2]);
+				}
 				timesAndMetric.add(tr);
 			}
 			
@@ -260,6 +335,9 @@ public class ScenarioSimControl implements InitializingBean
     
     private void publishMetric(TimeAndMetric tam) {
     	objective.metric_id=tam.metric;
+    	if(tam.metric.equals(VB_ECG_METRIC)) {
+    		System.err.println("publishing metric for "+VB_ECG_METRIC+" with index "+tam.value);
+    	}
     	objective.value=tam.value;
     	writer.write(objective, handle);
     	System.err.println("publishing "+tam.metric+" with value "+objective.value);
