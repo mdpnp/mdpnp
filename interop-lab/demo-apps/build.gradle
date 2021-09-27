@@ -214,6 +214,13 @@ dependencies {
     compile group: 'org.mongodb', name: 'mongodb-driver',      version: '3.2.2'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    
+    compile files('../../artifacts/pixelmed.jar')
+    
+    implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.1000')
+    
+    implementation 'com.amazonaws:aws-java-sdk-s3'
+    compile group: 'software.amazon.awssdk', name: 's3-transfer-manager', version: '2.17.16-PREVIEW'
 }
 
 jar {
