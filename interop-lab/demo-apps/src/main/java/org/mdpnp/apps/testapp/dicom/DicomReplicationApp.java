@@ -4,7 +4,14 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Set;
@@ -33,14 +40,19 @@ import com.pixelmed.network.FindSOPClassSCU;
 import com.pixelmed.network.GetSOPClassSCU;
 import com.pixelmed.network.IdentifierHandler;
 import com.pixelmed.network.ReceivedObjectHandler;
+import com.pixelmed.utils.DateUtilities;
 import com.rti.dds.subscription.Subscriber;
 
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.cell.*;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleGroup;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.transfer.s3.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
@@ -81,6 +93,21 @@ public class DicomReplicationApp {
 	@FXML
 	private TableView<DicomFileForTable> filesTable;
 	
+	@FXML
+	private DatePicker startDate;
+	
+	@FXML
+	private DatePicker endDate;
+	
+	@FXML
+	private ToggleGroup runGroup;
+	
+	@FXML
+	private RadioButton runOnce;
+	
+	@FXML
+	private RadioButton runLoop;
+	
 	ArrayList<AttributeList> knownEntries;
 	
 	/**
@@ -109,7 +136,25 @@ public class DicomReplicationApp {
 	 */
 	private Thread queryThread;
 	
+	/**
+	 * Indicator to tell the processing thread to stop.
+	 */
 	private boolean pleaseStop;
+	
+	/**
+	 * The start date to get images for if one is specified in the UI
+	 */
+	private LocalDate rangeStartDate;
+	
+	/**
+	 * The end date to get images for if one is specified in the UI
+	 */
+	private LocalDate rangeEndDate;
+	
+	/**
+	 * A parser for dates in the format returned in DICOM records for AcquisitionDate
+	 */
+	private DateTimeFormatter dtf=DateTimeFormatter.ofPattern("yyyyMMdd");
 	
 	public DicomReplicationApp() {
 		knownEntries=new ArrayList<>();
@@ -141,6 +186,14 @@ public class DicomReplicationApp {
 		filesTable.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("imageName"));
 		filesTable.getColumns().get(1).setCellValueFactory(new PropertyValueFactory<>("localFile"));
 		
+		if(startDate.getValue()!=null) {
+			rangeStartDate=startDate.getValue();
+		}
+		
+		if(endDate.getValue()!=null) {
+			rangeEndDate=endDate.getValue();
+		}
+		
 		try {
             // use the default character set for VR encoding - override this as necessary
             final SpecificCharacterSet specificCharacterSet = new SpecificCharacterSet((String[])null);
@@ -157,8 +210,8 @@ public class DicomReplicationApp {
             identifier.putNewAttribute(TagFromName.StudyDescription);
             identifier.putNewAttribute(TagFromName.StudyDate);
             identifier.putNewAttribute(TagFromName.SOPClassesInStudy);
+            identifier.putNewAttribute(TagFromName.AcquisitionDate);
             
-            //retrieve all studies belonging to patient with name 'Bowen'
             //TODO - this fails with secure settings turned on on the local orthanc. How do we "Authenticate" properly?
             
            
@@ -167,6 +220,7 @@ public class DicomReplicationApp {
             queryThread=new Thread() {
             	@Override
             	public void run() {
+            		
             		while(!pleaseStop) {
 	            		try {
 	            			System.err.println("Thread start");
@@ -187,6 +241,10 @@ public class DicomReplicationApp {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
+	            		Toggle t=runGroup.getSelectedToggle();
+	            		if(t.equals(runOnce)) {
+	            			return;
+	            		}
 	            		try {
 							sleep(60000);
 						} catch (InterruptedException ie) {
@@ -195,6 +253,7 @@ public class DicomReplicationApp {
 							}
 							return;
 						}
+	            		
             		}
             	}
             	
@@ -224,9 +283,35 @@ public class DicomReplicationApp {
 			System.err.println("doSomethingWithIdentifier called");
 			// TODO Auto-generated method stub
 			if(!knownEntries.contains(attributeListForFindResult)) {
-				Attribute a=attributeListForFindResult.get(TagFromName.PatientName);
-				System.err.println("Attribute a has "+a.getStringValues().length+" entries and first is "+a.getStringValues()[0]);
 				knownEntries.add(attributeListForFindResult);
+				Attribute a=attributeListForFindResult.get(TagFromName.PatientName);
+				Attribute d=attributeListForFindResult.get(TagFromName.AcquisitionDate);
+				System.err.println("Attribute a has "+a.getStringValues().length+" entries and first is "+a.getStringValues()[0]);
+				if(d!=null && d.getStringValues()!=null && d.getStringValues()[0].length()>0) {
+					/*
+					 * At least for the images we have to hand, not all images have an acquisiton date.  The resulting attribute can
+					 * certainly be not null, but there are no getStringValues() and evaluating them seems to cause an NPE.  
+					 */
+					System.err.println("Acquisition Date is "+d.getStringValues()[0]);
+						//Date acquistionDate=DateUtilities.yyyymmddFormat.parse(d.getStringValues()[0]);
+					
+					TemporalAccessor ta=dtf.parse(d.getStringValues()[0]);
+					LocalDate acquisitionDate=LocalDate.from(ta);
+					if(rangeStartDate!=null && rangeStartDate.isAfter(acquisitionDate)) {
+						System.err.println("Skipping record with date "+acquisitionDate+" as it's before start date for search");
+						return;
+					}
+					if(rangeEndDate!=null && rangeEndDate.isBefore(acquisitionDate)) {
+						System.err.println("Skipping record with date "+acquisitionDate+" as it's after end date for search");
+						return;
+					}
+				} else {
+					System.err.println("No AcquisitionDate on this record");
+					if(rangeStartDate!=null || rangeEndDate!=null) {
+						System.err.println("Skipping record with no acquisiton date as start or end date was specified");
+						return;
+					}
+				}
 				
 				String studyInstanceUID = attributeListForFindResult.get(TagFromName.StudyInstanceUID)
 	                    .getSingleStringValueOrEmptyString();
@@ -313,7 +398,7 @@ public class DicomReplicationApp {
             	System.err.println("Received file "+testFile.getAbsolutePath()+" has size "+testFile.length());
             }
             
-            String s3Key="patient99/"+filename.substring(filename.lastIndexOf(File.separatorChar)+1);
+            String s3Key=filename.substring(filename.lastIndexOf(File.separatorChar)+1);
             
             Upload upload=s3TransferManager.upload( b -> b.putObjectRequest(r -> r.bucket("openicedicom").key(s3Key))
             		.source(Paths.get(filename)));

@@ -24,9 +24,21 @@
     </VBox>
     <HBox fx:id="timeBox" GridPane.columnIndex="0" GridPane.rowIndex="1">
 		<Label text="Starting Time"/>
-		<TextField fx:id="startTime"></TextField>
+		<DatePicker fx:id="startDate"></DatePicker>
 		<Label text="End Time"/>
-		<TextField fx:id="endTime"></TextField>
+		<DatePicker fx:id="endDate"></DatePicker>
+		<RadioButton fx:id="runOnce">
+			<toggleGroup>
+				<ToggleGroup fx:id="runGroup"/>
+			</toggleGroup>
+			Run Once
+		</RadioButton>
+		<RadioButton fx:id="runLoop">
+			<toggleGroup>
+					<fx:reference source="runGroup"/>
+			</toggleGroup>
+			Run Periodically
+		</RadioButton>
     </HBox>
     <TableView fx:id="filesTable" GridPane.columnIndex="0" GridPane.rowIndex="2">
     	<columns>
