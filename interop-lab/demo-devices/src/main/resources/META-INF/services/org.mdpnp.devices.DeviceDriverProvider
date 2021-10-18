@@ -1,4 +1,5 @@
 org.mdpnp.devices.puritanbennett._840.PB840Provider
+org.mdpnp.devices.puritanbennett._840.PB980Provider
 org.mdpnp.apps.testapp.DeviceFactory$NoninProvider
 org.mdpnp.apps.testapp.DeviceFactory$NellcorN595Provider
 org.mdpnp.apps.testapp.DeviceFactory$MasimoRadical7Provider
