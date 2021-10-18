@@ -34,6 +34,8 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     private final PB840Clock deviceClock = new PB840Clock();
     protected final Map<PB840.Units, String> unitsMap = new HashMap<PB840.Units, String>();
     protected final Map<String, String> terms = new HashMap<String, String>();
+    
+    private String whichModel;
 
     private class MyPB840Waveforms extends PB840Waveforms {
 
@@ -60,14 +62,19 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         }
     }
 
-    public DemoPB840(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop) {
+    public DemoPB840(final Subscriber subscriber, final Publisher publisher, EventLoop eventLoop, String model) {
         super(subscriber, publisher, eventLoop, 2, PB840.class);
+        //Override icon now we have the model.  This is bleurgh
+        
+        whichModel=model;
         loadUnits(unitsMap);
         loadTerms(terms);
         AbstractSimulatedDevice.randomUDI(deviceIdentity);
         deviceIdentity.manufacturer = "Puritan Bennett";
-        deviceIdentity.model = "";
-        writeDeviceIdentity();
+//        deviceIdentity.model = "";
+        deviceIdentity.model = model;
+        iconOrBlank(model, iconResourceName());
+        //writeDeviceIdentity();
     }
 
 
@@ -213,6 +220,9 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
         
         @Override
         public void receiveVentilatorId(String model, String id) {
+        	//This gets called from PB840Parameters.VentilatorId, where the model is received from
+        	//the device itself.  We found when testing the PB980 that the model number varies
+        	//according to the communication mode selected on the device.
             if (!id.equals(deviceIdentity.serial_number) || 
                 !model.equals(deviceIdentity.model)) {
                 deviceIdentity.serial_number = id;
@@ -332,7 +342,7 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
     protected long getMaximumQuietTime(int idx) {
         switch (idx) {
         case 0:
-            return 3000L;
+            return 10000L;
         case 1:
             // There is no protocol negotiation for waveform data
             // so there is no utility in interrupting the main parameter
@@ -345,7 +355,10 @@ public class DemoPB840 extends AbstractDelegatingSerialDevice<PB840> {
 
     @Override
     protected String iconResourceName() {
-        return "pb840.png";
+    	if(whichModel==null || whichModel.equals("PB840")) {
+    		return "pb840.png";
+    	}
+        return "pb980.jpg";
     }
 
 

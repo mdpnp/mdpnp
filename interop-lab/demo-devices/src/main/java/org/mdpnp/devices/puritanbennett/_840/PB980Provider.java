@@ -11,11 +11,11 @@ import com.rti.dds.subscription.Subscriber;
 /**
  *
  */
-public class PB840Provider extends DeviceDriverProvider.SpringLoadedDriver {
+public class PB980Provider extends DeviceDriverProvider.SpringLoadedDriver {
 
     @Override
     public DeviceType getDeviceType(){
-        return new DeviceType(ice.ConnectionType.Serial, "Puritan Bennett", "840", "PB840", 2);
+        return new DeviceType(ice.ConnectionType.Serial, "Puritan Bennett", "980", "PB980", 2);
     }
 
     @Override
@@ -23,6 +23,6 @@ public class PB840Provider extends DeviceDriverProvider.SpringLoadedDriver {
         EventLoop eventLoop = context.getBean("eventLoop", EventLoop.class);
         Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
         Publisher publisher = context.getBean("publisher", Publisher.class);
-        return new DemoPB840(subscriber, publisher, eventLoop, "PB840");
+        return new DemoPB840(subscriber, publisher, eventLoop, "PB980");
     }
 }
