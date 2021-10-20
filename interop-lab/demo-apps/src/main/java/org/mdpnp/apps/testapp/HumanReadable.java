@@ -26,6 +26,21 @@ public class HumanReadable {
 		MetricLabels.put(rosetta.MDC_PULS_OXIM_PULS_RATE.VALUE, "Pulse");
 		MetricLabels.put(rosetta.MDC_PULS_OXIM_SAT_O2.VALUE, "SpO\u2082");
 		
+		/*
+		 * Some new values for ventilator application.  Note that not all of these keys are using rosetta or ice
+		 * fields.  Some come from PB directly and are defined in the resource file pb840.fields .   
+		 * 
+		 * 
+		 */
+		MetricLabels.put("PB_SETTING_PEEP", "PEEP");
+		MetricLabels.put("PB_SETTING_RESPIRATORY_RATE", "RR");
+		MetricLabels.put("PB_SETTING_APNEA_OXYGEN_PERCENT", "O\u2082");
+		
+		/*
+		 * These are units...
+		 */
+		MetricLabels.put("MDC_DIM_RESP_PER_MIN", "bpm");
+		
 	}
 	
 	
