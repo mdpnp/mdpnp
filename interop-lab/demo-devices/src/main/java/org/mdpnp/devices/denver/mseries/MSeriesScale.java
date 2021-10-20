@@ -187,7 +187,7 @@ public class MSeriesScale extends AbstractSerialDevice {
 	@Override
 	public SerialProvider getSerialProvider(int idx) {
 		SerialProvider serialProvider = super.getSerialProvider(idx);
-        serialProvider.setDefaultSerialSettings(300, DataBits.Eight, Parity.None, StopBits.Two);
+        serialProvider.setDefaultSerialSettings(4800, DataBits.Eight, Parity.None, StopBits.Two);
         return serialProvider;
 	}
 
