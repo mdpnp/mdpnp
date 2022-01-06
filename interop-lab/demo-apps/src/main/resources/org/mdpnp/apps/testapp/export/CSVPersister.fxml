@@ -18,7 +18,7 @@
          <children>
             <Label text="Logging to: " />
             <Label fx:id="filePathLabel" text="Label" />
-            <Button mnemonicParsing="false" onAction="#clickChange" text="Change" />
+            <Button fx:id="changeButton" mnemonicParsing="false" onAction="#clickChange" text="Change" />
          </children>
       </FlowPane>
       <FlowPane GridPane.columnIndex="0" GridPane.rowIndex="1" hgap="10.0">

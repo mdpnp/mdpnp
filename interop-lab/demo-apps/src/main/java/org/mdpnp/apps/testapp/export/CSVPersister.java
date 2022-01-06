@@ -2,22 +2,26 @@ package org.mdpnp.apps.testapp.export;
 
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.ResourceBundle;
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.LogRecord;
 
 import com.google.common.eventbus.Subscribe;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.stage.FileChooser;
-
-import org.apache.log4j.Level;
 
 public class CSVPersister extends DataCollectorAppFactory.PersisterUIController implements Initializable {
 
@@ -30,6 +34,7 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     
     @FXML Label filePathLabel;
     @FXML ComboBox<String> backupIndex, fSize;
+    @FXML Button changeButton;
     
     //TODO: Can it be a problem that this is static?
     private static boolean rawDateFormat=false;
@@ -46,19 +51,17 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
     @Override
     public boolean start() throws Exception {
-        appender.activateOptions();
-        final File f = new File(appender.getFile());
-        if(f.exists() && f.length() != 0)
-            appender.rollOver();
+    	backupIndex.setDisable(true);
+    	fSize.setDisable(true);
+    	changeButton.setDisable(true);
         return true;
     }
 
     @Override
     public void stop() throws Exception {
-        final File f = new File(appender.getFile());
-        // test for canWrite just to be safe in case delete fails for whatever reason
-        if(f.exists() && f.length()==0 && f.canWrite())
-            f.delete();
+    	backupIndex.setDisable(false);
+    	fSize.setDisable(false);
+    	changeButton.setDisable(false);
     }
     
     private static NumberFormat valueFormat = NumberFormat.getNumberInstance();
@@ -126,19 +129,22 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     @Subscribe
     public void handleDataSampleEvent(NumericsDataCollector.NumericSampleEvent evt) throws Exception {
         String s = toCSVLine(evt);
-        cat.info(s);
+        LogRecord record=new LogRecord(java.util.logging.Level.INFO, s);
+        fileHandler.publish(record);
     }
 
     @Subscribe
     public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
         String s = toCSVLine(evt);
-        cat.info(s);
+        LogRecord record=new LogRecord(java.util.logging.Level.INFO, s);
+        fileHandler.publish(record);
     }
 
     @Subscribe
     public void handleDataSampleEvent(PatientAssessmentDataCollector.PatientAssessmentEvent evt) throws Exception {
         String s = toCSVLine(evt);
-        cat.info(s);
+        LogRecord record=new LogRecord(java.util.logging.Level.INFO, s);
+        fileHandler.publish(record);
     }
 
     public CSVPersister() {
@@ -147,18 +153,20 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     
     @FXML public void clickBackupIndex(ActionEvent evt) {
         String s = backupIndex.getSelectionModel().getSelectedItem();
-        if(appender != null) {
-            appender.setMaxBackupIndex(Integer.parseInt(s));
-            appender.activateOptions();
-        }
+        //if(appender != null) {
+        	configureLoggerFromSettings2(Integer.parseInt(s), null, null);
+            //appender.setMaxBackupIndex(Integer.parseInt(s));
+            //appender.activateOptions();
+        //}
     }
     
     @FXML public void clickFSize(ActionEvent evt) {
         String s = fSize.getSelectionModel().getSelectedItem();
-        if(appender != null) {
-            appender.setMaxFileSize(s);
-            appender.activateOptions();
-        }
+        //if(appender != null) {
+        	configureLoggerFromSettings2(-1,s,null);
+            //appender.setMaxFileSize(s);
+            //appender.activateOptions();
+        //}
     }
     
     @FXML public void clickChange(ActionEvent evt) {
@@ -169,8 +177,9 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         File f = fc.showSaveDialog(null);
         if(null != f) {
             filePathLabel.setText(f.getAbsolutePath());
-            appender.setFile(f.getAbsolutePath());
-            appender.activateOptions();
+            configureLoggerFromSettings2(-1,null,f.getAbsolutePath());
+            //appender.setFile(f.getAbsolutePath());
+            //appender.activateOptions();
         }
     }
     
@@ -227,19 +236,86 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
 
         // add file size controls.
-        appender = new org.apache.log4j.RollingFileAppender();
-        appender.setFile(defaultLogFileName.getAbsolutePath());
-        appender.setMaxBackupIndex(maxBackupIndex);
-        appender.setMaxFileSize(maxFileSize);
-        appender.setAppend(true);
-        appender.setLayout(new org.apache.log4j.PatternLayout("%m%n"));
-        appender.setThreshold(Level.ALL);
-        cat.setAdditivity(false);
-        cat.setLevel(Level.ALL);
-        cat.addAppender(appender);
+    	
+    	configureLoggerFromSettings2(maxBackupIndex, maxFileSize, null);
+    	
+    	
 
     }
+    
+    private void configureLoggerFromSettings2(int maxBackupIndex, String maxFileSize, String fileName) {
+    	
+    	if(maxBackupIndex==-1) {
+    		maxBackupIndex=Integer.parseInt(backupIndex.getValue());
+    	}
+    	
+    	if(maxFileSize==null) {
+    		maxFileSize=fSize.getValue();
+    	}
+    	
+    	if(fileName==null) {
+    		fileName=defaultLogFileName.getAbsolutePath();
+    	}
+    	String fileWithoutSuffix=null;
+    	String suffix=null;
+    	if(fileName.indexOf('.')!=-1) {
+    		fileWithoutSuffix=fileName.substring(0,fileName.lastIndexOf('.'));
+        	suffix=fileName.substring(fileName.lastIndexOf('.'));
+    	} else {
+    		fileWithoutSuffix=fileName;
+    		suffix="";
+    	}
+    	String fileNamePattern=fileWithoutSuffix+"-%g"+suffix;
+    	
+    	int numericMax=getMaxFileSize(maxFileSize);
+    	
+    	try {
+			 fileHandler=new FileHandler(fileNamePattern, numericMax, maxBackupIndex);
+			 fileHandler.setFormatter(new PlainTextFormatter());
+		} catch (SecurityException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    }
+    
+    /**
+     * 
+     * @param strMax the string format of size such as 500MB, 1GB
+     * @return
+     */
+    private int getMaxFileSize(String strMax) throws RuntimeException {
+    	
+    	int i;
+    	char chars[]=strMax.toCharArray();
+    	for(i=0;i<chars.length;i++) {
+    		if(Character.isAlphabetic(chars[i])) {
+    			break;
+    		}
+    	}
+    	int base=Integer.parseInt(strMax.substring(0,i));
+    	String factor=strMax.substring(i);
+    	
+    	if(factor.equals("MB")) {
+    		return base*1024*1024;
+    	}
+    	if(factor.equals("GB")) {
+    		return base*1024*1024*1024;
+    	}
+    	
+    	throw new RuntimeException("Unknown file size suffix "+factor);
+    }
+    
+    private class PlainTextFormatter extends Formatter {
+    	
+    	String newLine=System.getProperty("line.separator");
 
-    private org.apache.log4j.RollingFileAppender appender = null;
-    private org.apache.log4j.Category cat = org.apache.log4j.Logger.getLogger("OpenICEDataExport.CVS");
+		@Override
+		public String format(LogRecord record) {
+			return record.getMessage()+newLine;
+		}
+    	
+    }
+
+    private FileHandler fileHandler = null;
 }
