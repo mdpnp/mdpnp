@@ -51,9 +51,12 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 
     @Override
     public boolean start() throws Exception {
-    	backupIndex.setDisable(true);
-    	fSize.setDisable(true);
-    	changeButton.setDisable(true);
+    	//only process controls if they exist - otherwise tests fail.
+    	if(backupIndex!=null) {
+	    	backupIndex.setDisable(true);
+	    	fSize.setDisable(true);
+	    	changeButton.setDisable(true);
+    	}
         return true;
     }
 
