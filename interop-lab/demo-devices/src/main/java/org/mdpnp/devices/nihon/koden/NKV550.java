@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
@@ -23,6 +24,7 @@ import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceIdentityBuilder;
 import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
+import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,7 @@ import org.xml.sax.SAXException;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 
+import ice.ConnectionState;
 import ice.ConnectionType;
 import ice.DeviceIdentity;
 import ice.SampleArray;
@@ -138,7 +141,7 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private InstanceHolder<SampleArray>[] waveformInstances=new InstanceHolder[WAVEFORM_TYPES.length];
 	
-	private Number[][] waveformBuffers=new Number[WAVEFORM_TYPES.length][480];
+	private Number[][] waveformBuffers=new Number[WAVEFORM_TYPES.length][520];
 	
 	private int[] waveformBufferLength=new int[WAVEFORM_TYPES.length];
 	
@@ -153,6 +156,8 @@ public class NKV550 extends AbstractConnectedDevice {
 
 	public NKV550(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
 		super(subscriber, publisher, eventLoop);
+		AbstractSimulatedDevice.randomUDI(deviceIdentity);
+        writeDeviceIdentity();
 		ourClock=new DeviceClock.WallClock();
 	}
 
@@ -163,6 +168,8 @@ public class NKV550 extends AbstractConnectedDevice {
 			log.error("connect called with empty address");
 			return false;
 		}
+//		Thread.dumpStack();
+		stateMachine.transitionIfLegal(ConnectionState.Connecting, "Connecting to NKV 550 with address "+address);
 		
 		int port = defaultPort;
 
@@ -223,6 +230,13 @@ public class NKV550 extends AbstractConnectedDevice {
 			toDevice.write(waveformsPlease.getBytes());
 			toDevice.flush();
 			System.err.println("Wrote the waveformsPlease XML");
+//			Thread.dumpStack();
+			/*
+			 * Does this really count as "negotiating"?  We have to pass through this state to get to connected
+			 * If we send this successfully then we are connected, so negotiating works OK here and then we
+			 * transition to connected once we get a Device node in XML
+			 */
+			stateMachine.transitionIfLegal(ConnectionState.Negotiating, "Requesting waveforms from NKV 550 with serial number "+deviceIdentity.serial_number);
 			//Doing a write seems to reset the input stream.  Reset it here.
 			//fromDevice=new BufferedInputStream(deviceSocket.getInputStream());
 		} catch (IOException e) {
@@ -263,7 +277,7 @@ public class NKV550 extends AbstractConnectedDevice {
 						while(actuallyRead<blockSize) {
 							actuallyRead+=fromDevice.read(blockBytes,actuallyRead,blockSize-actuallyRead);
 						}
-						System.err.println("Read "+actuallyRead+" bytes from device to get XML block");
+						//System.err.println("Read "+actuallyRead+" bytes from device to get XML block");
 						String xmlBlock=new String(blockBytes);
 						
 						DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
@@ -291,10 +305,10 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private void processChildren(Node node) {
 		NodeList nodes=node.getChildNodes();
-		System.err.println("nodes length is "+nodes.getLength());
+		//System.err.println("nodes length is "+nodes.getLength());
 		for(int i=0;i<nodes.getLength();i++) {
 			Node n=nodes.item(i);
-			System.err.println("Got node "+i+" with name "+n.getNodeName());
+			//System.err.println("Got node "+i+" with name "+n.getNodeName());
 			switch (n.getNodeType()) {
 			case Node.ELEMENT_NODE:
 				Element elem=(Element)n;
@@ -316,24 +330,28 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private void processDeviceNode(Element deviceElement) {
 		String serialNumber=deviceElement.getAttribute("sn");
-		System.err.println("Device serial number is "+serialNumber);
+		//System.err.println("Device serial number is "+serialNumber);
 		//Simple check for first time
 		if(! deviceIdentity.serial_number.equals(serialNumber)) {
 			deviceIdentity.manufacturer="Nihon Koden";
 			deviceIdentity.model="NKV550";
 			deviceIdentity.serial_number=serialNumber;
-			deviceIdentity.unique_device_identifier=DeviceIdentityBuilder.randomUDI();
+			//deviceIdentity.unique_device_identifier=DeviceIdentityBuilder.randomUDI();
+			//Thread.dumpStack();
+			stateMachine.transitionIfLegal(ConnectionState.Connected, "Receiving date from NKV 550 with serial number "+serialNumber);
 			writeDeviceIdentity();
 		}
 		processChildren(deviceElement);
 		
 	}
 	
+	
+	
 	private void processWaveformsNode(Element waveformElement) {
 		String _numdata=waveformElement.getAttribute("numdata");
 		int numdata=Integer.parseInt(_numdata);
 		//TODO: MAke this a class member and check against individual waveforms
-		System.err.println("numdata in waveforms element is "+numdata);
+//		System.err.println("numdata in waveforms element is "+numdata);
 		
 		NodeList waveforms=waveformElement.getChildNodes();
 		for(int i=0;i<waveforms.getLength();i++) {
@@ -364,13 +382,13 @@ public class NKV550 extends AbstractConnectedDevice {
 			return;
 		}
 		
-		System.err.println("waveform "+id+ " datasize "+datasize+" datagain "+datagain+" zeroffset "+zeroffset);
+//		System.err.println("waveform "+id+ " datasize "+datasize+" datagain "+datagain+" zeroffset "+zeroffset);
 		
 		String base64Encoded=waveformElement.getTextContent();
-		System.err.println(base64Encoded);
+//		System.err.println(base64Encoded);
 		Decoder d=Base64.getDecoder();
 		byte bytes[]=d.decode(base64Encoded);
-		System.err.println("decoded bytes of length "+bytes.length);
+//		System.err.println("decoded bytes of length "+bytes.length);
 		
 		//All waveforms so far seem to be datasize=2...
 		if(datasize!=2) {
@@ -379,7 +397,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		}
 		
 		int expectedNumOfPoints=bytes.length/datasize;
-		System.err.println("Expected num of points is "+expectedNumOfPoints);
+//		System.err.println("Expected num of points is "+expectedNumOfPoints);
 		
 		/*
 		 * Presumably we will encounter the customary annoyance of a short
@@ -388,12 +406,12 @@ public class NKV550 extends AbstractConnectedDevice {
 		 */
 		Number wave[]=new Number[expectedNumOfPoints];
 		int j=0;
+		
+		ByteBuffer bb=ByteBuffer.wrap(bytes);
+				
 		for(int i=0;i<bytes.length;i+=datasize) {
 			//System.err.println("Using bytes "+i+" and "+ (i+1));
-			int fromTwoBytes = 0;
-			//fromTwoBytes |= (bytes[i]<<8) | (bytes[i+1]);
-			fromTwoBytes |= (bytes[i+1]<<8) | (bytes[i]);	//Looks better in some cases?
-			//System.err.print(fromTwoBytes+" ");
+			int fromTwoBytes = Short.toUnsignedInt(bb.getShort());
 			float finalVal = (float)fromTwoBytes/datagain - zeroffset;
 			wave[j++]=finalVal;
 		}
@@ -405,9 +423,9 @@ public class NKV550 extends AbstractConnectedDevice {
 		 */
 		//if(publishCount++<5) {
 		//We need something like the emitFastData thing in the Intellivue code..
-		if(waveformBufferLength[id]==480) {
+		if(waveformBufferLength[id]>500) {
 			//Closest we can get for now...
-			waveformInstances[id]=sampleArraySample(waveformInstances[id],waveformBuffers[id],WAVEFORM_METRICS[id],"",0, WAVEFORM_UNITS[id], 480, ourClock.instant());
+			waveformInstances[id]=sampleArraySample(waveformInstances[id],waveformBuffers[id],WAVEFORM_METRICS[id],"",0, WAVEFORM_UNITS[id], waveformBufferLength[id], ourClock.instant());
 			
 			//System.arraycopy(waveformBuffers[id], 480, waveformBuffers[id], 0, 20);
 			waveformBufferLength[id]=0;
@@ -434,5 +452,13 @@ public class NKV550 extends AbstractConnectedDevice {
 		 */
 		
 	}
+
+	@Override
+	protected String iconResourceName() {
+		// TODO Auto-generated method stub
+		return "nkv550.png";
+	}
+	
+	
 	
 }
