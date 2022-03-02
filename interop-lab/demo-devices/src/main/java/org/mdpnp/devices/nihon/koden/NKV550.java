@@ -221,7 +221,7 @@ public class NKV550 extends AbstractConnectedDevice {
 	 * If this is true, we transform received XML docs to String
 	 * and then dump them.
 	 */
-	private static final boolean DEBUG_INCOMING_XML=true;
+	private static final boolean DEBUG_INCOMING_XML=false;
 	
 	/**
 	 * A document builder instance.  Since we use one all the way through the
@@ -242,6 +242,14 @@ public class NKV550 extends AbstractConnectedDevice {
 	 * 
 	 */
 	private int currentOperatingMode;
+	
+	/**
+	 * An instance holder to hold the operating mode. In time we probably want
+	 * an array of instance holders for settings that we want to publish, but we
+	 * are just using this as a quick way of publishing this one variable during
+	 * the test phase.
+	 */
+	private InstanceHolder<Numeric> opModeHolder;
 
 	public NKV550(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
 		super(subscriber, publisher, eventLoop);
@@ -336,52 +344,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		
 		keepGoing=true;
 		startReadLoop();
-		//Temp test...
-		new Thread() {
-			public void run() {
-				try {
-					sleep(10000);
-					Hashtable<String,String> params=new Hashtable();
-					if(currentOperatingMode==0) {
-						params.put("2","1");
-						System.err.println("Current operating mode is 0, setting to 1");
-					} else {
-						params.put("2","0");
-						System.err.println("Current operating mode is 1, setting to 0");
-					}
-					String setVentOpMode=createCommandWithParams(1, params);
-					pauseForCommand=true;
-					System.err.println("Set pauseForCommand to true...");
-					synchronized (toDevice) {
-						String cmdLength=String.format("%08d", setVentOpMode.length());
-						String finalCmdToSend=cmdLength+setVentOpMode;
-						System.err.println("Sending command "+finalCmdToSend+" to set mode");
-						toDevice.write(finalCmdToSend.getBytes());
-						toDevice.flush();
-					}
-					
-					int response=getStatusFromResponse();
-					//Don't think there is any more response?
-					switch (response) {
-					case 0:
-						System.err.println("Got response 0 from set vent mode");
-						break;
-					default:
-						System.err.println("Got response "+response+" from set vent mode");
-						break;
-					}
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException ioe) {
-					ioe.printStackTrace();
-				} finally {
-					pauseForCommand=false;
-					System.err.println("Set pauseForCommand to false...");
-				}
-				
-			}
-		}.start();
+		startModeSwitchTestThread();
 	}
 	
 	private void _connect() throws IOException {
@@ -646,6 +609,58 @@ public class NKV550 extends AbstractConnectedDevice {
 		readLoop.start();
 	}
 	
+	private void startModeSwitchTestThread() {
+		//Temp test...
+		Thread modeChangeThread=new Thread() {
+			public void run() {
+				while(keepGoing) {
+					try {
+						sleep(60000);
+						Hashtable<String,String> params=new Hashtable<>();
+						if(currentOperatingMode==0) {
+							params.put("2","1");
+							System.err.println("Current operating mode is 0, setting to 1");
+						} else {
+							params.put("2","0");
+							System.err.println("Current operating mode is 1, setting to 0");
+						}
+						String setVentOpMode=createCommandWithParams(1, params);
+						pauseForCommand=true;
+						System.err.println("Set pauseForCommand to true...");
+						synchronized (toDevice) {
+							String cmdLength=String.format("%08d", setVentOpMode.length());
+							String finalCmdToSend=cmdLength+setVentOpMode;
+							System.err.println("Sending command "+finalCmdToSend+" to set mode");
+							toDevice.write(finalCmdToSend.getBytes());
+							toDevice.flush();
+						}
+						
+						int response=getStatusFromResponse();
+						//Don't think there is any more response?
+						switch (response) {
+						case 0:
+							System.err.println("Got response 0 from set vent mode");
+							break;
+						default:
+							System.err.println("Got response "+response+" from set vent mode");
+							break;
+						}
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException ioe) {
+						ioe.printStackTrace();
+					} finally {
+						pauseForCommand=false;
+						System.err.println("Set pauseForCommand to false...");
+					}
+				}
+			}
+		};
+		modeChangeThread.setName("NKV550ModeChangeTest");
+		modeChangeThread.start();
+	}
+	
 	private void processChildren(Node node) {
 		NodeList nodes=node.getChildNodes();
 		//System.err.println("nodes length is "+nodes.getLength());
@@ -894,6 +909,7 @@ public class NKV550 extends AbstractConnectedDevice {
 				//Operating mode...
 				currentOperatingMode=Integer.parseInt(value);
 				System.err.println("Current operating mode is "+currentOperatingMode);
+				opModeHolder=numericSample(opModeHolder, currentOperatingMode, "NKV_550_OP_MODE","", 0,rosetta.MDC_DIM_DIMLESS.VALUE,ourClock.instant());
 			}
 		}
 	}
