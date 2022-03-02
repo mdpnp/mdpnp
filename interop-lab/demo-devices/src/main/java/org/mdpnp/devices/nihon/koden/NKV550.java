@@ -2,27 +2,31 @@ package org.mdpnp.devices.nihon.koden;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.FileWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.mdpnp.devices.DeviceClock;
-import org.mdpnp.devices.DeviceIdentityBuilder;
-import org.mdpnp.devices.AbstractDevice.InstanceHolder;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -32,6 +36,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -40,7 +45,7 @@ import com.rti.dds.subscription.Subscriber;
 
 import ice.ConnectionState;
 import ice.ConnectionType;
-import ice.DeviceIdentity;
+import ice.Numeric;
 import ice.SampleArray;
 
 /**
@@ -84,6 +89,12 @@ public class NKV550 extends AbstractConnectedDevice {
 	private boolean keepGoing;
 	
 	/**
+	 * A variable to indicate that the read loop should pause while a command is executed
+	 * and the response processed - but not that the read loop should quit.
+	 */
+	private boolean pauseForCommand;
+	
+	/**
 	 * The XML node name indicating device data
 	 */
 	private static final String DEVICE="device";
@@ -94,9 +105,35 @@ public class NKV550 extends AbstractConnectedDevice {
 	private static final String WAVEFORMS="waveforms";
 	
 	/**
+	 * The XML node name indicating monitors
+	 */
+	private static final String MONITORS="monitors";
+	
+	/**
+	 * The XML node name indicating monitorsindex
+	 */
+	private static final String MONITORS_INDEX="monitorsindex";
+	
+	/**
 	 * The XML node name indicating an individual waveform.
 	 */
 	private static final String WAVEFORM="w";
+	
+	/**
+	 * The XML node name indicating settingsindex
+	 */
+	private static final String SETTINGS_INDEX="settingsindex";
+	
+	/**
+	 * The XML node name indicating settings
+	 */
+	private static final String SETTINGS="settings";
+	
+	/**
+	 * The XML node name indicating an individual setting
+	 */
+	private static final String SETTING="s";
+	
 	
 	private static final String[] WAVEFORM_TYPES=new String[] {
 		"Patient Pressure",
@@ -129,9 +166,9 @@ public class NKV550 extends AbstractConnectedDevice {
 	};
 	
 	private static final String[] WAVEFORM_UNITS=new String[] {
-			rosetta.MDC_PRESS_AWAY.VALUE,
 			rosetta.MDC_DIM_CM_H2O.VALUE,
-			rosetta.MDC_VOL_AWAY_TIDAL.VALUE,
+			rosetta.MDC_DIM_L_PER_MIN.VALUE,
+			rosetta.MDC_DIM_MILLI_L.VALUE,
 			rosetta.MDC_PRESS_AWAY.VALUE,
 			rosetta.MDC_PRESS_AWAY.VALUE,
 			rosetta.MDC_PRESS_AWAY.VALUE,
@@ -140,6 +177,11 @@ public class NKV550 extends AbstractConnectedDevice {
 		};
 	
 	private InstanceHolder<SampleArray>[] waveformInstances=new InstanceHolder[WAVEFORM_TYPES.length];
+	
+	/**
+	 * 
+	 */
+	private HashMap<String, InstanceHolder<Numeric>> numericInstances;
 	
 	private Number[][] waveformBuffers=new Number[WAVEFORM_TYPES.length][520];
 	
@@ -154,11 +196,81 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private int publishCount=0;
 
+	/**
+	 * A map between the id index values in monitors from the device
+	 * and the names of the metrics that they represent.
+	 */
+	private HashMap<String,String> monitorNamesMap;
+	
+	/**
+	 * A map between the setting name in settings from the device
+	 * and the id of the setting.  Note this is opposite to some
+	 * of the other mappings, as we really want to look up some
+	 * sort of human readable setting name to get the corresponding
+	 * id so that we can put that in a command to set the setting.
+	 */
+	private HashMap<String, String> settingsNameMap;
+	
+	/**
+	 * A map between the <em>names</em> of the elements in the device
+	 * monitors and the metrics we want to publish them as in OpenICE.
+	 */
+	private HashMap<String,String[]> monitorsMetricsMap;
+	
+	/**
+	 * If this is true, we transform received XML docs to String
+	 * and then dump them.
+	 */
+	private static final boolean DEBUG_INCOMING_XML=true;
+	
+	/**
+	 * A document builder instance.  Since we use one all the way through the
+	 * code, it makes sense to have a global variable. WATCH OUT FOR THREAD SAFETY THOUGH?!?!
+	 */
+	private DocumentBuilder db;
+	
+	/**
+	 * A (possibly) temporary variable indicating the current operating mode.  We need
+	 * to be able to display the current mode, but this is more just a thing so we can
+	 * test changing it from one mode to another.
+	 * 
+	 * 0 = ACMV_VC<br/>
+	 * 1 = ACMV_PC<br/>
+	 * 2 = ACMV_PRVC<br/>
+	 * 
+	 * etc.  See the NKV docs for all modes.
+	 * 
+	 */
+	private int currentOperatingMode;
+
 	public NKV550(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
 		super(subscriber, publisher, eventLoop);
 		AbstractSimulatedDevice.randomUDI(deviceIdentity);
         writeDeviceIdentity();
 		ourClock=new DeviceClock.WallClock();
+		fillMonitorsMetricsMap();
+		numericInstances=new HashMap<>();
+		DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+		try {
+			db=dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private void fillMonitorsMetricsMap() {
+		//TODO: Some devices read these sort of maps from a file.
+		monitorsMetricsMap=new HashMap<>();
+		monitorsMetricsMap.put("RR<sub>TOT</sub>", new String[] {rosetta.MDC_RESP_RATE.VALUE, "MDC_DIM_RESP_PER_MIN"});
+		monitorsMetricsMap.put("EtCO<sub>2</sub>", new String[] {rosetta.MDC_AWAY_CO2_ET.VALUE, rosetta.MDC_DIM_MMHG.VALUE});
+		monitorsMetricsMap.put("P<sub>PEAK</sub>", new String[] {rosetta.MDC_PRESS_AWAY_INSP_PEAK.VALUE, rosetta.MDC_DIM_CM_H2O.VALUE});
+		monitorsMetricsMap.put("P<sub>PLAT</sub>", new String[] {rosetta.MDC_PRESS_RESP_PLAT.VALUE, rosetta.MDC_DIM_CM_H2O.VALUE});
+		monitorsMetricsMap.put("PEEP", new String[] {"ICE_PEEP", rosetta.MDC_DIM_CM_H2O.VALUE});	//TODO: Confirm there is no MDC_ for PEEP
+		monitorsMetricsMap.put("FiO<sub>2</sub>%", new String[] {"ICE_FIO2", rosetta.MDC_DIM_PERCENT.VALUE});	//TODO: Confirm there is no MDC_ for FiO2
+		monitorsMetricsMap.put("Leak %", new String[] {rosetta.MDC_VENT_VOL_LEAK.VALUE, rosetta.MDC_DIM_PERCENT.VALUE});	//TODO: Confirm there is no MDC_ for FiO2
+		
+		//Leak %
 	}
 
 	@Override
@@ -206,9 +318,70 @@ public class NKV550 extends AbstractConnectedDevice {
 		this.address=address;
 		this.port=port;
 		_connect();
-		askForWaveforms();
+		//askForWaveforms();
+		dummyAskForWaveforms();
+		askForMonitorValues();
+		//Try a sleep after monitorValues
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		askForCurrentSettings();
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		keepGoing=true;
 		startReadLoop();
+		//Temp test...
+		new Thread() {
+			public void run() {
+				try {
+					sleep(10000);
+					Hashtable<String,String> params=new Hashtable();
+					if(currentOperatingMode==0) {
+						params.put("2","1");
+						System.err.println("Current operating mode is 0, setting to 1");
+					} else {
+						params.put("2","0");
+						System.err.println("Current operating mode is 1, setting to 0");
+					}
+					String setVentOpMode=createCommandWithParams(1, params);
+					pauseForCommand=true;
+					System.err.println("Set pauseForCommand to true...");
+					synchronized (toDevice) {
+						String cmdLength=String.format("%08d", setVentOpMode.length());
+						String finalCmdToSend=cmdLength+setVentOpMode;
+						System.err.println("Sending command "+finalCmdToSend+" to set mode");
+						toDevice.write(finalCmdToSend.getBytes());
+						toDevice.flush();
+					}
+					
+					int response=getStatusFromResponse();
+					//Don't think there is any more response?
+					switch (response) {
+					case 0:
+						System.err.println("Got response 0 from set vent mode");
+						break;
+					default:
+						System.err.println("Got response "+response+" from set vent mode");
+						break;
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
+				} finally {
+					pauseForCommand=false;
+					System.err.println("Set pauseForCommand to false...");
+				}
+				
+			}
+		}.start();
 	}
 	
 	private void _connect() throws IOException {
@@ -217,6 +390,17 @@ public class NKV550 extends AbstractConnectedDevice {
 		toDevice=new BufferedOutputStream(deviceSocket.getOutputStream());
 	}
 	
+	private void dummyAskForWaveforms() {
+		stateMachine.transitionIfLegal(ConnectionState.Negotiating, "Requesting waveforms from NKV 550 with serial number "+deviceIdentity.serial_number);
+	}
+	
+	/**
+	 * Request waveform data from the device.
+	 * 
+	 * It seems that if we do this, it stops after some period of time, like 60 seconds.
+	 * However, if we don't request waveforms, they seem to get supplied anyway, without
+	 * stopping.  So until we clarify, this method isn't used.
+	 */
 	private void askForWaveforms() {
 		String waveformsPlease="<xml version=\"1.0\" encoding=\"UTF8\"?>\n" + 
 				"<device>\n" + 
@@ -229,7 +413,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		try {
 			toDevice.write(waveformsPlease.getBytes());
 			toDevice.flush();
-			System.err.println("Wrote the waveformsPlease XML");
+			log.info("Wrote the waveforms command XML");
 //			Thread.dumpStack();
 			/*
 			 * Does this really count as "negotiating"?  We have to pass through this state to get to connected
@@ -246,6 +430,176 @@ public class NKV550 extends AbstractConnectedDevice {
 	}
 	
 	/**
+	 * Request monitor values from device.  
+	 * @throws IOException 
+	 * @throws ParserConfigurationException 
+	 * @throws SAXException 
+	 */
+	private void askForMonitorValues() throws IOException {
+		String monitorCommand=createCommand(0);
+		System.err.println("monitorCommand is "+monitorCommand);
+		
+		
+		
+		//TODO: - how long should we stay synchronized on output?
+		/*
+		 * There shouldn't be anything else trying to use output stream at this point
+		 */
+		synchronized (toDevice) {
+			String cmdLength=String.format("%08d", monitorCommand.length());
+			String finalCmdToSend=cmdLength+monitorCommand;
+			toDevice.write(finalCmdToSend.getBytes());
+			toDevice.flush();
+		}
+		
+		int response=getStatusFromResponse();
+		switch (response) {
+		case 0:
+			try {
+				Document d=getNextBlock();
+				if(d.hasChildNodes()) {
+					processChildren(d);
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+
+		default:
+			break;
+		}
+
+		//We haven't started the read loop yet, so we can read on the input without mangling other reads yet.
+			
+	}
+	
+	private Document getNextBlock() throws IOException, SAXException {
+		byte[] eightBytes=new byte[8];
+		fetch(eightBytes);
+		
+		String _blockSize=new String(eightBytes);
+		int blockSize=0;
+		try {
+			blockSize=Integer.parseInt(_blockSize);
+		} catch (NumberFormatException nfe) {
+			nfe.printStackTrace();
+			keepGoing=false;
+			System.err.println("Read error - setting next block size to 256");
+			blockSize=256;	//So we can try and see what else we get.
+		}
+		byte blockBytes[]=new byte[blockSize];
+		fetch(blockBytes);
+		String xmlBlock=new String(blockBytes);
+		System.err.println("xmlBlock is "+xmlBlock);
+		
+		DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+		DocumentBuilder localDb=null;
+		try {
+			localDb = dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		Document xmlDoc=localDb.parse(new InputSource(new StringReader(xmlBlock)));
+		
+		if(DEBUG_INCOMING_XML) {
+			TransformerFactory tf=TransformerFactory.newInstance();
+			Transformer t;
+			try {
+				t = tf.newTransformer();
+				DOMSource source=new DOMSource(xmlDoc);
+				ByteArrayOutputStream baos=new ByteArrayOutputStream();
+				StreamResult result=new StreamResult(baos);
+				t.transform(source, result);
+				String dumpThis=new String(baos.toByteArray());
+				System.err.println("<<<"+dumpThis);
+			} catch (TransformerConfigurationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (TransformerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return xmlDoc;
+			
+		
+	}
+	
+	/**
+	 * Request monitor values from device.  
+	 * @throws IOException 
+	 * @throws ParserConfigurationException 
+	 * @throws SAXException 
+	 */
+	private void askForCurrentSettings() throws IOException {
+		String monitorCommand=createCommand(4);
+		System.err.println("monitorCommand is "+monitorCommand);
+		//TODO: - how long should we stay synchronized on output?
+		/*
+		 * There shouldn't be anything else trying to use output stream at this point
+		 */
+		synchronized (toDevice) {
+			String cmdLength=String.format("%08d", monitorCommand.length());
+			String finalCmdToSend=cmdLength+monitorCommand;
+			toDevice.write(finalCmdToSend.getBytes());
+			toDevice.flush();
+		}
+		int response=getStatusFromResponse();
+		switch (response) {
+		case 0:
+			try {
+				Document d=getNextBlock();
+				if(d.hasChildNodes()) {
+					processChildren(d);
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+	
+	private int getStatusFromResponse() throws IOException {
+		NodeList statusList=null;
+		Document d;
+		while(statusList==null || statusList.getLength()==0) {
+			/*
+			 * We can receive other output from the device that does not yet include
+			 * the status element, because the device will already be sending other
+			 * data before we send our command.  So we need to parse repeated device
+			 * responses until we find the one with a status field in it.
+			 */
+			try {
+				d=getNextBlock();
+				statusList=d.getElementsByTagName("status");
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+		}
+		//We only get here once statusList is not null, and according to the spec, there should only be one...
+		Node statusNode=statusList.item(0);
+		Text textChild=(Text)statusNode.getFirstChild();
+		String statusText=textChild.getTextContent();
+		int status=Integer.parseInt(statusText);
+		return status;
+	}
+	
+	/**
 	 * This is where we expect to be connected and so we start reading data from the device.
 	 */
 	private void startReadLoop() {
@@ -259,47 +613,36 @@ public class NKV550 extends AbstractConnectedDevice {
 				 * of using the buffer is we don't have to care about the underlying sync between
 				 * what we have read, what the device has written etc. etc. 
 				 */
-				byte eightBytes[]=new byte[8];
 				while(keepGoing) {
+					if(pauseForCommand) {
+						try {
+							Thread.sleep(50);	//Give a bit of time for something else...
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						System.err.println("readLoop is paused");
+						continue;
+					}
+					Document xmlDoc;
 					try {
-						int eightByteCount=0;
-						while(eightByteCount<8) {
-							try {
-								eightByteCount=fromDevice.read(eightBytes);
-							} catch (SocketException se) {
-								_connect();
-							}
-						}
-						String _blockSize=new String(eightBytes);
-						int blockSize=Integer.parseInt(_blockSize);
-						byte blockBytes[]=new byte[blockSize];
-						int actuallyRead=0;
-						while(actuallyRead<blockSize) {
-							actuallyRead+=fromDevice.read(blockBytes,actuallyRead,blockSize-actuallyRead);
-						}
-						//System.err.println("Read "+actuallyRead+" bytes from device to get XML block");
-						String xmlBlock=new String(blockBytes);
-						
-						DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
-						DocumentBuilder db=dbf.newDocumentBuilder();
-						Document xmlDoc=db.parse(new InputSource(new StringReader(xmlBlock)));
+						xmlDoc = getNextBlock();
 						if(xmlDoc.hasChildNodes()) {
 							processChildren(xmlDoc);
 						}
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					} catch (ParserConfigurationException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
 					} catch (SAXException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					
 				}
-				System.err.println("Read loop finishing as keepGoing now false");
+				log.info("Read loop finishing as keepGoing now false");
 			}
 		};
+		readLoop.setName("NKV550Reader");
 		readLoop.start();
 	}
 	
@@ -314,10 +657,24 @@ public class NKV550 extends AbstractConnectedDevice {
 				Element elem=(Element)n;
 				String nodeName=elem.getNodeName();
 				if(nodeName.equals(DEVICE)) {
+					System.err.println("Got a device node");
 					processDeviceNode(elem);
 				}
 				if(nodeName.equals(WAVEFORMS)) {
+					System.err.println("Got a waveforms node");
 					processWaveformsNode(elem);
+				}
+				if(nodeName.equals(MONITORS)) {
+					System.err.println("Got a monitors node");
+					processMonitors(elem);
+				}
+				if(nodeName.equals(MONITORS_INDEX)) {
+					System.err.println("Got a monitors index node");
+					processMonitorsIndex(elem);
+				}
+				if(nodeName.equals(SETTINGS_INDEX) || nodeName.equals(SETTINGS)) {
+					System.err.println("Got a settings index node");
+					processSettings(elem);
 				}
 				break;
 
@@ -330,14 +687,12 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private void processDeviceNode(Element deviceElement) {
 		String serialNumber=deviceElement.getAttribute("sn");
-		//System.err.println("Device serial number is "+serialNumber);
 		//Simple check for first time
 		if(! deviceIdentity.serial_number.equals(serialNumber)) {
+			log.info("Device serial number for device identity is "+serialNumber);
 			deviceIdentity.manufacturer="Nihon Koden";
 			deviceIdentity.model="NKV550";
 			deviceIdentity.serial_number=serialNumber;
-			//deviceIdentity.unique_device_identifier=DeviceIdentityBuilder.randomUDI();
-			//Thread.dumpStack();
 			stateMachine.transitionIfLegal(ConnectionState.Connected, "Receiving date from NKV 550 with serial number "+serialNumber);
 			writeDeviceIdentity();
 		}
@@ -351,7 +706,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		String _numdata=waveformElement.getAttribute("numdata");
 		int numdata=Integer.parseInt(_numdata);
 		//TODO: MAke this a class member and check against individual waveforms
-//		System.err.println("numdata in waveforms element is "+numdata);
+		log.debug("numdata in waveforms element is "+numdata);
 		
 		NodeList waveforms=waveformElement.getChildNodes();
 		for(int i=0;i<waveforms.getLength();i++) {
@@ -364,7 +719,7 @@ public class NKV550 extends AbstractConnectedDevice {
 	}
 	
 	private void processWaveform(Element waveformElement, int numdata) {
-		
+	
 		String _datasize=waveformElement.getAttribute("datasize");
 		int datasize=Integer.parseInt(_datasize);
 		
@@ -377,18 +732,20 @@ public class NKV550 extends AbstractConnectedDevice {
 		String _id=waveformElement.getAttribute("id");
 		int id=Integer.parseInt(_id);
 		
-		if(id!=1 && id!=2) {
-			//System.err.println("Temp not doing waveform "+id);
+		/*
+		 * For now, we only want 0, 1 and 2
+		 */
+		if(id>2) {
 			return;
 		}
 		
-//		System.err.println("waveform "+id+ " datasize "+datasize+" datagain "+datagain+" zeroffset "+zeroffset);
+		log.debug("waveform "+id+ " datasize "+datasize+" datagain "+datagain+" zeroffset "+zeroffset);
 		
 		String base64Encoded=waveformElement.getTextContent();
-//		System.err.println(base64Encoded);
+		log.debug(base64Encoded);
 		Decoder d=Base64.getDecoder();
 		byte bytes[]=d.decode(base64Encoded);
-//		System.err.println("decoded bytes of length "+bytes.length);
+		log.debug("decoded bytes of length "+bytes.length);
 		
 		//All waveforms so far seem to be datasize=2...
 		if(datasize!=2) {
@@ -397,7 +754,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		}
 		
 		int expectedNumOfPoints=bytes.length/datasize;
-//		System.err.println("Expected num of points is "+expectedNumOfPoints);
+		log.debug("Expected num of points is "+expectedNumOfPoints);
 		
 		/*
 		 * Presumably we will encounter the customary annoyance of a short
@@ -410,14 +767,11 @@ public class NKV550 extends AbstractConnectedDevice {
 		ByteBuffer bb=ByteBuffer.wrap(bytes);
 				
 		for(int i=0;i<bytes.length;i+=datasize) {
-			//System.err.println("Using bytes "+i+" and "+ (i+1));
 			int fromTwoBytes = Short.toUnsignedInt(bb.getShort());
 			float finalVal = (float)fromTwoBytes/datagain - zeroffset;
 			wave[j++]=finalVal;
 		}
-		//System.err.println();
 		
-		//System.err.println("wave is "+ArrayUtils.toString(wave));
 		/*
 		 * wave is now a float array, perfect for publishing...
 		 */
@@ -433,30 +787,284 @@ public class NKV550 extends AbstractConnectedDevice {
 			System.arraycopy(wave, 0, waveformBuffers[id], waveformBufferLength[id], wave.length);
 			waveformBufferLength[id]+=wave.length;
 		}
-			
-		//}
-		
-		/*
-		protected InstanceHolder<ice.SampleArray> sampleArraySample(InstanceHolder<ice.SampleArray> holder,
-                Number[] newValues,
-                String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
-                DeviceClock.Reading timestamp)
-		*/
-		
-		
-		
-//		sampleArraySample(waveformInstances[id], wave, ourClock.instant());
-		/*
-		 * wave = sampleArraySample(wave, waveValues, rosetta.MDC_PRESS_BLD.VALUE, "", 0, 
-                    rosetta.MDC_DIM_DIMLESS.VALUE, frequency, sampleTime);
-		 */
-		
 	}
+	
+	private void processMonitors(Element monitorsElement) {
+		NodeList waveforms=monitorsElement.getChildNodes();
+		for(int i=0;i<waveforms.getLength();i++) {
+			Node n=waveforms.item(i);
+			if(n.getNodeType()==Node.ELEMENT_NODE) {
+				processMonitor((Element)n);
+			}
+		}
+	}
+	
+	private void processMonitor(Element monitorElement) {
+		String id=monitorElement.getAttribute("id");
+		String name=(monitorNamesMap!=null && monitorNamesMap.containsKey(id)) ? monitorNamesMap.get(id) : id;
+		float newValue=Float.parseFloat(monitorElement.getFirstChild().getTextContent());
 
+//		System.err.println("Monitor element "+name+" has value "+newValue);
+		/*
+		 * We have a slightly annoying issue here - it would be nice to map directly from the integer 'id'
+		 * values to the metrics we want to publish.  But we probably can't guarantee that they never change,
+		 * so we are left with mapping from the names.
+		 */
+		if(monitorsMetricsMap.containsKey(name)) {
+			//monitorsMetricsMap.put("RR<sub>TOT</sub>", new String[] {rosetta.MDC_RESP_RATE.VALUE, "MDC_DIM_RESP_PER_MIN"});
+			String metricId=monitorsMetricsMap.get(name)[0];
+			String unitId=monitorsMetricsMap.get(name)[1];
+			if(numericInstances.containsKey(metricId)) {
+				InstanceHolder<Numeric> holder=numericInstances.get(metricId);
+				  holder=numericSample(holder, newValue,metricId,"", 0,unitId,ourClock.instant());
+			} else {
+				InstanceHolder<Numeric> holder=numericSample(null, newValue, unitId, "", 0, ourClock.instant());
+				numericInstances.put(metricId, holder);
+				
+			}
+			
+		}
+	}
+	
+	private void processMonitorsIndex(Element monitorsElement) {
+		if(monitorNamesMap==null) {
+			monitorNamesMap=new HashMap<String,String>();
+			NodeList waveforms=monitorsElement.getChildNodes();
+			for(int i=0;i<waveforms.getLength();i++) {
+				Node n=waveforms.item(i);
+				if(n.getNodeType()==Node.ELEMENT_NODE) {
+					processMonitorIndex((Element)n);
+				}
+			}
+		}
+		/*
+		 * We'll make an assumption here that the monitor names map doesn't change, and so we
+		 * don't need to process it more than once.  Maybe it only gets sent once anyway...
+		 */
+	}
+	
+	private void processMonitorIndex(Element monitorElement) {
+		String id=monitorElement.getAttribute("id");
+		String name=monitorElement.getFirstChild().getTextContent();
+		id=StringEscapeUtils.unescapeHtml4(id);
+		System.err.println(id+" "+name);
+		monitorNamesMap.put(id, name);
+	}
+	
+	/**
+	 * Process the settings or settingsindex element.  These have the same
+	 * child nodes - a single setting (&lt;s id="...") but the format of the
+	 * child nodes varies according to whether it's settingindex (which just
+	 * includes the names) or settings, which has the current values for the
+	 * settings.  processSetting handles that according to the true/false
+	 * value we pass in from here.
+	 * @param settingsElement
+	 */
+	private void processSettings(Element settingsElement) {
+		if(settingsNameMap==null) {
+			settingsNameMap=new HashMap<String,String>();
+		}
+		NodeList settings=settingsElement.getChildNodes();
+		for(int i=0;i<settings.getLength();i++) {
+			Node n=settings.item(i);
+			if(n.getNodeType()==Node.ELEMENT_NODE) {
+				Element settingElement=(Element)n;
+				String isOff=settingElement.getAttribute("isOff");
+				if(isOff!=null && isOff.length()>0) {
+					processSetting(settingElement, false);
+				} else {
+					processSetting(settingElement, true);
+				}
+			}
+		}
+	}
+	
+	private void processSetting(Element settingElement, boolean names) {
+		int id=Integer.parseInt(settingElement.getAttribute("id"));
+		if(names) {
+			System.err.print("Setting name "+id);
+			String value=settingElement.getFirstChild().getTextContent();
+			System.err.println(" "+value);
+			settingsNameMap.put(settingElement.getAttribute("id"), value);
+		} else {
+			System.err.print("Setting "+settingElement.getAttribute("id")+ " is off "+settingElement.getAttribute("isOff"));
+			String value=settingElement.getFirstChild().getTextContent();
+			System.err.println(" "+value);
+			if(id==2) {
+				//Operating mode...
+				currentOperatingMode=Integer.parseInt(value);
+				System.err.println("Current operating mode is "+currentOperatingMode);
+			}
+		}
+	}
+	
 	@Override
 	protected String iconResourceName() {
 		// TODO Auto-generated method stub
 		return "nkv550.png";
+	}
+
+	@Override
+	public void shutdown() {
+		try {
+			if(fromDevice!=null) {
+				toDevice.close();
+			}
+			if(toDevice!=null) {
+				fromDevice.close();
+			}
+			if(deviceSocket!=null) {
+				deviceSocket.close();
+			}
+		} catch (Exception e) {
+			log.error("Exception closing resources during shutdown of NKV550",e);
+		}
+		log.info("Finished closing streams and sockets in NKV550");
+		super.shutdown();
+	}
+	
+	private String createCommand(int command) {
+		DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+		try {
+			DocumentBuilder db=dbf.newDocumentBuilder();
+			Document doc=db.newDocument();
+			
+			doc.setXmlStandalone(true);
+			Element rootElement=doc.createElement("device");
+			rootElement.setAttribute("version", "1.0");
+			doc.appendChild(rootElement);
+			
+			Element cmdElement=doc.createElement("command");
+			Text txt=doc.createTextNode(String.valueOf(command));
+			cmdElement.appendChild(txt);
+			rootElement.appendChild(cmdElement);
+			
+			Element crcElement=doc.createElement("crc");
+			Text ff=doc.createTextNode("FFFFFFFF");
+			crcElement.appendChild(ff);
+			rootElement.appendChild(crcElement);
+			
+			//Transform the doc.
+			TransformerFactory tf=TransformerFactory.newInstance();
+			Transformer t=tf.newTransformer();
+			DOMSource source=new DOMSource(doc);
+			ByteArrayOutputStream baos=new ByteArrayOutputStream();
+			StreamResult result=new StreamResult(baos);
+			t.transform(source, result);
+			
+			int actualCRC=NKVCRC.calculate(baos.toByteArray());
+			String hexCRC=Integer.toHexString(actualCRC).toUpperCase();
+			if(hexCRC.length()<8) {
+				hexCRC=String.format("%8s", hexCRC).replaceAll(" ", "0");
+			}
+			
+			ff.setNodeValue(hexCRC);
+			source=new DOMSource(doc);
+			baos.reset();
+			result=new StreamResult(baos);
+			t.transform(source, result);
+			
+			return new String(baos.toByteArray());
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Create a command, and use the hashtable as additional data.
+	 * 
+	 * THIS PROBABLY IS NOT REALLY GENERIC AND ONLY USABLE FOR command=1 FOR SETTINGS.
+	 * @param command
+	 * @param params
+	 * @return
+	 */
+	private String createCommandWithParams(int command, Hashtable<String,String> params) {
+		DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+		try {
+			DocumentBuilder db=dbf.newDocumentBuilder();
+			Document doc=db.newDocument();
+			
+			doc.setXmlStandalone(true);
+			Element rootElement=doc.createElement("device");
+			rootElement.setAttribute("version", "1.0");
+			doc.appendChild(rootElement);
+			
+			Element cmdElement=doc.createElement("command");
+			Text txt=doc.createTextNode(String.valueOf(command));
+			cmdElement.appendChild(txt);
+			
+			Element settingsElement=doc.createElement("settings");
+			params.forEach( (key, value) -> {
+				Element settingElement=doc.createElement("s");
+				settingElement.setAttribute("id", key);
+				Text valueElement=doc.createTextNode(value);
+				settingElement.appendChild(valueElement);
+				settingsElement.appendChild(settingElement);
+			});
+			
+			rootElement.appendChild(cmdElement);
+			rootElement.appendChild(settingsElement);
+			
+			Element crcElement=doc.createElement("crc");
+			Text ff=doc.createTextNode("FFFFFFFF");
+			crcElement.appendChild(ff);
+			rootElement.appendChild(crcElement);
+			
+			//Transform the doc.
+			TransformerFactory tf=TransformerFactory.newInstance();
+			Transformer t=tf.newTransformer();
+			DOMSource source=new DOMSource(doc);
+			ByteArrayOutputStream baos=new ByteArrayOutputStream();
+			StreamResult result=new StreamResult(baos);
+			t.transform(source, result);
+			
+			int actualCRC=NKVCRC.calculate(baos.toByteArray());
+			String hexCRC=Integer.toHexString(actualCRC).toUpperCase();
+			if(hexCRC.length()<8) {
+				hexCRC=String.format("%8s", hexCRC).replaceAll(" ", "0");
+			}
+			
+			ff.setNodeValue(hexCRC);
+			source=new DOMSource(doc);
+			baos.reset();
+			result=new StreamResult(baos);
+			t.transform(source, result);
+			
+			return new String(baos.toByteArray());
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Fill the specified buffer with data from the device.
+	 * @param target
+	 * @throws IOException
+	 */
+	private void fetch(byte[] target) throws IOException {
+		int actuallyRead=0;
+		int required=target.length;
+		log.debug("Need to read "+required+" to fill buffer");
+		while(actuallyRead<required) {
+			actuallyRead+=fromDevice.read(target,actuallyRead,required-actuallyRead);
+			log.debug("Now read "+actuallyRead);
+		}
 	}
 	
 	
