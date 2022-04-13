@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+
+<?import javafx.geometry.Insets?>
+<GridPane xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.mdpnp.apps.testapp.vents.control.VentControl">
+            
+    <columnConstraints>
+    	<ColumnConstraints percentWidth="50"/>
+    	<ColumnConstraints percentWidth="50"/>
+    </columnConstraints>
+    
+    <HBox GridPane.columnIndex="0" GridPane.rowIndex="0">
+      <children>
+        <Label>Device</Label>
+        <ComboBox fx:id="devicesCombo"></ComboBox>
+      </children>
+    </HBox>        
+            
+            
+            
+    <TableView fx:id="numericTable"
+       prefHeight="400.0" GridPane.rowIndex="1" GridPane.columnIndex="0">
+       <columns>
+        <TableColumn prefWidth="200.0" text="Source Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="source_timestamp" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Metric">
+         <cellValueFactory>
+          <PropertyValueFactory property="human_readable_for_metric" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="Value">
+         <cellValueFactory>
+          <PropertyValueFactory property="value" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Device Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="device_time" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Presentation Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="presentation_time" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="150.0" text="Vendor Metric">
+         <cellValueFactory>
+          <PropertyValueFactory property="vendor_metric_id" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Units">
+         <cellValueFactory>
+          <PropertyValueFactory property="human_readable_for_unit" />
+         </cellValueFactory>
+        </TableColumn>
+
+       </columns>
+      </TableView>
+            
+      <BorderPane fx:id="ventChart1" prefHeight="400.0" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+      
+      <HBox fx:id="controlButtons" GridPane.rowIndex="2" GridPane.columnIndex="0">
+        <children>
+			<!--Buttons are defined and specified dynamically in the Java code-->
+      	</children>
+      </HBox>
+      
+      <HBox fx:id="controlInputs" GridPane.rowIndex="3" GridPane.columnIndex="0">
+      	<children>
+      		<Label fx:id="numericInputLabel">New value</Label>
+      		<TextField fx:id="numericTextInput"></TextField>
+      		<Button fx:id="setParamButton" onAction="#setParam">Set</Button>
+      	</children>
+      </HBox>
+      
+      <TableView fx:id="patientAlertTable" prefWidth="-1.0"
+       prefHeight="200" GridPane.rowIndex="4" GridPane.columnIndex="0" >
+       <columns>
+        <TableColumn prefWidth="200.0" text="Source Time">
+         <cellValueFactory>
+          <PropertyValueFactory property="source_timestamp" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="75.0" text="UDI">
+         <cellValueFactory>
+          <PropertyValueFactory property="unique_device_identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Identifier">
+         <cellValueFactory>
+          <PropertyValueFactory property="identifier" />
+         </cellValueFactory>
+        </TableColumn>
+        <TableColumn prefWidth="200.0" text="Text">
+         <cellValueFactory>
+          <PropertyValueFactory property="text" />
+         </cellValueFactory>
+        </TableColumn>
+       </columns>
+      </TableView>
+           
+      <!--<BorderPane fx:id="ventChart2" prefWidth="400" prefHeight="300.0" GridPane.rowIndex="2" GridPane.columnIndex="1"/>-->      
+            
+            
+            
+</GridPane>
