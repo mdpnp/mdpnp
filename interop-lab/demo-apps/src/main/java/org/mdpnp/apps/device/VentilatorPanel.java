@@ -23,15 +23,26 @@ import javafx.scene.paint.Paint;
  */
 public class VentilatorPanel extends AbstractWaveAndParamsPanel {
     private final static String[] RR_WAVEFORMS = new String[] { rosetta.MDC_FLOW_AWAY.VALUE, rosetta.MDC_PRESS_AWAY.VALUE,
-            rosetta.MDC_AWAY_CO2.VALUE, rosetta.MDC_IMPED_TTHOR.VALUE };
+            rosetta.MDC_AWAY_CO2.VALUE, rosetta.MDC_IMPED_TTHOR.VALUE, rosetta.MDC_VOL_AWAY_TIDAL.VALUE };
+    
+//    private final static String[] RR_WAVEFORMS = new String[] { rosetta.MDC_VOL_AWAY_TIDAL.VALUE };
+
 
     private final static String[][] PARAMS = new String[][] {
-            { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_AWAY_RESP_RATE.VALUE }, { rosetta.MDC_AWAY_CO2_ET.VALUE } };
-    private final static String[] PARAM_LABELS = new String[] { "Resp Rate", "etCO2" };
-    private final static String[] PARAM_UNITS = new String[] { "BPM", "mmHg" };
+            { rosetta.MDC_RESP_RATE.VALUE, rosetta.MDC_CO2_RESP_RATE.VALUE, rosetta.MDC_TTHOR_RESP_RATE.VALUE, rosetta.MDC_AWAY_RESP_RATE.VALUE },	//resp rate
+            { rosetta.MDC_AWAY_CO2_ET.VALUE },	//etc02
+            { rosetta.MDC_PRESS_AWAY_INSP_PEAK.VALUE },	//insp peak
+            { rosetta.MDC_PRESS_RESP_PLAT.VALUE },	//plateau pressure
+            { "ICE_PEEP" },	//peep
+            { "ICE_FIO2" },	//fio2
+            { rosetta.MDC_VENT_VOL_LEAK.VALUE },
+            { "NKV_550_OP_MODE" }
+    };
+    private final static String[] PARAM_LABELS = new String[] { "Resp Rate", "etCO2", "Ppeak", "Pplat", "PEEP", "FiO2", "Leak", "Op Mode" };
+    private final static String[] PARAM_UNITS = new String[] { "BPM", "mmHg", "mmHg", "cmH2O", "cmH2O", "%", "%" ,""};
 
-    private final static String[] RR_LABELS = new String[] { "Flow", "Pressure", "CO2", "Impedance" };
-
+    private final static String[] RR_LABELS = new String[] { "Flow", "Pressure", "CO2", "Impedance", "Volume" };
+    
     @Override
     public String getStyleClassName() {
         return "ventilator-panel";
@@ -39,7 +50,7 @@ public class VentilatorPanel extends AbstractWaveAndParamsPanel {
 
     @Override
     public int getParameterCount() {
-        return 2;
+        return PARAMS.length;
     }
 
     @Override
@@ -70,6 +81,21 @@ public class VentilatorPanel extends AbstractWaveAndParamsPanel {
     @Override
     public Paint getWaveformPaint() {
         return Color.WHITE;
+    }
+    
+    @Override
+    public Paint getWaveformPaint(String metricId) {
+    	switch (metricId) {
+		case rosetta.MDC_PRESS_AWAY.VALUE:
+			return Color.DEEPSKYBLUE;
+		case rosetta.MDC_FLOW_AWAY.VALUE:
+			return Color.WHITE;
+		case rosetta.MDC_VOL_AWAY_TIDAL.VALUE:
+			return Color.YELLOW;
+		default:
+			break;
+		}
+    	return getWaveformPaint();
     }
 
     public static boolean supported(Set<String> identifiers) {

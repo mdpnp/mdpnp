@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.swing.border.Border;
+
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -38,6 +41,19 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
     public abstract String getParameterLabel(int i);
     public abstract String getStyleClassName();
     public abstract Paint getWaveformPaint();
+    
+    /**
+     * 
+     * @param metricId - the metric to be published.  This method is a "compatibility" wrapper to allow
+     * us to have different coloured waveforms for different metrics.  Previously this class just called
+     * getWaveformPaint() without a metric, so to avoid changing all the subclasses we just call that
+     * method from in here, and then any subclass that wants different colours can override this.
+     * 
+     * @return a Paint for the waveform.
+     */
+    public Paint getWaveformPaint(String metricId) {
+    	return getWaveformPaint();
+    }
     
     private final Set<String> waveformMetrics = new HashSet<String>();
     private final Set<String>[] parameterMetrics;
@@ -148,7 +164,7 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
               wuws.setSource(saws);
               final int idx = panelMap.size();
               
-              ((JavaFXWaveformPane)wuws).getCanvas().getGraphicsContext2D().setStroke(getWaveformPaint());
+              ((JavaFXWaveformPane)wuws).getCanvas().getGraphicsContext2D().setStroke(getWaveformPaint(data.getMetric_id()));
               Node x = (Node) wuws;
               bp = new BorderPane(x);
               GridPane.setVgrow(bp, Priority.ALWAYS);
@@ -161,10 +177,12 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
                       l.setPrefWidth(LEFT_RIGHT_PANEL_WIDTH);
                       l.setWrapText(true);
                       bp.setLeft(l);
+                      bp.setPadding(new Insets(0,0,10,0));
                       break;
                   }
               }
               panelMap.put(data.getMetric_id(), bp);
+              //TODO: Can we have an order somehow? Maybe a "getIndexForMetric" method or something?
               waves.add(bp, 0, idx);
 
               wuws.start();
