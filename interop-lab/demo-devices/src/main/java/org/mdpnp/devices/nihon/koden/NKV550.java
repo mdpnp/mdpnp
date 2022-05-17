@@ -321,7 +321,7 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	/**
 	 * An instance holder to hold the <i>setting</i> for the T<sub>i</sub>.
-	 * That's the <b>setting</b>, not the current value.  Ordinal 83
+	 * That's the <b>setting</b>, not the current value.  Ordinal 75
 	 */
 	private InstanceHolder<Numeric> tiSettingHolder;
 	
@@ -332,8 +332,40 @@ public class NKV550 extends AbstractConnectedDevice {
 	private InstanceHolder<Numeric> peepSettingHolder;
 	
 	/**
+	 * An instance holder to hold the <i>setting</i> for the APRV High Pressure setting .
+	 * That's the <b>setting</b>, not the current value.  Ordinal 68
+	 */
+	private InstanceHolder<Numeric> aprvPressureHighSettingHolder;
+	
+	/**
+	 * An instance holder to hold the <i>setting</i> for the APRV Low Pressure setting .
+	 * That's the <b>setting</b>, not the current value.  Ordinal 69
+	 */
+	private InstanceHolder<Numeric> aprvPressureLowSettingHolder;
+	
+	/**
+	 * An instance holder to hold the <i>setting</i> for the APRV High Pressure Time setting .
+	 * That's the <b>setting</b>, not the current value.  Ordinal 68
+	 */
+	private InstanceHolder<Numeric> aprvTimeHighSettingHolder;
+	
+	/**
+	 * An instance holder to hold the <i>setting</i> for the APRV Low Pressure Time setting .
+	 * That's the <b>setting</b>, not the current value.  Ordinal 68
+	 */
+	private InstanceHolder<Numeric> aprvTimeLowSettingHolder;
+
+	
+	/*
+	 * settingIdToSettings.put(68,new NKV550Settings(aprvPressureHighSettingHolder, "NKV_550_APRV_PRES_HIGH_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(69,new NKV550Settings(aprvPressureLowSettingHolder, "NKV_550_APRV_PRES_LOW_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(70,new NKV550Settings(aprvTimeHighSettingHolder, "NKV_550_APRV_TIME_HIGH_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(71,new NKV550Settings(aprvTimeLowSettingHolder, "NKV_550_APRV_TIME_LOW_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+	 */
+	
+	/**
 	 * An instance holder to hold the <i>setting</i> for the FiO<sub>2</sub>.
-	 * That's the <b>setting</b>, not the current value.  Ordinal ??
+	 * That's the <b>setting</b>, not the current value.  Ordinal 78
 	 */
 	private InstanceHolder<Numeric> fiO2SettingHolder;
 	
@@ -344,8 +376,9 @@ public class NKV550 extends AbstractConnectedDevice {
 	private InstanceHolder<Numeric> fTrigSettingHolder;
 	
 	/**
-	 * An instance holder to hold the <i>setting</i> for the deltaPC.
-	 * That's the <b>setting</b>, not the current value.  Ordinal ??
+	 * An instance holder to hold the <i>setting</i> for the Recruiment Pressure Control
+	 * (DELTA PC).
+	 * That's the <b>setting</b>, not the current value.  Ordinal 131
 	 */
 	private InstanceHolder<Numeric> deltaPCSettingHolder;
 	
@@ -477,7 +510,7 @@ public class NKV550 extends AbstractConnectedDevice {
                             	try { 
                             		doSetting(data);
                             	} catch (IOException ioe) {
-                            		log.error("Failed to set pump speed", ioe);
+                            		log.error("Failed to set key value setting", ioe);
                             		ioe.printStackTrace();
                             	}
                             }
@@ -516,14 +549,17 @@ public class NKV550 extends AbstractConnectedDevice {
 		
 		System.err.println("Requested change is to "+paramName+"("+id+") is value "+data.newValue);
 		String settingString=createCommandWithParams(1, params);
+		System.err.println("doSetting entering sync block at "+System.currentTimeMillis());
 		synchronized (toDevice) {
 			String cmdLength=String.format("%08d", settingString.length());
 			String finalCmdToSend=cmdLength+settingString;
-			System.err.println("Sending command "+finalCmdToSend+" to set paramName");
+			System.err.println("Sending command "+finalCmdToSend+" to set "+paramName);
 			toDevice.write(finalCmdToSend.getBytes());
 			toDevice.flush();
+			System.err.println("doSetting write and flush at "+System.currentTimeMillis());
 			lastCommandSent=finalCmdToSend;
 		}
+		System.err.println("doSetting exited sync block at "+System.currentTimeMillis());
 		
 	}
 
@@ -532,20 +568,26 @@ public class NKV550 extends AbstractConnectedDevice {
 		params.put("2",String.valueOf(newMode));
 		System.err.println("Requested new operating mode is "+newMode);
 		String setVentOpMode=createCommandWithParams(1, params);
+		System.err.println("setMode entering sync block at "+System.currentTimeMillis());
 		synchronized (toDevice) {
 			String cmdLength=String.format("%08d", setVentOpMode.length());
 			String finalCmdToSend=cmdLength+setVentOpMode;
 			System.err.println("Sending command "+finalCmdToSend+" to set mode");
 			toDevice.write(finalCmdToSend.getBytes());
 			toDevice.flush();
+			System.err.println("setMode write and flush at "+System.currentTimeMillis());
 			lastCommandSent=finalCmdToSend;
 		}
+		System.err.println("setMode exited sync block at "+System.currentTimeMillis());
+		/*
 		try {
 			Thread.sleep(10000);
+			System.err.println("asking for current settings afer setting mode");
 			askForCurrentSettings();
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}
+		*/
 	}
 	
 	private void fillMonitorsMetricsMap() {
@@ -568,10 +610,16 @@ public class NKV550 extends AbstractConnectedDevice {
 		settingIdToSettings.put(64,new NKV550Settings(vtSettingHolder, "NKV_550_VT_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(66,new NKV550Settings(psSettingHolder, "NKV_550_PRESSURE_SUPPORT_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(67,new NKV550Settings(peepSettingHolder, "NKV_550_PEEP_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(68,new NKV550Settings(aprvPressureHighSettingHolder, "NKV_550_APRV_PRES_HIGH_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(69,new NKV550Settings(aprvPressureLowSettingHolder, "NKV_550_APRV_PRES_LOW_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(70,new NKV550Settings(aprvTimeHighSettingHolder, "NKV_550_APRV_TIME_HIGH_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(71,new NKV550Settings(aprvTimeLowSettingHolder, "NKV_550_APRV_TIME_LOW_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(75,new NKV550Settings(tiSettingHolder, "NKV_550_TI_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(77,new NKV550Settings(rrSettingHolder, "NKV_550_RR_SETTING", "MDC_DIM_RESP_PER_MIN"));
+		settingIdToSettings.put(78,new NKV550Settings(fiO2SettingHolder, "NKV_550_FIO2_SETTING", rosetta.MDC_DIM_PERCENT.VALUE));
 		settingIdToSettings.put(80,new NKV550Settings(fTrigSettingHolder, "NKV_550_FTRIG_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(83,new NKV550Settings(tiSettingHolder, "NKV_550_TI_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(86,new NKV550Settings(cpapSettingHolder, "NKV_550_CPAP_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(131,new NKV550Settings(deltaPCSettingHolder, "NKV_550_DELTAPC_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 	}
 	
 	private void fillSettingsToIdMap() {
@@ -711,13 +759,16 @@ public class NKV550 extends AbstractConnectedDevice {
 		/*
 		 * There shouldn't be anything else trying to use output stream at this point
 		 */
+		System.err.println("askForMonitorValues entering sync block at "+System.currentTimeMillis());
 		synchronized (toDevice) {
 			String cmdLength=String.format("%08d", monitorCommand.length());
 			String finalCmdToSend=cmdLength+monitorCommand;
 			toDevice.write(finalCmdToSend.getBytes());
 			toDevice.flush();
+			System.err.println("askForMonitorValues write and flush at "+System.currentTimeMillis());
 			lastCommandSent=finalCmdToSend;
 		}
+		System.err.println("askForMonitorValues exited sync block at "+System.currentTimeMillis());
 				
 	}
 	
@@ -787,13 +838,16 @@ public class NKV550 extends AbstractConnectedDevice {
 		/*
 		 * There shouldn't be anything else trying to use output stream at this point
 		 */
+		System.err.println("askForCurrentSettings entering sync block at "+System.currentTimeMillis());
 		synchronized (toDevice) {
 			String cmdLength=String.format("%08d", monitorCommand.length());
 			String finalCmdToSend=cmdLength+monitorCommand;
 			toDevice.write(finalCmdToSend.getBytes());
 			toDevice.flush();
+			System.err.println("askForCurrentSettings write and flush at "+System.currentTimeMillis());
 			lastCommandSent=finalCmdToSend;
 		}
+		System.err.println("askForCurrentSettings exited sync block at "+System.currentTimeMillis());
 		
 	}
 	
@@ -952,7 +1006,7 @@ public class NKV550 extends AbstractConnectedDevice {
 					processMonitorsIndex(elem);
 				}
 				if(nodeName.equals(SETTINGS_INDEX) || nodeName.equals(SETTINGS)) {
-					//System.err.println("Got a settings index node");
+					System.err.println("Got a settings index node at "+System.currentTimeMillis());
 					processSettings(elem);
 				}
 				if(nodeName.equals(STATUS)) {
@@ -1235,7 +1289,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		Node statusNode=statusElement.getFirstChild();
 		String statusText=statusNode.getTextContent();
 		int status=Integer.parseInt(statusText);
-		System.err.println("status was "+status);
+		System.err.println("status was "+status+" at "+System.currentTimeMillis());
 		if(status!=0) {
 			log.error("Status code was "+status+" after last command");
 		} else {
