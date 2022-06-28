@@ -29,7 +29,6 @@ import org.mdpnp.devices.nonin.pulseox.DemoNoninPulseOx;
 import org.mdpnp.devices.oridion.capnostream.DemoCapnostream20;
 import org.mdpnp.devices.philips.intellivue.DemoEthernetIntellivue;
 import org.mdpnp.devices.philips.intellivue.DemoSerialIntellivue;
-import org.mdpnp.devices.qcore.pumps.SapphirePump;
 import org.mdpnp.devices.simulation.co2.SimCapnometer;
 import org.mdpnp.devices.simulation.ecg.SimElectroCardioGram;
 import org.mdpnp.devices.simulation.ibp.SimInvasivePressure;
