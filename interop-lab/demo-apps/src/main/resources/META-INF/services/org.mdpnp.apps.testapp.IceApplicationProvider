@@ -22,3 +22,4 @@ org.mdpnp.apps.testapp.bpcontrol.timing.BPTimingTestApplicationFactory
 org.mdpnp.apps.testapp.openemr.OpenEMRTestApplicationFactory
 org.mdpnp.apps.testapp.mindware.BioLabAppFactory
 org.mdpnp.apps.testapp.vents.VentilatorsApplicationFactory
+org.mdpnp.apps.testapp.vents.control.VentControlApplicationFactory

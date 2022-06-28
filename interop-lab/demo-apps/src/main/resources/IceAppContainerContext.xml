@@ -76,6 +76,18 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
     
+    <!-- This is needed for setting ventilation modes -->
+    <bean id="ventModeObjectiveWriter" class="org.mdpnp.rtiapi.data.VentModeObjectiveDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+    
+    <!-- This is needed for setting ventilation parameters -->
+    <bean id="keyValueObjectiveWriter" class="org.mdpnp.rtiapi.data.KeyValueObjectiveDataWriterFactory" lazy-init="true">
+        <constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+
 
     <!-- This is only needed when Charting apps are installed -->
     <bean id="patientAssessmentWriter" class="org.mdpnp.rtiapi.data.PatientAssessmentDataWriterFactory" lazy-init="true">

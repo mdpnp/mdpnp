@@ -125,19 +125,12 @@ public class VentControl {
 	
 	private KeyValueObjectiveDataWriter keyValueWriter;
 	
-	/*
-	 * settingIdToSettings=new HashMap<>();
-		settingIdToSettings.put(2, new NKV550Settings(opModeHolder, "NKV_550_OP_MODE", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(64,new NKV550Settings(vtSettingHolder, "NKV_550_VT_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(66,new NKV550Settings(psSettingHolder, "NKV_550_PRESSURE_SUPPORT_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(67,new NKV550Settings(peepSettingHolder, "NKV_550_PEEP_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(77,new NKV550Settings(rrSettingHolder, "NKV_550_RR_SETTING", "MDC_DIM_RESP_PER_MIN"));
-		settingIdToSettings.put(80,new NKV550Settings(fTrigSettingHolder, "NKV_550_FTRIG_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(83,new NKV550Settings(tiSettingHolder, "NKV_550_TI_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-		settingIdToSettings.put(86,new NKV550Settings(cpapSettingHolder, "NKV_550_CPAP_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
-	 */
-	
 	private HashMap<String, Button> metricsToButtons;
+	
+	/**
+	 * Current operating mode flag
+	 */
+	private int currentOpMode;
 	
 	public VentControl() {
 		
@@ -236,13 +229,17 @@ public class VentControl {
 						humanReadableList.add(humanNumeric);
 						//For control, bind to the operating mode numeric...
 						if(n.getMetric_id().equals("NKV_550_OP_MODE")) {
+							System.err.println("Found KNV_550_OP_MODE");
 							n.valueProperty().addListener( l -> {
 								int newMode=(int)n.getValue();
+								currentOpMode=newMode;
 								//TODO: extract these mode mappings somewhere else and share them with the device code.
 								setOpModeButtonLabel(newMode);
 								configureButtonsForMode(newMode);
 							});
+							System.err.println("Added listener to it");
 							setOpModeButtonLabel((int)n.getValue());
+							System.err.println("And called set on op mode button label");
 							configureButtonsForMode((int)n.getValue());
 						}
 						Button b;
@@ -257,6 +254,9 @@ public class VentControl {
 								b.setText(currentText+"\n"+f);
 							});
 							String currentText=b.getText();
+							if(currentText.indexOf('\n')!=-1) {
+								currentText=currentText.substring(0,currentText.indexOf('\n'));
+							}
 							float f=(float)n.getValue();
 							b.setText(currentText+"\n"+f);
 						} else {
@@ -265,6 +265,7 @@ public class VentControl {
 						}
 
 					});
+					numericTable.getItems().clear();
 					numericTable.setItems(humanReadableList);
 					
 					FilteredList<AlertFx> alertsForUDI=new FilteredList<AlertFx>(alerts, new Predicate<AlertFx>() {
@@ -298,6 +299,7 @@ public class VentControl {
 			String labelText=b.getText().substring(0,b.getText().indexOf('\n'));
 			String newLabelText="New Value For "+labelText;
 			numericInputLabel.setText(newLabelText);
+			numericTextInput.setText("");	//Empty any previous contents
 			//Pass the user data from the source button to the setParamButton button
 			setParamButton.setUserData(b.getUserData());
 		}
@@ -309,35 +311,36 @@ public class VentControl {
 		metricsToButtons.put("NKV_550_VT_SETTING", vtButton);
 		metricsToButtons.put("NKV_550_PRESSURE_SUPPORT_SETTING", psButton);
 		metricsToButtons.put("NKV_550_PEEP_SETTING", peepButton);
-		metricsToButtons.put("NKV_550_FTRIG_SETTING", ftrigButton);
+		metricsToButtons.put("NKV_550_APRV_PRES_HIGH_SETTING", pHighButton);
+		metricsToButtons.put("NKV_550_APRV_PRES_LOW_SETTING", pLowButton);
+		metricsToButtons.put("NKV_550_APRV_TIME_HIGH_SETTING", tHighButton);
+		metricsToButtons.put("NKV_550_APRV_TIME_LOW_SETTING", tLowButton);
 		metricsToButtons.put("NKV_550_RR_SETTING", rrButton);
+		metricsToButtons.put("NKV_550_FIO2_SETTING", fiO2Button);
+		metricsToButtons.put("NKV_550_FTRIG_SETTING", ftrigButton);
 		metricsToButtons.put("NKV_550_TI_SETTING", tButton);
 		metricsToButtons.put("NKV_550_CPAP_SETTING", cpapButton);
+		metricsToButtons.put("NKV_550_DELTAPC_SETTING", deltaPCButton);
 		/*
 		 * settingIdToSettings=new HashMap<>();
 		settingIdToSettings.put(2, new NKV550Settings(opModeHolder, "NKV_550_OP_MODE", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(64,new NKV550Settings(vtSettingHolder, "NKV_550_VT_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(66,new NKV550Settings(psSettingHolder, "NKV_550_PRESSURE_SUPPORT_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(67,new NKV550Settings(peepSettingHolder, "NKV_550_PEEP_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(68,new NKV550Settings(aprvPressureHighSettingHolder, "NKV_550_APRV_PRES_HIGH_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(69,new NKV550Settings(aprvPressureLowSettingHolder, "NKV_550_APRV_PRES_LOW_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(70,new NKV550Settings(aprvTimeHighSettingHolder, "NKV_550_APRV_TIME_HIGH_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(71,new NKV550Settings(aprvTimeLowSettingHolder, "NKV_550_APRV_TIME_LOW_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(77,new NKV550Settings(rrSettingHolder, "NKV_550_RR_SETTING", "MDC_DIM_RESP_PER_MIN"));
+		settingIdToSettings.put(77,new NKV550Settings(fiO2SettingHolder, "NKV_550_FIO2_SETTING", rosetta.MDC_DIM_PERCENT.VALUE));
 		settingIdToSettings.put(80,new NKV550Settings(fTrigSettingHolder, "NKV_550_FTRIG_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(83,new NKV550Settings(tiSettingHolder, "NKV_550_TI_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		settingIdToSettings.put(86,new NKV550Settings(cpapSettingHolder, "NKV_550_CPAP_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
+		settingIdToSettings.put(131,new NKV550Settings(deltaPCSettingHolder, "NKV_550_DELTAPC_SETTING", rosetta.MDC_DIM_DIMLESS.VALUE));
 		 */
 	}
 	
 	private void createSettingButtons() {
-		/*
-		 * <Button fx:id="opModeButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">Mode</Button>
-      		<Button fx:id="vtButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">VT</Button>
-      		<Button fx:id="tButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">T</Button>
-      		<Button fx:id="rrButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">RR</Button>
-      		<Button fx:id="peepButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">PEEP</Button>
-      		<Button fx:id="fiO2Button" prefHeight="100" prefWidth="100" mnemonicParsing="false">FiO2</Button>
-      		<Button fx:id="ftrigButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">Ftrig</Button>
-      		<Button fx:id="deltaPCButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">\u0394PC</Button>
-      		<Button fx:id="psButton" prefHeight="100" prefWidth="100" mnemonicParsing="false">PS</Button>
-		 */
 		opModeButton=new Button("Mode");
 		opModeButton.setPrefHeight(100);
 		opModeButton.setPrefWidth(100);
@@ -348,14 +351,14 @@ public class VentControl {
 		vtButton.setPrefWidth(100);
 		vtButton.setMnemonicParsing(false);
 		vtButton.setOnAction(settingButtonHandler);
-		vtButton.setUserData("SET_NKV_550_VT");
+		vtButton.setUserData("tidalVolumeSetting");
 		
 		tButton=new Button("Ti");
 		tButton.setPrefHeight(100);
 		tButton.setPrefWidth(100);
 		tButton.setMnemonicParsing(false);
 		tButton.setOnAction(settingButtonHandler);
-		tButton.setUserData("SET_NKV_550_T");
+		tButton.setUserData("inspiratoryTimeSetting");
 		
 		rrButton=new Button("RR");
 		rrButton.setPrefHeight(100);
@@ -376,56 +379,56 @@ public class VentControl {
 		fiO2Button.setPrefWidth(100);
 		fiO2Button.setMnemonicParsing(false);
 		fiO2Button.setOnAction(settingButtonHandler);
-		fiO2Button.setUserData("SET_NKV_550_FIO2");
+		fiO2Button.setUserData("o2percentSetting");
 		
 		ftrigButton=new Button("Ftrig");
 		ftrigButton.setPrefHeight(100);
 		ftrigButton.setPrefWidth(100);
 		ftrigButton.setMnemonicParsing(false);
 		ftrigButton.setOnAction(settingButtonHandler);
-		ftrigButton.setUserData("SET_NKV_550_FTRIG");
+		ftrigButton.setUserData("flowTriggerSetting");
 		
 		deltaPCButton=new Button("\u0394PC");
 		deltaPCButton.setPrefHeight(100);
 		deltaPCButton.setPrefWidth(100);
 		deltaPCButton.setMnemonicParsing(false);
 		deltaPCButton.setOnAction(settingButtonHandler);
-		deltaPCButton.setUserData("SET_NKV_550_DELTAPC");
+		deltaPCButton.setUserData("recruitmentPressureControl");
 		
 		psButton=new Button("PS");
 		psButton.setPrefHeight(100);
 		psButton.setPrefWidth(100);
 		psButton.setMnemonicParsing(false);
 		psButton.setOnAction(settingButtonHandler);
-		psButton.setUserData("SET_NKV_550_PS");
+		psButton.setUserData("pressureSupportSetting");
 		
 		pHighButton=new Button("Phigh");
 		pHighButton.setPrefHeight(100);
 		pHighButton.setPrefWidth(100);
 		pHighButton.setMnemonicParsing(false);
 		pHighButton.setOnAction(settingButtonHandler);
-		pHighButton.setUserData("SET_NKV_550_PHIGH");
+		pHighButton.setUserData("aprvPressureHighSetting");
 		
 		pLowButton=new Button("Plow");
 		pLowButton.setPrefHeight(100);
 		pLowButton.setPrefWidth(100);
 		pLowButton.setMnemonicParsing(false);
 		pLowButton.setOnAction(settingButtonHandler);
-		pLowButton.setUserData("SET_NKV_550_PLOW");
+		pLowButton.setUserData("aprvPressureLowSetting");
 
 		tHighButton=new Button("Thigh");
 		tHighButton.setPrefHeight(100);
 		tHighButton.setPrefWidth(100);
 		tHighButton.setMnemonicParsing(false);
 		tHighButton.setOnAction(settingButtonHandler);
-		tHighButton.setUserData("SET_NKV_550_THIGH");
+		tHighButton.setUserData("aprvTimeHighSetting");
 		
 		tLowButton=new Button("Tlow");
 		tLowButton.setPrefHeight(100);
 		tLowButton.setPrefWidth(100);
 		tLowButton.setMnemonicParsing(false);
 		tLowButton.setOnAction(settingButtonHandler);
-		tLowButton.setUserData("SET_NKV_550_TLOW");
+		tLowButton.setUserData("aprvTimeLowSetting");
 		
 		modeButtons = new Button[][] {
 				{ opModeButton, vtButton, tButton, rrButton, peepButton, fiO2Button, ftrigButton },			//Mode 0, ACMV_VC
@@ -462,6 +465,9 @@ public class VentControl {
 		ObservableList<Node> children=controlButtons.getChildren();
 		children.clear();	//Remove all existing buttons from the HBox.
 		Button[] newButtons=modeButtons[mode];
+		for(Button enable : newButtons) {
+			enable.setDisable(false);
+		}
 		children.addAll(newButtons);
 	}
 	
@@ -518,6 +524,11 @@ public class VentControl {
 		String udi=devicesCombo.getSelectionModel().getSelectedItem().getUDI();
 		objective.unique_device_identifier=udi;
 		ventModeWriter.write(objective, InstanceHandle_t.HANDLE_NIL);
+		Button[] buttonsToDisable=modeButtons[currentOpMode];
+		for(Button disable : buttonsToDisable) {
+			disable.setDisable(true);
+		}
+		
 	}
 	
 	/**

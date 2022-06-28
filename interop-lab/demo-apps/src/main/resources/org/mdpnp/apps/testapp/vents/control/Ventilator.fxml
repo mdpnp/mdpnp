@@ -65,7 +65,11 @@
           <PropertyValueFactory property="human_readable_for_unit" />
          </cellValueFactory>
         </TableColumn>
-
+        <TableColumn prefWidth="200.0" text="UDI">
+         <cellValueFactory>
+          <PropertyValueFactory property="unique_device_identifier" />
+         </cellValueFactory>
+        </TableColumn>
        </columns>
       </TableView>
             
