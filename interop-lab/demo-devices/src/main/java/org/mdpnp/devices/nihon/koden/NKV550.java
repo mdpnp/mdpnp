@@ -573,14 +573,14 @@ public class NKV550 extends AbstractConnectedDevice {
             }
         });
         
-        try {
+//        try {
 //			debugStream=new PrintStream(new BufferedOutputStream(new FileOutputStream(new File("/tmp/waveform.csv"))));
-			debugStream2=new PrintStream(new BufferedOutputStream(new FileOutputStream(new File("allDumps.csv"))));
+//			debugStream2=new PrintStream(new BufferedOutputStream(new FileOutputStream(new File("allDumps.csv"))));
 //			packetCounter=0;
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 	}
 	
@@ -1176,10 +1176,10 @@ public class NKV550 extends AbstractConnectedDevice {
 		if(waveformBufferLength[id]>125) {
 			//Closest we can get for now...
 			waveformInstances[id]=sampleArraySample(waveformInstances[id],waveformBuffers[id],WAVEFORM_METRICS[id],"",0, WAVEFORM_UNITS[id], waveformBufferLength[id], ourClock.instant());
-			if(id==2) {
-				String allNumbers=ArrayUtils.toString(waveformBuffers[id]);
-				debugStream2.println(allNumbers);
-			}
+//			if(id==2) {
+//				String allNumbers=ArrayUtils.toString(waveformBuffers[id]);
+//				debugStream2.println(allNumbers);
+//			}
 			waveformBufferLength[id]=0;
 		}
 	}
