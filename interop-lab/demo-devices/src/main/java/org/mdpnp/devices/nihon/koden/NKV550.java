@@ -67,6 +67,7 @@ import ice.ConnectionType;
 import ice.KeyValueObjective;
 import ice.KeyValueObjectiveDataReader;
 import ice.Numeric;
+import ice.RequestNKVSettingsObjectiveDataReader;
 import ice.SampleArray;
 import ice.VentModeObjectiveDataReader;
 
@@ -174,6 +175,8 @@ public class NKV550 extends AbstractConnectedDevice {
 	private PrintStream debugStream;
 	private PrintStream debugStream2;
 	private int packetCounter;
+	
+	private DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
 	
 	
 	private static final String[] WAVEFORM_TYPES=new String[] {
@@ -416,10 +419,13 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private VentModeObjectiveDataReader modeReader;
 	private KeyValueObjectiveDataReader kvReader;
+	private RequestNKVSettingsObjectiveDataReader settingsReader;
 	private Topic ventModeTopic;
 	private Topic keyValueTopic;
+	private Topic publishSettingsTopic;
 	private QueryCondition ventModeQueryCondition;
 	private QueryCondition keyValueQueryCondition;
+	private QueryCondition publishSettingsQueryCondition;
 
 	public NKV550(Subscriber subscriber, Publisher publisher, EventLoop eventLoop) {
 		super(subscriber, publisher, eventLoop);
@@ -524,14 +530,57 @@ public class NKV550 extends AbstractConnectedDevice {
             }
         });
         
-//        try {
+        /**
+		 * Following block of code is for receiving the objective to publish the current monitor values.
+		 */
+		ice.RequestNKVSettingsObjectiveTypeSupport.register_type(getParticipant(), ice.RequestNKVSettingsObjectiveTypeSupport.get_type_name());
+		publishSettingsTopic = TopicUtil.findOrCreateTopic(getParticipant(), ice.RequestNKVSettingsObjectiveTopic.VALUE, ice.RequestNKVSettingsObjectiveTypeSupport.class);
+		settingsReader = (ice.RequestNKVSettingsObjectiveDataReader) subscriber.create_datareader_with_profile(publishSettingsTopic,
+        		QosProfiles.ice_library, QosProfiles.state,  null, StatusKind.STATUS_MASK_NONE);
+		StringSeq publishSettingsParams = new StringSeq();
+		publishSettingsParams.add("'" + deviceIdentity.unique_device_identifier + "'");
+		publishSettingsQueryCondition = settingsReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+        		ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", publishSettingsParams);
+        eventLoop.addHandler(publishSettingsQueryCondition, new ConditionHandler() {
+            private ice.RequestNKVSettingsObjectiveSeq data_seq = new ice.RequestNKVSettingsObjectiveSeq();
+            private SampleInfoSeq info_seq = new SampleInfoSeq();
+
+            @Override
+            public void conditionChanged(Condition condition) {
+
+                for (;;) {
+                    try {
+                    	settingsReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                                (ReadCondition) condition);
+                        for (int i = 0; i < info_seq.size(); i++) {
+                            SampleInfo si = (SampleInfo) info_seq.get(i);
+                            ice.RequestNKVSettingsObjective data = (ice.RequestNKVSettingsObjective) data_seq.get(i);
+                            if (si.valid_data) {
+                            	try { 
+                            		askForCurrentSettings();
+                            	} catch (IOException ioe) {
+                            		log.error("Failed to request current settings", ioe);
+                            		ioe.printStackTrace();
+                            	}
+                            }
+                        }
+                    } catch (RETCODE_NO_DATA noData) {
+                        break;
+                    } finally {
+                    	settingsReader.return_loan(data_seq, info_seq);
+                    }
+                }
+            }
+        });
+        
+        try {
 //			debugStream=new PrintStream(new BufferedOutputStream(new FileOutputStream(new File("/tmp/waveform.csv"))));
-//			debugStream2=new PrintStream(new BufferedOutputStream(new FileOutputStream(new File("/tmp/allDumps.csv"))));
+			debugStream2=new PrintStream(new BufferedOutputStream(new FileOutputStream(new File("allDumps.csv"))));
 //			packetCounter=0;
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -700,7 +749,7 @@ public class NKV550 extends AbstractConnectedDevice {
 	
 	private void _connect() throws IOException {
 		deviceSocket=new Socket(address, port);
-		fromDevice=new BufferedInputStream(deviceSocket.getInputStream());
+		fromDevice=new BufferedInputStream(deviceSocket.getInputStream(),65536);
 		toDevice=new BufferedOutputStream(deviceSocket.getOutputStream());
 	}
 	
@@ -791,7 +840,6 @@ public class NKV550 extends AbstractConnectedDevice {
 		String xmlBlock=new String(blockBytes);
 		//System.err.println("xmlBlock is "+xmlBlock);
 		
-		DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
 		DocumentBuilder localDb=null;
 		try {
 			localDb = dbf.newDocumentBuilder();
@@ -923,6 +971,7 @@ public class NKV550 extends AbstractConnectedDevice {
 			}
 		};
 		readLoop.setName("NKV550Reader");
+		readLoop.setPriority(Thread.MAX_PRIORITY);
 		readLoop.start();
 	}
 	
@@ -1079,13 +1128,13 @@ public class NKV550 extends AbstractConnectedDevice {
 			return;
 		}
 		
-		log.debug("waveform "+id+ " datasize "+datasize+" datagain "+datagain+" zeroffset "+zeroffset);
+		//log.debug("waveform "+id+ " datasize "+datasize+" datagain "+datagain+" zeroffset "+zeroffset);
 		
 		String base64Encoded=waveformElement.getTextContent();
-		log.debug(base64Encoded);
+		//log.debug(base64Encoded);
 		Decoder d=Base64.getDecoder();
 		byte bytes[]=d.decode(base64Encoded);
-		log.debug("decoded bytes of length "+bytes.length);
+		//log.debug("decoded bytes of length "+bytes.length);
 		
 		//All waveforms so far seem to be datasize=2...
 		if(datasize!=2) {
@@ -1094,7 +1143,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		}
 		
 		int expectedNumOfPoints=bytes.length/datasize;
-		log.debug("Expected num of points is "+expectedNumOfPoints);
+		//log.debug("Expected num of points is "+expectedNumOfPoints);
 		
 		/*
 		 * Presumably we will encounter the customary annoyance of a short
@@ -1111,7 +1160,12 @@ public class NKV550 extends AbstractConnectedDevice {
 			int fromTwoBytes = Short.toUnsignedInt(bb.getShort());
 			float finalVal = (float)fromTwoBytes/datagain - zeroffset;
 			if(i % 8 ==0  ) {	//i goes 0,2,4,6,8,10,12,14,16,18,20, so for every 4 data points we want mod 8
-				wave[j++]=finalVal;
+				
+				if(id==2) {
+					wave[j++]=finalVal*1000;
+				} else {
+					wave[j++]=finalVal;
+				}
 			}
 			//if(id==2) debugStream.println(finalVal);
 		}
@@ -1122,10 +1176,10 @@ public class NKV550 extends AbstractConnectedDevice {
 		if(waveformBufferLength[id]>125) {
 			//Closest we can get for now...
 			waveformInstances[id]=sampleArraySample(waveformInstances[id],waveformBuffers[id],WAVEFORM_METRICS[id],"",0, WAVEFORM_UNITS[id], waveformBufferLength[id], ourClock.instant());
-//			if(id==2) {
-//				String allNumbers=ArrayUtils.toString(waveformBuffers[id]);
-//				debugStream2.println(allNumbers);
-//			}
+			if(id==2) {
+				String allNumbers=ArrayUtils.toString(waveformBuffers[id]);
+				debugStream2.println(allNumbers);
+			}
 			waveformBufferLength[id]=0;
 		}
 	}
@@ -1188,7 +1242,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		String id=monitorElement.getAttribute("id");
 		String name=monitorElement.getFirstChild().getTextContent();
 		id=StringEscapeUtils.unescapeHtml4(id);
-		System.err.println(id+" "+name);
+		//System.err.println(id+" "+name);
 		monitorNamesMap.put(id, name);
 	}
 	
@@ -1224,18 +1278,18 @@ public class NKV550 extends AbstractConnectedDevice {
 	private void processSetting(Element settingElement, boolean names) {
 		int id=Integer.parseInt(settingElement.getAttribute("id"));
 		if(names) {
-			System.err.print("Setting name "+id);
+			//System.err.print("Setting name "+id);
 			String value=settingElement.getFirstChild().getTextContent();
-			System.err.println(" "+value);
+			//System.err.println(" "+value);
 			settingsNameMap.put(id, value);
 			settingsIDMap.put(value, id);
 		} else {
-			System.err.print("Setting "+id+" is off "+settingElement.getAttribute("isOff"));
+			//System.err.print("Setting "+id+" is off "+settingElement.getAttribute("isOff"));
 			String value=settingElement.getFirstChild().getTextContent();
-			System.err.println(" "+value);
+			//System.err.println(" "+value);
 			NKV550Settings settings=null;
 			if( (settings=settingIdToSettings.get(id))!=null) {
-				System.err.println("Got a settings object for id "+id+", publlishing new value "+value);
+				//System.err.println("Got a settings object for id "+id+", publlishing new value "+value);
 				settings.holder=numericSample(settings.holder, Float.parseFloat(value), settings.metric, "", 0, settings.units, ourClock.instant());
 			}
 		}
@@ -1289,7 +1343,7 @@ public class NKV550 extends AbstractConnectedDevice {
 		Node statusNode=statusElement.getFirstChild();
 		String statusText=statusNode.getTextContent();
 		int status=Integer.parseInt(statusText);
-		System.err.println("status was "+status+" at "+System.currentTimeMillis());
+		//System.err.println("status was "+status+" at "+System.currentTimeMillis());
 		if(status!=0) {
 			log.error("Status code was "+status+" after last command");
 		} else {
@@ -1338,19 +1392,19 @@ public class NKV550 extends AbstractConnectedDevice {
 	 */
 	private void processAlarm(String _id, String _priority, String _alarmStatus) {
 		if(_id.equals("0")) {
-			System.err.println("Not processing alarm with id 0");
+			//System.err.println("Not processing alarm with id 0");
 			return;
 		}
 		System.err.println("Processing alarm with id "+_id+" and status "+_alarmStatus);
 		if(_priority==null || _priority.length()==0) {
 			alarmNameMap.put(Integer.parseInt(_id), _alarmStatus);
-			System.err.println("Added "+_id+" to alarmNameMap with key "+_alarmStatus);
+			//System.err.println("Added "+_id+" to alarmNameMap with key "+_alarmStatus);
 			return;
 		}
 		int index=Integer.parseInt(_id);
 		String alarmKey=alarmNameMap.get(index);
 		if(alarmKey==null) {
-			System.err.println("Can't find index for alarm with id "+_id);
+			//System.err.println("Can't find index for alarm with id "+_id);
 		}
 		//TODO: We can't write one of these before setting the UDI in the device identity...
 		if(_alarmStatus.equals("0")) {

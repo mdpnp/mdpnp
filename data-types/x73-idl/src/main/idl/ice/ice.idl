@@ -384,7 +384,49 @@ module ice {
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "InfusionObjective";
+
+  /**
+   * Topic to set the operating mode for a ventilator.
+   */
+  struct VentModeObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString requestor;
+    float newMode;
+  }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
+  #pragma keylist VentModeObjective unique_device_identifier
+  const string VentModeObjectiveTopic = "VentModeObjective";
   
+  /**
+   * Do we really need a special topic to set the op mode
+   * on the ventilator?  All NKV 550 params are set the same
+   * way - a parameter index/name and a new value.  Realistically
+   * we need the param name rather than the index, because the app
+   * that is receiving the metric doesn't know the required param
+   * index on the device side - only the device knows that.
+   */
+  struct KeyValueObjective {
+	UniqueDeviceIdentifier unique_device_identifier;	//@key
+	LongString requestor;
+	LongString paramName;
+	float newValue;	
+  };
+  #pragma keylist KeyValueObjective unique_device_identifier
+  const string KeyValueObjectiveTopic = "KeyValueObjective";
+  
+  /**
+   * Topic to allow an app to request that the NKV 550 publishes
+   * its current settings.  This is mainly to allow the Web Integration
+   * service app to request the current settings, as otherwise it will
+   * miss them in a model where the device only publishes them at startup.
+   * This could well be useful in other situations as well, such as a periodic
+   * refresh by the app.
+   */
+  struct RequestNKVSettingsObjective {
+    UniqueDeviceIdentifier unique_device_identifier; //@key
+    LongString requestor;
+  };
+  #pragma keylist RequestNKVSettingsObjective unique_device_identifier
+  const string RequestNKVSettingsObjectiveTopic = "RequestNKVSettingsObjective";
   /**
    * SK - Topic for setting the averaging rate of a pulse oximetry device.
    * The "Oximetry Devices" app will publish a sample with averageTime=N to
