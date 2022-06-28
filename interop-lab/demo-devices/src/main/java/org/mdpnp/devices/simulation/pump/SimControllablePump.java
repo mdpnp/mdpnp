@@ -137,6 +137,7 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	
 	@Override
 	protected void writeDeviceIdentity() {
+		deviceIdentity.manufacturer="ICE";
 		deviceIdentity.model="Controllable Pump";
 		super.writeDeviceIdentity();
 	}
