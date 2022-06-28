@@ -37,6 +37,7 @@ import javafx.util.Callback;
 
 import org.mdpnp.apps.testapp.Configuration.Application;
 import org.mdpnp.apps.testapp.ConfigurationDialog.DeviceDriverProviderCell;
+import org.mdpnp.data.serial.PureJavaCommSerialProvider;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.serial.SerialProviderFactory;
 import org.mdpnp.devices.serial.TCPSerialProvider;
@@ -49,7 +50,7 @@ public class SettingsController {
     @FXML
     ComboBox<DeviceDriverProvider> deviceType;
     @FXML
-    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel, fhirServerLabel;
+    Label applicationsLabel, domainIdLabel, deviceTypeLabel, serialPortsLabel, addressLabel, fhirServerLabel, emrServerLabel;
     @FXML
     GridPane gridPane;
     @FXML
@@ -114,6 +115,8 @@ public class SettingsController {
         case ICE_Device_Interface:
             gridPane.getChildren().remove(fhirServer);
             gridPane.getChildren().remove(fhirServerLabel);
+            gridPane.getChildren().remove(emrServer);
+            gridPane.getChildren().remove(emrServerLabel);
             if(!gridPane.getChildren().contains(deviceType)) { gridPane.getChildren().add(deviceType); }
             if(!gridPane.getChildren().contains(deviceCategory)) { gridPane.getChildren().add(deviceCategory); }
             if(!gridPane.getChildren().contains(deviceTypeLabel)) { gridPane.getChildren().add(deviceTypeLabel); }
@@ -211,6 +214,15 @@ public class SettingsController {
             @Override
             public void changed(ObservableValue<? extends ConnectionType> observable, ConnectionType oldValue, ConnectionType newValue) {
                 if(null != newValue) {
+                	if(newValue.equals(ConnectionType.Serial)) {
+                		/*
+                		 * Not sure why AbstractDevice.getObject sets default serial provider to TCPSerialProvider,
+                		 * for a network device, but it breaks the selection of a serial port for serial devices
+                		 * selected later.  Reset here
+                		 */
+                		SerialProviderFactory.setDefaultProvider(new PureJavaCommSerialProvider());
+                		
+                	}
                     deviceType.setItems(deviceTypesByCategory.get(newValue));
                 }
             }
