@@ -98,6 +98,24 @@ public class VentilatorPanel extends AbstractWaveAndParamsPanel {
     	return getWaveformPaint();
     }
 
+    @Override
+	public double[] getMinMaxForMetric(String metricId) {
+		switch (metricId) {
+		case rosetta.MDC_PRESS_AWAY.VALUE:
+			return new double[] {-5, 50};
+
+		case rosetta.MDC_FLOW_AWAY.VALUE:
+			return new double[] {-60, 60};
+
+		case rosetta.MDC_VOL_AWAY_TIDAL.VALUE:
+			return new double[] {-60, 600};
+
+		default:
+			break;
+		}
+		return super.getMinMaxForMetric(metricId);
+	}
+
     public static boolean supported(Set<String> identifiers) {
         for (String w : RR_WAVEFORMS) {
             if (identifiers.contains(w)) {

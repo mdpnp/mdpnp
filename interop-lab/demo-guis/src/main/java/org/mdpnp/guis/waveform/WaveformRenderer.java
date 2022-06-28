@@ -35,6 +35,16 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     private double gapSize = 0.02;
     boolean aged_segment = true;
     boolean rendering = false;
+    
+    private double[] fixedMinMax;
+    
+    public void setFixedMinMax(double[] minMax) {
+    	if(minMax!=null) {
+	    	fixedMinMax=minMax;
+	    	minY=minMax[0];
+	    	maxY=minMax[1];
+    	}
+    }
 
     public void setOverwrite(boolean overwrite) {
         this.overwrite = overwrite;
@@ -59,6 +69,11 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     
 
     public void rescaleValue() {
+    	if(fixedMinMax!=null) {
+    		minY=fixedMinMax[0];
+    		maxY=fixedMinMax[1];
+    		return;
+    	}
         minY = Double.MAX_VALUE;
         maxY = Double.MIN_VALUE;
     }
@@ -69,10 +84,13 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
     public void sample(long time, float value) {
         
         if(time>=t1&&time<t2) {
-            minY = Math.min(value, minY);
-            maxY = Math.max(value, maxY);
+        	if(fixedMinMax==null) {
+        		//No fixed min/max, so allow recalc.
+        		minY = Math.min(value, minY);
+        		maxY = Math.max(value, maxY);
+        	}
 
-            if(0==Double.compare(minY, maxY)) {
+            if(0==Double.compare(minY, maxY) && fixedMinMax==null) {
                 maxY = minY + 0.01;
             }
         }
@@ -145,7 +163,7 @@ public class WaveformRenderer implements WaveformSource.WaveformIterator {
             canvas.clearRect(extent.getMinX(), extent.getMinY(), extent.getMaxX(), extent.getMaxY());
     
             
-            if (continuousRescale) {
+            if (continuousRescale && fixedMinMax==null) {
                 minY = Double.MAX_VALUE;
                 maxY = Double.MIN_VALUE;
             }

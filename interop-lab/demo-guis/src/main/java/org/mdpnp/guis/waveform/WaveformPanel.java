@@ -15,6 +15,8 @@ package org.mdpnp.guis.waveform;
 public interface WaveformPanel {
     void setSource(WaveformSource source);
     
+    default void setFixedMinMax(double[] minMax) {};
+    
     WaveformSource getSource();
 
     void setOutOfTrack(boolean outOfTrack);

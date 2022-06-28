@@ -55,6 +55,21 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
     	return getWaveformPaint();
     }
     
+    /**
+     * A method (possibly in the wrong place) to allow mix and max scaling to be fixed for a metric.
+     * At the moment, the renderer auto scales min/max according to the incoming data.  There are some
+     * cases where we want to override that.  This is a pre-cursor to allowing that.  This base implementation
+     * just returns the min and max doubles, which is the same pair of values that the renderer uses.
+     * 
+     * Actually that never works - we need null to retain the default values.
+     * 
+     * @param metricId
+     * @return
+     */
+    public double[]  getMinMaxForMetric(String metricId) {
+    	return null;
+    }
+    
     private final Set<String> waveformMetrics = new HashSet<String>();
     private final Set<String>[] parameterMetrics;
   
@@ -153,6 +168,8 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
   };
   
   protected void add(SampleArrayFx data) {
+	  String myTempMetricId=data.getMetric_id();
+	  double myMinMax[]=getMinMaxForMetric(myTempMetricId);
       if(!time.textProperty().isBound()) {
           time.textProperty().bind(data.presentation_timeProperty().asString());
       }
@@ -162,6 +179,10 @@ public abstract class AbstractWaveAndParamsPanel extends DevicePanel {
               SampleArrayWaveformSource saws = new SampleArrayWaveformSource(deviceMonitor.getSampleArrayList().getReader(), data.getHandle());
               WaveformPanel wuws = new WaveformPanelFactory().createWaveformPanel();
               wuws.setSource(saws);
+              if(myMinMax!=null) {
+            	  System.err.println("Using min max "+myMinMax[0]+" "+myMinMax[1]+" for metric " +myTempMetricId);
+              }
+              wuws.setFixedMinMax(myMinMax);
               final int idx = panelMap.size();
               
               ((JavaFXWaveformPane)wuws).getCanvas().getGraphicsContext2D().setStroke(getWaveformPaint(data.getMetric_id()));
