@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -11,6 +12,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.mdpnp.apps.fxbeans.AlertFxList;
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFx;
@@ -31,13 +33,17 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.Subscriber;
 
 import ice.FlowRateObjectiveDataWriter;
+import ice.InfusionObjectiveDataWriter;
+import ice.InfusionProgramDataWriter;
 import ice.MDSConnectivity;
 import ice.Patient;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
@@ -51,44 +57,25 @@ public class PumpControllerTestApplication {
 	
 	private DeviceListModel dlm;
 	private NumericFxList numeric;
-	private SampleArrayFxList samples;
-	private FlowRateObjectiveDataWriter writer;
+	private AlertFxList alert;
+	private FlowRateObjectiveDataWriter flowRateWriter;
+	private InfusionObjectiveDataWriter infusionObjWriter;
+	private InfusionProgramDataWriter infusionProgWriter;
 	private MDSHandler mdsHandler;
 	
 	@FXML VBox pumps;
 		
-	@FXML private ComboBox<Device> bpsources;
+	//@FXML private ComboBox<Device> pumpCombo;
 	@FXML private TextField systolic;
 	@FXML private TextField diastolic;
 	@FXML private TextField mean;
 		
 	private final String FLOW_RATE=rosetta.MDC_FLOW_FLUID_PUMP.VALUE;
-	private final String ARTERIAL=rosetta.MDC_PRESS_BLD_ART_ABP.VALUE;
 	
 	private static final Logger log = LoggerFactory.getLogger(PumpControllerTestApplication.class);
 	
 	private boolean listenerPresent;
-	
-	private String[] SYS_PARAMS=new String[] { rosetta.MDC_PRESS_BLD_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_SYS.VALUE, rosetta.MDC_PRESS_INTRA_CRAN_SYS.VALUE,
-            rosetta.MDC_PRESS_BLD_AORT_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_FEMORAL_SYS.VALUE,
-            rosetta.MDC_PRESS_BLD_ART_PULM_SYS.VALUE, rosetta.MDC_PRESS_BLD_ART_UMB_SYS.VALUE, rosetta.MDC_PRESS_BLD_ATR_LEFT_SYS.VALUE,
-            rosetta.MDC_PRESS_BLD_ATR_RIGHT_SYS.VALUE
-    };
-	
-	private String[] DIA_PARAMS=new String[] {
-			rosetta.MDC_PRESS_BLD_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_DIA.VALUE, rosetta.MDC_PRESS_INTRA_CRAN_DIA.VALUE,
-            rosetta.MDC_PRESS_BLD_AORT_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_FEMORAL_DIA.VALUE,
-            rosetta.MDC_PRESS_BLD_ART_PULM_DIA.VALUE, rosetta.MDC_PRESS_BLD_ART_UMB_DIA.VALUE, rosetta.MDC_PRESS_BLD_ATR_LEFT_DIA.VALUE,
-            rosetta.MDC_PRESS_BLD_ATR_RIGHT_DIA.VALUE
-	};
-	
-	private String[] MEAN_PARAMS=new String[] {
-			rosetta.MDC_PRESS_BLD_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_MEAN.VALUE, rosetta.MDC_PRESS_INTRA_CRAN_MEAN.VALUE,
-            rosetta.MDC_PRESS_BLD_AORT_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_ABP_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_FEMORAL_MEAN.VALUE,
-            rosetta.MDC_PRESS_BLD_ART_PULM_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ART_UMB_MEAN.VALUE, rosetta.MDC_PRESS_BLD_ATR_LEFT_MEAN.VALUE,
-            rosetta.MDC_PRESS_BLD_ATR_RIGHT_MEAN.VALUE
-	};
-	
+		
 	private HashMap<String, Parent> udiToPump=new HashMap<>();
 	
 	/**
@@ -98,12 +85,16 @@ public class PumpControllerTestApplication {
 	
 	private Connection dbconn;
 	
-	public void set(DeviceListModel dlm, NumericFxList numeric, SampleArrayFxList samples, FlowRateObjectiveDataWriter writer, MDSHandler mdsHandler) {
+	public void set(DeviceListModel dlm, NumericFxList numeric, FlowRateObjectiveDataWriter writer,
+			InfusionObjectiveDataWriter infusionObjWriter, InfusionProgramDataWriter programWriter, MDSHandler mdsHandler,
+			AlertFxList alert) {
 		this.dlm=dlm;
 		this.numeric=numeric;
-		this.samples=samples;
-		this.writer=writer;
+		this.flowRateWriter=writer;
+		this.infusionObjWriter=infusionObjWriter;
+		this.infusionProgWriter=programWriter;
 		this.mdsHandler=mdsHandler;
+		this.alert=alert;
 	}
 	
 	public void stop() {
@@ -126,17 +117,7 @@ public class PumpControllerTestApplication {
 		System.err.println("In PumpControllerTestApplication.activate");
 
 	}
-	
-	class BPDeviceChangeListener implements ChangeListener<Device> {
 
-		@Override
-		public void changed(ObservableValue<? extends Device> observable, Device oldValue, Device newValue) {
-			handleBPDeviceChange(newValue);
-		}
-	}
-
-	BPDeviceChangeListener bpDeviceChangeListener=new BPDeviceChangeListener();
-	
 	public void start(EventLoop eventLoop, Subscriber subscriber) {
 		
 		//Rely on addition of metrics to add devices...
@@ -145,14 +126,17 @@ public class PumpControllerTestApplication {
 			public void onChanged(Change<? extends NumericFx> change) {
 				while(change.next()) {
 					change.getAddedSubList().forEach( n -> {
-						if(n.getMetric_id().equals(FLOW_RATE)) {
+						if(n.getMetric_id().equals(FLOW_RATE) ||
+								n.getMetric_id().equals("MDC_FLOW_FLUID_PUMP_1") || n.getMetric_id().equals("MDC_FLOW_FLUID_PUMP_2")) {
 							//Flow rate published - add to panel.  addPumpToMainPanel avoids duplication of devices anyway,
 							//so just call it here.
 							addPumpToMainPanel(dlm.getByUniqueDeviceIdentifier(n.getUnique_device_identifier()));
+							//addPumpToSelectionBox(dlm.getByUniqueDeviceIdentifier(n.getUnique_device_identifier()));
 						}
 					});
 				}
 			}
+
 		});
 		
 		//...and removal of devices to remove devices.
@@ -162,32 +146,16 @@ public class PumpControllerTestApplication {
 				while(change.next()) {
 					change.getRemoved().forEach( d-> {
 						//icepumps.getItems().remove(d);
-						bpsources.getItems().remove(d);
 						removePumpFromMainPanel(d);
 					});
 				}
 			}
 		});
 		
-		//Similarly, rely on metrics to add BP devices.
-		samples.addListener(new ListChangeListener<SampleArrayFx>() {
-			@Override
-			public void onChanged(Change<? extends SampleArrayFx> change) {
-				while(change.next()) {
-					change.getAddedSubList().forEach( n -> {
-						if(n.getMetric_id().equals(ARTERIAL)) {
-							bpsources.getItems().add(dlm.getByUniqueDeviceIdentifier(n.getUnique_device_identifier()));
-						}
-					});
-				}
-				
-			}
-		});
-		
-		bpsources.getSelectionModel().selectedItemProperty().addListener(bpDeviceChangeListener);
 		listenerPresent=true;
 		
-		bpsources.setCellFactory(new Callback<ListView<Device>,ListCell<Device>>() {
+		/*
+		pumpCombo.setCellFactory(new Callback<ListView<Device>,ListCell<Device>>() {
 
 			@Override
 			public ListCell<Device> call(ListView<Device> device) {
@@ -196,7 +164,7 @@ public class PumpControllerTestApplication {
 			
 		});
 		
-		bpsources.setConverter(new StringConverter<Device>() {
+		pumpCombo.setConverter(new StringConverter<Device>() {
 
 			@Override
 			public Device fromString(String arg0) {
@@ -205,12 +173,23 @@ public class PumpControllerTestApplication {
 			}
 
 			@Override
-			public String toString(Device arg0) {
+			public String toString(Device device) {
 				// TODO Auto-generated method stub
-				return arg0.getModel();
+				return device.getModel();
 			}
 			
 		});
+		
+		pumpCombo.getSelectionModel().selectedItemProperty().addListener( new ChangeListener<Device>() {
+
+			@Override
+			public void changed(ObservableValue<? extends Device> observable, Device oldValue, Device newValue) {
+				//Remove the old one...
+				addPumpToMainPanel(newValue);
+				
+			}
+		});
+		*/
 		
 		mdsHandler.addPatientListener(new PatientListener() {
 
@@ -259,13 +238,35 @@ public class PumpControllerTestApplication {
 	
 	private void addPumpToMainPanel(Device d) {
 		if(!udiToPump.containsKey(d.getUDI()) && numeric!=null) {
-			FXMLLoader loader = new FXMLLoader(PumpWithListener.class.getResource("PumpWithListener.fxml"));
+			
+			String fxmlFile=getCorrectFXML(d);
+			URL url = PumpControllerTestApplication.class.getResource(fxmlFile);
+			String f = url.getFile();
+			File testfile = new File (f);
+			if (!testfile.exists()) {
+				return;
+			}
+			
+			FXMLLoader loader = new FXMLLoader(url);
+			
 			try {
 		        final Parent ui = loader.load();
 		        
-		        final PumpWithListener controller = ((PumpWithListener) loader.getController());
-		        controller.setPump(d,numeric,writer, dbconn);
-		        pumps.getChildren().add(ui);
+//		        final PumpWithListener controller = ((PumpWithListener) loader.getController());
+//		        controller.setPump(d,numeric,writer, dbconn);
+		        final AbstractControllablePump controller = (AbstractControllablePump)loader.getController();
+		        controller.setDevice(d);
+		        controller.setNumerics(numeric);
+		        controller.setInfusionObjectiveDataWriter(infusionObjWriter);
+		        controller.setInfusionProgramDataWriter(infusionProgWriter);
+		        controller.setAlerts(alert);
+		        controller.start();
+		        //Assume that only one other pump is possible.
+		        ObservableList<Node> currentChildren=pumps.getChildren();
+		        //if(currentChildren.size()>0) {
+		        //	currentChildren.remove(0);
+		        //}
+		        currentChildren.add(ui);
 		        udiToPump.put(d.getUDI(), ui);
 			} catch (IOException ioe) {
 				ioe.printStackTrace();
@@ -273,15 +274,44 @@ public class PumpControllerTestApplication {
 		}
 	}
 	
+	/**
+	 * Get the correct FXML file name for the specified device.  We <i>could<i> try skipping
+	 * this method and just making the FXML file name be &lt;MANUFACTURER&gt;_&lt;MODEL&gt;
+	 * but we could still have issues with spaces or other special characters.  So we use this
+	 * method to work out what the file name is for a particular device.
+	 * @param d
+	 * @return
+	 */
+	private String getCorrectFXML(Device d) {
+		//TODO: Turn all this into a file with a map in it...
+		/*
+		 * deviceIdentity.manufacturer="Neurowave";
+		deviceIdentity.model="AP-4000";
+		
+		 */
+		
+		String testFileName = d.getManufacturer().toLowerCase() + "_" + d.getModel().toLowerCase() + ".fxml";
+		return testFileName;
+		
+//		if(d.getManufacturer().equals("Neurowave")) {
+//			if(d.getModel().equals("AP-4000")) {
+//				return "neurowave_ap-4000.fxml";
+//				
+//			}
+//		}
+//		return null;
+	}
+	
+	/*
+	private void addPumpToSelectionBox(Device device) {
+		pumpCombo.getItems().add(device);
+		
+	}
+	*/
+	
 	private void removePumpFromMainPanel(Device d) {
 		pumps.getChildren().remove(udiToPump.get(d.getUDI()));
 	}
-	
-	/**
-	 * Use this to allow access to the numeric sample that has a listener attached.
-	 * Then if the pump is changed, the listener can be detached from the previous numeric
-	 */
-	private NumericFx currentPumpNumeric;
 	
 	private float[] getMinAndMax(Number[] numbers) {
 		float[] minAndMax=new float[] {numbers[0].floatValue(),numbers[0].floatValue()};
@@ -292,47 +322,9 @@ public class PumpControllerTestApplication {
 		return minAndMax;
 	}
 	
-	class SampleValuesChangeListener implements ChangeListener<Number[]> {
 
-		@Override
-		public void changed(ObservableValue<? extends Number[]> observable, Number[] oldValue, Number[] newValue) {
-			//Ignore the old values.  Just get new ones.
-			float[] minMax=getMinAndMax(newValue);
-			//System.err.println("got minMax as "+minMax[0]+ " and "+minMax[1]);
-			diastolic.setText(Integer.toString((int)minMax[0]));
-			systolic.setText(Integer.toString((int)minMax[1]));
-			/*
-			 * https://nursingcenter.com/ncblog/december-2011/calculating-the-map
-			 */
-			float meanCalc=(minMax[1]+(2*minMax[0]))/3;
-			mean.setText(Integer.toString((int)meanCalc));
-		}
-	}
 	
-	SampleValuesChangeListener bpArrayListener=new SampleValuesChangeListener();
-	
-	/**
-	 * Use this to allow access to the array sample that has a listener attached.
-	 * Then if the BP monitor is changed, the listener can be detached from the previous sample
-	 */
-	private SampleArrayFx currentBPSample;
-	
-	private void handleBPDeviceChange(Device newDevice) {
-		log.info("QCT.handleDeviceChange newDevice is "+newDevice);
-		if(currentBPSample!=null) {
-			currentBPSample.valuesProperty().removeListener(bpArrayListener);
-		}
-		if(null==newDevice) return;	//No device selected and/or available - can happen when patient is changed and no devices for that patient
-		samples.forEach( s-> {
-			if (! s.getUnique_device_identifier().contentEquals(newDevice.getUDI())) return;	//Some other device.
-			//This sample is from the current device.
-			if(s.getMetric_id().equals(ARTERIAL)) {
-				s.valuesProperty().addListener(bpArrayListener);
-				currentBPSample=s;
-			}
-		});
-	}
-	
+
 	class DeviceListCell extends ListCell<Device> {
         @Override protected void updateItem(Device device, boolean empty) {
             super.updateItem(device, empty);

@@ -47,6 +47,12 @@
         <constructor-arg ref="domainParticipant" />
     </bean>
     
+    <!-- For programming infusion pumps -->
+    <bean id="infusionPumpProgramWriter" class="org.mdpnp.rtiapi.data.InfusionProgramDataWriterFactory" lazy-init="true">
+    	<constructor-arg ref="publisher" />
+        <constructor-arg ref="domainParticipant" />
+    </bean>
+    
     <!-- This is needed for ICE aware oximetry apps and devices where the
          device can have the average time set by an objective
     -->

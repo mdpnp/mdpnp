@@ -3,6 +3,7 @@ package org.mdpnp.apps.testapp.pumps;
 import java.io.IOException;
 import java.net.URL;
 
+import org.mdpnp.apps.fxbeans.AlertFxList;
 import org.mdpnp.apps.fxbeans.NumericFxList;
 import org.mdpnp.apps.fxbeans.SampleArrayFxList;
 import org.mdpnp.apps.testapp.DeviceListModel;
@@ -14,6 +15,8 @@ import org.springframework.context.ApplicationContext;
 import com.rti.dds.subscription.Subscriber;
 
 import ice.FlowRateObjectiveDataWriter;
+import ice.InfusionObjectiveDataWriter;
+import ice.InfusionProgramDataWriter;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
@@ -36,7 +39,9 @@ public class PumpControllerTestApplicationFactory implements IceApplicationProvi
 		
 		final NumericFxList numericList = parentContext.getBean("numericList", NumericFxList.class);
 		
-		final SampleArrayFxList sampleList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
+		final AlertFxList alertList = parentContext.getBean("technicalAlertList", AlertFxList.class);
+		
+		//final SampleArrayFxList sampleList = parentContext.getBean("sampleArrayList", SampleArrayFxList.class);
 		
 		final Subscriber subscriber = (Subscriber) parentContext.getBean("subscriber");
 
@@ -44,6 +49,11 @@ public class PumpControllerTestApplicationFactory implements IceApplicationProvi
         
         //"flowRateObjectiveWriter" is a new bean in IceAppContainerContext.xml
         final FlowRateObjectiveDataWriter objectiveWriter=(FlowRateObjectiveDataWriter) parentContext.getBean("flowRateObjectiveWriter");
+        
+        //What a bad bean name this is.
+        final InfusionObjectiveDataWriter infusionObjectiveWriter=(InfusionObjectiveDataWriter) parentContext.getBean("objectiveWriter");
+        
+        final InfusionProgramDataWriter infusionProgramWriter=(InfusionProgramDataWriter) parentContext.getBean("infusionPumpProgramWriter");
         
         final MDSHandler mdsHandler=(MDSHandler)parentContext.getBean("mdsConnectivity",MDSHandler.class);
         mdsHandler.start();
@@ -54,7 +64,7 @@ public class PumpControllerTestApplicationFactory implements IceApplicationProvi
         
         final PumpControllerTestApplication controller = ((PumpControllerTestApplication) loader.getController());
         
-        controller.set(deviceListModel, numericList, sampleList, objectiveWriter, mdsHandler);
+        controller.set(deviceListModel, numericList, objectiveWriter, infusionObjectiveWriter, infusionProgramWriter, mdsHandler, alertList);
         
         controller.start(eventLoop, subscriber);
 		

@@ -381,9 +381,36 @@ module ice {
     UniqueDeviceIdentifier unique_device_identifier; //@key
     LongString requestor;
     boolean stopInfusion;
+    long head;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist InfusionObjective unique_device_identifier
   const string InfusionObjectiveTopic = "InfusionObjective";
+  
+  /**
+   * Topic to program an infusion pump - added summer 2022.
+   * The "head" parameter relates to pumps that have more than
+   * one "pump head".  Ultimately it's up to the calling program
+   * and the pump device to agree what that number means, and what
+   * to do if it's invalid.
+   * 
+   * infusionRate, VTBI, bolusVolume and bolusRate might not all be
+   * supported by all devices and in all circumstances and in all
+   * combinations at once.
+   * Again, the definition of what is valid and handling of invalid
+   * is between the publishing app and the subscribing device.
+   */
+  struct InfusionProgram {
+  	UniqueDeviceIdentifier unique_device_identifier; //@key
+  	LongString requestor;
+  	long head;	//Which head/pump etc. we are requesting to change.  Can't use int
+  	float infusionRate;	//Infusion rate
+  	float VTBI;			//Volume to be infused
+  	float bolusVolume;	//Bolus volume
+  	float bolusRate;	//Bolus Infusion Rate.
+  	long seconds;		//Bolus duration...
+  };
+  #pragma keylist InfusionProgram unique_device_identifier
+  const string InfusionProgramTopic = "InfusionProgram";
 
   /**
    * Topic to set the operating mode for a ventilator.

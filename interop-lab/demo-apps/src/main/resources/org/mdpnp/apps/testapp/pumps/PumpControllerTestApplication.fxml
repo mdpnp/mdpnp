@@ -8,6 +8,19 @@
 <?import javafx.geometry.Insets?>
 
 <BorderPane fx:id="main" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.PumpControllerTestApplication">
+<!--
+<top>
+  <HBox spacing="2">
+    <ComboBox fx:id="pumpCombo">
+    
+    
+    </ComboBox>
+  
+  </HBox>  
+
+</top>
+-->
+
 <center>
   <VBox fx:id="pumps" spacing="2">
   
@@ -18,23 +31,7 @@
 <right>
   <VBox spacing="2">
     <children>
-    <!--
-	    <Label>Please select a pump</Label>
-	    <ComboBox fx:id="icepumps" promptText="choose"/>
-	    <Label text="Requested Speed"/>
-		<TextField fx:id="requestedSpeed"/>
-	    <Button fx:id="setButton" text="Set"/>
-	    <Label text="Current Speed"/>
-	    <TextField fx:id="currentSpeed"/>
-	-->
-	    <Label>Please select a BP source</Label>
-	    <ComboBox fx:id="bpsources" promptText="choose"/>
-	    <Label text="Sys"/>
-		<TextField fx:id="systolic"/>
-		<Label text="Dia"/>
-		<TextField fx:id="diastolic"/>
-	    <Label text="Mean"/>
-		<TextField fx:id="mean"/>
+
 	</children>
   </VBox>
 </right>

@@ -11,12 +11,28 @@ import javafx.scene.paint.Paint;
 public class PumpPanel extends AbstractWaveAndParamsPanel {
 	
 	private final static String[][] PARAMS = new String[][] {
-        { rosetta.MDC_FLOW_FLUID_PUMP.VALUE }
+        { 
+          rosetta.MDC_FLOW_FLUID_PUMP.VALUE,
+        },
+        {
+        	 "MDC_FLOW_FLUID_PUMP_1",
+        },
+        {
+        	"MDC_FLOW_FLUID_PUMP_2"
+        }
 	};
 	
-	private final static String[] PARAM_LABELS = new String[] { "Infusion Rate" };
+	private final static String[] PARAM_LABELS = new String[] { 
+			"Infusion Rate",
+			"Head 1",
+			"Head 2"
+	};
 	
-	private final static String[] PARAM_UNITS = new String[] { "ml/hour" };
+	private final static String[] PARAM_UNITS = new String[] {
+			"ml/hour",
+			"ml/hour",
+			"ml/hour"
+	};
 	
 	private final static String[] PUMP_WAVEFORMS = new String[] {  };
 	
@@ -39,7 +55,7 @@ public class PumpPanel extends AbstractWaveAndParamsPanel {
 	@Override
 	public int getParameterCount() {
 		// TODO Auto-generated method stub
-		return 1;
+		return 3;
 	}
 
 	@Override
