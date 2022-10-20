@@ -10,12 +10,7 @@
  * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-/*
-apply plugin: 'java'
-apply plugin: 'application'
-apply plugin: "me.champeau.jbake"
-apply from: 'javafx.plugin'
-*/
+
 buildscript {
 
     dependencies {
@@ -181,12 +176,13 @@ dependencies {
     compile project(':interop-lab:demo-guis-javafx')
     compile project(':interop-lab:demo-purejavacomm')
 
-    runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: SLF4J_VERSION
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
     compile files('../../artifacts/mdpnp-sounds-0.1.0.jar')
 
     //
-    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.17.1'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.1'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.19.0'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.19.0'
     compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
     
     // Default capture device is a trimmed down piece of OpenIMAJ

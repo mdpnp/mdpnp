@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="trace" dest="/tmp/log4j2.debug">
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout>
+				<pattern>%d | %-5p | %c{1} | %t | %m%n"</pattern>
+			</PatternLayout>
+		</Console>
+		<RollingFile name="demo-apps-log" fileName="${sys:user.home}/demo-apps.log"
+			filePattern="${sys:user.home}/demo-apps.log-%i.log">
+			<PatternLayout>
+				<pattern>%d | %-5p | %c{1} | %t | %m%n</pattern>
+			</PatternLayout>
+			<SizeBasedTriggeringPolicy size="1024KB"/>
+		</RollingFile>
+		<RollingFile name="easy-tiva-log" fileName="${sys:user.home}/easy-tiva.log"
+			filePattern="${sys:user.home}/easy-tiva.log-%i.log">
+			<PatternLayout>
+				<pattern>%d | %-5p | %c{1} | %t | %m%n</pattern>
+			</PatternLayout>
+			<SizeBasedTriggeringPolicy size="1024KB"/>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="demo-apps-log"/>
+		</Root>
+		<Logger name="easy.tiva" level="trace" additivity="false">
+			<AppenderRef ref="easy-tiva-log"/>
+		</Logger>
+	</Loggers>
+
+</Configuration>
