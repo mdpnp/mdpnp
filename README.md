@@ -1,10 +1,12 @@
 # MD PnP OpenICE
 
-[![Join the chat at https://gitter.im/mdpnp/mdpnp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mdpnp/mdpnp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://jenkins.openice.info/job/mdpnp-demoapp/badge/icon)](https://jenkins.openice.info/job/mdpnp-demoapp)
 [![Latest Release](https://img.shields.io/github/release/mdpnp/mdpnp.svg)](https://github.com/mdpnp/mdpnp/releases/latest)
 Getting Started
 ---------------
+
+You can download a zip of the source code from GitHub, or get it with your git client by doing
+
+    git clone https://github.com/mdpnp/mdpnp
 
 You can build and run the main OpenICE application with one gradle task.
 
@@ -36,3 +38,11 @@ __devices/__
 * To be used in conjunction with other components that provide nomenclature, information model translation, and messaging
 
 <a href="https://iconscout.com/icons/infusion-pumps" target="_blank">Infusion pumps Icon</a> by <a href="https://iconscout.com/contributors/icons8">Icons8</a> on <a href="https://iconscout.com">Iconscout</a>
+
+Here are some videos on "Getting started with OpenICE"
+
+[OpenICE Download and Build](https://vimeo.com/410273636)
+
+[Importing OpenICE code into Eclipse for developing](https://vimeo.com/410685721)
+
+[Using a template to create new applications](https://player.vimeo.com/video/761590094)
