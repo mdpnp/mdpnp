@@ -17,7 +17,7 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-  compile project(':devices:common')
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+  implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  implementation project(':devices:common')
+  testImplementation group: 'junit', name: 'junit', version: '4.11'
 }

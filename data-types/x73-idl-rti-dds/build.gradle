@@ -44,13 +44,13 @@ jar.doFirst {
 
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
-  compile files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
+  implementation files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
   //This next slf4j entry appears to have been a missing dependency somehow?
   //Rather than a migration from mdpnp artifactory...
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
 
-  //compile project(':data-types:x73-idl')
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+  //implementation project(':data-types:x73-idl')
+  testImplementation group: 'junit', name: 'junit', version: '4.11'
 
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
@@ -113,7 +113,7 @@ task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
             javaexec {
               classpath = configurations.rtiddsgen
               jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
-              main = myMain
+              mainClass = myMain
               args = myArgs
               standardOutput = os
             }

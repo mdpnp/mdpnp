@@ -41,8 +41,8 @@ jar.doFirst {
 }
 
 dependencies {
-  compile project(':data-types:x73-idl')
-  compile files("$System.env.OSPL_HOME/jar/$System.env.SPLICE_TARGET/dcpssaj.jar")
+  implementation project(':data-types:x73-idl')
+  implementation files("$System.env.OSPL_HOME/jar/$System.env.SPLICE_TARGET/dcpssaj.jar")
 }
 
 // makes output directories for the code generator

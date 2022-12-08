@@ -15,5 +15,5 @@ sourceSets {
 */
 
 dependencies {
-  compile files('lib/jna-4.0.0.jar')
+  implementation files('lib/jna-4.0.0.jar')
 }

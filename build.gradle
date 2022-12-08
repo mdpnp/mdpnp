@@ -1,9 +1,9 @@
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 defaultTasks 'build'
 
 // builds a gradle wrapper
-// http://www.gradle.org/docs/current/userguide/gradle_wrapper.html
+// https://www.gradle.org/docs/current/userguide/gradle_wrapper.html
 //task wrapper(type: Wrapper) {
 //    gradleVersion = '5.0'
 //}
@@ -42,7 +42,7 @@ def fromOsArch(arch) {
 
 // Follow MAJOR.MINOR.REVISION-BUILDNUMBER versioning pattern to 
 // be consistent with Maven schema.
-// http://docs.codehaus.org/display/MAVEN/Versioning
+// https://docs.codehaus.org/display/MAVEN/Versioning
 // 
 // MAJOR changes is backward incompatible and require changing 
 // project name, path to files, GUIDs, etc.
@@ -78,7 +78,7 @@ ext {
 group 'org.mdpnp'
 
 subprojects {
-    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
     apply plugin: 'eclipse'
     version VERSION_NUMBER
 
@@ -89,7 +89,7 @@ subprojects {
             // Repository for external released libs hosted by mdpnp (unavailable in any other repo)
             //maven {  url 'https://build.openice.info/artifactory/ext-release-local' }
 
-            ivy {  artifactPattern 'http://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
+            ivy {  artifactPattern 'https://gradle-launch4j.googlecode.com/files/[module]-[revision].[ext]' }
 
             mavenCentral()
         }
@@ -124,16 +124,16 @@ subprojects {
         // They are included her for reference (and potentially fallback)
 
         // Repository for javacv/javacpp
-        maven {  url 'http://maven2.javacv.googlecode.com/git/' }
+        maven {  url 'https://maven2.javacv.googlecode.com/git/' }
 
         // Repository for jogamp
-        maven {  url 'http://www.jogamp.org/deployment/maven/' }
+        maven {  url 'https://www.jogamp.org/deployment/maven/' }
 
         // Repository for restlet
-        maven {  url 'http://maven.restlet.org' }
+        maven {  url 'https://maven.restlet.org' }
 
         // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
-        maven {  url 'http://download.java.net/maven/2/' }
+        maven {  url 'https://download.java.net/maven/2/' }
 
 
 
@@ -143,7 +143,7 @@ subprojects {
         mavenCentral()
 
         // Is this a VERY slow maven repo?
-        // maven {  url 'http://maven.eclipse.org' }
+        // maven {  url 'https://maven.eclipse.org' }
     }
 /*
     if(project.hasProperty('MDPNP_WRITE_USER') && project.hasProperty('MDPNP_WRITE_PASSWORD')) {

@@ -47,7 +47,7 @@ android {
 
 
 dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-android', version: '1.6.1-RC1'
+        implementation group: 'org.slf4j', name: 'slf4j-android', version: '1.6.1-RC1'
         compile(project(':interop-lab:demo-guis')) {
             exclude group: 'org.slf4j'
         }
