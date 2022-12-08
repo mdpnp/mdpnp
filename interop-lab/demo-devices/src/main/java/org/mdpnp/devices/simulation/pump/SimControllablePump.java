@@ -34,9 +34,6 @@ import ice.ConnectionState;
 import ice.FlowRateObjectiveDataReader;
 import ice.Numeric;
 
-import javafx.beans.value.*;
-import javafx.beans.property.*;
-
 /**
  * A simulated pump for which the speed can be controlled.  Designed to be
  * used as part of the closed loop control demo application, so that that app
