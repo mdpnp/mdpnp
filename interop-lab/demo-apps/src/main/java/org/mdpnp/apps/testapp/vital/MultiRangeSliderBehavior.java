@@ -2,7 +2,6 @@ package org.mdpnp.apps.testapp.vital;
 
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.END;
-import static javafx.scene.input.KeyCode.F4;
 import static javafx.scene.input.KeyCode.HOME;
 import static javafx.scene.input.KeyCode.KP_DOWN;
 import static javafx.scene.input.KeyCode.KP_LEFT;
@@ -11,76 +10,88 @@ import static javafx.scene.input.KeyCode.KP_UP;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
 import static javafx.scene.input.KeyCode.UP;
-import static javafx.scene.input.KeyEvent.KEY_RELEASED;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.javafx.scene.control.behavior.BehaviorBase;
+import com.sun.javafx.scene.control.behavior.TwoLevelFocusBehavior;
+import com.sun.javafx.scene.control.inputmap.InputMap;
+import com.sun.javafx.util.Utils;
 
-import javafx.event.EventType;
 import javafx.geometry.Orientation;
-import javafx.scene.control.Control;
+import javafx.scene.Node;
 import javafx.scene.control.Skin;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 
-import com.sun.javafx.scene.control.behavior.BehaviorBase;
-import com.sun.javafx.scene.control.behavior.KeyBinding;
-import com.sun.javafx.scene.control.behavior.OrientedKeyBinding;
-import com.sun.javafx.util.Utils;
-
 public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
-    
-     /**************************************************************************
-     *                          Setup KeyBindings                             *
-     *                                                                        *
-     * We manually specify the focus traversal keys because Slider has        *
-     * different usage for up/down arrow keys.                                *
-     *************************************************************************/
-    private static final List<KeyBinding> RANGESLIDER_BINDINGS = new ArrayList<>();
-    static {
-        RANGESLIDER_BINDINGS.add(new KeyBinding(F4, "TraverseDebug").alt().ctrl().shift()); //$NON-NLS-1$
+	
+	private final InputMap<MultiRangeSlider> sliderInputMap;
+	
+	private TwoLevelFocusBehavior tlFocus;
 
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(LEFT, "DecrementValue")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_LEFT, "DecrementValue")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(UP, "IncrementValue").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_UP, "IncrementValue").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(RIGHT, "IncrementValue")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_RIGHT, "IncrementValue")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(DOWN, "DecrementValue").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_DOWN, "DecrementValue").vertical()); //$NON-NLS-1$
+	public MultiRangeSliderBehavior(MultiRangeSlider slider) {
+		super(slider);
+		// create a map for slider-specific mappings (this reuses the default
+        // InputMap installed on the control, if it is non-null, allowing us to pick up any user-specified mappings)
+        sliderInputMap = createInputMap();
 
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(LEFT, "TraverseLeft").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_LEFT, "TraverseLeft").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(UP, "TraverseUp")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_UP, "TraverseUp")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(RIGHT, "TraverseRight").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_RIGHT, "TraverseRight").vertical()); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(DOWN, "TraverseDown")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new RangeSliderKeyBinding(KP_DOWN, "TraverseDown")); //$NON-NLS-1$
-
-        RANGESLIDER_BINDINGS.add(new KeyBinding(HOME, KEY_RELEASED, "Home")); //$NON-NLS-1$
-        RANGESLIDER_BINDINGS.add(new KeyBinding(END, KEY_RELEASED, "End")); //$NON-NLS-1$
+        // then slider-specific mappings for key input
+        addDefaultMapping(sliderInputMap,
+            new InputMap.KeyMapping(HOME, KeyEvent.KEY_RELEASED, e -> home()),
+            new InputMap.KeyMapping(END, KeyEvent.KEY_RELEASED, e -> end())
+        );
+        
+     // we split the rest of the mappings into vertical and horizontal slider
+        // child input maps
+        // -- horizontal
+        InputMap<MultiRangeSlider> horizontalMappings = new InputMap<>(slider);
+        horizontalMappings.setInterceptor(e -> slider.getOrientation() != Orientation.HORIZONTAL);
+        horizontalMappings.getMappings().addAll(
+            // we use the rtl method to translate depending on the RTL state of the UI
+            new InputMap.KeyMapping(LEFT, e -> rtl(slider, this::incrementValue, this::decrementValue)),
+            new InputMap.KeyMapping(KP_LEFT, e -> rtl(slider, this::incrementValue, this::decrementValue)),
+            new InputMap.KeyMapping(RIGHT, e -> rtl(slider, this::decrementValue, this::incrementValue)),
+            new InputMap.KeyMapping(KP_RIGHT, e -> rtl(slider, this::decrementValue, this::incrementValue))
+        );
+        addDefaultChildMap(sliderInputMap, horizontalMappings);
+        
+     // -- vertical
+        InputMap<MultiRangeSlider> verticalMappings = new InputMap<>(slider);
+        verticalMappings.setInterceptor(e -> slider.getOrientation() != Orientation.VERTICAL);
+        verticalMappings.getMappings().addAll(
+                new InputMap.KeyMapping(DOWN, e -> decrementValue()),
+                new InputMap.KeyMapping(KP_DOWN, e -> decrementValue()),
+                new InputMap.KeyMapping(UP, e -> incrementValue()),
+                new InputMap.KeyMapping(KP_UP, e -> incrementValue())
+        );
+        addDefaultChildMap(sliderInputMap, verticalMappings);
+        
+     // Only add this if we're on an embedded platform that supports 5-button navigation
+        if (com.sun.javafx.scene.control.skin.Utils.isTwoLevelFocus()) {
+            tlFocus = new TwoLevelFocusBehavior(slider); // needs to be last.
+        }
+	}
+	
+	/**
+	 * We have to steal this from BehaviorBase as it's package private in there
+	 * @param node
+	 * @param rtlMethod
+	 * @param nonRtlMethod
+	 */
+	void rtl(Node node, Runnable rtlMethod, Runnable nonRtlMethod) {
+        switch(node.getEffectiveNodeOrientation()) {
+            case RIGHT_TO_LEFT: rtlMethod.run(); break;
+            default: nonRtlMethod.run(); break;
+        }
     }
-    
-    public MultiRangeSliderBehavior(MultiRangeSlider slider) {
-        super(slider, RANGESLIDER_BINDINGS);
-    }
 
-    @Override protected void callAction(String s) {
-        if ("Home".equals(s) || "Home2".equals(s)) home(); //$NON-NLS-1$ //$NON-NLS-2$
-        else if ("End".equals(s) || "End2".equals(s)) end(); //$NON-NLS-1$ //$NON-NLS-2$
-        else if ("IncrementValue".equals(s) || "IncrementValue2".equals(s)) incrementValue(); //$NON-NLS-1$ //$NON-NLS-2$
-        else if ("DecrementValue".equals(s) || "DecrementValue2".equals(s)) decrementValue(); //$NON-NLS-1$ //$NON-NLS-2$
-        else super.callAction(s);
-    }
-     
-    /**************************************************************************
-     *                         State and Functions                            *
-     *************************************************************************/
-
-    private Callback<Void, FocusedChild> selectedValue;
+	@Override
+	public InputMap<MultiRangeSlider> getInputMap() {
+		// TODO Auto-generated method stub
+		return sliderInputMap;
+	}
+	
+	private Callback<Void, FocusedChild> selectedValue;
     public void setSelectedValue(Callback<Void, FocusedChild> c) {
         selectedValue = c;
     }
@@ -95,7 +106,7 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
     public void trackPress(MouseEvent e, double position) {
         // determine the percentage of the way between min and max
         // represented by this mouse event
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         // If not already focused, request focus
         if (!rangeSlider.isFocused()) rangeSlider.requestFocus();
         if (selectedValue != null) {
@@ -138,19 +149,19 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
     public void trackRelease(MouseEvent e, double position) {
     }
     
-     /**
+    /**
      * @param position The mouse position on track with 0.0 being beginning of
       *       track and 1.0 being the end
      */
     public void lowerThumbPressed(MouseEvent e, double position) {
         // If not already focused, request focus
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         if (!rangeSlider.isFocused())  rangeSlider.requestFocus();
         rangeSlider.setLowerValueChanging(true);
     }
     public void lowestThumbPressed(MouseEvent e, double position) {
         // If not already focused, request focus
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         if (!rangeSlider.isFocused())  rangeSlider.requestFocus();
         rangeSlider.setLowestValueChanging(true);
     }    
@@ -160,7 +171,7 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
      *        track and 1.0 being the end
      */
     public void lowerThumbDragged(MouseEvent e, double position) {
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         double newValue = Utils.clamp(rangeSlider.getMin(), 
                 (position * (rangeSlider.getMax() - rangeSlider.getMin())) + rangeSlider.getMin(), 
                 rangeSlider.getMax());
@@ -168,7 +179,7 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
     }
     
     public void lowestThumbDragged(MouseEvent e, double position) {
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         double newValue = Utils.clamp(rangeSlider.getMin(), 
                 (position * (rangeSlider.getMax() - rangeSlider.getMin())) + rangeSlider.getMin(), 
                 rangeSlider.getMax());
@@ -179,7 +190,7 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
      * When lowThumb is released lowValueChanging should be set to false.
      */
     public void lowerThumbReleased(MouseEvent e) {
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         rangeSlider.setLowerValueChanging(false);
         // RT-15207 When snapToTicks is true, slider value calculated in drag
         // is then snapped to the nearest tick on mouse release.
@@ -189,22 +200,114 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
     }
     
     public void lowestThumbReleased(MouseEvent e) {
-        final MultiRangeSlider rangeSlider = getControl();
+        final MultiRangeSlider rangeSlider = getNode();
         rangeSlider.setLowestValueChanging(false);
         // RT-15207 When snapToTicks is true, slider value calculated in drag
         // is then snapped to the nearest tick on mouse release.
         if (rangeSlider.isSnapToTicks()) {
             rangeSlider.setLowestValue(snapValueToTicks(rangeSlider.getLowestValue()));
         }
-    }    
+    }
     
-    void home() {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        slider.adjustHighestValue(slider.getMin());
+    private double snapValueToTicks(double d) {
+        MultiRangeSlider rangeSlider = (MultiRangeSlider) getNode();
+        double d1 = d;
+        double d2 = 0.0D;
+        if (rangeSlider.getMinorTickCount() != 0)
+            d2 = rangeSlider.getMajorTickUnit() / (double) (Math.max(rangeSlider.getMinorTickCount(), 0) + 1);
+        else
+            d2 = rangeSlider.getMajorTickUnit();
+        int i = (int) ((d1 - rangeSlider.getMin()) / d2);
+        double d3 = (double) i * d2 + rangeSlider.getMin();
+        double d4 = (double) (i + 1) * d2 + rangeSlider.getMin();
+        d1 = Utils.nearest(d3, d1, d4);
+        return Utils.clamp(rangeSlider.getMin(), d1, rangeSlider.getMax());
+    }
+    
+ // when high thumb is released, highValueChanging is set to false.
+    public void higherThumbReleased(MouseEvent e) {
+    	MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        slider.setHigherValueChanging(false);
+        if (slider.isSnapToTicks())
+            slider.setHigherValue(snapValueToTicks(slider.getHigherValue()));
+    }
+    public void highestThumbReleased(MouseEvent e) {
+    	MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        slider.setHighestValueChanging(false);
+        if (slider.isSnapToTicks())
+            slider.setHighestValue(snapValueToTicks(slider.getHighestValue()));
     }
 
-    void decrementValue() {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
+    public void higherThumbPressed(MouseEvent e, double position) {
+    	MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        if (!slider.isFocused())
+            slider.requestFocus();
+        slider.setHigherValueChanging(true);
+    }
+    
+    public void highestThumbPressed(MouseEvent e, double position) {
+    	MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        if (!slider.isFocused())
+            slider.requestFocus();
+        slider.setHighestValueChanging(true);
+    }    
+
+    public void higherThumbDragged(MouseEvent e, double position) {
+    	MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        slider.setHigherValue(Utils.clamp(slider.getMin(), position * (slider.getMax() - slider.getMin()) + slider.getMin(), slider.getMax()));
+    }
+    
+    public void highestThumbDragged(MouseEvent e, double position) {
+    	MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        slider.setHighestValue(Utils.clamp(slider.getMin(), position * (slider.getMax() - slider.getMin()) + slider.getMin(), slider.getMax()));
+    }
+
+	
+	void home() {
+        final MultiRangeSlider slider = getNode();
+        slider.adjustHighestValue(slider.getMin());
+    }
+	
+	void end() {
+        final MultiRangeSlider slider = getNode();
+        slider.adjustHighestValue(slider.getMax());
+    }
+	
+	void incrementValue() {
+		MultiRangeSlider slider = (MultiRangeSlider) getNode();
+        if (selectedValue != null) {
+            switch(selectedValue.call(null)) {
+            case HIGHEST_THUMB:
+                if (slider.isSnapToTicks())
+                    slider.adjustHighestValue(slider.getHighestValue() + computeIncrement());
+                else
+                    slider.incrementHighestValue();
+                break;
+            case HIGHER_THUMB:
+                if (slider.isSnapToTicks())
+                    slider.adjustHigherValue(slider.getHigherValue() + computeIncrement());
+                else
+                    slider.incrementHigherValue();
+                break;
+            case LOWER_THUMB:
+                if (slider.isSnapToTicks())
+                    slider.adjustLowerValue(slider.getLowerValue() + computeIncrement());
+                else
+                    slider.incrementLowerValue();
+                break;
+            case LOWEST_THUMB:
+                if (slider.isSnapToTicks())
+                    slider.adjustLowestValue(slider.getLowestValue() + computeIncrement());
+                else
+                    slider.incrementLowestValue();
+                break;
+            default:
+            }
+        }
+    }
+	
+	void decrementValue() {
+        MultiRangeSlider slider = (MultiRangeSlider) getNode();
         if (selectedValue != null) {
             switch(selectedValue.call(null)) {
             case HIGHEST_THUMB:
@@ -237,113 +340,25 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
         }
     }
 
-    void end() {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        slider.adjustHighestValue(slider.getMax());
-    }
-
-    void incrementValue() {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        if (selectedValue != null) {
-            switch(selectedValue.call(null)) {
-            case HIGHEST_THUMB:
-                if (slider.isSnapToTicks())
-                    slider.adjustHighestValue(slider.getHighestValue() + computeIncrement());
-                else
-                    slider.incrementHighestValue();
-                break;
-            case HIGHER_THUMB:
-                if (slider.isSnapToTicks())
-                    slider.adjustHigherValue(slider.getHigherValue() + computeIncrement());
-                else
-                    slider.incrementHigherValue();
-                break;
-            case LOWER_THUMB:
-                if (slider.isSnapToTicks())
-                    slider.adjustLowerValue(slider.getLowerValue() + computeIncrement());
-                else
-                    slider.incrementLowerValue();
-                break;
-            case LOWEST_THUMB:
-                if (slider.isSnapToTicks())
-                    slider.adjustLowestValue(slider.getLowestValue() + computeIncrement());
-                else
-                    slider.incrementLowestValue();
-                break;
-            default:
-            }
-        }
-        
-    }
-
+    // Used only if snapToTicks is true.
     double computeIncrement() {
-        MultiRangeSlider rangeSlider = (MultiRangeSlider) getControl();
-        double d = 0.0D;
-        if (rangeSlider.getMinorTickCount() != 0)
-            d = rangeSlider.getMajorTickUnit() / (double) (Math.max(rangeSlider.getMinorTickCount(), 0) + 1);
-        else
-            d = rangeSlider.getMajorTickUnit();
-        if (rangeSlider.getBlockIncrement() > 0.0D && rangeSlider.getBlockIncrement() < d)
-            return d;
-        else
-            return rangeSlider.getBlockIncrement();
-    }
+        final MultiRangeSlider slider = getNode();
+        double tickSpacing = 0;
+        if (slider.getMinorTickCount() != 0) {
+            tickSpacing = slider.getMajorTickUnit() / (Math.max(slider.getMinorTickCount(),0)+1);
+        } else {
+            tickSpacing = slider.getMajorTickUnit();
+        }
 
-    private double snapValueToTicks(double d) {
-        MultiRangeSlider rangeSlider = (MultiRangeSlider) getControl();
-        double d1 = d;
-        double d2 = 0.0D;
-        if (rangeSlider.getMinorTickCount() != 0)
-            d2 = rangeSlider.getMajorTickUnit() / (double) (Math.max(rangeSlider.getMinorTickCount(), 0) + 1);
-        else
-            d2 = rangeSlider.getMajorTickUnit();
-        int i = (int) ((d1 - rangeSlider.getMin()) / d2);
-        double d3 = (double) i * d2 + rangeSlider.getMin();
-        double d4 = (double) (i + 1) * d2 + rangeSlider.getMin();
-        d1 = Utils.nearest(d3, d1, d4);
-        return Utils.clamp(rangeSlider.getMin(), d1, rangeSlider.getMax());
-    }
+        if (slider.getBlockIncrement() > 0 && slider.getBlockIncrement() < tickSpacing) {
+                return tickSpacing;
+        }
 
-    // when high thumb is released, highValueChanging is set to false.
-    public void higherThumbReleased(MouseEvent e) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        slider.setHigherValueChanging(false);
-        if (slider.isSnapToTicks())
-            slider.setHigherValue(snapValueToTicks(slider.getHigherValue()));
+        return slider.getBlockIncrement();
     }
-    public void highestThumbReleased(MouseEvent e) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        slider.setHighestValueChanging(false);
-        if (slider.isSnapToTicks())
-            slider.setHighestValue(snapValueToTicks(slider.getHighestValue()));
-    }
-
-    public void higherThumbPressed(MouseEvent e, double position) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        if (!slider.isFocused())
-            slider.requestFocus();
-        slider.setHigherValueChanging(true);
-    }
-    
-    public void highestThumbPressed(MouseEvent e, double position) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        if (!slider.isFocused())
-            slider.requestFocus();
-        slider.setHighestValueChanging(true);
-    }    
-
-    public void higherThumbDragged(MouseEvent e, double position) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        slider.setHigherValue(Utils.clamp(slider.getMin(), position * (slider.getMax() - slider.getMin()) + slider.getMin(), slider.getMax()));
-    }
-    
-    public void highestThumbDragged(MouseEvent e, double position) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
-        slider.setHighestValue(Utils.clamp(slider.getMin(), position * (slider.getMax() - slider.getMin()) + slider.getMin(), slider.getMax()));
-    }    
     
     public void moveRange(double position) {
-        MultiRangeSlider slider = (MultiRangeSlider) getControl();
+        MultiRangeSlider slider = (MultiRangeSlider) getNode();
         final double min = slider.getMin();
         final double max = slider.getMax();
         final double lowestValue = slider.getLowestValue();
@@ -371,7 +386,7 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
     }
     
       public void confirmRange() {
-          MultiRangeSlider slider = (MultiRangeSlider) getControl();
+          MultiRangeSlider slider = (MultiRangeSlider) getNode();
 
         slider.setLowestValueChanging(false);
         if (slider.isSnapToTicks()) {
@@ -391,31 +406,18 @@ public class MultiRangeSliderBehavior extends BehaviorBase<MultiRangeSlider> {
         }        
 
     }
-    
-    public static class RangeSliderKeyBinding extends OrientedKeyBinding {
-        public RangeSliderKeyBinding(KeyCode code, String action) {
-            super(code, action);
-        }
+	
+      public enum FocusedChild {
+          LOWEST_THUMB,
+          LOWER_THUMB,
+          HIGHER_THUMB,
+          HIGHEST_THUMB,
+          RANGE_BAR_LOWEST,
+          RANGE_BAR_LOWER,
+          RANGE_BAR_MID,
+          RANGE_BAR_HIGHER,
+          RANGE_BAR_HIGHEST,
+          NONE
+      }
 
-        public RangeSliderKeyBinding(KeyCode code, EventType<KeyEvent> type, String action) {
-            super(code, type, action);
-        }
-
-        public @Override boolean getVertical(Control control) {
-            return ((MultiRangeSlider)control).getOrientation() == Orientation.VERTICAL;
-        }
-    }
-     
-    public enum FocusedChild {
-        LOWEST_THUMB,
-        LOWER_THUMB,
-        HIGHER_THUMB,
-        HIGHEST_THUMB,
-        RANGE_BAR_LOWEST,
-        RANGE_BAR_LOWER,
-        RANGE_BAR_MID,
-        RANGE_BAR_HIGHER,
-        RANGE_BAR_HIGHEST,
-        NONE
-    }
 }
