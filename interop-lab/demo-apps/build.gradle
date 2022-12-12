@@ -29,6 +29,15 @@ buildscript {
     }
 }
 
+plugins {
+  id 'org.openjfx.javafxplugin' version '0.0.13'
+}
+
+dependencies {
+	implementation group: 'org.openjdk.nashorn', name: 'nashorn-core', version: '15.4'
+}
+
+
 repositories {
   mavenLocal()
   mavenCentral()
@@ -40,6 +49,11 @@ apply plugin: 'application'
 //apply plugin: 'javafx-gradle-plugin'
 
 defaultTasks 'build'
+
+javafx {
+  version = "17"
+  modules = [ 'javafx.base', 'javafx.controls' , 'javafx.fxml' , 'javafx.swing' , 'javafx.web' ]
+}
 
 /*
 jfxDeploy {
@@ -205,7 +219,7 @@ dependencies {
     
     implementation files('../../artifacts/Utility-0.0.1.jar')
     
-    implementation group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12'
+    implementation group: 'org.controlsfx', name: 'controlsfx', version: '11.1.2'
 
     implementation group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
 

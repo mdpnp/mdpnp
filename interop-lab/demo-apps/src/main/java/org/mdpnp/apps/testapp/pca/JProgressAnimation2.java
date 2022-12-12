@@ -16,6 +16,8 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
 
+import org.mdpnp.apps.util.FontMetricsWrapper;
+
 import com.sun.javafx.tk.Toolkit;
 
 /**
@@ -164,7 +166,8 @@ public class JProgressAnimation2 {
 //            g.strokeLine(0, 2 * height / ROWS + bounds.getHeight() / 2, width,
 //                    2 * height / ROWS + bounds.getHeight() / 2);
 
-            double w = Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont()).computeStringWidth(l1);
+            double w = FontMetricsWrapper.computeStringWidth( 
+            		Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont()),l1);
             g.fillText(l1, width / 2 - w / 2, 1 * height / ROWS);
 
             g.translate(-arrowWidth + offset, 2 * height / ROWS);
@@ -185,7 +188,8 @@ public class JProgressAnimation2 {
             }
         }
         g.setFill(Color.BLACK);
-        double w = Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont()).computeStringWidth(NO_PUMP);
+        double w = FontMetricsWrapper.computeStringWidth(
+    			Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont()),NO_PUMP);
         g.fillText(NO_PUMP, width / 2 - w / 2, height / 2);
     }
 

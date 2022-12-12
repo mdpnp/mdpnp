@@ -30,6 +30,7 @@ import javafx.util.Duration;
 import org.mdpnp.apps.testapp.vital.Value;
 import org.mdpnp.apps.testapp.vital.Vital;
 import org.mdpnp.apps.testapp.vital.VitalModel;
+import org.mdpnp.apps.util.FontMetricsWrapper;
 
 import com.sun.javafx.tk.FontMetrics;
 import com.sun.javafx.tk.Toolkit;
@@ -120,7 +121,7 @@ public class VitalMonitoring implements VitalModelContainer {
             final String s = "Please add at least three vital signs.";
             final FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont());
             final float height = fm.getLineHeight();
-            final float str_w = fm.computeStringWidth(s);
+            final float str_w = FontMetricsWrapper.computeStringWidth(fm, s);
             g.fillText(s, center_x - str_w / 2, center_y + height / 2);
             return;
         }
@@ -281,7 +282,7 @@ public class VitalMonitoring implements VitalModelContainer {
                 FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(g.getFont());
                 float maxDescent = fm.getMaxDescent();
                 float height = fm.getLineHeight();
-                float str_w = fm.computeStringWidth(lbl);
+                float str_w = FontMetricsWrapper.computeStringWidth(fm, lbl);
                 if (FLIP) {
                     g.fillText(lbl, -str_w / 2,  3 * height + maxDescent);
 //                    g.drawString(lbl, -str_w / 2, 3 * height + maxDescent);
@@ -292,7 +293,7 @@ public class VitalMonitoring implements VitalModelContainer {
 
                 // Low end of the scale
                 lbl = minimumLabel;
-                str_w = fm.computeStringWidth(lbl);
+                str_w = FontMetricsWrapper.computeStringWidth(fm, lbl);
                 if (FLIP) {
                     g.fillText(lbl, length / 2 - str_w, maxDescent + height + 5);
                     g.strokeLine(length / 2, 0, length / 2,  5);
@@ -306,7 +307,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     Paint c = g.getStroke();
                     g.setStroke(IDEAL_COLOR);
                     lbl = Integer.toString((int) (double) low);
-                    str_w = fm.computeStringWidth(lbl);
+                    str_w = FontMetricsWrapper.computeStringWidth(fm, lbl);
                     double proportion = 1.0 * (low - minimum) / (maximum - minimum);
                     proportion -= 0.5;
                     int xloc = (int) (proportion * length);
@@ -322,7 +323,7 @@ public class VitalMonitoring implements VitalModelContainer {
 
                 // High end of the scale
                 lbl = maximumLabel;
-                str_w = fm.computeStringWidth(lbl);
+                str_w = FontMetricsWrapper.computeStringWidth(fm, lbl);
                 if (FLIP) {
                     g.fillText(lbl, -length / 2,  maxDescent + 5 + height);
                     g.strokeLine(-length / 2,  0, -length / 2, 5);
@@ -336,7 +337,7 @@ public class VitalMonitoring implements VitalModelContainer {
                     Paint c = g.getStroke();
                     g.setStroke(IDEAL_COLOR);
                     lbl = Integer.toString((int) (double) high);
-                    str_w = fm.computeStringWidth(lbl);
+                    str_w = FontMetricsWrapper.computeStringWidth(fm, lbl);
                     double proportion = 1.0 * (high - minimum) / (maximum - minimum);
                     proportion -= 0.5;
                     double xloc = proportion * length;
@@ -351,7 +352,7 @@ public class VitalMonitoring implements VitalModelContainer {
                 }
                 // Middle of the scale
                 lbl = Integer.toString((int) ((maximum - minimum) / 2 + minimum));
-                str_w = fm.computeStringWidth(lbl);
+                str_w = FontMetricsWrapper.computeStringWidth(fm, lbl);
                 if (FLIP) {
                     g.fillText(lbl, -str_w / 2, maxDescent + 5 + height);
                     g.strokeLine(0, 0, 0, 5);

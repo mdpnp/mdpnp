@@ -26,6 +26,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
+import org.mdpnp.apps.util.FontMetricsWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +98,7 @@ public class BloodPressurePanel extends DevicePanel {
         String labelText = label.getText();
 
         FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(labelFont);
-        float stringWidth = fm.computeStringWidth(labelText);
+        float stringWidth = FontMetricsWrapper.computeStringWidth(fm, labelText);
         float stringHeight = fm.getLineHeight();
         double componentWidth = label.getWidth();
         double componentHeight = label.getHeight();

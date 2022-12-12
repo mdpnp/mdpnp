@@ -9,8 +9,8 @@ defaultTasks 'build'
 //}
 
 ext {
-    JAVA_VERSION_SOURCE = 1.8
-    JAVA_VERSION_CLASSES = 1.8
+    JAVA_VERSION_SOURCE = 17
+    JAVA_VERSION_CLASSES = 17
     WINDOWS = 1
     MAC = 2
     LINUX = 3
