@@ -19,5 +19,10 @@ targetCompatibility = JAVA_VERSION_CLASSES
 dependencies {
   implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
   implementation project(':devices:common')
-  testImplementation group: 'junit', name: 'junit', version: '4.11'
+  testImplementation("junit:junit:4.13.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
+}
+
+test {
+	useJUnitPlatform()
 }

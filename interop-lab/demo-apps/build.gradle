@@ -229,14 +229,20 @@ dependencies {
     implementation group: 'org.mongodb', name: 'mongodb-driver-core', version: '3.2.2'
     implementation group: 'org.mongodb', name: 'mongodb-driver',      version: '3.2.2'
 
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
-    
     implementation files('../../artifacts/pixelmed.jar')
     
     implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.1000')
     
     implementation 'com.amazonaws:aws-java-sdk-s3'
     implementation group: 'software.amazon.awssdk', name: 's3-transfer-manager', version: '2.17.16-PREVIEW'
+
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
+}
+
+test {
+	useJUnitPlatform()
+	systemProperty 'user.timezone' , 'EST'
 }
 
 jar {
@@ -260,8 +266,4 @@ jar {
       jfxNative
     }
 */
-}
-
-test {
-	systemProperty 'user.timezone' , 'EST'
 }

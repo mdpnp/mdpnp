@@ -36,6 +36,8 @@ dependencies {
   implementation group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
   implementation group: 'org.connectopensource', name: 'CONNECTCommonTypesLib', version: '4.0.0'
   implementation group: 'org.connectopensource', name: 'DocumentSubmissionCore', version: '4.0.0'
+  testImplementation("junit:junit:4.13.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
 
   // earlib dependencies
   earlib group: 'org.springframework', name: 'spring-web', version: '3.0.7.RELEASE'
@@ -48,5 +50,8 @@ dependencies {
   // include the war in the deployment of the ear
   deploy files(war.archivePath)
 
-  testImplementation group: 'junit', name: 'junit', version: '4.11'
+}
+
+test {
+	useJUnitPlatform()
 }

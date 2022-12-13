@@ -48,9 +48,10 @@ dependencies {
   //This next slf4j entry appears to have been a missing dependency somehow?
   //Rather than a migration from mdpnp artifactory...
   implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  testImplementation("junit:junit:4.13.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
 
   //implementation project(':data-types:x73-idl')
-  testImplementation group: 'junit', name: 'junit', version: '4.11'
 
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
@@ -58,6 +59,10 @@ dependencies {
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
   rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
   rtiddsgen group: 'org.aspectj', name: 'aspectjrt', version: '1.7.2'
+}
+
+test {
+	useJUnitPlatform()
 }
 
 // makes output directories for the code generator
