@@ -137,6 +137,9 @@ public class CreateMultiAdapters {
     	File selectedFile=chooser.showOpenDialog(currentStage);
     	configFileLines=Files.readAllLines(selectedFile.toPath());
     	for(String oneLine : configFileLines) {
+    		if(oneLine.startsWith("#") || oneLine.length()==0) {
+    			continue;
+    		}
     		fileContent.appendText(oneLine+"\n");
     	}
     }

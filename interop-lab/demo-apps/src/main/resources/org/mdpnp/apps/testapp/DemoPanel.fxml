@@ -26,9 +26,12 @@
      onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..."
      GridPane.columnIndex="2" GridPane.halignment="CENTER" />
     <Button fx:id="createAdapter" mnemonicParsing="false"
-     onAction="#createMultipleAdapters" text="Create Multiple Adapters"
+     onAction="#createMultipleAdapters" text="Start a scenario"
      GridPane.columnIndex="3" GridPane.halignment="CENTER" />
-    <Label fx:id="clock" text="Time" GridPane.columnIndex="4"
+    <Button fx:id="saveDevices" mnemonicParsing="false"
+     onAction="#saveScenario" text="Save Scenario"
+     GridPane.columnIndex="4" GridPane.halignment="CENTER" />
+    <Label fx:id="clock" text="Time" GridPane.columnIndex="5"
      GridPane.halignment="RIGHT" />
    </children>
    <columnConstraints>

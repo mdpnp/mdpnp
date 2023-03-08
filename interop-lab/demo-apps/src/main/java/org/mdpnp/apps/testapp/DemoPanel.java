@@ -12,7 +12,11 @@
  ******************************************************************************/
 package org.mdpnp.apps.testapp;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -20,6 +24,7 @@ import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Observable;
@@ -37,6 +42,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
 import org.mdpnp.devices.AbstractDevice;
@@ -294,6 +300,22 @@ public class DemoPanel {
         } catch (IOException e) {
             log.error("Error getting configuration", e);
         }
+    }
+    
+    @FXML public void saveScenario(ActionEvent evt) {
+    	try {
+    		FileChooser chooser=new FileChooser();
+    		chooser.setTitle("Select the file to save the scenario to");
+    		File target=chooser.showOpenDialog(content.sceneProperty().get().getWindow());
+    		int dayOfYear=Calendar.getInstance().get(Calendar.DAY_OF_YEAR);
+            File source=new File(System.getProperty("user.home"),"device_creation_"+dayOfYear+".log");
+            BufferedOutputStream bos=new BufferedOutputStream(new FileOutputStream(target));
+            long copied=Files.copy(source.toPath(),bos);
+            bos.close();
+            log.info("saveScenario copied "+copied+" bytes to "+target.getAbsolutePath());
+    	} catch (IOException ioe) {
+    		log.error("Could not save file",ioe);
+    	}
     }
 
     @FXML
