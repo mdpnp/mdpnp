@@ -630,7 +630,7 @@ public class DeviceFactory {
     	
     	@Override
         public DeviceType getDeviceType() {
-                return new DeviceType(ice.ConnectionType.Simulated,"ICE", "Controllable Pump", "Controllable_PUmp", 1);
+                return new DeviceType(ice.ConnectionType.Simulated,"ICE", "Controllable Pump", "Controllable_Pump", 1);
         }
     	
         @Override

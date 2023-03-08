@@ -159,6 +159,106 @@ public class DemoPanel {
     
     @FXML
     Label patientsLabel;
+    
+    private void createDeviceFromConfiguration(Configuration c, Subscriber subscriber) {
+    	Thread t = new Thread(() -> {
+            try {
+                
+                if (null != c) {
+                    SubscriberQos qos = new SubscriberQos();
+                    subscriber.get_qos(qos);
+                    List<String> partition = new ArrayList<String>();
+                    for (int i = 0; i < qos.partition.name.size(); i++) {
+                        partition.add((String) qos.partition.name.get(i));
+                    }
+    
+                    try {
+                        // This must not use the same context as the app as it messes up DDS
+                        //
+                        final AbstractApplicationContext context = c.createContext("EmbeddedDeviceAdapterContext.xml");
+                        final DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(c.getDeviceFactory(), context, false) {
+                            // intercept stop to destroy the context specific to this device
+                            public void stop() {
+                                //Must get the UDI before calling calling super.stop and context.destroy.
+                                AbstractDevice d=getDevice();
+                                String udiToKill=d.getUniqueDeviceIdentifier();
+                                super.stop();
+                                context.destroy();
+                                try {
+                                    Connection c=SQLLogging.getConnection();
+                                    PreparedStatement ps=c.prepareStatement("UPDATE devices SET destroyed=? WHERE udi=? AND destroyed IS NULL");
+                                    ps.setLong(1, System.currentTimeMillis()/1000);
+                                    ps.setString(2, udiToKill);
+                                    /*
+                                     * ps.execute should return false here and we should get an update count.  Of course the update count should be 1
+                                     * -1 in this context indicates an error.
+                                     */
+                                    if( ! ps.execute()) {
+                                        log.info("Updated "+ps.getUpdateCount()+" rows in the devices table with destroyed time");
+                                    }
+                                    
+                                    ps=c.prepareStatement("UPDATE patientdevice SET dissociated=? WHERE udi=? AND dissociated IS NULL");
+                                    ps.setLong(1, System.currentTimeMillis()/1000);
+                                    ps.setString(2, udiToKill);
+                                    if( ! ps.execute()) {
+                                        log.info("Updated "+ps.getUpdateCount()+" rows in the patientdevice table with dissociated time");
+                                    }
+                                    c.close();
+                                } catch (SQLException sqle) {
+                                    log.error("Failed to record device destruction in database",sqle);
+                                }
+                            };
+
+                            @Override
+                            public void init() throws Exception {
+                                super.init();
+                                AbstractDevice d=getDevice();
+                                //String logThis=d.getUniqueDeviceIdentifier()+" "+d.getManufacturer()+" "+d.getModel();
+                                //System.err.println("HeadlessAdapter init override has details "+logThis);
+                                /*
+                                 * Although this init method throws Exception in signature, we still wrap this SQL stuff in a
+                                 * try/catch so we don't cause the init to fail if we can't log.
+                                 */
+                                try {
+                                    Connection c=SQLLogging.getConnection();
+                                    PreparedStatement ps=c.prepareStatement("INSERT INTO devices(created, manufacturer, model, udi) VALUES (?,?,?,?)");
+                                    ps.setLong(1, (System.currentTimeMillis()/1000) );
+                                    ps.setString(2, d.getManufacturer());
+                                    ps.setString(3, d.getModel());
+                                    ps.setString(4, d.getUniqueDeviceIdentifier());
+                                    ps.execute();
+                                    c.close();
+                                } catch (SQLException sqle) {
+                                    log.error("Failed to record device creation in database",sqle);
+                                }
+                            }
+
+                        };
+                        // Use the current partition of the app container
+                        da.setPartition(partition.toArray(new String[0]));
+                        da.setAddress(c.getAddress());
+                        da.init();
+
+                        boolean connected=da.connect();
+                        //Is this the answer?
+                        Thread.sleep(1000);
+                        
+                        Platform.runLater( () -> {
+                        	deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da);
+                        });
+
+                    } catch (Exception e) {
+                        log.error("Error in spawned DeviceAdapter", e);
+                    }
+                }
+    
+            } catch (Exception e) {
+                log.error("", e);
+            }
+        });
+        t.setDaemon(true);
+        t.start();
+    }
 
     @FXML
     public void clickCreateAdapter(ActionEvent evt) {
@@ -166,103 +266,27 @@ public class DemoPanel {
             final Subscriber subscriber = partitionChooserModel.getSubscriber();
             final Configuration c = CreateAdapter.showDialog(subscriber.get_participant().get_domain_id());
             if(null != c) {
-                Thread t = new Thread(() -> {
-                    try {
-                        
-                        if (null != c) {
-                            SubscriberQos qos = new SubscriberQos();
-                            subscriber.get_qos(qos);
-                            List<String> partition = new ArrayList<String>();
-                            for (int i = 0; i < qos.partition.name.size(); i++) {
-                                partition.add((String) qos.partition.name.get(i));
-                            }
+               createDeviceFromConfiguration(c, subscriber); 
+            } else {
+            	System.err.println("c is null outer");
+            }
             
-                            try {
-                                // This must not use the same context as the app as it messes up DDS
-                                //
-                                final AbstractApplicationContext context = c.createContext("EmbeddedDeviceAdapterContext.xml");
-                                final DeviceAdapterCommand.HeadlessAdapter da = new DeviceAdapterCommand.HeadlessAdapter(c.getDeviceFactory(), context, false) {
-                                    // intercept stop to destroy the context specific to this device
-                                    public void stop() {
-                                        //Must get the UDI before calling calling super.stop and context.destroy.
-                                        AbstractDevice d=getDevice();
-                                        String udiToKill=d.getUniqueDeviceIdentifier();
-                                        super.stop();
-                                        context.destroy();
-                                        try {
-                                            Connection c=SQLLogging.getConnection();
-                                            PreparedStatement ps=c.prepareStatement("UPDATE devices SET destroyed=? WHERE udi=? AND destroyed IS NULL");
-                                            ps.setLong(1, System.currentTimeMillis()/1000);
-                                            ps.setString(2, udiToKill);
-	                                        /*
-	                                         * ps.execute should return false here and we should get an update count.  Of course the update count should be 1
-	                                         * -1 in this context indicates an error.
-	                                         */
-                                            if( ! ps.execute()) {
-                                                log.info("Updated "+ps.getUpdateCount()+" rows in the devices table with destroyed time");
-	                                        }
-                                            
-                                            ps=c.prepareStatement("UPDATE patientdevice SET dissociated=? WHERE udi=? AND dissociated IS NULL");
-                                            ps.setLong(1, System.currentTimeMillis()/1000);
-                                            ps.setString(2, udiToKill);
-                                            if( ! ps.execute()) {
-                                                log.info("Updated "+ps.getUpdateCount()+" rows in the patientdevice table with dissociated time");
-	                                        }
-	                                        c.close();
-                                        } catch (SQLException sqle) {
-                                            log.error("Failed to record device destruction in database",sqle);
-                                        }
-                                    };
-
-                                    @Override
-                                    public void init() throws Exception {
-                                        super.init();
-                                        AbstractDevice d=getDevice();
-                                        //String logThis=d.getUniqueDeviceIdentifier()+" "+d.getManufacturer()+" "+d.getModel();
-                                        //System.err.println("HeadlessAdapter init override has details "+logThis);
-                                        /*
-                                         * Although this init method throws Exception in signature, we still wrap this SQL stuff in a
-                                         * try/catch so we don't cause the init to fail if we can't log.
-                                         */
-                                        try {
-	                                        Connection c=SQLLogging.getConnection();
-	                                        PreparedStatement ps=c.prepareStatement("INSERT INTO devices(created, manufacturer, model, udi) VALUES (?,?,?,?)");
-	                                        ps.setLong(1, (System.currentTimeMillis()/1000) );
-	                                        ps.setString(2, d.getManufacturer());
-	                                        ps.setString(3, d.getModel());
-	                                        ps.setString(4, d.getUniqueDeviceIdentifier());
-	                                        ps.execute();
-	                                        c.close();
-                                        } catch (SQLException sqle) {
-                                            log.error("Failed to record device creation in database",sqle);
-                                        }
-                                    }
-
-                                };
-                                // Use the current partition of the app container
-                                da.setPartition(partition.toArray(new String[0]));
-                                da.setAddress(c.getAddress());
-                                da.init();
-
-                                boolean connected=da.connect();
-                                //Is this the answer?
-                                Thread.sleep(1000);
-                                
-                                Platform.runLater( () -> {
-                                	deviceListModel.getByUniqueDeviceIdentifier(da.getDevice().getUniqueDeviceIdentifier()).setHeadlessAdapter(da);
-                                });
-
-                            } catch (Exception e) {
-                                log.error("Error in spawned DeviceAdapter", e);
-                            }
-                        }
-            
-                    } catch (Exception e) {
-                        log.error("", e);
-                    }
-                });
-                t.setDaemon(true);
-                t.start();
+        } catch (IOException e) {
+            log.error("Error getting configuration", e);
+        }
+    }
+    
+    @FXML
+    public void createMultipleAdapters(ActionEvent evt) {
+        try {
+            final Subscriber subscriber = partitionChooserModel.getSubscriber();
+            //It doesn't work as well having showMultiDialog as static, so create an instance
+            CreateMultiAdapters cma=new CreateMultiAdapters();
+            final ArrayList<Configuration> configs = cma.showMultiDialog(subscriber.get_participant().get_domain_id());
+            if(null != configs) {
+            	for(Configuration c : configs) {
+	                createDeviceFromConfiguration(c, subscriber);
+            	}
             } else {
             	System.err.println("c is null outer");
             }

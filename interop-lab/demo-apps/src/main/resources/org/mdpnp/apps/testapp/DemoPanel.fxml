@@ -25,7 +25,10 @@
     <Button fx:id="createAdapter" mnemonicParsing="false"
      onAction="#clickCreateAdapter" text="Create an ICE Device Adapter..."
      GridPane.columnIndex="2" GridPane.halignment="CENTER" />
-    <Label fx:id="clock" text="Time" GridPane.columnIndex="3"
+    <Button fx:id="createAdapter" mnemonicParsing="false"
+     onAction="#createMultipleAdapters" text="Create Multiple Adapters"
+     GridPane.columnIndex="3" GridPane.halignment="CENTER" />
+    <Label fx:id="clock" text="Time" GridPane.columnIndex="4"
      GridPane.halignment="RIGHT" />
    </children>
    <columnConstraints>
