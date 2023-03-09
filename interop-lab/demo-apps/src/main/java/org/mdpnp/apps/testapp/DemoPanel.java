@@ -45,7 +45,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 
 import org.mdpnp.apps.testapp.patient.PatientInfo;
+import org.mdpnp.data.serial.PureJavaCommSerialProvider;
 import org.mdpnp.devices.AbstractDevice;
+import org.mdpnp.devices.serial.SerialProviderFactory;
+import org.mdpnp.devices.serial.TCPSerialProvider;
 import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +56,8 @@ import org.springframework.context.support.AbstractApplicationContext;
 
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.SubscriberQos;
+
+import ice.ConnectionType;
 
 /**
  * @author Jeff Plourde
@@ -171,6 +176,10 @@ public class DemoPanel {
             try {
                 
                 if (null != c) {
+                    if(c.getDeviceFactory().getDeviceType().getConnectionType()==ConnectionType.Serial && SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
+			//Adding serial device after network device.  Reset default provider
+                        SerialProviderFactory.setDefaultProvider(new PureJavaCommSerialProvider());
+                    }
                     SubscriberQos qos = new SubscriberQos();
                     subscriber.get_qos(qos);
                     List<String> partition = new ArrayList<String>();
@@ -292,6 +301,7 @@ public class DemoPanel {
             if(null != configs) {
             	for(Configuration c : configs) {
 	                createDeviceFromConfiguration(c, subscriber);
+	                Thread.sleep(1000);
             	}
             } else {
             	System.err.println("c is null outer");
@@ -299,6 +309,8 @@ public class DemoPanel {
             
         } catch (IOException e) {
             log.error("Error getting configuration", e);
+        } catch (InterruptedException ie) {
+
         }
     }
     
@@ -306,10 +318,10 @@ public class DemoPanel {
     	try {
     		FileChooser chooser=new FileChooser();
     		chooser.setTitle("Select the file to save the scenario to");
-    		File target=chooser.showOpenDialog(content.sceneProperty().get().getWindow());
+    		File target=chooser.showSaveDialog(content.sceneProperty().get().getWindow());
     		int dayOfYear=Calendar.getInstance().get(Calendar.DAY_OF_YEAR);
             File source=new File(System.getProperty("user.home"),"device_creation_"+dayOfYear+".log");
-            BufferedOutputStream bos=new BufferedOutputStream(new FileOutputStream(target));
+            BufferedOutputStream bos=new BufferedOutputStream(new FileOutputStream(target,false));
             long copied=Files.copy(source.toPath(),bos);
             bos.close();
             log.info("saveScenario copied "+copied+" bytes to "+target.getAbsolutePath());
