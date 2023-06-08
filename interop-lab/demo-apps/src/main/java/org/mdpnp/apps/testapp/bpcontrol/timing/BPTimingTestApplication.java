@@ -1,16 +1,11 @@
 package org.mdpnp.apps.testapp.bpcontrol.timing;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Properties;
 
 import org.mdpnp.apps.fxbeans.NumericFx;
 import org.mdpnp.apps.fxbeans.NumericFxList;
@@ -32,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import com.rti.dds.subscription.Subscriber;
 
 import ice.BPObjectiveDataWriter;
-import ice.FlowRateObjectiveDataWriter;
 import ice.MDSConnectivity;
 import ice.Patient;
 import javafx.beans.value.ChangeListener;
