@@ -123,9 +123,6 @@ subprojects {
         // All the following should be covered by the remote-repos repository above
         // They are included her for reference (and potentially fallback)
 
-        // Repository for javacv/javacpp
-        maven {  url 'https://maven2.javacv.googlecode.com/git/' }
-
         // Repository for jogamp
         maven {  url 'https://www.jogamp.org/deployment/maven/' }
 
@@ -134,6 +131,8 @@ subprojects {
 
         // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
         maven {  url 'https://download.java.net/maven/2/' }
+
+        maven {  url 'https://mvnrepository.com' }
 
 
 

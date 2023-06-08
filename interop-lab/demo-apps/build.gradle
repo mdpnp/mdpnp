@@ -197,7 +197,7 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
     implementation files('../../artifacts/mdpnp-sounds-0.1.0.jar')
-    implementation files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
+    implementation files('../../artifacts/nddsjava.jar')
 
     //
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.19.0'

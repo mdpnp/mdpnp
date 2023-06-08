@@ -26,7 +26,7 @@ artifacts {
 }
 dependencies {
   implementation group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
-  implementation files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
+  implementation files('../../artifacts/nddsjava.jar')
   implementation project(':devices:common')
   implementation project(':data-types:x73-idl-rti-dds')
 }

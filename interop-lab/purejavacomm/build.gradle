@@ -15,5 +15,5 @@ sourceSets {
 */
 
 dependencies {
-  implementation files('lib/jna-4.0.0.jar')
+  implementation group: 'net.java.dev.jna', name: 'jna', version: '5.13.0'
 }
