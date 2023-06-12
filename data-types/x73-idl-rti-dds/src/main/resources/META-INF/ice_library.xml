@@ -203,7 +203,7 @@
              but not part of the standard -->
             <element>
               <name>dds.transport.UDPv4.builtin.send_ping</name>
-              <value>false</value>
+              <value>0</value>
             </element>
             <element>
               <name>dds.transport.UDPv4.builtin.ignore_loopback_interface</name>
