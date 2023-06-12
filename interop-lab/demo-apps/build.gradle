@@ -182,6 +182,8 @@ ext {
     buildDate = new java.text.SimpleDateFormat('dd-MMM-yyyy').format(buildTimeAndDate)
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
     specificationVersion = project.version.substring(0, project.version.lastIndexOf('.')) 
+    localOsName = System.properties['os.name'].toLowerCase();
+    currentPath = System.getenv('PATH');
 }
 
 manifest { attributes "Main-Class" : mainClassName }
@@ -244,6 +246,25 @@ dependencies {
 test {
 	useJUnitPlatform()
 	systemProperty 'user.timezone' , 'EST'
+}
+
+run {
+    if(localOsName.contains("linux")) {
+      environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+    }
+    if(localOsName.contains("windows")) {
+      environment 'PATH', currentPath + ';native/libs/windows'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+    }
+    if(localOsName.contains("mac")) {
+      environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+
+    }
 }
 
 jar {
