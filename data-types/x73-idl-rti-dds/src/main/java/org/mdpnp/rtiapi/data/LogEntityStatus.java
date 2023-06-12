@@ -30,6 +30,8 @@ import com.rti.dds.topic.InconsistentTopicStatus;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TopicListener;
 
+import com.rti.dds.publication.ServiceRequestAcceptedStatus;
+
 public class LogEntityStatus implements DataReaderListener, DataWriterListener, TopicListener, SubscriberListener, PublisherListener, DomainParticipantListener {
     private final Logger log;
     private final String label;
@@ -184,6 +186,12 @@ public class LogEntityStatus implements DataReaderListener, DataWriterListener, 
     public void on_subscription_matched(DataReader arg0, SubscriptionMatchedStatus arg1) {
         if(log.isDebugEnabled()) {
             log.debug("{} subscription_matched: {}", label, arg1);
+        }
+    }
+
+    public void on_service_request_accepted(DataWriter arg0, ServiceRequestAcceptedStatus arg1) {
+        if(log.isDebugEnabled()) {
+            log.debug("{} on_service_request_accepted: {}", label, arg1);
         }
     }
 }

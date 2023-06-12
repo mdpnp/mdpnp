@@ -1,0 +1,441 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##--------------------
+##2.2,24nov14,ajm CODEGENII-397 Fixing ordingals indexes to be unordered as in C
+##2.2,28aug14,ajm CODEGENII-179 Support enums with duplicate values
+##2.2,8aug13,ajm CODEGENII-205 Getting the default member of an union may throw an error
+##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##2.0,24sept13,ajm CODEGENII-92 Support for optional members.typedef of a string optional
+##10a,13jun13,ajm CODEGENII-109 joining the type variables in the constructMap 
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,8mar13, ajm CODEGENII-30 and CODEGENII-87 Code reviews and Xtypes in Java
+##10a,6feb12,ajm CODEGENII-30 Starting review of the templates to match the
+## guidelines we are following for C/C++
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##                 Support from constant inside a type in Java
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,31oct12, ajm RTIDDSGEN-34 support for the first set of copy directives (java ones)
+##10a,26oct12, ajm Merging enumType.vm template into type.vm template
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,14oc11,jmt fixed issue when using an enum in an union with only one case
+##10a,12oc11,jmt finished union support
+##10a,10oc11,jmt adding union support 
+##10a,22sep11,jmt adding valuetypes support
+##10a,15sep11,jmt Fixing more typedef issues
+##10a,14sep11,jmt Refactor typedef
+##10a,2sep11,ajm Adding typedef support for sequences and arrays of sequences
+##10a,29ag11,jmt Fixing macros consistency by adding the missing parameters
+##10a,10ag11,jmt Adding support for arrays of basic types
+##10a,09ag11,ajm Fixing tabulations and length of the lines
+##10a,05ag11,jmt Modification of the history header (a comment missing)
+##           ajm Fixing the bug for a struct without a module
+##10a,04ag11,jmt Adding all the basic type and testing them
+##10a,02ag11,jmt adding modification history header
+##10a,02ag11,jmt Moved to be under the path "resource/templates/java/"
+##10a,02ag11,jmt New dessing using auxiliary files for the macros
+##10a,01ag11,jmt created 
+##========================================================================*/*#
+##-----------------------------------------------------------------
+##               
+##             Template for the main Java file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Note to the programmer: Any tabulation or space in this file will be reflicted
+## in the final file, so be sure for the final release to delete al tabulations
+## and unnecesary intros and spaces in this template.
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from .idl using "rtiddsgen".
+  The rtiddsgen tool is part of the RTI Connext distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the RTI Connext manual.
+*/
+
+
+#if ($constructMap.packageName)  
+package $constructMap.packageName;
+#end
+        
+#*--*##if($constructMap.constructKind=="const")
+#*----*##foreach($element in $constructMap.directives)
+#*------*#$element.getValue()
+#*----*##end
+#*----*##assignMemberVariables($constructMap $constructMap.extensibility $constructMap)
+#*----*##declareConstant ($constructMap)
+#*--*##else ##constructKind==alias, union, struct or valueType or enum           
+#*----*##if($constructMap.constructKind=="enum")
+import com.rti.dds.util.Enum;
+import com.rti.dds.cdr.CdrHelper;
+import java.util.Arrays;
+import java.io.ObjectStreamException;
+#*----*##else
+import com.rti.dds.infrastructure.*;
+#if(!$constructMap.baseTypeFQName)
+import com.rti.dds.infrastructure.Copyable;
+import java.io.Serializable;
+#end
+import com.rti.dds.cdr.CdrHelper;
+#*------*##if($constructMap.constructKind=="union")
+import com.rti.dds.util.Union;
+#*------*##end
+#*----*##end
+##in utils.vm. Creates the Java definition of the basic type variables
+#*----*##assignTypeVariables($constructMap $constructMap.extensibility)
+#if ($constructMap.requireBigIntegerImport)
+import java.math.BigInteger;
+#end
+#*----*##foreach($element in $constructMap.directives)
+#*------*#$element.getValue()
+#*----*##end
+
+public class $constructMap.name #if($constructMap.constructKind=="enum") extends Enum #*
+**##else #if($constructMap.constructKind=="union")extends Union#end 
+#if($constructMap.baseTypeFQName)extends $constructMap.baseTypeFQName#else implements Copyable, Serializable#end#end
+{
+
+#*-************************Enum code****************************************-*# 
+#*----*##if ($constructMap.constructKind=="enum")
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#*---*##if(!$member.directive)
+    public static final ${constructMap.name} $member.name = new ${constructMap.name}("$member.name", ${member.ordinal});
+    public static final int _${member.name} = ${member.ordinal};
+#*------*##end   
+#*------*##end   
+    public static ${constructMap.name} valueOf(int ordinal) {
+        switch(ordinal) {
+            
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#*---*##if(!$member.directive && !$member.duplicated)
+              case $member.ordinal: return ${constructMap.name}.${member.name};
+#*------*##end    
+#*------*##end 
+
+        }
+        return null;
+    }
+
+    public static ${constructMap.name} from_int(int __value) {
+        return valueOf(__value);
+    }
+
+    public static int[] getOrdinals() {
+        int i = 0;
+        int[] values = new int[$constructMap.memberCount];
+        
+        
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#*---*##if(!$member.directive)
+        values[i] = ${member.name}.ordinal();
+        i++;
+#*------*##end     
+#*------*##end    
+
+        return values;
+    }
+
+    public int value() {
+        return super.ordinal();
+    }
+
+    /**
+     * Create a default instance
+     */  
+    public static ${constructMap.name} create() {
+
+        return valueOf(#setDefaultEnumValue($constructMap));
+    }
+    
+    /**
+     * Print Method
+     */     
+    public String toString(String desc, int indent) {
+        StringBuffer strBuffer = new StringBuffer();
+
+        CdrHelper.printIndent(strBuffer, indent);
+            
+        if (desc != null) {
+            strBuffer.append(desc).append(": ");
+        }
+        
+        strBuffer.append(this);
+        strBuffer.append("\n");              
+        return strBuffer.toString();
+    }
+
+    private Object readResolve() throws ObjectStreamException {
+        return valueOf(ordinal());
+    }
+
+    private ${constructMap.name}(String name, int ordinal) {
+        super(name, ordinal);
+    }
+}
+
+
+#*----*##else
+#*-************************Non-enum code****************************************-*#   
+#*------*##if($constructMap.constructKind=="union")
+#*--------*##assignMemberVariables($constructMap.unionDiscriminatorMap  $extensibility $constructMap)
+#*--------*##assignMemberVariables($constructMap.typeCodeUnionDiscriminatorMap  $extensibility $constructMap)
+
+    private static final $constructMap.unionDiscriminatorMap.nativeTypeFQName _default = getDefaultDiscriminator();
+  
+    public $constructMap.unionDiscriminatorMap.nativeTypeFQName _d #*
+--------*##if($constructMap.unionDiscriminatorMap.typeKind=="enum")#*
+--------*# = ${constructMap.unionDiscriminatorMap.nativeTypeFQName}.create()#end;
+#*------*##end
+
+#*------*##declareMembers($constructMap.memberFieldMapList)
+
+
+    public ${constructMap.name}() {
+
+#*------*##if($constructMap.baseTypeFQName)
+        super();
+#*------*##end
+    
+#*------*##initArrayandSeq($constructMap.memberFieldMapList)
+
+#*------*##if($constructMap.constructKind=="union")
+        _d = getDefaultDiscriminator();
+#*------*##end
+    }
+    public $constructMap.name ($constructMap.name other) {
+
+        this();
+        copy_from(other);
+    }
+
+
+    public static Object create() {
+    
+         $constructMap.name self;
+        self = new  ${constructMap.name}();
+    #if(!$constructMap.extensibility.equals("FINAL_EXTENSIBILITY"))    
+        self.clear();
+    #end    
+        return self;
+        
+    }
+    
+    public void clear() {
+    
+#if($constructMap.baseTypeFQName)
+        super.clear();
+#end    
+#*------*##if($constructMap.constructKind=="union")
+        _d = getDefaultDiscriminator();
+#*------*##end        
+#*------*##clearMembers($constructMap.memberFieldMapList)
+   }
+    
+#******************************Start of code just for unions ******************#       
+#*------*##if($constructMap.constructKind=="union")
+ 
+    public static $constructMap.unionDiscriminatorMap.nativeTypeFQName getDefaultDiscriminator() {
+#*--------*##if($constructMap.unionDiscriminatorMap.typeKind=="enum")
+        return ${constructMap.unionDiscriminatorMap.nativeTypeFQName}.valueOf($constructMap.unionDiscriminatorMap.defaultDiscriminatorValue);
+#*--------*##elseif($constructMap.unionDiscriminatorMap.typeName=="boolean") 
+#*----------*##if($constructMap.unionDiscriminatorMap.defaultDiscriminatorValue==0)
+        return false;
+#*----------*##else
+        return true;
+#*----------*##end
+#*--------*##else
+        return ($constructMap.unionDiscriminatorMap.nativeTypeFQName)  $constructMap.unionDiscriminatorMap.defaultDiscriminatorValue;
+#*--------*##end
+    }    
+    public $constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator() {
+        return _d;
+    }
+    
+#*--------*##foreach($member in $constructMap.memberFieldMapList)
+#*----------*##if($member.directive)
+#*-------------*##copyDirectiveNoBegin ($member)
+#*----------*##else
+    private void verify${member.name}($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator) {
+
+#*----------This for the members that are not in the default case----------------*#
+#*------------*##if($velocityCount!=$constructMap.defaultIndex +1)
+        if (#foreach($element in $member.labelList) discriminator != $element#*
+         *##if($member.labelList.size()>$velocityCount) && 
+         #end#end) {
+
+#*----------This for the members that are with the default case----------------*#           
+#*------------*##else
+        if (!(#foreach($element in $constructMap.unionDiscriminatorMap.labelList)#*
+        *##if(!$element.contains("default") && !$member.labelList.contains($element))discriminator != $element#* 
+         *##if($velocityCount <$constructMap.unionDiscriminatorMap.labelList.size() - $member.labelList.size()) &&
+          #end#end#end)) {
+#*------------*##end
+            throw new RETCODE_ILLEGAL_OPERATION();
+        }
+    }
+
+    public #addUnionMemberInitializationType($member) ${member.name}() {
+        verify${member.name}(_d);
+        return ${member.name};
+    }
+
+#*------------*###if has more than one label or contains the default one
+#*------------*##if($member.labelList.size()>1||($velocityCount==$constructMap.defaultIndex+1))
+    public void ${member.name}($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator,#addUnionMemberInitializationType($member) __value) {
+        verify${member.name}(discriminator);
+        _d = discriminator;
+        ${member.name} = __value;
+    }
+#*------------*##end ##if
+
+
+    public void ${member.name}(#addUnionMemberInitializationType($member) __value) {
+
+#*------------*##if($velocityCount==$constructMap.defaultIndex +1)
+#*--------------*##if($constructMap.unionDiscriminatorMap.typeName!="boolean")
+       if (_default == #getMaxValue($constructMap.unionDiscriminatorMap)) throw new RETCODE_ILLEGAL_OPERATION();
+#*--------------*##end
+        _d = _default;
+#*------------*##else        
+        _d = $member.labelList.get(0);
+#*------------*##end
+        $member.name = __value;
+    }
+
+#*----------*##end ## if
+#*--------*##end ## for    
+    
+      private void verifyDefault($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator) {
+     if (!(#foreach($element in $constructMap.unionDiscriminatorMap.labelList)#if(!$element.contains("default"))#*
+          *##if($constructMap.defaultIndex!="-1")#set($loopCount=$velocityCount +1)#else#set($loopCount=$velocityCount)#end#*
+          *#discriminator != $element #if($constructMap.unionDiscriminatorMap.labelList.size()>$loopCount) &&
+          #end#end#end)) {
+            throw new RETCODE_ILLEGAL_OPERATION();
+        }
+    }
+
+    public void __default($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator) {
+        verifyDefault(discriminator);
+        _d = discriminator;
+    }
+
+    public void __default() {
+    #* This happens when all the labels are covered *#
+#*--------*##if($constructMap.unionDiscriminatorMap.typeName.equals("boolean") 
+                || $constructMap.unionDiscriminatorMap.typeName.equals("enum"))
+#*----------*##if ($constructMap.hasAllCaseCovered)
+                throw new RETCODE_ILLEGAL_OPERATION();
+              #else 
+              _d = _default;    
+              #end
+#*--------*##else
+        if (_default == #getMaxValue($constructMap.unionDiscriminatorMap)) throw new RETCODE_ILLEGAL_OPERATION();
+        _d = _default;     
+#*--------*##end    
+    }
+#*------*##end
+
+#******************************End of code just for unions ******************# 
+    public boolean equals(Object o) {
+                
+        if (o == null) {
+            return false;
+        }        
+          
+#*------*##if($constructMap.baseTypeFQName)
+
+        if (!super.equals(o)) {
+            return false;
+        }
+#*------*##end
+
+        
+        if(getClass() != o.getClass()) {
+            return false;
+        }
+        
+        $constructMap.name otherObj = ($constructMap.name)o;
+        
+#*------*##equalsMemberField($constructMap.memberFieldMapList)                                                  
+            
+        return true;
+    }
+
+    public int hashCode() {
+        int __result = 0;
+#*------*##if($constructMap.baseTypeFQName)
+
+        __result = super.hashCode();
+#*------*##end
+#*------*##hashCode($constructMap.memberFieldMapList)        
+        return __result;
+    }
+
+#*-****************************************************************-*#   
+    
+    /**
+     * This is the implementation of the <code>Copyable</code> interface.
+     * This method will perform a deep copy of <code>src</code>
+     * This method could be placed into <code>${constructMap.name}TypeSupport</code>
+     * rather than here by using the <code>-noCopyable</code> option
+     * to rtiddsgen.
+     * 
+     * @param src The Object which contains the data to be copied.
+     * @return Returns <code>this</code>.
+     * @exception NullPointerException If <code>src</code> is null.
+     * @exception ClassCastException If <code>src</code> is not the 
+     * same type as <code>this</code>.
+     * @see com.rti.dds.infrastructure.Copyable${envMap.POUND_CHAR}copy_from(java.lang.Object)
+     */
+    public Object copy_from(Object #if($constructMap.constructKind=="union")other#else#* *#src#* *##end) {
+       
+       
+        $constructMap.name typedSrc = ($constructMap.name) #if($constructMap.constructKind=="union")other#else#* *#src#* *##end;
+        $constructMap.name typedDst = this;
+#*------*##if($constructMap.baseTypeFQName)
+        super.copy_from(typedSrc);#end
+
+#*------*##copy($constructMap.memberFieldMapList)
+
+        return this;
+    }
+
+    
+    public String toString(){
+        return toString("", 0);
+    }
+        
+    
+    public String toString(String desc, int indent) {
+        StringBuffer strBuffer = new StringBuffer();        
+                        
+        
+        if (desc != null) {
+            CdrHelper.printIndent(strBuffer, indent);
+            strBuffer.append(desc).append(":\n");
+        }
+
+
+#*-------*##if($constructMap.baseTypeFQName)
+        strBuffer.append(super.toString("",indent));
+#*-------*##end
+
+#*------*##toString($constructMap)
+            
+        return strBuffer.toString();
+    }
+    
+}
+#*----*##end
+#*--*##end
