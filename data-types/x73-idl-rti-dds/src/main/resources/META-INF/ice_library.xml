@@ -247,9 +247,11 @@
 
         <!-- UDI is typical in the instance key so instances are owned exclusively
          by one publisher (device) This seems like a peculiar "default" -->
+<!--
         <ownership>
           <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
         </ownership>
+-->
 
         <!-- Enabling lots of RTPS level fragmentation -->
         <reader_resource_limits>
@@ -336,9 +338,11 @@
 
         <!-- UDI is typical in the instance key so instances are owned exclusively
          by one publisher (device). This may not be a reasonable default. -->
+<!-- 
         <ownership>
           <kind>DDS_EXCLUSIVE_OWNERSHIP_QOS</kind>
         </ownership>
+-->
         <!-- Set to async to allow RTPS fragmentation where it's necessary to
          exceed max message size of transport -->
         <publish_mode>
