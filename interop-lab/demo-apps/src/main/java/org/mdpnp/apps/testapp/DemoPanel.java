@@ -188,7 +188,7 @@ public class DemoPanel {
                                         AbstractDevice d=getDevice();
                                         String udiToKill=d.getUniqueDeviceIdentifier();
                                         super.stop();
-                                        context.destroy();
+                                        context.close();
                                         try {
                                             Connection c=SQLLogging.getConnection();
                                             PreparedStatement ps=c.prepareStatement("UPDATE devices SET destroyed=? WHERE udi=? AND destroyed IS NULL");
