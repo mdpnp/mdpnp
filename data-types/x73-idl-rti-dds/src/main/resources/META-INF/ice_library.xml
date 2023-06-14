@@ -269,7 +269,7 @@
           <kind>DDS_KEEP_LAST_HISTORY_QOS</kind>
           <!-- samples kept in the writer ... see durability -->
           <depth>500</depth>
-          <refilter>DDS_NONE_REFILTER_QOS</refilter>
+          <!-- <refilter>DDS_NONE_REFILTER_QOS</refilter> -->
         </history>
 
         <!-- Discarding samples based upon sequence via history (if durability
@@ -505,7 +505,7 @@
           <kind>KEEP_LAST_HISTORY_QOS</kind>
           <!-- samples kept in the writer ... see durability -->
           <depth>1</depth>
-          <refilter>DDS_NONE_REFILTER_QOS</refilter>
+          <!-- <refilter>DDS_NONE_REFILTER_QOS</refilter> -->
         </history>
       </datareader_qos>
       <datawriter_qos>
