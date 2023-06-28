@@ -18,3 +18,5 @@ class DeviceIdentity:
         if self.icon != None: self.icon.clear()
         self.build = ""
         self.operating_system = ""
+
+    
