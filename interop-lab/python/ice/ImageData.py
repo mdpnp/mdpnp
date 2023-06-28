@@ -4,3 +4,6 @@ class ImageData:
 
     def clear(self):
         if self.userData != None: self.userData = []
+
+    def update_data(self, data):
+        self.userData = data

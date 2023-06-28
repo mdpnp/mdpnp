@@ -2,13 +2,13 @@ import rticonnextdds_connector as rti
 
 connector = rti.Connector("iceParticipantLibrary::iceParticipant", "/home/benstacey/from-simon/mdpnp/interop-lab/python/ice/icepython.xml")
 
-input = connector.getInput("NumericSubscriber::NumericReader")
+input = connector.getInput("DeviceIdentitySubscriber::DeviceIdentityReader")
 
 def printSampleData(numOfSamples):   
     for j in range (0, numOfSamples):         
         if input.infos.isValid(j):             
-            numeric = input.samples.getDictionary(j)
-            print(numeric)
+            deviceIdentity = input.samples.getDictionary(j)
+            print(deviceIdentity)
             '''
             udi = input.samples.getString(j, "unique_device_identifier")             
             value = input.samples.getNumber(j, "value")

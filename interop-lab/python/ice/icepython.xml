@@ -882,6 +882,12 @@
         <topic_qos name="Numeric_qos" base_name="ice_library::numeric_data"/>
       </topic>
 
+    <register_type name="ice::DeviceIdentity" kind="dynamicData" type_ref="ice::DeviceIdentity" />
+
+      <topic name="DeviceIdentity" register_type_ref="ice::DeviceIdentity">
+        <topic_qos name="DeviceIdentity_qos" base_name="ice_library::device_identity"/>
+      </topic>
+
   </domain>
 </domain_library>
 
@@ -898,6 +904,17 @@
         <datareader_qos name="Numeric_qos" base_name="ice_library::numeric_data"/>
       </data_reader>
     </subscriber>
+
+    <publisher name="DeviceIdentityPublisher">
+      <data_writer name="DeviceIdentityWriter" topic_ref="DeviceIdentity"/>
+    </publisher>
+    
+    <subscriber name="DeviceIdentitySubscriber">
+      <data_reader name="DeviceIdentityReader" topic_ref="DeviceIdentity">
+        <datareader_qos name="DeviceIdentity_qos" base_name="ice_library::device_identity"/>
+      </data_reader>
+    </subscriber>
+
   </domain_participant>
 
 </domain_participant_library>
