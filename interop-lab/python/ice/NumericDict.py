@@ -75,7 +75,7 @@ if __name__ == '__main__':
         current_dict.update()
         #print(current_dict.fetch(udi = 'UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG'))
         #print(current_dict.fetch(udi = 'UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG', metric_id='MDC_FLOW_FLUID_PUMP'))
-        print(current_dict.fetch(metric_id='MDC_FLOW_FLUID_PUMP'))    
+        if len(current_dict.numericDict) > 0: print(current_dict.fetch()[0].unit_id)    
 
 #UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG
         
