@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import time
 
 from SampleArrayDict import SampleArrayDict
@@ -22,8 +23,30 @@ print(len(current_data))
 x_axis = [i for i in range(0, current_frequency)]
 y_axis = current_data
 
-plt.plot(x_axis, y_axis)
-plt.title(f'Waveform Data: {current_metric_id}')
-plt.xlabel('Datapoint')
-plt.ylabel('Data')
+fig = plt.figure()
+ax1 = fig.add_subplot(1, 1, 1)
+
+y_axis = []
+
+def animate(i):
+    currentDict.update()
+    
+    fetchedSampleArray = currentDict.fetch(metric_id='MDC_AWAY_CO2')[0]
+
+    current_data = fetchedSampleArray.values.userData
+
+    for datapoint in current_data: y_axis.append(datapoint)
+    frequency = len(y_axis)
+    x_axis = [i for i in range(0, frequency)]
+
+    ax1.clear()
+    ax1.plot(x_axis, y_axis)
+
+while len(currentDict.sampleArrayDict) == 0:
+    time.sleep(1.0)
+    currentDict.update()
+
+ani = animation.FuncAnimation(fig, animate, interval=1000)
 plt.show()
+
+    

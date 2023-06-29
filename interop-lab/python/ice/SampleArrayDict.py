@@ -28,17 +28,15 @@ class SampleArrayDict:
             for j in range (0, numOfSamples):         
                 if input.infos.isValid(j):             
                     sampleArray = input.samples.getDictionary(j)
-                    udi = input.samples.getString(j, "unique_device_identifier") 
+                    udi = sampleArray['unique_device_identifier']
+                    metric_id = sampleArray['metric_id']
                     
-                    if udi not in self.sampleArrayDict: self.sampleArrayDict[udi] = []
+                    if udi not in self.sampleArrayDict: self.sampleArrayDict[udi] = {}
 
                     currentSampleArray = SampleArray()
                     currentSampleArray.update_fields(sampleArray)
-                    self.sampleArrayDict[udi].append(currentSampleArray)
-                
-        #for udi in self.sampleArrayDict: print(len(self.sampleArrayDict[udi]))
-        for udi in self.sampleArrayDict: print(f'Length of sampleArrayDict is :{len(self.sampleArrayDict[udi])}')
-
+                    
+                    self.sampleArrayDict[udi][metric_id] = currentSampleArray
 
     # Returns a list of Numerics that fit the supplied conditions
     def fetch(self, udi = None, metric_id = None):
@@ -47,25 +45,23 @@ class SampleArrayDict:
         try:
             # Fetches all Numerics with matching UDI and metric_id
             if udi != None and metric_id != None:           
-                for sampleArray in self.sampleArrayDict[udi]:
-                    if sampleArray.metric_id == metric_id: sampleArrays.append(sampleArray)
+                sampleArrays.append(self.sampleArrayDict[udi][metric_id])
             
             # Fetches all Numerics with matching UDI
             elif udi != None:                               
                 for sampleArray in self.sampleArrayDict[udi]:
-                    sampleArrays.append(sampleArray)
+                    sampleArrays.append(self.sampleArrayDict[udi])
             
             # Fetches all Numerics with matching metric_id
             elif metric_id != None:
                 for udi in self.sampleArrayDict:
-                    for sampleArray in self.sampleArrayDict[udi]:
-                        if sampleArray.metric_id == metric_id: sampleArrays.append(sampleArray)
+                    sampleArrays.append(self.sampleArrayDict[udi][metric_id])
             
             # Fetches all Numerics
             else:
                 for udi in self.sampleArrayDict:
-                    for sampleArray in self.sampleArrayDict[udi]:
-                        sampleArrays.append(sampleArray)
+                    for metric_id in self.sampleArrayDict[udi]:
+                        sampleArrays.append(self.sampleArrayDict[udi][metric_id])
 
         except:
             print('Key provided not found in SampleArrayDict')
@@ -78,10 +74,8 @@ if __name__ == '__main__':
     current_dict = SampleArrayDict()
 
     while True:
-        time.sleep(1.0)
         current_dict.update()
-        #print(current_dict.fetch(udi = 'UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG'))
-        #print(current_dict.fetch(udi = 'Coa7yzECPNilGhUpxGwVtfe24mML0uGhfjqd', metric_id='MDC_PULS_OXIM_PLETH'))
-        #if len(current_dict.sampleArrayDict) > 0: print(current_dict.fetch(udi='Coa7yzECPNilGhUpxGwVtfe24mML0uGhfjqd')[0].values.userData)    
-
-# Coa7yzECPNilGhUpxGwVtfe24mML0uGhfjqd
+        '''if len(current_dict.sampleArrayDict) > 0: 
+            for sampleArray in current_dict.fetch():
+                print(sampleArray.metric_id)'''
+        print(current_dict.fetch(metric_id='MDC_PULS_OXIM_PLETH'))
