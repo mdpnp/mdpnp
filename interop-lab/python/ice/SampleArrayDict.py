@@ -22,9 +22,7 @@ class SampleArrayDict:
         input.take()
         numOfSamples = input.samples.getLength()
         
-        #print(numOfSamples)
         if numOfSamples > 0:
-
             for j in range (0, numOfSamples):         
                 if input.infos.isValid(j):             
                     sampleArray = input.samples.getDictionary(j)
@@ -38,6 +36,7 @@ class SampleArrayDict:
                     
                     self.sampleArrayDict[udi][metric_id] = currentSampleArray
 
+
     # Returns a list of Numerics that fit the supplied conditions
     def fetch(self, udi = None, metric_id = None):
         sampleArrays = []
@@ -49,8 +48,8 @@ class SampleArrayDict:
             
             # Fetches all Numerics with matching UDI
             elif udi != None:                               
-                for sampleArray in self.sampleArrayDict[udi]:
-                    sampleArrays.append(self.sampleArrayDict[udi])
+                for metric_id in self.sampleArrayDict[udi]:
+                    sampleArrays.append(self.sampleArrayDict[udi][metric_id])
             
             # Fetches all Numerics with matching metric_id
             elif metric_id != None:

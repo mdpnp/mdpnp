@@ -17,3 +17,11 @@ class Time_t():
     def update_fields(self, dictionary):
         self.sec = dictionary['sec']
         self.nanosec = dictionary['nanosec']
+
+    
+    def publish_fields(self):
+        publishing_dict = {}
+        publishing_dict['sec'] = self.sec
+        publishing_dict['nanosec'] = self.nanosec
+
+        return publishing_dict

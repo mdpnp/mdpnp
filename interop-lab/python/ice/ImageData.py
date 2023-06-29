@@ -7,3 +7,6 @@ class ImageData:
 
     def update_data(self, data):
         self.userData = data
+
+    def publish_data(self):
+        return self.userData

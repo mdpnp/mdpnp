@@ -25,12 +25,15 @@ class NumericDict:
             for j in range (0, numOfSamples):         
                 if input.infos.isValid(j):             
                     numeric = input.samples.getDictionary(j)
-                    udi = input.samples.getString(j, "unique_device_identifier") 
+                    udi = numeric['unique_device_identifier']
+                    metric_id = numeric['metric_id']
                     
-                    self.numericDict[udi] = []
+                    if udi not in self.numericDict: self.numericDict[udi] = {}
+
                     currentNumeric = Numeric()
                     currentNumeric.update_fields(numeric)
-                    self.numericDict[udi].append(currentNumeric)
+
+                    self.numericDict[udi][metric_id] = currentNumeric
 
 
     # Returns a list of Numerics that fit the supplied conditions
@@ -40,25 +43,23 @@ class NumericDict:
         try:
             # Fetches all Numerics with matching UDI and metric_id
             if udi != None and metric_id != None:        
-                for numeric in self.numericDict[udi]:
-                    if numeric.metric_id == metric_id: numerics.append(numeric)
+                numerics.append(self.numericDict[udi][metric_id])
             
             # Fetches all Numerics with matching UDI
             elif udi != None:                               
-                for numeric in self.numericDict[udi]:
-                    numerics.append(numeric)
+                for metric_id in self.numericDict[udi]:
+                    numerics.append(self.numericDict[udi][metric_id])
             
             # Fetches all Numerics with matching metric_id
             elif metric_id != None:
                 for udi in self.numericDict:
-                    for numeric in self.numericDict[udi]:
-                        if numeric.metric_id == metric_id: numerics.append(numeric)
+                    numerics.append(self.numericDict[udi][metric_id])
             
             # Fetches all Numerics
             else:
                 for udi in self.numericDict:
-                    for numeric in self.numericDict[udi]:
-                        numerics.append(numeric)
+                    for metric_id in self.numericDict[udi]:
+                        numerics.append(self.numericDict[udi][metric_id])
 
         except:
             print('Key provided not found in NumericDict')

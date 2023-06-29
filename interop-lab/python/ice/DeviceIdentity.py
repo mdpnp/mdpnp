@@ -27,3 +27,18 @@ class DeviceIdentity:
         self.icon.update_fields(dictionary['icon'])
         self.build = dictionary['build']
         self.operating_system = dictionary['operating_system']
+
+    def set_image(self, image_path):
+        self.icon.set_image(image_path)
+
+    def publish_fields(self):
+        publishing_dict = {}
+        publishing_dict['unique_device_identifier'] = self.unique_device_identifier
+        publishing_dict['manufacturer'] = self.manufacturer
+        publishing_dict['model'] = self.model
+        publishing_dict['serial_number'] = self.serial_number
+        publishing_dict['icon'] = self.icon.publish_fields()
+        publishing_dict['build'] = self.build
+        publishing_dict['operating_system'] = self.operating_system
+
+        return publishing_dict

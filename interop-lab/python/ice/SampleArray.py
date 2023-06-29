@@ -35,3 +35,17 @@ class SampleArray:
         self.values.update_data(dictionary['values'])
         self.device_time.update_fields(dictionary['device_time'])
         self.presentation_time.update_fields(dictionary['presentation_time'])
+
+    def publish_fields(self):
+        publishing_dict = {}
+        publishing_dict['unique_device_identifier'] = self.unique_device_identifier
+        publishing_dict['metric_id'] = self.metric_id
+        publishing_dict['vendor_metric_id'] = self.vendor_metric_id
+        publishing_dict['instance_id'] = self.instance_id
+        publishing_dict['unit_id'] = self.unit_id
+        publishing_dict['frequency'] = self.frequency
+        publishing_dict['values'] = self.values.publish_data()
+        publishing_dict['device_time'] = self.device_time.publish_fields()
+        publishing_dict['presentation_time'] = self.device_time.publish_fields()
+
+        return publishing_dict

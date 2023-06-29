@@ -9,12 +9,7 @@ def printSampleData(numOfSamples):
         if input.infos.isValid(j):             
             sampleArray = input.samples.getDictionary(j)
             print(sampleArray)
-            '''
-            udi = input.samples.getString(j, "unique_device_identifier")             
-            value = input.samples.getNumber(j, "value")
-            device_time = input.samples.getDictionary(j, "device_time") 
-            print(f"UDI: {udi}, Value: {value}, Time: {device_time['sec']}")
-            '''
+
 
 while True:
     input.take()

@@ -6,23 +6,6 @@ from SampleArrayDict import SampleArrayDict
 
 currentDict = SampleArrayDict()
 
-while len(currentDict.sampleArrayDict) == 0:
-    time.sleep(1.0)
-    currentDict.update()
-
-print(len(currentDict.sampleArrayDict))
-fetchedSampleArray = currentDict.fetch(metric_id='MDC_PULS_OXIM_PLETH')[0]
-
-current_frequency = fetchedSampleArray.frequency
-current_data = fetchedSampleArray.values.userData
-current_metric_id = fetchedSampleArray.metric_id
-
-print(current_frequency)
-print(len(current_data))
-
-x_axis = [i for i in range(0, current_frequency)]
-y_axis = current_data
-
 fig = plt.figure()
 ax1 = fig.add_subplot(1, 1, 1)
 
@@ -48,5 +31,3 @@ while len(currentDict.sampleArrayDict) == 0:
 
 ani = animation.FuncAnimation(fig, animate, interval=1000)
 plt.show()
-
-    
