@@ -3,33 +3,36 @@ import threading
 import time
 
 from DeviceIdentityDict import DeviceIdentityDict
-
-'''root = tk.Tk()
-
-root.geometry("1000x800")
-root.title("OpenICE Python")
-
-lable = tk.Label(root, text="ICE Controllable Pump", font=('Arial', 18))
-lable.pack()
-
-textbox = tk.Text(root, height=1, font=('Arial', 16))
-textbox.pack()
-
-button = tk.Button(root, text='Click Me', font=('Arial', 16))
-button.pack()
-
-root.mainloop()'''
-
-'''def update_info(current_manufacturer):
-    current_identities.update()
-    if len(current_identities.deviceIdentityDict) > 0:
-        current_manufacturer = current_identities.fetch()[0].manufacturer
-        manufacturer_value_label['text'] = current_manufacturer
-    
-    print(current_manufacturer)
-    #info_page.after(2000, update_info(current_manufacturer))'''
+from NumericDict import NumericDict
 
 FONT = ('Arial', 11)
+
+class SupervisorApp(threading.Thread):
+    def __init__(self):
+        self.running = True
+        threading.Thread.__init__(self)
+        self.start()
+
+    def callback(self):
+        self.running = False
+        self.root.destroy()
+    
+    def run(self):
+        self.root = tk.Tk()
+        self.root.protocol("WM_DELETE_WINDOW", self.callback)
+
+        self.root.geometry("1000x800")
+        self.root.title("OpenICE Python")
+
+        self.device_btn = tk.PhotoImage(file='')
+        self.image_label = tk.Label(self.root, image=self.device_btn)
+        self.image_label.pack()
+
+        self.device_label = tk.Label(self.root, text='', font=FONT)
+        
+        self.device_label.pack()
+
+        self.root.mainloop()
 
 class DeviceInfoPage(threading.Thread):
     def __init__(self):
@@ -56,6 +59,7 @@ class DeviceInfoPage(threading.Thread):
         version_title = tk.Label(self.root, text='Version', font=FONT).place(y=90)
         os_title = tk.Label(self.root, text='Operating System', font=FONT).place(y=108)
         host_name_title = tk.Label(self.root, text='Host Name', font=FONT).place(y=127)
+        infusion_rate_title = tk.Label(self.root, text='Infusion Rate:', font=FONT).place(y=162)
 
         self.manufacturer_label = tk.Label(self.root, text='', font=FONT)#.place(x=170)
         self.model_label = tk.Label(self.root, text='', font=FONT)#.place(x=170, y=18)
@@ -65,6 +69,7 @@ class DeviceInfoPage(threading.Thread):
         self.version_label = tk.Label(self.root, text='', font=FONT)#.place(x=170, y=90)
         self.os_label = tk.Label(self.root, text='', font=FONT)#.place(x=170, y=108)
         self.host_name_label = tk.Label(self.root, text='', font=FONT)#.place(x=170, y=127)
+        self.infusion_rate_label = tk.Label(self.root, text='', font=('Arial', 20))
 
         self.manufacturer_label.place(x=170)
         self.model_label.place(x=170, y=18)
@@ -74,19 +79,29 @@ class DeviceInfoPage(threading.Thread):
         self.version_label.place(x=170, y=90)
         self.os_label.place(x=170, y=108)
         self.host_name_label.place(x=170, y=127)
+        self.infusion_rate_label.place(y=180)
 
         self.root.mainloop()
 
+current_identities = DeviceIdentityDict()
+current_numerics = NumericDict()
+
+supervisor = SupervisorApp()
 deviceinfopage = DeviceInfoPage()
 
-current_identities = DeviceIdentityDict()
-
-while deviceinfopage.running:
+while supervisor.running:
     time.sleep(2)
     current_identities.update()
+    current_numerics.update()
     if len(current_identities.deviceIdentityDict) > 0:
         fetched_identity = current_identities.fetch()[0]
-        
+        fetched_numeric = current_numerics.fetch(udi=fetched_identity.unique_device_identifier)[0]
+        fetched_identity.icon.render()
+
+        supervisor.device_label['text'] = f'{fetched_identity.manufacturer} {fetched_identity.model}'
+        supervisor.device_btn['file'] = fetched_identity.icon.image_path
+        print(fetched_identity.icon.image_path)
+
         deviceinfopage.manufacturer_label['text'] = fetched_identity.manufacturer
         deviceinfopage.model_label['text'] = fetched_identity.model
         deviceinfopage.serial_num_label['text'] = fetched_identity.serial_number
@@ -95,3 +110,4 @@ while deviceinfopage.running:
         deviceinfopage.version_label['text'] = fetched_identity.build
         deviceinfopage.os_label['text'] = fetched_identity.operating_system
         deviceinfopage.host_name_label['text'] = ''
+        deviceinfopage.infusion_rate_label['text'] = str(float(fetched_numeric.value))

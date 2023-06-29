@@ -39,8 +39,7 @@ class NumericDict:
         
         try:
             # Fetches all Numerics with matching UDI and metric_id
-            if udi != None and metric_id != None:           
-                numerics = []
+            if udi != None and metric_id != None:        
                 for numeric in self.numericDict[udi]:
                     if numeric.metric_id == metric_id: numerics.append(numeric)
             
@@ -73,9 +72,9 @@ if __name__ == '__main__':
 
     while True:
         current_dict.update()
-        #print(current_dict.fetch(udi = 'UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG'))
-        #print(current_dict.fetch(udi = 'UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG', metric_id='MDC_FLOW_FLUID_PUMP'))
-        if len(current_dict.numericDict) > 0: print(current_dict.fetch()[0].unit_id)    
+        #if len(current_dict.numericDict) > 0: print(current_dict.fetch()[0].unique_device_identifier)
+        if len(current_dict.numericDict) > 0: print(current_dict.fetch(udi = 'UPXjQH67bTtFkx2OYskwgydUTivXjFqAn7yU')[0].metric_id)
+        #print(current_dict.fetch(udi = 'UPXjQH67bTtFkx2OYskwgydUTivXjFqAn7yU ', metric_id='MDC_FLOW_FLUID_PUMP'))
+        #if len(current_dict.numericDict) > 0: print(current_dict.fetch()[0].unit_id)    
 
-#UEw3GF1koyHkiJ6YVqNHUcOsnA0nIb9KS7jG
-        
+#UPXjQH67bTtFkx2OYskwgydUTivXjFqAn7yU       

@@ -60,6 +60,6 @@ if __name__ == '__main__':
         current_dict.update()
         if len(current_dict.deviceIdentityDict) > 0:
             print('Fetched')
-            print(current_dict.fetch(udi='kUaeOTPiEIPG51wur3ioqCwCBYSRSn3mpsSV')[0].icon.image.userData)
+            print(current_dict.fetch()[0].icon.image.userData)
 
 #kUaeOTPiEIPG51wur3ioqCwCBYSRSn3mpsSV
