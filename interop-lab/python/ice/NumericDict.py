@@ -6,18 +6,24 @@ connector = rti.Connector("iceParticipantLibrary::iceParticipant", "interop-lab/
 input = connector.getInput("NumericSubscriber::NumericReader")
 
 class NumericDict:
-    # Initialises the NumericDict class by creating a numericDict dictionary
+    '''Class that stores a dictionary of the most recent Numerics recieved from DDS, keyed by UDI\n
+       Additionally, for each UDI, the Numerics are keyed by metric_id'''
+    
     def __init__(self):
+        '''Initialises the NumericDict class by creating an empty dictionary'''
+
         self.numericDict = {}
     
 
-    # Clears the numericDict dictionary
     def clear(self):
+        '''Clears the Numeric dictionary back to the inital state'''
+
         if self.numericDict != None: self.numericDict = {}
 
 
-    # Uses an API call via DDS to obtain all of the Numerics being published over the domain and stores them in the numericDict dictionary
     def update(self):
+        '''Uses an API call via DDS to obtain all of the Numerics being published over the domain and stores them in the Numeric dictionary'''
+
         input.take()
         numOfSamples = input.samples.getLength()
         
@@ -36,8 +42,9 @@ class NumericDict:
                     self.numericDict[udi][metric_id] = currentNumeric
 
 
-    # Returns a list of Numerics that fit the supplied conditions
     def fetch(self, udi = None, metric_id = None):
+        '''Returns a list of Numeric objects (Option to fetch by UDI and/or metric_id)'''
+
         numerics = []
         
         try:
@@ -65,17 +72,3 @@ class NumericDict:
             print('Key provided not found in NumericDict')
 
         return numerics
-
-
-# Testing
-if __name__ == '__main__':
-    current_dict = NumericDict()
-
-    while True:
-        current_dict.update()
-        #if len(current_dict.numericDict) > 0: print(current_dict.fetch()[0].unique_device_identifier)
-        if len(current_dict.numericDict) > 0: print(current_dict.fetch(udi = 'UPXjQH67bTtFkx2OYskwgydUTivXjFqAn7yU')[0].metric_id)
-        #print(current_dict.fetch(udi = 'UPXjQH67bTtFkx2OYskwgydUTivXjFqAn7yU ', metric_id='MDC_FLOW_FLUID_PUMP'))
-        #if len(current_dict.numericDict) > 0: print(current_dict.fetch()[0].unit_id)    
-
-#UPXjQH67bTtFkx2OYskwgydUTivXjFqAn7yU       

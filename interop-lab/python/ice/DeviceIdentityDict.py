@@ -6,18 +6,23 @@ connector = rti.Connector("iceParticipantLibrary::iceParticipant", "interop-lab/
 input = connector.getInput("DeviceIdentitySubscriber::DeviceIdentityReader")
 
 class DeviceIdentityDict:
-    # Initialises the DeviceIdentityDict class by creating a deviceIdentityDict dictionary
+    '''Class that stores a dictionary of all DeviceIdentities recieved from DDS, keyed by UDI'''
+    
     def __init__(self):
+        '''Initialises the DeviceIdentityDict class by creating an empty dictionary'''
+
         self.deviceIdentityDict = {}
     
 
-    # Clears the deviceIdentityDict dictionary
     def clear(self):
+        '''Clears the DeviceIdentity dictionary back to the inital state'''
+
         if self.deviceIdentityDict != None: self.deviceIdentityDict = {}
 
 
-    # Uses an API call via DDS to obtain all of the Device Identities being published over the domain and stores them in the numericDict dictionary
     def update(self):
+        '''Uses an API call via DDS to obtain all of the DeviceIdentities being published over the domain and stores them in the DeviceIdentity dictionary'''
+        
         input.take()
         numOfSamples = input.samples.getLength()
         
@@ -32,8 +37,9 @@ class DeviceIdentityDict:
                     self.deviceIdentityDict[udi] = currentDeviceIdentity
 
 
-    # Returns a list of Numerics that fit the supplied conditions
     def fetch(self, udi = None):
+        '''Returns a list of DeviceIdentity objects (Option to fetch by UDI)'''
+        
         deviceIdentities = []
         
         try:
@@ -50,16 +56,3 @@ class DeviceIdentityDict:
             print('Key provided not found in NumericDict')
 
         return deviceIdentities
-
-
-# Testing
-if __name__ == '__main__':
-    current_dict = DeviceIdentityDict()
-
-    while True:
-        current_dict.update()
-        if len(current_dict.deviceIdentityDict) > 0:
-            print('Fetched')
-            print(current_dict.fetch()[0].icon.image.userData)
-
-#kUaeOTPiEIPG51wur3ioqCwCBYSRSn3mpsSV

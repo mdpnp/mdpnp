@@ -1,11 +1,18 @@
+import rticonnextdds_connector as rti
+import time
+
 from Time_t import Time_t
 
-
-# The Numeric class that stores all of the information of an OpenICE Numeric object
+# Setting up API publishing Connection
+connector = rti.Connector("iceParticipantLibrary::iceParticipant", "interop-lab/python/ice/icepython.xml")#
+numericOutput = connector.get_output("NumericPublisher::NumericWriter")
 
 class Numeric:
-    # Initialises all of the fields of the Numeric object as empty strings or 0s
+    '''Class that stores all of the information of an OpenICE Numeric object'''
+
     def __init__(self):
+        '''Initialises all of the fields of the Numeric object as empty strings or 0s'''
+
         self.unique_device_identifier = ""
         self.metric_id = ""
         self.vendor_metric_id = ""
@@ -16,8 +23,9 @@ class Numeric:
         self.presentation_time = Time_t()
 
 
-    # Clears all of the fields of the Numeric object
     def clear(self):
+        '''Clears all of the fields of the Numeric object back to the inital state'''
+
         self.unique_device_identifier = ""
         self.metric_id = ""
         self.vendor_metric_id = ""
@@ -28,8 +36,18 @@ class Numeric:
         if self.presentation_time != None: self.presentation_time.clear()
 
 
-    # Updates the fields of the Numeric object by taking in a dictionary of all of the required fields
     def update_fields(self, dictionary):
+        '''Updates the fields of the Numeric object by taking in a dictionary of all of the required fields\n
+            Required Fields:\n
+            unique_device_identifier: string,\n
+            metric_id: string,\n
+            vendor_metric_id: string,\n
+            instance_id: int,\n
+            unit_id: string,\n
+            value: float,\n
+            device_time: dictionary containing sec and nanosec),\n
+            presentation_time: dictionary containing sec: int and nanosec: int'''
+        
         self.unique_device_identifier = dictionary['unique_device_identifier']
         self.metric_id = dictionary['metric_id']
         self.vendor_metric_id = dictionary['vendor_metric_id']
@@ -39,7 +57,10 @@ class Numeric:
         self.device_time.update_fields(dictionary['device_time'])
         self.presentation_time.update_fields(dictionary['presentation_time'])
 
+
     def publish_fields(self):
+        '''Returns a dictionary in a form that can be directly published to DDS'''
+
         publishing_dict = {}
         publishing_dict['unique_device_identifier'] = self.unique_device_identifier
         publishing_dict['metric_id'] = self.metric_id
@@ -51,19 +72,16 @@ class Numeric:
         publishing_dict['presentation_time'] = self.device_time.publish_fields()
 
         return publishing_dict
+    
 
-# Testing
-if __name__ == "__main__":    
-    numeric = Numeric()
+    def publish_to_dds(self):
+        '''Publishes the data stored in the Numeric object to DDS via the API'''
 
-    print(f"Device time is: {numeric.device_time.sec}s and {numeric.device_time.nanosec}")
+        current_time = str(time.time())
+        current_time = current_time.split('.')
+        
+        self.presentation_time.sec = int(current_time[0])
+        self.presentation_time.nanosec = int(current_time[1])
 
-    numeric.device_time.sec = 9999999
-    numeric.device_time.nanosec = 100000
-
-    print(f"Device time is: {numeric.device_time.sec}s and {numeric.device_time.nanosec}")
-
-    numeric.clear()
-
-    print(f"Device time is: {numeric.device_time.sec}s and {numeric.device_time.nanosec}")
-
+        numericOutput.instance.set_dictionary(self.publish_fields())
+        numericOutput.write()

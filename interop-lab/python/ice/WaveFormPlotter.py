@@ -14,7 +14,7 @@ y_axis = []
 def animate(i):
     currentDict.update()
     
-    fetchedSampleArray = currentDict.fetch(metric_id='MDC_AWAY_CO2')[0]
+    fetchedSampleArray = currentDict.fetch(metric_id='MDC_PULS_OXIM_PLETH')[0]
 
     current_data = fetchedSampleArray.values.userData
 
