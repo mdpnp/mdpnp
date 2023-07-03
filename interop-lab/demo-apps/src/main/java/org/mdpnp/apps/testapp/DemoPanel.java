@@ -319,6 +319,10 @@ public class DemoPanel {
     		FileChooser chooser=new FileChooser();
     		chooser.setTitle("Select the file to save the scenario to");
     		File target=chooser.showSaveDialog(content.sceneProperty().get().getWindow());
+    		if(target==null) {
+    			//Cancelled
+    			return;
+    		}
     		int dayOfYear=Calendar.getInstance().get(Calendar.DAY_OF_YEAR);
             File source=new File(System.getProperty("user.home"),"device_creation_"+dayOfYear+".log");
             BufferedOutputStream bos=new BufferedOutputStream(new FileOutputStream(target,false));
