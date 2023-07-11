@@ -1,7 +1,6 @@
 package org.mdpnp.apps.testapp.export;
 
 import ice.Patient;
-import ice.SampleArray;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
@@ -136,6 +135,8 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
             data = v;
             value = data.getValues();
             time = data.getDevice_time().getTime();
+            //We MUST read the presentation_time property in order to change the validity of the sample.  See Issue #8
+            data.getPresentation_time();
         }
 
         public String getUniqueDeviceIdentifier() {

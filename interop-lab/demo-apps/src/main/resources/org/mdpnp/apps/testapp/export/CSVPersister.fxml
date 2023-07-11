@@ -50,6 +50,8 @@
                     </FXCollections>
                 </items>
             </ComboBox>
+            <Label text="Separator character" />
+            <TextField fx:id="sepChar">,</TextField>
          </children>
       </FlowPane>
    </children>
