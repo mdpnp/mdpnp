@@ -82,6 +82,30 @@ public class DeviceTreeModel extends SelectableNode implements ListChangeListene
         }
     }
 
+    @Subscribe
+    public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+        final String key = toKey(evt);
+
+        if (nodeLookup.get(key) == null) {
+            Platform.runLater(() ->
+            {
+                Iterator<TreeItem<Object>> iter = getChildren().iterator();
+                while (iter.hasNext()) {
+                    TreeItem<Object> deviceNode = (TreeItem<Object>) iter.next();
+                    Device d = (Device) deviceNode.getValue();
+                    if (d.getUDI().equals(evt.getUniqueDeviceIdentifier())) {
+                        final TreeItem<Object> metricNode = ensureNode(deviceNode, evt.getMetricId());
+                        final TreeItem<Object> instanceNode = ensureNode(metricNode, evt.getInstanceId());
+
+                        nodeLookup.put(key, instanceNode);
+
+                        log.debug("adding to the tree: {}", key);
+                    }
+                }
+            });
+        }
+    }
+
     static String toKey(DataCollector.DataSampleEvent value) {
         return value.getUniqueDeviceIdentifier() + "/" + value.getMetricId() + "/" + value.getInstanceId();
     }
