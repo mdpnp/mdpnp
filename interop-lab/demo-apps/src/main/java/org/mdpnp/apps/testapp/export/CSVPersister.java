@@ -21,6 +21,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 
 public class CSVPersister extends DataCollectorAppFactory.PersisterUIController implements Initializable {
@@ -35,10 +36,13 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
     @FXML Label filePathLabel;
     @FXML ComboBox<String> backupIndex, fSize;
     @FXML Button changeButton;
+    @FXML TextField sepChar;
     
     //TODO: Can it be a problem that this is static?
     private static boolean rawDateFormat=false;
     
+    private static String separator=",";
+
     @Override
     public void setRawDateFormat(boolean raw) {
     	this.rawDateFormat=raw;
@@ -56,7 +60,16 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
 	    	backupIndex.setDisable(true);
 	    	fSize.setDisable(true);
 	    	changeButton.setDisable(true);
-    	}
+	        if(sepChar.getText().length()>0) {
+	            if(sepChar.getText().equals("\\t")) {
+	                //If they wrote two characters in the box as first character \ and second t, they wanted a tab...
+	                separator="\t";
+                } else {
+                    separator=sepChar.getText();
+                }
+            }
+        }
+
         return true;
     }
 
@@ -85,9 +98,9 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         String devTime = rawDateFormat ? Long.toString(ms) : dateFormats.get().format(new Date(ms));
         String mrn = value.getPatientId();
 
-        sb.append(3).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
-                .append(devTime).append(",").append(mrn).append(",").append(1).append(",")
-                .append(value.getValue().getKey()).append(",")
+        sb.append(3).append(separator).append(value.getUniqueDeviceIdentifier()).append(separator)
+                .append(devTime).append(separator).append(mrn).append(separator).append(1).append(separator)
+                .append(value.getValue().getKey()).append(separator)
                 .append(value.getValue().getValue());
 
         return sb.toString();
@@ -101,10 +114,10 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         Number v[] = value.getValues();
         String mrn = value.getPatientId();
 
-        sb.append(2).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
-                .append(value.getMetricId()).append(",")
-                .append(value.getInstanceId()).append(",")
-                .append(devTime).append(",").append(mrn).append(",").append(v.length);
+        sb.append(2).append(separator).append(value.getUniqueDeviceIdentifier()).append(separator)
+                .append(value.getMetricId()).append(separator)
+                .append(value.getInstanceId()).append(separator)
+                .append(devTime).append(separator).append(mrn).append(separator).append(v.length);
 
         for(Number n : v) {
             sb.append(",").append(scientificFormat.format(n.doubleValue()));
@@ -120,10 +133,10 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         String devTime = rawDateFormat ? Long.toString(ms) : dateFormats.get().format(new Date(ms));
         String mrn = value.getPatientId();
 
-        sb.append(1).append(",").append(value.getUniqueDeviceIdentifier()).append(",")
-            .append(value.getMetricId()).append(",")
-            .append(value.getInstanceId()).append(",")
-            .append(devTime).append(",").append(mrn).append(",").append(1).append(",")
+        sb.append(1).append(separator).append(value.getUniqueDeviceIdentifier()).append(separator)
+            .append(value.getMetricId()).append(separator)
+            .append(value.getInstanceId()).append(separator)
+            .append(devTime).append(separator).append(mrn).append(separator).append(1).append(separator)
             .append(valueFormat.format(value.getValue()));
 
         return sb.toString();
