@@ -48,7 +48,7 @@ public class DataCollectorApp implements Initializable {
 
     protected static class Row {
         private final String uniqueDeviceIdentifier, instanceId, metricId, devTime;
-        private final float value;
+        private final float[] value;
         
         public Row(final String uniqueDeviceIdentifier, final String instanceId, 
                    final String metricId, final String devTime, final float value) {
@@ -56,11 +56,20 @@ public class DataCollectorApp implements Initializable {
             this.instanceId = instanceId;
             this.metricId = metricId;
             this.devTime = devTime;
-            this.value = value;
+            this.value = new float[] {value};
         }
         
+        public Row(final String uniqueDeviceIdentifier, final String instanceId,
+                final String metricId, final String devTime, final float[] values) {
+            this.uniqueDeviceIdentifier = uniqueDeviceIdentifier;
+            this.instanceId = instanceId;
+            this.metricId = metricId;
+            this.devTime = devTime;
+            this.value = values;
+        }
+
         public float getValue() {
-            return value;
+            return value[0];
         }
         
         public String getDevTime() {
@@ -302,6 +311,27 @@ public class DataCollectorApp implements Initializable {
                     tblModel.subList(250, tblModel.size()).clear();
                 }
                 
+            }
+        });
+    }
+
+    @Subscribe
+    public void handleDataSampleEvent(SampleArrayDataCollector.SampleArrayEvent evt) throws Exception {
+        long ms = evt.getDevTime();
+        String devTime = rawTimes.isSelected() ? Long.toString(ms) : DataCollector.dateFormats.get().format(new Date(ms));
+        Number[] numbers=evt.getValues();
+        float[] floats=new float[numbers.length];
+        for(int i=0;i<numbers.length;i++) {
+            floats[i]=numbers[i].floatValue();
+        }
+        final Row row = new Row(evt.getUniqueDeviceIdentifier(), ""+evt.getInstanceId(),
+                evt.getMetricId(), devTime, floats);
+        Platform.runLater(new Runnable() {
+            public void run() {
+                tblModel.add(0, row);
+                if(tblModel.size()>250) {
+                    tblModel.subList(250, tblModel.size()).clear();
+                }
             }
         });
     }
