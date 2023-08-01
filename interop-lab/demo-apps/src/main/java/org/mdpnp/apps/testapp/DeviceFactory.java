@@ -15,6 +15,7 @@ package org.mdpnp.apps.testapp;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceDriverProvider;
 import org.mdpnp.devices.DeviceDriverProvider.SpringLoadedDriver;
+import org.mdpnp.devices.coleparmer.TB800Balance;
 import org.mdpnp.devices.cpc.bernoulli.DemoBernoulli;
 import org.mdpnp.devices.denver.mseries.MSeriesScale;
 import org.mdpnp.devices.draeger.medibus.*;
@@ -673,6 +674,22 @@ public class DeviceFactory {
                 Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
                 Publisher publisher = context.getBean("publisher", Publisher.class);
                 return new NKV550(subscriber, publisher, eventLoop);
+        }
+    }
+    
+    public static class TB800Provider extends SpringLoadedDriver {
+
+    	@Override
+        public DeviceType getDeviceType() {
+                return new DeviceType(ice.ConnectionType.Serial,"Cole-Parmer", "TB800", "TB800", 1);
+        }
+
+        @Override
+        public AbstractDevice newInstance(AbstractApplicationContext context) throws Exception {
+                EventLoop eventLoop = (EventLoop)context.getBean("eventLoop");
+                Subscriber subscriber = context.getBean("subscriber", Subscriber.class);
+                Publisher publisher = context.getBean("publisher", Publisher.class);
+                return new TB800Balance(subscriber, publisher, eventLoop);
         }
     }
 
