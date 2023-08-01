@@ -1,0 +1,7 @@
+services:
+  dds:
+    build: .
+    environment:
+      RTI_LICENSE_FILE: /opt/mdpnp/flat/OpenICE_license.dat
+      LD_LIBRARY_PATH: /opt/mdpnp/flat
+    working_dir: /opt/mdpnp/flat
