@@ -1,4 +1,2 @@
 services:
-  dds:
-    build: .
-    working_dir: /opt/mdpnp/flat
+  openice:
