@@ -1,0 +1,167 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##========================================================================*/*#
+
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+#* This file contains macros used for DDS_Char* and    *#
+#* std::string string styles                           *#
+#* --------------------------------------------------- *#
+
+#macro(assignCommonStringMemberVariables $member)
+#*--*##set($member.typeEnum="RTI_CDR_CHAR_TYPE")
+#*--*##set($member.elementSize="RTI_CDR_CHAR_SIZE")
+#*--*##set($member.elementPrintMethod="RTICdrType_printString")
+#*--*##set($member.arraySkipMethod="RTICdrStream_skipStringArray")
+#*--*##set($member.sequenceSkipMethod="RTICdrStream_skipStringSequence")
+#*--*##set($member.sequenceSizeMethod="RTICdrType_getStringSequenceMaxSizeSerialized")
+#*--*##set($member.elementCopyMethod="RTICdrType_copyStringEx")
+#*--*##set($member.elementSerializeMethod="RTICdrStream_serializeString")
+#*--*##set($member.elementDeserializeMethod="RTICdrStream_deserializeStringEx")
+#*--*##set($member.pointerSequenceSerializeMethod="RTICdrStream_serializeStringPointerSequence")
+#*--*##set($member.sequenceSerializeMethod="RTICdrStream_serializeStringSequence")
+#*--*##set($member.sequenceDeserializeMethod="RTICdrStream_deserializeStringSequenceEx")
+#*--*##set($member.pointerSequenceDeserializeMethod="RTICdrStream_deserializeStringPointerSequenceEx")
+#*--*##set($member.sequenceSkipMethod="RTICdrStream_skipStringSequence")
+#*--*##set($member.elementSkipMethod="RTICdrStream_skipString")
+#*--*##set($member.sequenceSizeMethod="RTICdrType_getStringSequenceMaxSizeSerialized")
+#*--*##set($member.arraySizeMethod="RTICdrType_getStringArrayMaxSizeSerialized")
+#*--*##set($member.elementSizeMethod="RTICdrType_getStringMaxSizeSerialized")
+#*--*##set($member.elementSizeMethodSimple="RTICdrType_getStringSerializedSize")
+#*--*##set($member.allocMethod="DDS_String_alloc")
+#*--*##set($member.finalizeMethod="DDS_String_free")
+#end
+
+#macro(assignCommonWStringMemberVariables $member)
+#*--*##set($member.allocMethod="DDS_Wstring_alloc")
+#end
+
+#macro(allocStringOrWStringObject $strRef $member $memoryManager)
+#*--*##if($memoryManager)
+#*----*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING")
+$strRef = REDAInlineMemory_reserveBuffer(
+        memoryManager, 
+        (REDAInlineMemorySize) 
+                ((#getStrSize($member "init")+1) * sizeof(DDS_Wchar)));
+#*----*##else
+$strRef = REDAInlineMemory_reserveBuffer(
+        memoryManager, 
+        (REDAInlineMemorySize) (#getStrSize($member "init")+1));
+#*----*##end
+#*--*##else
+$strRef = $member.allocMethod (#getStrSize($member "init"));
+#*--*##end
+#end
+
+#macro(allocAndCopyDefaultWStringObjectReference $member $memoryManager)
+const DDS_Wchar wStringValue[] = ${member.defaultValue};
+#*--*##if($memoryManager)
+$member.basicStringSampleRef = REDAInlineMemory_reserveBuffer(
+        memoryManager, 
+        (REDAInlineMemorySize)
+                ((#getStrSize($member "init")+1) * sizeof(DDS_Wchar)));
+#*--*##else
+$member.basicStringSampleRef = DDS_Wstring_alloc(#getStrSize($member "init"));
+#*--*##end
+if ($member.basicStringSampleRef != NULL) {
+    RTIOsapiUtility_unusedReturnValue(
+            RTICdrType_copyWstringEx(
+                    &${member.basicStringSampleRef},
+                    wStringValue,
+                    #getStrSize($member "init"),
+                    RTI_FALSE),
+            RTIBool);      
+}
+#end
+
+#macro(allocAndCopyDefaultStringObjectReference $member $memoryManager)
+#*--*##if($memoryManager)
+${member.basicStringSampleRef} = REDAInlineMemory_reserveBuffer(
+        memoryManager, 
+        (REDAInlineMemorySize) (#getStrSize($member "init")+1));
+#*--*##else
+${member.basicStringSampleRef} = DDS_String_alloc(#getStrSize($member "init"));
+#*--*##end
+if (${member.basicStringSampleRef} != NULL) {
+    RTIOsapiUtility_unusedReturnValue(
+            RTICdrType_copyStringEx(
+                    &${member.basicStringSampleRef},
+                    ${member.defaultValue},
+                    #getStrSize($member "init"),
+                    RTI_FALSE),
+            RTIBool);
+}
+#end
+
+#macro(replaceStringObjectReferenceWithDefault $member $memoryManager)
+#*--*##if(${member.strSize} == -1)
+#*----*##if($memoryManager)
+if (${member.basicStringSampleRef} == NULL
+        || REDAInlineMemBuffer_release(
+                ${member.basicStringSampleRef})) {
+    ${member.basicStringSampleRef} = REDAInlineMemory_reserveBuffer(
+            memoryManager, 
+            (REDAInlineMemorySize) (strlen(${member.defaultValue}) + 1));
+    if (${member.basicStringSampleRef} != NULL) {
+        RTIOsapiUtility_unusedReturnValue(
+                RTICdrType_copyStringEx(
+                        &${member.basicStringSampleRef},
+                        ${member.defaultValue},
+                        #getStrSize($member "init"),
+                        RTI_FALSE),
+                RTIBool);
+    }
+}
+#*----*##else
+DDS_String_replace(&${member.basicStringSampleRef}, ${member.defaultValue});
+#*----*##end
+#*--*##else
+RTIOsapiUtility_unusedReturnValue(
+        RTICdrType_copyStringEx(
+                &${member.basicStringSampleRef},
+                ${member.defaultValue},
+                #getStrSize($member "init"),
+                RTI_FALSE),
+        RTIBool);
+#*--*##end
+#end
+
+#macro(replaceWStringObjectReferenceWithDefault $member $memoryManager)
+const DDS_Wchar wStringValue[] = ${member.defaultValue};
+#*--*##if(${member.strSize} == -1)
+#*----*##if($memoryManager)
+if (${member.basicStringSampleRef} == NULL
+        || REDAInlineMemBuffer_release(
+                ${member.basicStringSampleRef})) {
+    ${member.basicStringSampleRef} = REDAInlineMemory_reserveBuffer(
+            memoryManager, 
+            (REDAInlineMemorySize)
+                    ((DDS_Wstring_length(wStringValue) + 1) * sizeof(DDS_Wchar)));
+    if (${member.basicStringSampleRef} != NULL) {
+        RTIOsapiUtility_unusedReturnValue(
+                RTICdrType_copyWstringEx(
+                        &${member.basicStringSampleRef},
+                        wStringValue,
+                        #getStrSize($member "init"),
+                        RTI_FALSE),
+                RTIBool);
+    }
+}
+#*----*##else
+DDS_Wstring_replace(&${member.basicStringSampleRef}, wStringValue);
+#*----*##end
+#*--*##else
+RTIOsapiUtility_unusedReturnValue(
+        RTICdrType_copyWstringEx(
+                &${member.basicStringSampleRef},
+                wStringValue,
+                #getStrSize($member "init"),
+                RTI_FALSE),
+        RTIBool);  
+#*--*##end
+#end

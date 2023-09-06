@@ -1,0 +1,103 @@
+##/*
+##
+## ViewController (VC) macros
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2.3.x,10sep15,djs created 
+##
+##========================================================================*/
+
+#macro (VC_Pub_Header_class $language $namespace)
+#*--*##if($language.equals("C"))
+    struct DDS_Entities dds_entities;
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+    DDS_Entities dds_entities;
+#*--*##elseif($language.equals("Cpp") && $namespace)
+    DDS_Entities dds_entities;
+#*--*##elseif($language.equals("cpp11stl"))
+    PublisherApp publisherApp;
+#*--*##end
+#end // VC_Pub_Header_class
+
+##
+
+#macro (VC_Pub_Entity_Setup $language $namespace)
+#*--*##if($language.equals("C"))
+        memset(&dds_entities, 0, sizeof(struct DDS_Entities));
+        dds_setup(&dds_entities, domain);
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+         dds_entities.dds_setup(domain);
+#*--*##elseif($language.equals("Cpp") && $namespace)
+         dds_entities.dds_setup(domain);
+#*--*##elseif($language.equals("cpp11stl"))
+         publisherApp.setup(domain);
+#*--*##end
+#end // VC_Pub_Entity_Setup
+
+##
+
+#macro (VC_Pub_Publish $language $namespace)
+#*--*##if($language.equals("C"))
+    dds_publish(&dds_entities, sample_count); // publish one sample
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+    dds_entities.dds_publish(sample_count); // publish one sample
+#*--*##elseif($language.equals("Cpp") && $namespace)
+    dds_entities.dds_publish(sample_count); // publish one sample
+#*--*##elseif($language.equals("cpp11stl"))
+    publisherApp.publish(); // publish one sample
+#*--*##end
+#end // VC_Pub_Publish
+
+##
+
+#macro (VC_Pub_Shutdown $language $namespace)
+#*--*##if($language.equals("C"))
+        publisher_shutdown(&(dds_entities));
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+        dds_entities.publisher_shutdown();
+#*--*##elseif($language.equals("Cpp") && $namespace)
+        dds_entities.publisher_shutdown();
+#*--*##elseif($language.equals("cpp11stl"))
+#*--*##end
+#end // VC_Pub_Publish
+
+
+#macro (VC_Sub_Header_class $language $namespace)
+#*--*##if($language.equals("C"))
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+#*--*##elseif($language.equals("Cpp") && $namespace)
+#*--*##elseif($language.equals("cpp11stl"))
+    SubscriberApp subscriberApp;
+#*--*##end
+#end // VC_Sub_Header_class
+
+#macro (VC_Sub_Subscribe_Extern $language $namespace)
+#*--*##if($language.equals("C"))
+extern int subscriber_main(int domainId, int sample_count);
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+extern "C" int subscriber_main(int domainId, int sample_count);
+#*--*##elseif($language.equals("Cpp") && $namespace)
+extern "C" int subscriber_main(int domainId, int sample_count);
+#*--*##elseif($language.equals("cpp11stl"))
+#*--*##end
+#end // VC_Sub_Subscribe_Extern
+
+#macro (VC_Sub_Subscribe $language $namespace)
+#*--*##if($language.equals("C"))
+subscriber_main(domain, count);
+#*--*##elseif($language.equals("Cpp") && !$namespace)
+subscriber_main(domain, count);
+#*--*##elseif($language.equals("Cpp") && $namespace)
+subscriber_main(domain, count);
+#*--*##elseif($language.equals("cpp11stl"))
+subscriberApp.setup(domain);
+#*--*##end
+#end // VC_Sub_Subscribe
+

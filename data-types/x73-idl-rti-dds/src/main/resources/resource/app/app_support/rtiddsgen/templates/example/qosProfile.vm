@@ -1,0 +1,182 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##modification history:
+##---------------------
+##230,01dec15,bps CODEGENII-466 Update comment with new installation path, new base profiles of 5.2.0 and User Manual reference.
+##10a,04nov13,ajm minor change in USER_QOS_PROFILE.xml comment 
+##10a,31oct13,ajm Changed some profile names in the generate Qos file 
+##10a,10jun13,ajm CODEGENII-143 and CORE-5587 Updating QoS profiles to inherit from builtinQosProfiles
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm there was an space at the beggining of the file
+##10a,17oct11,jmt adding version variable
+##10a,14oct11,jmt created 
+##========================================================================*/*#
+<?xml version="1.0"?>
+<!-- 
+Description
+XML QoS Profile for ${envMap.idlFileName}
+
+(c) Copyright, Real-Time Innovations, 2012.  All rights reserved.
+RTI grants Licensee a license to use, modify, compile, and create derivative
+works of the software solely for use with RTI Connext DDS. Licensee may
+redistribute copies of the software provided that all such copies are
+subject to this license. The software is provided "as is", with no warranty
+of any type, including any warranty for fitness for any purpose. RTI is
+under no obligation to maintain or support the software. RTI shall not be
+liable for any incidental or consequential damages arising out of the use
+or inability to use the software.
+
+The QoS configuration of the DDS entities in the generated example is loaded 
+from this file.
+
+This file is used only when it is in the current working directory or when the
+environment variable NDDS_QOS_PROFILES is defined and points to this file.
+
+The profile in this file inherits from the builtin QoS profile 
+BuiltinQosLib::Generic.StrictReliable. That profile, along with all of the 
+other built-in QoS profiles can be found in the 
+BuiltinProfiles.documentationONLY.xml file located in the 
+$NDDSHOME/resource/xml/ directory.
+
+You may use any of these QoS configurations in your application simply by 
+referring to them by the name shown in the 
+BuiltinProfiles.documentationONLY.xml file.
+
+Also, following the QoS Profile composition pattern you can use QoS Snippets
+to easily create your final QoS Profile. For further information visit:
+https://community.rti.com/best-practices/qos-profile-inheritance-and-composition-guidance
+
+There is a QoS Snippet library that contains a collection of
+QoS Snippets that set some specific features or configurations. You can find
+them in the BuiltinProfiles.documentationONLY.xml file as well.
+
+You should not edit the file BuiltinProfiles.documentationONLY.xml directly.
+However, if you wish to modify any of the values in a built-in profile, the
+recommendation is to create a profile of your own and inherit from the built-in
+profile you wish to modify. The NDDS_QOS_PROFILES.example.xml file (contained in 
+the same directory as the BuiltinProfiles.documentationONLY.xml file) shows how
+to inherit from the built-in profiles. 
+
+For more information about XML QoS Profiles see the "Configuring QoS with
+XML" chapter in the RTI Connext DDS Core Libraries User's Manual.
+-->
+
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="${envMap.schemaLocation}">
+    <!-- QoS Library containing the QoS profile used in the generated example.
+
+        A QoS library is a named set of QoS profiles.
+    -->
+    <qos_library name="${envMap.idlFileName}_Library">
+
+        <!-- QoS profile used to configure reliable communication between the DataWriter 
+             and DataReader created in the example code.
+
+             A QoS profile groups a set of related QoS.
+        -->
+#*--*##if($envMap.largeDataProfile)
+        <qos_profile name="${envMap.idlFileName}_Profile" base_name="BuiltinQosLib::Generic.StrictReliable.LargeData" is_default_qos="true">
+#*--*##else
+        <qos_profile name="${envMap.idlFileName}_Profile" base_name="BuiltinQosLib::Generic.StrictReliable" is_default_qos="true">
+#*--*##end
+            <!-- QoS used to configure the data writer created in the example code -->                
+            <datawriter_qos>
+                <publication_name>
+                    <name>${envMap.idlFileName}DataWriter</name>
+                </publication_name>
+#*--*##if($envMap.unboundedSupport)   
+                <!-- This property is needed when using -unboundedSupport command-line option
+                 in order to configure the memory allocation policy for the buffers that are
+                 used to serialize the samples -->                
+                <property>
+                    <value>
+                        <element>
+                           <name>
+                           dds.data_writer.history.memory_manager.fast_pool.pool_buffer_max_size
+                           </name>
+                           <value>4096</value>
+                        </element>
+#*----*##if($envMap.language.equals("Java"))                
+                    <!-- Java will use a buffer of this length to serialize all frames with a
+                     size smaller than or equal than this length. When a sample is published,
+                    Java will reallocate the serialization buffer to match the serialized
+                    size of the new sample if it is greater to this length -->                
+                        <element>
+                           <name>
+                           dds.data_writer.history.memory_manager.java_stream.min_size
+                           </name>
+                           <value>4096</value>
+                        </element>
+                        <element>
+                           <name>
+                           dds.data_writer.history.memory_manager.java_stream.trim_to_size
+                           </name>
+                           <value>1</value>
+                        </element>
+#*----*##end      
+                    </value>                    
+                </property>
+#*--*##end                                
+            </datawriter_qos>
+
+            <!-- QoS used to configure the data reader created in the example code -->                
+            <datareader_qos>
+                <subscription_name>
+                    <name>${envMap.idlFileName}DataReader</name>
+                </subscription_name>
+#*--*##if($envMap.unboundedSupport)
+                <!-- This property is needed when using -unboundedSupport command-line option
+                in order to configure the memory allocation policy for the buffers that are 
+                used to keep the serialized keys for the instances -->        
+                <property>
+                    <value>
+                        <element>
+                            <name>
+                            dds.data_reader.history.memory_manager.fast_pool.pool_buffer_max_size
+                            </name>
+                            <value>4096</value>
+                        </element>
+#*----*##if($envMap.language.equals("Java")) 
+                     <!-- Java will use a buffer of this length to deserialize all samples with a
+                    serialized size smaller or equal than this length. When a new sample is received,
+                    Java will re-allocate the deserialization buffer to match the serialized size 
+                    of the new sample if it is greater to this length --> 
+                        <element>
+                            <name>
+                            dds.data_reader.history.memory_manager.java_stream.min_size
+                            </name>
+                            <value>4096</value>
+                        </element>
+                          <element>
+                            <name>
+                            dds.data_reader.history.memory_manager.java_stream.trim_to_size
+                            </name>
+                            <value>1</value>
+                        </element>
+#*----*##end
+                    </value>
+                </property>
+#*--*##end
+            </datareader_qos>
+            <domain_participant_qos>
+                <!--
+                The participant name, if it is set, will be displayed in the
+                RTI tools, making it easier for you to tell one
+                application from another when you're debugging.
+                -->
+                <participant_name>
+                    <name>${envMap.idlFileName}Participant</name>
+                    <role_name>${envMap.idlFileName}ParticipantRole</role_name>
+                </participant_name>
+
+            </domain_participant_qos>
+        </qos_profile>
+
+    </qos_library>
+</dds>

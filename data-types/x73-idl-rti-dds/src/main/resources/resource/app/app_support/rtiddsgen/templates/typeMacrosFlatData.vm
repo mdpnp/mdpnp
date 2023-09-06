@@ -1,0 +1,1390 @@
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2018.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+## ----------------------------------------------------------------------------
+
+#* ----------------------------------------------------------------------------
+   typeMacrosFlatData.vm
+-------------------------------------------------------------------------------
+
+This file contains the templates for flat-data types in C++.
+
+The two main macros are:
+   - flatTypeDeclaration (called from typeHeader.vm)
+   - flatTypeImplementation (called from typeBody.vm)   
+
+Note that the same IDL file may contain flat and plain types
+
+---------------------------------------------------------------------------- *#
+
+#* ----------------------------------------------------------------------------
+Set flat-data-specific node and member variables.
+
+This is called by flatTypeDeclaration and for each member in 
+flatConstGettersHeader
+---------------------------------------------------------------------------- *#
+
+#macro(flatSetNodeVariables $node)
+#*--*##if($node.baseTypeFQName)
+#set($node.baseOffset="${node.baseTypeFQName}Offset")
+#set($node.baseConstOffset="${node.baseTypeFQName}ConstOffset")
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#set($node.baseBuilder="${node.baseTypeFQName}Builder")
+#*------*##end
+#*--*##else ## !$node.baseTypeFQName
+#*----*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#set($node.baseOffset="::rti::flat::MutableOffset")
+#set($node.baseConstOffset="::rti::flat::MutableOffset")
+#*------*##if($node.constructKind.equals("union"))
+#*---------*##if($node.unionDiscriminatorMap.isEnum) ## Enums require casting to int32
+#*-----------*##if($envMap.language.equals("Cpp")) ## traditional C++
+#set($node.baseBuilder="::rti::flat::UnionBuilder<int>")
+#*-----------*##else
+#set($node.baseBuilder="::rti::flat::UnionBuilder<int32_t>")
+#*-----------*##end
+#*---------*##else ## non-enum union discriminator builders
+#set($node.baseBuilder="::rti::flat::UnionBuilder< ${node.unionDiscriminatorMap.nativeTypeFQName} >")
+#*---------*##end ## enum union discriminator
+#*------*##else
+#set($node.baseBuilder="::rti::flat::AggregationBuilder")
+#*------*##end ## builder type
+#*----*##else ## !MUTABLE_EXTENSIBILITY
+#set($node.baseOffset="::rti::flat::FinalOffset< ${node.nativeFQNameInModule}Offset >")
+#set($node.baseConstOffset="::rti::flat::FinalOffset< ${node.nativeFQNameInModule}ConstOffset >")
+#*----*##end ## MUTABLE_EXTENSIBILITY
+#*--*##end ## $node.baseTypeFQName
+#set($node.builderType="${node.nativeFQNameInModule}Builder")
+#end
+
+#macro(flatSetMemberVariables $member $node)
+#flatSetMemberOffsetTypes($member $node)
+#flatSetMemberBuilderType($member $node)
+#end
+
+#macro(flatSetMemberOffsetTypes $member $node)
+#set($member.isNonOptionalPrimitive=false)
+#set($member.isPrimitive=false)
+#*--------*##if($member.typeKind.equals("user") && !$member.isEnum) ## Structs
+#*----------*##if($member.seqSize) ## Sequence of structs
+#set($member.constOffsetType="::rti::flat::SequenceOffset< ${member.nativeTypeFQName}::ConstOffset >")
+#set($member.offsetType="::rti::flat::SequenceOffset< ${member.nativeTypeFQName}::Offset >")
+#*----------*##else ## Struct (not a sequence)
+#set($member.constOffsetType="${member.nativeTypeFQName}::ConstOffset")
+#set($member.offsetType="${member.nativeTypeFQName}::Offset")
+#*----------*##end ## Struct or seq of structs
+#*--------*##else ## Strings, primitives and enums
+#*----------*##if($member.seqSize && !$member.strSize)
+#set($member.constOffsetType="const ::rti::flat::PrimitiveSequenceOffset< ${member.nativeTypeFQName} >")
+#set($member.offsetType="::rti::flat::PrimitiveSequenceOffset< ${member.nativeTypeFQName} >")
+#*----------*##elseif($member.strSize)
+#*------------*##if($member.nativeTypeFQName=="DDS_Wchar *" || $member.nativeTypeFQName=="dds::core::wstring" || $member.nativeTypeFQName=="DDS_Wstring")
+#set($member.constOffsetType="const ::rti::flat::WStringOffset")
+#set($member.offsetType="::rti::flat::WStringOffset")
+#*------------*##else
+#set($member.constOffsetType="const ::rti::flat::StringOffset")
+#set($member.offsetType="::rti::flat::StringOffset")
+#*------------*##end
+#*------------*##if($member.seqSize) ## Sequence of strings
+#set($member.constOffsetType="::rti::flat::SequenceOffset< $member.constOffsetType >")
+#set($member.offsetType="::rti::flat::SequenceOffset< $member.offsetType >")
+#*------------*##end ## Sequence of strings
+#*----------*##else ## Primitives
+#set($member.isPrimitive=true)
+#*------------*##if($member.isOptional)
+#set($member.constOffsetType="::rti::flat::PrimitiveConstOffset< ${member.nativeTypeFQName} >")
+#set($member.offsetType="::rti::flat::PrimitiveOffset< ${member.nativeTypeFQName} >")
+#*------------*##else
+#set($member.constOffsetType="${member.nativeTypeFQName}")
+#set($member.offsetType="${member.nativeTypeFQName}")
+#set($member.isNonOptionalPrimitive=true)
+#*------------*##end
+#*-----------*##end ## sequence of primitives
+#*--------*##end ## Structs / primitives
+## Arrays -----------
+#*--------*##if($member.dimensionList)
+#set($member.isNonOptionalPrimitive=false)
+#set($member.isPrimitive=false)
+#*---------*##if($member.extensibility != "MUTABLE_EXTENSIBILITY" && !$member.seqSize && !$member.strSize)
+#*----------*##if($member.typeKind.equals("user") && !$member.isEnum)
+#*------------*##if($node.extensibility != "MUTABLE_EXTENSIBILITY")
+#set($member.constOffsetType="::rti::flat::FinalArrayOffset< ${member.constOffsetType}, $member.arrayTotalSize >")
+#set($member.offsetType="::rti::flat::FinalArrayOffset< ${member.offsetType}, $member.arrayTotalSize >")
+#*------------*##else
+#set($member.constOffsetType="::rti::flat::FinalAlignedArrayOffset< ${member.constOffsetType}, $member.arrayTotalSize >")
+#set($member.offsetType="::rti::flat::FinalAlignedArrayOffset< ${member.offsetType}, $member.arrayTotalSize >")
+#*------------*##end
+#*----------*##else
+#set($member.constOffsetType="const ::rti::flat::PrimitiveArrayOffset< ${member.constOffsetType}, $member.arrayTotalSize >")
+#set($member.offsetType="::rti::flat::PrimitiveArrayOffset< ${member.offsetType}, $member.arrayTotalSize >")
+#*----------*##end
+#*---------*##else ## ($member.seqSize)
+#set($member.constOffsetType="::rti::flat::MutableArrayOffset< ${member.constOffsetType}, $member.arrayTotalSize >")
+#set($member.offsetType="::rti::flat::MutableArrayOffset< ${member.offsetType}, $member.arrayTotalSize >")
+#*---------*##end ## ($member.seqSize)
+#*--------*##end ## arrays
+#end
+
+#macro(flatSetMemberBuilderType $member $node)
+#*--*##if($member.strSize)
+#*----*##if($member.nativeTypeFQName=="DDS_Wchar *" || $member.nativeTypeFQName=="dds::core::wstring" || $member.nativeTypeFQName=="DDS_Wstring")
+#set($member.builderType="::rti::flat::WStringBuilder")
+#*----*##else
+#set($member.builderType="::rti::flat::StringBuilder")
+#*----*##end
+#*--*##elseif($member.extensibility == "MUTABLE_EXTENSIBILITY")
+#set($member.builderType="${member.nativeTypeFQName}Builder")
+#*--*##end
+#*--*##if($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.strSize)
+#*--------*##if($member.seqSize)
+#set($member.builderType="::rti::flat::MutableSequenceBuilder< ${member.builderType} >")
+#*--------*##end ## array/sequence/neither
+#*--*##else ## $member.extensibility != "MUTABLE_EXTENSIBILITY"
+#*--------*##if($member.seqSize)
+#*----------*##if($member.typeKind.equals("user") && !$member.isEnum)
+#set($member.builderType="::rti::flat::FinalSequenceBuilder< ${member.nativeTypeFQName}::Offset >")
+#*----------*##else
+#set($member.builderType="::rti::flat::PrimitiveSequenceBuilder< ${member.nativeTypeFQName} >")
+#*----------*##end
+#*--------*##end ## array/sequence
+#*--*##end ## member MUTABLE_EXTENSIBILITY
+## Arrays -----
+#*--*##if($member.dimensionList && ($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.seqSize || $member.strSize))
+#set($member.builderType="::rti::flat::MutableArrayBuilder< ${member.builderType}, $member.arrayTotalSize >")
+#*--*##end
+#end
+
+#* ----------------------------------------------------------------------------
+Generates the type declaration of a flat-data type, Foo
+
+For every IDL type Foo with @language_binding(FLAT_DATA) we generate the 
+following:
+
+- FooOffset
+- FooConstOffset
+- Foo
+
+Foo contains and owns a CDR buffer and represents the sample that can be created,
+written and read. The method root() obtains a FooOffset, and the overload
+"root() const" obtains a FooConstOffset.
+
+FooOffset represents a position inside the buffer of a sample. It provides
+the means to access and manipulate the member values directly on
+the CDR buffer via getters and setters. This is similar to an iterator.
+
+FooConstOffset is like a FooOffset, but it only provides const accessors. This
+is similar to a const_iterator.
+---------------------------------------------------------------------------- *#
+#macro(flatTypeDeclaration $node)
+#flatSetNodeVariables($node)
+class NDDSUSERDllExport ${node.nativeFQNameInModule}ConstOffset 
+    : public ${node.baseConstOffset} {
+public:
+#*----*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    enum { required_alignment = ${node.cdrAlignment} };
+
+    static ::rti::flat::offset_t serialized_size(::rti::flat::offset_t initial_position)
+    {
+        static const ::rti::flat::offset_t sizes[] = {${node.cdrSerializedSize[0]}, ${node.cdrSerializedSize[1]}, ${node.cdrSerializedSize[2]}, ${node.cdrSerializedSize[3]}};
+        return sizes[initial_position % 4];
+    }
+#*----*##end
+
+    #flatConstructors($node, "Const")
+
+    #flatConstGettersHeader($node)
+};
+class NDDSUSERDllExport ${node.nativeFQNameInModule}Offset 
+    : public ${node.baseOffset} {
+public:
+    typedef ${node.nativeFQNameInModule}ConstOffset ConstOffset;
+    
+#*----*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))    
+    enum { required_alignment = ${node.cdrAlignment} };
+
+    static ::rti::flat::offset_t serialized_size(::rti::flat::offset_t initial_position)
+    {
+        static const ::rti::flat::offset_t sizes[] = {${node.cdrSerializedSize[0]}, ${node.cdrSerializedSize[1]}, ${node.cdrSerializedSize[2]}, ${node.cdrSerializedSize[3]}};
+        return sizes[initial_position % 4];
+    }
+#*----*##end
+
+    #flatConstructors($node, "")
+
+    // Const accessors
+    #flatConstGettersHeader($node)
+
+    // Modifiers
+    #flatGetterAndSettersHeader($node)
+};
+
+
+#*----*##if($envMap.language.equals("Cpp"))
+class ${node.nativeFQNameInModule} : public ::rti::flat::Sample< ${node.nativeFQNameInModule}Offset > {
+public:
+    typedef ::rti::flat::Sample< ${node.nativeFQNameInModule}Offset > Base;
+    typedef struct ${node.nativeSeqFQNameInModule} Seq;
+#*------*##if($node.topLevel=="true")
+    typedef ${node.nativeFQNameInModule}TypeSupport TypeSupport;
+    typedef ${node.nativeFQNameInModule}DataWriter DataWriter;
+    typedef ${node.nativeFQNameInModule}DataReader DataReader;
+#*------*##end
+
+    static ${node.nativeFQNameInModule} * create_data();
+};
+#*----*##else ## modern C++
+typedef ::rti::flat::Sample< ${node.name}Offset > ${node.name};
+#*----*##end
+##
+## Generate FooBuilder class (only for mutable types)
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+##
+##
+class NDDSUSERDllExport ${node.nativeFQNameInModule}Builder
+    : public ${node.baseBuilder} {
+public:
+    typedef ${node.nativeFQNameInModule}Offset Offset;
+    typedef ${node.baseBuilder} Base;
+
+    #flatBuilderConstructors($node, "Const")
+
+    #flatBuilderMethodsHeader($node)
+
+    RTI_FLAT_BUILDER_DEFINE_MOVE_OPERATIONS(${node.nativeFQNameInModule}Builder, AggregationBuilder)
+};
+##
+#end ## !$node.extensibility.equals("MUTABLE_EXTENSIBILITY")
+##
+#end ## macro flatGenerateDataType
+
+#macro (flatDeclareSampleTraits $node)
+namespace rti { namespace flat {
+
+#foreach($node in $constructMapList)
+#*--*##if($node.isAggregationType && $node.languageBinding.equals("FLAT_DATA"))
+template <>
+struct flat_type_traits< ${node.nativeFQName} > {
+    typedef ${node.nativeFQName}PlainHelper plain_type;
+    typedef ${node.nativeFQName}Offset offset;
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    typedef ${node.nativeFQName}Builder builder;
+#end
+};
+
+template <>
+struct flat_type_traits< ${node.nativeFQName}Offset > {
+    typedef ${node.nativeFQName} flat_type;
+    typedef ${node.nativeFQName}PlainHelper plain_type;
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    typedef ${node.nativeFQName}Builder builder;
+#end
+};
+
+template <>
+struct flat_type_traits< ${node.nativeFQName}ConstOffset > 
+        : flat_type_traits< ${node.nativeFQName}Offset > {
+};
+
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+template <>
+struct flat_type_traits< ${node.nativeFQName}Builder > {
+    typedef ${node.nativeFQName} flat_type;
+    typedef ${node.nativeFQName}PlainHelper plain_type;
+    typedef ${node.nativeFQName}Offset offset;
+};
+#end
+
+#*--*##end
+## For traditional C++ only, we need to specialize the array-initialization
+## functions for each enum type
+#*--*##if ($node.constructKind=="enum" && $envMap.language=="Cpp")
+namespace detail {
+template <>
+struct default_primitive_value< ${node.nativeFQName} > {
+
+    static ${node.nativeFQName} get()
+    {
+        ${node.nativeFQName} default_enumerator;
+        ${node.nativeFQName}_initialize(&default_enumerator);
+        return default_enumerator;
+    }
+};
+} // namespace detail
+#*--*##end
+
+#end
+
+} } // namespace ::rti::flat
+#end
+
+#macro (flatMemberOffsets $node $member)
+#*--*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+static const ::rti::flat::offset_t offsets[] = {$member.cdrOffset[0], $member.cdrOffset[1], $member.cdrOffset[2], $member.cdrOffset[3]};
+#*----*##if($member.dimensionList && $member.typeKind.equals("user") && !$member.isEnum)
+static const ::rti::flat::offset_t first_element_size[] = {$member.cdrArrayFirstElementSize[0], $member.cdrArrayFirstElementSize[1], $member.cdrArrayFirstElementSize[2], $member.cdrArrayFirstElementSize[3]};
+static const ::rti::flat::offset_t element_size = $member.cdrArrayElementSize;
+#*----*##end
+#*--*##end
+#end
+
+
+#* ----------------------------------------------------------------------------
+Generates the Offset class constructor
+---------------------------------------------------------------------------- *#
+#macro (flatConstructors $node, $constSuffix)
+// Null offset
+${node.nativeFQNameInModule}${constSuffix}Offset()
+{
+}
+
+// Constructor is for internal use only
+${node.nativeFQNameInModule}${constSuffix}Offset(
+    #if($constSuffix.equals("Const"))const #{end}::rti::flat::SampleBase *sample, 
+#*--*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    ::rti::flat::offset_t offset,
+    ::rti::flat::offset_t member_size)
+#*----*##if($constSuffix.equals("Const"))
+    : ${node.baseConstOffset}(const_cast< ::rti::flat::SampleBase * >(sample), offset, member_size)
+#*----*##else
+    : ${node.baseOffset}(sample, offset, member_size)
+#*----*##end
+#*--*##else
+    ::rti::flat::offset_t offset)
+#*----*##if($constSuffix.equals("Const"))
+    : ${node.baseConstOffset}(const_cast< ::rti::flat::SampleBase * >(sample), offset)
+#*----*##else
+    : ${node.baseOffset}(sample, offset)
+#*----*##end
+#*--*##end
+{
+}
+#end ## macro flatGetterAndSettersHeader
+
+#* ----------------------------------------------------------------------------
+Generates the getters and setters for each member
+---------------------------------------------------------------------------- *#
+#macro (flatConstGettersHeader $node)
+#*----*##if($node.constructKind.equals("union"))
+#*----*##flatSetMemberVariables($node.unionDiscriminatorMap $node)
+#*----*##flatConstGetterHeader ($node.unionDiscriminatorMap $node)
+#*----*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyAllDirectives($member)
+#*----*##else
+#*----*##flatSetMemberVariables($member $node)
+#*----*##flatConstGetterHeader($member $node)
+#*----*##end
+#*--*##end
+#end ## macro flatConstGettersHeader
+
+#macro (flatGetterAndSettersHeader $node)
+#*----*##if($node.constructKind.equals("union"))
+#*----*##flatGetterHeader ($node.unionDiscriminatorMap $node)
+#*----*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyAllDirectives($member)
+#*----*##else
+#*----*##flatGetterHeader($member $node)
+#*----*##flatSetterHeader($member)
+#*----*##end
+#*--*##end
+#end ## macro flatGetterAndSettersHeader
+
+#* ----------------------------------------------------------------------------
+Generates the return type of the getter for a given member.
+
+For fixed-size types, there are 4 possibilities:
+- FinalArrayOffset<Foo, N>, if member is an array of an aggregated type Foo
+- PrimitiveArrayOffset<T, N>, if member is an array of primitive types
+- FooOffset, if member is of the aggreated type Foo
+- A primitive type
+---------------------------------------------------------------------------- *#
+#macro (flatGetMemberType $member, $constSuffix)
+#if($constSuffix.equals("Const"))${member.constOffsetType}#else${member.offsetType}#end
+#end
+
+#* ----------------------------------------------------------------------------
+Declares the getters
+
+For a complex member foo of type Foo, it generates:
+
+FooOffset foo();
+const FooOffset foo() const;
+
+For a primitive member bar of type short, it generates:
+
+short foo() const;
+
+For an array foo_array of Foo:
+
+FinalArrayOffset<FooOffset> foo_array();
+const FinalArrayOffset<FooOffset> foo_array() const;
+---------------------------------------------------------------------------- *# 
+#macro (flatGetterHeader $member $node)
+## Primitive types do not have a non-const getter (they have a setter)
+#*--*##if(!$member.isNonOptionalPrimitive)
+#flatGetMemberType($member, "") ${member.name}(); 
+#*--*##end
+#end
+
+#macro (flatConstGetterHeader $member $node)
+#flatGetMemberType($member, "Const") ${member.name}() const; 
+#end
+
+#* ----------------------------------------------------------------------------
+Declares the setters for members of primitive types. Complex members don't have
+setters--the non-const getter allows to access them.
+---------------------------------------------------------------------------- *#
+#macro (flatSetterHeader $member)
+#*--*##if($member.isNonOptionalPrimitive)
+bool ${member.name}($member.nativeTypeFQName value);
+#*--*##end
+#end
+
+#* ----------------------------------------------------------------------------
+Generates the implementation code for a flat-data type
+---------------------------------------------------------------------------- *#
+#macro(flatTypeImplementation $node)
+#*--*##if($envMap.language.equals("Cpp"))
+${node.nativeFQNameInModule} * ${node.nativeFQNameInModule}::create_data()
+{
+    return static_cast< ${node.nativeFQNameInModule} * >(Base::create_data());
+}
+
+#*--*##end
+#flatConstGettersAndSettersBody($node)
+#flatGettersAndSettersBody($node)
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#flatBuilderMethodsBody($node)
+#end
+#end
+
+#* ----------------------------------------------------------------------------
+Generates the implementation code for all the type's getters and setters
+---------------------------------------------------------------------------- *#
+#macro (flatConstGettersAndSettersBody $node)
+#*--*##if($node.constructKind.equals("union"))
+#*----*##flatGetterBody($node.unionDiscriminatorMap $node, "Const", "ConstOffset")
+
+#*--*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*----*##flatGetterBody( $member $node, "Const", "ConstOffset")
+
+#*----*##end
+#*--*##end
+#end
+
+#macro (flatGettersAndSettersBody $node)
+#*--*##if($node.constructKind.equals("union"))
+#*----*##flatGetterBody($node.unionDiscriminatorMap $node, "Const", "Offset")
+
+#*----*##flatGetterBody($node.unionDiscriminatorMap $node, "", "Offset")
+
+#*--*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*----*##flatGetterBody( $member $node, "Const", "Offset")
+
+#*----*##flatGetterBody( $member $node, "", "Offset")
+
+#*----*##flatSetterBody($member $node)
+
+#*----*##end
+#*--*##end
+#end
+
+#* ----------------------------------------------------------------------------
+Generates the implementation of the getters
+
+$constSuffix Is "Const" when the member being retrieved is a ConstOffset
+   and empty otherwise
+$offsetTypeSuffix is either "Offset" or "ConstOffset", depending on what
+   type contains this member.
+
+The member getter implementation is different for:
+  - Primitives & enums
+  - Arrays of primitives (PrimitiveArrayOffset) 
+  - Arrays of complex (FinalArrayOffset)
+
+Primitives and enums only have one (const) getter (and one setter). The rest of
+types have two getters (const and non-const) and no setter.
+
+---------------------------------------------------------------------------- *#
+#macro (flatGetterBody $member $node $constSuffix $offsetTypeSuffix)
+#if (!$member.isNonOptionalPrimitive || $constSuffix.equals("Const"))
+#if($constSuffix.equals("Const"))
+#flatGetMemberType($member, "Const") ${node.nativeFQNameInModule}${offsetTypeSuffix}::${member.name}() const
+#else
+#flatGetMemberType($member, "") ${node.nativeFQNameInModule}${offsetTypeSuffix}::${member.name}()
+#end
+#*--*##if($member.dimensionList && $member.typeKind.equals("user") && !$member.isEnum)
+{
+#if($node.extensibility == "MUTABLE_EXTENSIBILITY")
+    return get_member< #flatGetMemberType($member, $constSuffix) >($member.id);
+#else
+    #flatMemberOffsets($node $member)
+    return get_array_member< ${member.nativeTypeFQName}${constSuffix}Offset, $member.arrayTotalSize >(
+            offsets, 
+            first_element_size, 
+            element_size);
+#end
+}
+#*--*##elseif(!$member.isNonOptionalPrimitive)
+{
+    #flatMemberOffsets($node $member)
+    return get_member< #flatGetMemberType($member, $constSuffix) >(##
+#if($node.extensibility == "MUTABLE_EXTENSIBILITY")${member.id});
+#{else}offsets);#end    
+}
+#*--*##else ## primitives
+{
+    #flatMemberOffsets($node $member)
+#*----*##if($member.isEnum) ## Enums require casting to int32
+#*------*##if($envMap.language.equals("Cpp")) ## traditional C++
+    return static_cast< #flatGetMemberType($member, $constSuffix) >(
+        deserialize<int>(##
+#*------*##else
+    return static_cast< #flatGetMemberType($member, $constSuffix)>(
+        deserialize<int32_t>(##
+#*------*##end
+#*----*##else
+    return deserialize< #flatGetMemberType($member, $constSuffix) >(##
+#*----*##end
+#if($node.extensibility == "MUTABLE_EXTENSIBILITY")${member.id}, #flatGetMemberDefaultValue($member))##
+#{else}offsets)#{end}#if($member.isEnum)#*--*#);
+#{else};
+#end
+}
+#*--*##end
+#end
+#end ## macro flatGetterBody
+
+#macro (flatGetMemberDefaultValue $member)
+#if($member.name=="_d")$member.defaultDiscriminatorValue#else$member.defaultValue#end
+#end
+
+#* ----------------------------------------------------------------------------
+Generates the implementation of a setter
+---------------------------------------------------------------------------- *#
+#macro (flatSetterBody $member $node)
+#*--*##if($member.isNonOptionalPrimitive)
+bool ${node.nativeFQNameInModule}Offset::${member.name}($member.nativeTypeFQName value)
+{
+    #flatMemberOffsets($node $member)
+#if($node.extensibility == "MUTABLE_EXTENSIBILITY")
+    return serialize(${member.id}, ##
+#else
+    return serialize(offsets, ##
+#end
+#*----*##if($member.isEnum)
+#*------*##if($envMap.language.equals("Cpp")) ## traditional C++
+static_cast<int>(static_cast<int>(value)));
+#*------*##else
+static_cast<int32_t>(value));
+#*------*##end
+#*----*##else
+value);
+#*----*##end
+
+}
+#*--*##end
+#end
+
+#* ----------------------------------------------------------------------------
+reset_sample function body
+---------------------------------------------------------------------------- *#
+#macro (flatResetSample $node)
+RTIOsapiUtility_unusedParameter(sample);
+#end
+
+#* ----------------------------------------------------------------------------
+allocate_sample function body
+
+For fixed-size types, there's nothing to allocate
+---------------------------------------------------------------------------- *#
+#macro (flatAllocateSample $node)
+RTIOsapiUtility_unusedParameter(sample);
+#end
+
+#* ----------------------------------------------------------------------------
+initialize_test_values function body
+---------------------------------------------------------------------------- *#
+#macro (flatInitializeOffsetMemberTestValues $member $node)
+#*------*##if(!$member.directive)
+#*--------*##if(!$member.isNonOptionalPrimitive)
+#*----------*##if(${member.nativeTypeFQName} == "DDS_Boolean")
+## we can't rely on initialize_test_values because it won't pick up the overload
+## for bool, but the one for integers
+initialize_flat_boolean(sample.${member.name}());
+#*----------*##else
+initialize_test_values(sample.${member.name}());
+#*----------*##end
+#*--------*##else ## primitive type:
+{
+#*----------*##if(${member.nativeTypeFQName} == "DDS_Boolean")
+## we can't rely on initialize_test_values because it won't pick up the overload
+## for bool, but the one for integers
+sample.${member.name}(DDS_BOOLEAN_TRUE);
+#*----------*##else
+#flatGetMemberType($member, "") tmp;
+initialize_test_values(tmp);
+// GREEN-2119: Suppressing a cppcheck false positive: The uninitvar error
+// is reported because cppcheck is not able to detect that we are initializing
+// the variable tmp as part of the initialize_test_values() call.
+// cppcheck-suppress uninitvar
+sample.${member.name}(tmp);
+#*----------*##end
+}
+#*--------*##end    
+#*------*##end
+#end
+
+#macro (flatInitializeBuilderMemberTestValues $member $node)
+#*------*##if(!$member.directive)
+#*--------*##if(!$member.isPrimitive)
+#*----------*##if($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.seqSize || $member.strSize)
+{
+    ${member.builderType} builder = sample.build_${member.name}();
+#*------------*##if(${member.nativeTypeFQName} == "DDS_Boolean")
+    initialize_flat_boolean(builder);
+#*------------*##else    
+    initialize_test_values(builder);
+#*------------*##end
+}
+#*----------*##else ## ($member.extensibility == "MUTABLE_EXTENSIBILITY")
+#*------------*##if(${member.nativeTypeFQName} == "DDS_Boolean")
+## we can't rely on initialize_test_values because it won't pick up the overload
+## for bool, but the one for integers
+initialize_flat_boolean(sample.add_${member.name}());
+#*------------*##else
+initialize_test_values(sample.add_${member.name}());
+#*------------*##end ## boolean
+#*----------*##end ## ($member.extensibility == "MUTABLE_EXTENSIBILITY")
+#*--------*##else ## primitive or strings:
+{
+#*----------*##if(${member.nativeTypeFQName} == "DDS_Boolean")
+## we can't rely on initialize_test_values because it won't pick up the overload
+## for bool, but the one for integers
+sample.add_${member.name}(DDS_BOOLEAN_TRUE);
+#*----------*##elseif($member.strSize) ## strings
+std::string tmp;
+initialize_test_values(tmp);
+sample.add_${member.name}(tmp.c_str());
+#*----------*##else ## primitive
+${member.nativeTypeFQName} tmp;
+initialize_test_values(tmp);
+sample.add_${member.name}(tmp);
+#*----------*##end
+}
+#*--------*##end    
+#*------*##end
+#end
+
+
+#macro (flatInitializeTestValues $node)
+template <>
+void initialize_test_values< ${node.nativeFQName}Offset >(${node.nativeFQName}Offset sample)
+{
+#*--*##if($node.baseTypeFQName)
+// Initialize base
+initialize_test_values< ${node.baseTypeFQName}Offset >(sample);
+
+#*--*##end
+#*--*##if(!$node.constructKind.equals("union"))
+#*----*##foreach($member in $node.memberFieldMapList)
+#flatInitializeOffsetMemberTestValues($member $node)
+#*----*##end
+#*--*##else ## Unions
+#if($node.memberFieldMapList.size() > 1 
+    && !$node.memberFieldMapList[1].labelList[0].equals("default")
+    && !$node.memberFieldMapList[1].directive)
+#flatInitializeOffsetMemberTestValues(${node.memberFieldMapList[1]} $node)
+#else
+#flatInitializeOffsetMemberTestValues(${node.memberFieldMapList[0]} $node)
+#end
+#*--*##end
+}
+##
+## Mutable types also provide a initialize_test_values for the builders
+#if($node.extensibility == "MUTABLE_EXTENSIBILITY")
+##
+template <>
+void initialize_test_values< ${node.nativeFQName}Builder >(${node.nativeFQName}Builder& sample)
+{
+#*--*##if($node.baseTypeFQName)
+// Initialize base
+initialize_test_values< ${node.baseTypeFQName}Builder >(sample);
+#*--*##end    
+#*--*##if(!$node.constructKind.equals("union"))
+#*----*##foreach($member in $node.memberFieldMapList)
+#flatInitializeBuilderMemberTestValues($member $node)
+#*----*##end
+#*--*##else ## Unions
+#if($node.memberFieldMapList.size() > 1 
+    && !$node.memberFieldMapList[1].labelList[0].equals("default")
+    && !$node.memberFieldMapList[1].directive)
+#flatInitializeBuilderMemberTestValues(${node.memberFieldMapList[1]} $node)
+#else
+#flatInitializeBuilderMemberTestValues(${node.memberFieldMapList[0]} $node)
+#end
+#*--*##end    
+}
+##
+#end ## mutable extensibility
+#end ## flatInitializeTestValues
+
+#* ------------------------------------------------------------------------- *#
+
+
+#* ----------------------------------------------------------------------------
+Builder macros (for mutable types)
+---------------------------------------------------------------------------- *#
+
+#* ----------------------------------------------------------------------------
+Builder constructor
+---------------------------------------------------------------------------- *#
+#macro (flatBuilderConstructors $node, $constSuffix)
+public:
+${node.nativeFQNameInModule}Builder()
+{
+}
+
+// Create a new top-level builder
+${node.nativeFQNameInModule}Builder(
+        unsigned char *initial_buffer, 
+        ::rti::flat::offset_t size,
+        bool initialize_members = false)
+    : Base(initial_buffer, size, initialize_members)
+{
+}
+
+// Create a nested builder (for internal use only)
+${node.nativeFQNameInModule}Builder(
+        ::rti::flat::AbstractBuilder::nested_tag_t, 
+        ::rti::flat::AbstractBuilder& parent,
+        unsigned int alignment = 4)
+    : Base(${node.nativeFQNameInModule}Builder::nested_tag_t(), parent, alignment)
+{
+}
+#end ## macro flatGetterAndSettersHeader
+
+#* ----------------------------------------------------------------------------
+Builder methods
+---------------------------------------------------------------------------- *#
+#macro (flatBuilderMemberMethodHeader $member $node)
+#*----*##if($member.directive)
+#*----*##copyAllDirectives($member)
+#*----*##else
+#*------*##if(!$member.isPrimitive)
+#*--------*##if($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.seqSize || $member.strSize)
+${member.builderType} build_${member.name}(#flatBuilderDiscriminatorParam($member $node "" 1));
+#*--------*##else ## non-mutable
+${member.offsetType} add_${member.name}(#flatBuilderDiscriminatorParam($member $node "" 1));
+#*--------*##end
+#*------*##else ## primitive
+#*--------*##if($member.seqSize) ## primitive sequence
+${member.offsetType} add_${member.name}(size_t element_count#flatBuilderDiscriminatorParam($member $node ", " 1));
+#*--------*##else ## primitive (not sequence)
+bool add_${member.name}($member.nativeTypeFQName value#flatBuilderDiscriminatorParam($member $node ", " 1));
+#*--------*##end ## primitive sequence
+#*------*##end ## primitive
+#*----*##end
+#end ## macro flatBuilderMemberMethodHeader
+
+#* For a member of a union selected by more than one discriminator value, produces
+   an argument that allows specifying the discriminator
+*#
+#macro (flatBuilderDiscriminatorParam $member $node $comma $defaultParam)
+#*--*##if($node.constructKind.equals("union"))
+#*----*##if ($member.labelList.get(0).equals("default") || $member.labelList.get(0).equals("(default)"))
+#*------*##if (!$node.unionDiscriminatorMap.isEnum)
+## For example: uint32_t discriminator = 1
+$comma$node.unionDiscriminatorMap.nativeTypeFQName discriminator#*
+#*--------*##if($defaultParam)#*
+*# = $node.unionDiscriminatorMap.defaultDiscriminatorValue#*
+#*--------*##{end}##
+#*------*##else##
+$comma$node.unionDiscriminatorMap.nativeTypeFQName discriminator#*
+#*--------*##if($defaultParam)#*
+*# = ${node.unionDiscriminatorMap.nativeTypeFQName}(static_cast< #*
+*#${node.unionDiscriminatorMap.nativeTypeFQName}>(#*
+*#$node.unionDiscriminatorMap.defaultDiscriminatorValue))#*
+#*--------*##{end}##
+#*------*##end
+#*----*##elseif ($member.labelList.size() > 1)##
+$comma$node.unionDiscriminatorMap.nativeTypeFQName discriminator#if($defaultParam) = $member.labelList.get(0)#{end}##
+#*----*##end
+#*--*##end
+#end
+
+#* Generates the actual discriminator parameter that the implementation of a
+ Builder method passes to the base class.
+*#
+#macro (flatBuilderGetUnionDiscriminator $member $node)
+#if($node.constructKind.equals("union"))##
+#if ($member.labelList.size() > 1 || $member.labelList.get(0).equals("default") || $member.labelList.get(0).equals("(default)"))##
+#set($discValue="discriminator")## Pass through the 'discriminator' param
+#else##
+#set($discValue=$member.labelList.get(0))## Pass the only discriminator constant
+#end##
+## Handle enumerations (casting to integer). In modern C++ we need to call underlying()
+## when the argument is the parameter 'discriminator' but not when it's a constant
+#if(!$node.unionDiscriminatorMap.isEnum), $discValue##
+#elseif($envMap.language.equals("Cpp")), static_cast<int>($discValue)##
+#{else}, static_cast<int32_t>($discValue)#end##
+#end
+#end
+
+#macro (flatCheckBadParamIfUnion $member $node $returnOnError)
+#if($node.constructKind.equals("union") && !$member.name.equals("_d") && ($member.labelList.size() > 1 || $member.labelList.get(0).equals("default") || $member.labelList.get(0).equals("(default)")))#*
+----------This for the members that are not in the default case----------------
+----*##if(!$member.labelList.contains("default") && !$member.labelList.contains("(default)"))#*
+--*#if (#foreach($element in $member.labelList) discriminator != $element#*
+      *##if($member.labelList.size()>$foreach.count) && 
+         #end#end) {
+#*----------This for the members that are with the default case----------------           
+----*##else#*
+--*#if (!(#foreach($element in $node.unionDiscriminatorMap.labelList)#*
+       *##if(!$element.contains("default") && !$element.contains("(default)") && !$member.labelList.contains($element))discriminator != $element#* 
+       *##if($foreach.count <$node.unionDiscriminatorMap.labelList.size() - $member.labelList.size()) &&
+          #end#end#end)) {
+#end
+
+#if($envMap.language.equals("Cpp"))##
+            RTI_FLAT_BUILDER_PRECONDITION_ERROR(
+                    "Invalid discriminator value for ${node.nativeFQName}::${member.name}", 
+                    return ($returnOnError));
+        }
+#else
+            throw ::dds::core::InvalidArgumentError(
+                    "Invalid discriminator value for ${node.nativeFQName}::${member.name}" );
+        }
+#end
+#end
+#end
+
+#macro (flatBuilderMethodsHeader $node)
+Offset finish();
+${node.nativeFQNameInModule} * finish_sample();
+
+#*--*##foreach($member in $node.memberFieldMapList)
+#flatBuilderMemberMethodHeader($member $node)
+#*--*##end
+#end ## macro flatConstGettersHeader
+
+#macro (flatBuilderMethodPrimitiveBody $member $node)
+#if(!$member.isEnum)
+    return add_primitive_member(${member.id}#flatBuilderGetUnionDiscriminator($member $node), value);
+#elseif($envMap.language.equals("Cpp"))
+    return add_primitive_member(${member.id}#flatBuilderGetUnionDiscriminator($member $node), static_cast<int>(value));
+#else
+    return add_primitive_member(${member.id}#flatBuilderGetUnionDiscriminator($member $node), static_cast<int32_t>(value));
+#end
+#end
+
+#macro (flatBuilderMethodsBody $node)
+${node.nativeFQNameInModule}Offset ${node.builderType}::finish()
+{
+    return Base::finish_impl<Offset>();
+}
+
+${node.nativeFQNameInModule} * ${node.builderType}::finish_sample()
+{
+    return reinterpret_cast< ${node.nativeFQNameInModule} * >(Base::finish_sample_impl());
+}
+
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyAllDirectives($member)
+#*----*##else
+#*------*##if(!$member.isPrimitive)
+#*--------*##if($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.seqSize || $member.strSize)
+${member.builderType} ${node.builderType}::build_${member.name}(#flatBuilderDiscriminatorParam($member $node ""))
+{
+    #flatCheckBadParamIfUnion($member $node "${member.builderType}()")
+    return build_member< ${member.builderType} >(${member.id}#flatBuilderGetUnionDiscriminator($member $node));
+}
+
+#*--------*##else ## non-mutable
+${member.offsetType} ${node.builderType}::add_${member.name}(#flatBuilderDiscriminatorParam($member $node ""))
+{
+    #flatCheckBadParamIfUnion($member $node "${member.offsetType}()")
+    return add_member< ${member.offsetType} >(${member.id}#flatBuilderGetUnionDiscriminator($member $node));
+}
+
+#*--------*##end
+#*------*##else ## primitive
+bool ${node.builderType}::add_${member.name}($member.nativeTypeFQName value#flatBuilderDiscriminatorParam($member $node ", "))
+{
+    #flatCheckBadParamIfUnion($member $node "false")
+    #flatBuilderMethodPrimitiveBody($member $node)
+}
+
+#*------*##end ## primitive
+#*----*##end
+#*--*##end
+#end ## macro flatConstGettersBody
+
+#* ----------------------------------------------------------------------------
+Plugin macros
+---------------------------------------------------------------------------- *#
+
+## FooPlugin_get_buffer and return_buffer
+## FooPlugin_create_flat_data_sentinel, destroy_flat_data_sentinel and
+#macro (flatPluginTopLevelSupportFunctions $node)
+RTIBool ${node.nativeFQNameInModule}Plugin_get_buffer_w_params(
+    PRESTypePluginEndpointData endpointData,
+    struct REDABuffer *buffer,
+    const void *user_data,
+    const struct NDDS_WriterHistory_AllocatorParams *allocatorParams)
+{
+#*--------*##if($node.isMetpType)
+    if (allocatorParams->encapsulationId == DDS_ENCAPSULATION_ID_SHMEM_REF_FLAT_DATA) {
+        return PRESTypePluginDefaultEndpointData_getBuffer(
+                endpointData, buffer, allocatorParams->encapsulationId, user_data);
+    } else {
+#*--------*##end
+    if ((allocatorParams->sampleKind == NDDS_WRITERHISTORY_DATA_SAMPLE) 
+            && !PRESTypePluginDefaultEndpointData_isSecurityEnabled(endpointData)
+            && !PRESTypePluginDefaultEndpointData_isCompressionEnabled(endpointData)) {
+        buffer->pointer = (char *) user_data; // FLAT_DATA: the sample is the buffer
+#*----------*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))        
+        buffer->length = static_cast<int>(RTIOsapiAlignment_alignUInt32Up(
+                ${node.nativeFQNameInModule}Offset::serialized_size(0),
+                MIG_RTPS_SUBMESSAGE_ALIGNMENT)) 
+                + RTI_XCDR_ENCAPSULATION_HEADER_SIZE;
+        return RTI_TRUE;
+#*----------*##else
+        buffer->length = static_cast<int>(RTIOsapiAlignment_alignUInt32Up(
+                RTIXCdrFlatSample_getMutableSampleSize(
+                        static_cast<const unsigned char *>(user_data),
+                        RTI_XCDR_ENCAPSULATION_HEADER_SIZE),
+                MIG_RTPS_SUBMESSAGE_ALIGNMENT))
+                + RTI_XCDR_ENCAPSULATION_HEADER_SIZE;
+        return RTI_TRUE;      
+#*----------*##end
+    } else {
+        return PRESTypePluginDefaultEndpointData_getBuffer(
+                endpointData, buffer, allocatorParams->encapsulationId, user_data);
+    }
+#*--------*##if($node.isMetpType)
+    }
+#*--------*##end
+}
+
+void ${node.nativeFQNameInModule}Plugin_return_buffer_w_params(
+   PRESTypePluginEndpointData endpointData,
+   struct REDABuffer *buffer,
+   const struct NDDS_WriterHistory_AllocatorParams *allocatorParams)
+{
+#*--------*##if($node.isMetpType)
+    if (allocatorParams->encapsulationId == DDS_ENCAPSULATION_ID_SHMEM_REF_FLAT_DATA) {
+        return PRESTypePluginDefaultEndpointData_returnBuffer(
+                endpointData, buffer, allocatorParams->encapsulationId);
+    }
+#*--------*##end
+    if ((allocatorParams->sampleKind != NDDS_WRITERHISTORY_DATA_SAMPLE)
+            || PRESTypePluginDefaultEndpointData_isSecurityEnabled(endpointData)
+            || PRESTypePluginDefaultEndpointData_isCompressionEnabled(endpointData)) {
+        return PRESTypePluginDefaultEndpointData_returnBuffer(
+                endpointData, buffer, allocatorParams->encapsulationId);
+    }
+
+    // FLAT_DATA : nothing to do for NDDS_WRITERHISTORY_DATA_SAMPLE
+}
+
+
+${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}Plugin_create_flat_data_sentinel(void)
+{
+    return (${node.nativeFQNameInModule}*)PRES_TYPE_PLUGIN_INVALID_SAMPLE_ADDRESS;
+}
+
+void
+${node.nativeFQNameInModule}Plugin_destroy_flat_data_sentinel(void* sample)
+{
+    RTIOsapiUtility_unusedParameter(sample);
+}
+
+void*
+${node.nativeFQNameInModule}Plugin_get_sample_flat_data(
+    PRESTypePluginEndpointData endpointData,
+    void **handle)
+{
+    return PRESTypePluginDefaultEndpointData_getSample(endpointData,handle);
+}
+
+void
+${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
+    PRESTypePluginEndpointData endpointData,
+    void *sample, 
+    void *handle)
+{
+    struct REDAFastBufferPool *pool = PRESTypePluginDefaultEndpointData_getFstSampleDataPool(endpointData);
+    if (pool && (sample != reinterpret_cast<void *>(PRES_TYPE_PLUGIN_INVALID_SAMPLE_ADDRESS))) {
+        REDAFastBufferPool_returnBuffer(pool, sample);
+        if (handle != NULL) {
+            *static_cast<void**>(handle) =
+                reinterpret_cast<void *>(PRES_TYPE_PLUGIN_INVALID_SAMPLE_ADDRESS);
+        }
+    }
+    if (handle != NULL) {
+        PRESTypePluginDefaultEndpointData_returnSample(endpointData,sample,handle);
+    }
+}
+
+#end ## flatPluginTopLevelSupportFunctions 
+
+## FooPlugin_serialize
+#macro (flatPluginSerializeBody $node $standAlone)
+    RTIXCdrStream *xcdrStream = RTICdrStream_asXCdrStream(stream);
+    RTIXCdrUnsignedLong sampleSize = 0;
+
+#*--*##if($standAlone)
+    char * rti_position = NULL;
+#*----*##serializeEncapsulation($node)
+#*--*##end
+
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+    RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
+    
+    if (RTIXCdrFlatSample_getEncapsulation(
+            reinterpret_cast<const char *>(sample)) != encapsulation_id) {
+        return RTI_FALSE;
+    }
+    
+    if (serialize_sample) {
+#*--*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+        sampleSize = ${node.nativeFQNameInModule}Offset::serialized_size(0);
+#*--*##else
+        sampleSize = RTIXCdrFlatSample_getMutableSampleSize(
+                reinterpret_cast<const unsigned char *>(sample),
+                RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+#*--*##end
+        if (reinterpret_cast<const char *>(sample) != RTIXCdrStream_getBuffer(xcdrStream)) {
+            if (!RTIXCdrStream_serializeNByte(
+                    xcdrStream,
+                    sample + RTI_XCDR_ENCAPSULATION_HEADER_SIZE,
+                    1,
+                    sampleSize)) {
+                return RTI_FALSE;
+            }
+        } else {
+            if (!RTIXCdrStream_skipNByte(
+                    xcdrStream,
+                    1,
+                    sampleSize)) {
+                return RTI_FALSE;
+            }
+        }
+    }
+#*--*##if($standAlone)    
+    if (serialize_encapsulation) {
+        RTICdrStream_restoreAlignment(stream, rti_position);
+    }
+    return RTI_TRUE;
+#*--*##end
+
+#end 
+
+## FooPlugin_deserialize
+#macro (flatPluginDeserializeBody $node)
+    RTIXCdrStream *xcdrStream = RTICdrStream_asXCdrStream(stream);
+    RTIXCdrUnsignedLong sampleSize = 0;
+    
+    RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
+    
+    if (deserialize_encapsulation) {
+        if (!RTIXCdrStream_deserializeAndSetCdrEncapsulation(xcdrStream)) {
+            return RTI_FALSE;
+        }
+    }
+
+    if (deserialize_sample) {
+#*--*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+        sampleSize = ${node.nativeFQNameInModule}Offset::serialized_size(0);
+#*--*##else
+        sampleSize = RTIXCdrFlatSample_getMutableSampleSize(
+                reinterpret_cast<unsigned char *>(
+                        RTIXCdrStream_getBuffer(xcdrStream)),
+                RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+#*--*##end
+        if (*reinterpret_cast<void **>(sample) == reinterpret_cast<void *>(
+                        PRES_TYPE_PLUGIN_INVALID_SAMPLE_ADDRESS)) {
+            *sample = reinterpret_cast< ${node.nativeFQNameInModule} * >(PRESTypePluginDefaultEndpointData_getFstSampleWithSize(
+                    endpoint_data, 
+                    sampleSize + RTI_XCDR_ENCAPSULATION_HEADER_SIZE));
+            RTIXCdrFlatSample_initializeEncapsulation(
+                    *reinterpret_cast<char **>(sample),
+                    RTIXCdrStream_getEncapsulationId(xcdrStream));            
+        } else if (RTIXCdrFlatSample_getEncapsulation(
+                        *reinterpret_cast<char **>(sample)) !=
+                        RTIXCdrStream_getEncapsulationId(xcdrStream)) {
+            return RTI_FALSE;
+        }
+
+        if (*reinterpret_cast<char **>(sample) != RTIXCdrStream_getBuffer(xcdrStream)) {
+            if (!RTIXCdrStream_deserializeNByte(
+                    xcdrStream,
+                    *reinterpret_cast<char **>(sample) 
+                            + RTI_XCDR_ENCAPSULATION_HEADER_SIZE,
+                    1,
+                    sampleSize)) {
+                return RTI_FALSE;
+            }
+        } else {
+            if (!RTIXCdrStream_skipNByte(
+                    xcdrStream,
+                    1,
+                    sampleSize)) {
+                return RTI_FALSE;
+            }    
+        }
+    }
+    result = RTI_TRUE;
+#end 
+
+## FooPlugin_get_serialized_sample_max_size_ex
+#macro (flatPluginGetSerializedSampleMaxSizeBody $node)
+#*--*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+    RTIOsapiUtility_unusedParameter(encapsulation_id);
+    RTIOsapiUtility_unusedParameter(current_alignment);
+    
+    if (include_encapsulation) {
+        return static_cast<unsigned int>(
+                ${node.nativeFQNameInModule}Offset::serialized_size(current_alignment) +
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+    } else {
+        return static_cast<unsigned int>(
+                ${node.nativeFQNameInModule}Offset::serialized_size(current_alignment));
+    }
+#*--*##else
+    return PRESTypePlugin_interpretedGetSerializedSampleMaxSize(
+    	endpoint_data,
+    	overflow,
+   	include_encapsulation,
+    	encapsulation_id,
+    	current_alignment);
+#*--*##end
+#end
+
+## FooPlugin_get_serialized_sample_min_size
+#macro (flatPluginGetSerializedSampleMinSizeBody $node)
+#*--*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#flatPluginGetSerializedSampleMaxSizeBody($node)
+#*--*##else
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+    RTIOsapiUtility_unusedParameter(encapsulation_id);
+    RTIOsapiUtility_unusedParameter(current_alignment);
+    
+    if (include_encapsulation) {
+        return static_cast<unsigned int>(
+                RTI_XCDR_DHEADER_SIZE + RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+    } else {
+        return static_cast<unsigned int>(RTI_XCDR_DHEADER_SIZE);
+    }
+#*--*##end
+#end
+
+## FooPlugin_get_serialized_sample_size
+#macro (flatPluginGetSerializedSampleSizeBody $node)
+#*--*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    RTIOsapiUtility_unusedParameter(sample);
+#flatPluginGetSerializedSampleMaxSizeBody($node)
+#*--*##else
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+    RTIOsapiUtility_unusedParameter(encapsulation_id);
+    RTIOsapiUtility_unusedParameter(current_alignment);
+    
+    if (include_encapsulation) {
+        return static_cast<unsigned int>(
+                RTIXCdrFlatSample_getMutableSampleSize(
+                    reinterpret_cast<const unsigned char *>(sample),
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE) +
+                RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+    } else {
+        return static_cast<unsigned int>(
+                RTIXCdrFlatSample_getMutableSampleSize(
+                    reinterpret_cast<const unsigned char *>(sample),
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE));
+    }
+#*--*##end
+#end
+
+## FooPlugin_serialize_to_cdr_buffer_ex
+#macro (flatPluginSerializeToCdrBufferBody $node)
+    if (length == NULL) {
+        return RTI_FALSE;
+    }
+
+    const unsigned int serialized_size = static_cast<unsigned int>(
+            sample->buffer_size());
+
+    if (buffer == NULL) {
+        *length = serialized_size;
+        return RTI_TRUE;
+    }
+
+    if (*length < serialized_size) {
+        return RTI_FALSE;
+    }
+
+    RTIOsapiMemory_copy(buffer, sample->get_buffer(), serialized_size);
+    
+    return RTI_TRUE;
+#end
+
+## FooPlugin_serialize_key
+#macro (flatPluginSerializeKeyBody $node)
+    RTIBool result = RTI_FALSE;
+    RTIXCdrUnsignedLong sampleSize = 0;
+    struct RTICdrStream tempStream;
+    ${node.nativeFQNameInModule}PlainHelper *plainSample =
+        reinterpret_cast< ${node.nativeFQName}PlainHelper *>(
+            PRESTypePluginDefaultEndpointData_getPlainHelperSample(endpoint_data));
+    if (plainSample == NULL) {
+        return RTI_FALSE;
+    }
+
+#*--*##if($node.extensibility.equals("FINAL_EXTENSIBILITY"))
+    sampleSize = static_cast<unsigned int>(
+                ${node.nativeFQNameInModule}Offset::serialized_size(0) +
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+#*--*##else
+    sampleSize = static_cast<unsigned int>(
+                RTIXCdrFlatSample_getMutableSampleSize(
+                    reinterpret_cast<const unsigned char *>(sample),
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE) +
+                RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+#*--*##end
+    RTICdrStream_init(&tempStream);
+    RTICdrStream_set(&tempStream, (char *)sample, sampleSize);
+    if (PRESTypePlugin_interpretedSerializedSampleToKey(
+            endpoint_data,
+            plainSample,
+            &tempStream,
+            RTI_TRUE,
+            RTI_TRUE,
+            endpoint_plugin_qos)) {
+        result = PRESTypePlugin_interpretedSerializeKey(
+                endpoint_data,
+                plainSample,
+                stream,
+                serialize_encapsulation,
+                encapsulation_id,
+                serialize_key,
+                endpoint_plugin_qos);
+    }
+
+    return result;
+#end
+
+## FooPlugin_serialize_key_for_keyhash
+#macro (flatPluginSerializeKeyForKeyhashBody $node)
+    RTIBool result = RTI_FALSE;
+    RTIXCdrUnsignedLong sampleSize = 0;
+    struct RTICdrStream tempStream;
+
+    ${node.nativeFQNameInModule}PlainHelper *plainSample =
+        reinterpret_cast< ${node.nativeFQName}PlainHelper * >(
+            PRESTypePluginDefaultEndpointData_getPlainHelperSample(endpoint_data));
+    if (plainSample == NULL) {
+        return RTI_FALSE;
+    }
+    
+#*--*##if($node.extensibility.equals("FINAL_EXTENSIBILITY"))
+    sampleSize = static_cast<unsigned int>(
+                ${node.nativeFQNameInModule}Offset::serialized_size(0) +
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+#*--*##else
+    sampleSize = static_cast<unsigned int>(
+                RTIXCdrFlatSample_getMutableSampleSize(
+                    reinterpret_cast<const unsigned char *>(sample),
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE) +
+                RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+#*--*##end
+    RTICdrStream_init(&tempStream);
+    RTICdrStream_set(&tempStream, (char *)sample, sampleSize);
+    result =  PRESTypePlugin_interpretedSerializedSampleToKey(
+            endpoint_data,
+            plainSample,
+            &tempStream,
+            RTI_TRUE,
+            RTI_TRUE,
+            endpoint_plugin_qos);
+    if (result) {
+        result = PRESTypePlugin_interpretedSerializeKeyForKeyhash(
+                endpoint_data,
+                plainSample,
+                stream,
+                encapsulation_id,
+                endpoint_plugin_qos);
+    }
+    
+    return result;
+#end
+
+## FooPlugin_deserialize_key_sample
+#macro (flatPluginDeSerializeKeySampleBody $node)
+    RTIBool result = RTI_FALSE;
+    ${node.nativeFQNameInModule}PlainHelper *plainSample = 
+        reinterpret_cast< ${node.nativeFQName}PlainHelper * >(
+            PRESTypePluginDefaultEndpointData_getPlainHelperSample(endpoint_data));
+    if (plainSample == NULL) {
+        return RTI_FALSE;
+    }
+    if (!PRESTypePlugin_interpretedDeserializeKey(
+                endpoint_data,
+                plainSample,
+                stream,
+                deserialize_encapsulation,
+                deserialize_key,
+                endpoint_plugin_qos)) {
+        return RTI_FALSE;
+    }
+    unsigned int length = PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(
+    endpoint_data);
+#*----*##if($envMap.language.equals("Cpp"))    
+    result = ${node.nativeFQNameInModule}PlainHelperPlugin_serialize_to_cdr_buffer_ex(
+#*----*##else
+    result = ${node.nativeFQNameInModule}PlainHelperPlugin_serialize_to_cdr_buffer(
+#*----*##end
+    (char *)sample,
+    &length,
+    plainSample,
+    DDS_XCDR2_DATA_REPRESENTATION);
+    
+    return result;
+#end
+
+## Create PlainHelper sample in FooPlugin_on_endpoint_attached
+#macro (flatPluginCreatePlainHelperSample $node)
+#*--*##if($node.hasKey || $node.hasKeyBaseType)
+    ${node.nativeFQName}PlainHelper *plainHelperSample = 
+        ${node.nativeFQNameInModule}PlainHelperPluginSupport_create_data();
+    PRESTypePluginDefaultEndpointData_setPlainHelperSample(epd, plainHelperSample);
+#*--*##end    
+#end
+
+## Destroy PlainHelper sample in FooPlugin_on_endpoint_detached
+#macro (flatPluginDeletePlainHelperSample $node)
+#*--*##if($node.hasKey || $node.hasKeyBaseType)
+    ${node.nativeFQName}PlainHelper *plainHelperSample =
+        reinterpret_cast< ${node.nativeFQName}PlainHelper *>(
+            PRESTypePluginDefaultEndpointData_getPlainHelperSample(endpoint_data));
+    if (plainHelperSample != NULL) {
+        ${node.nativeFQNameInModule}PlainHelperPluginSupport_destroy_data(
+            plainHelperSample);
+    }        
+#*--*##end    
+#end

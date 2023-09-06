@@ -1,0 +1,51 @@
+##   (c) Copyright, Real-Time Innovations, Inc. 2017.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.4.10,23jun2017,fmt created 
+##========================================================================
+${envMap.POUND_CHAR}ifndef Application_h
+${envMap.POUND_CHAR}define Application_h
+
+${envMap.POUND_CHAR}ifndef rti_me_cpp_hxx
+${envMap.POUND_CHAR}include "rti_me_cpp.hxx"
+${envMap.POUND_CHAR}endif
+
+using namespace DDS;
+
+/* Define USE_RELIABLE_QOS to use reliable
+ * reliability; otherwise, best-effort is used
+ */
+${envMap.POUND_CHAR}define USE_RELIABLE_QOS
+
+class Application
+{
+public:
+    DomainParticipant *participant; 
+    Topic *topic; 
+    char topic_name[255];
+    char type_name[255];
+    Long sleep_time;
+    Long count;
+
+    static void help(char *appname);
+
+    ReturnCode_t initialize(const char *local_participant_name,
+                                const char *remote_participant_name,
+                                Long domain_id, 
+                                char *udp_intf, 
+                                char *peer, 
+                                Long sleep_time, 
+                                Long count);
+
+    ReturnCode_t enable();
+
+    Application();
+    ~Application();
+};
+
+${envMap.POUND_CHAR}endif

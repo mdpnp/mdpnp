@@ -1,0 +1,429 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##-----------------------------------------------------------------
+##
+##             Macros for Type Plugin
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+#macro(arrayFromNative $member)
+#*--*##if(!$member.typeKind.equals("user") || $member.isEnum)
+            ${member.name}.FromNative#if($member.typeName.equals("char"))Utf8#end(sample.${member.name}, dimension: $member.arrayTotalSize);
+#*--*##elseif($member.strSize)
+            ${member.name}.FromNative(elements: sample.${member.name}, dimension: $member.arrayTotalSize);
+#*--*##else
+            ${member.name}.FromNative<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(sample.${member.name}, keysOnly: keysOnly, dimension: $member.arrayTotalSize);
+#*--*##end
+#end
+
+#macro(initializeArrayPlugin $member)
+#*--*##if($member.strSize && !$member.isAlias)
+            ${member.name}.Initialize(dimension: $member.arrayTotalSize, maxStrLen: #getStrSize($member "init"), allocateMemory: allocateMemory);
+#*--*##elseif(!$member.typeKind.equals("user") || $member.isEnum)
+#*----*##if($member.typeName.equals("char"))
+#*------*##set(${member.nonBasicTypeName}="byte")
+#*----*##end
+            ${member.name}.Initialize<${member.nativeTypeFQName}>(dimension: $member.arrayTotalSize, allocateMemory: allocateMemory);
+#*--*##else
+            ${member.name}.Initialize<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(dimension: $member.arrayTotalSize, allocatePointers: allocatePointers, allocateMemory: allocateMemory);
+#*--*##end
+#end
+
+#macro(arrayToNative $member)
+#*--*##if($member.strSize)
+            ${member.name}.ToNative(sample.${member.name}, dimension: $member.arrayTotalSize, maxStrLen: #getStrSize($member "init_abs_max"));
+#*--*##elseif(!$member.typeKind.equals("user")  || $member.isEnum)
+#*----*##if($member.typeName.equals("char"))
+            ${member.name}.ToNativeUtf8(sample.${member.name}, dimension: $member.arrayTotalSize);
+#*----*##else
+            ${member.name}.ToNative<${member.nativeTypeFQName}>(sample.${member.name}, dimension: $member.arrayTotalSize);
+#*----*##end
+#*--*##else
+            ${member.name}.ToNative<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(sample.${member.name}, keysOnly: keysOnly, dimension: $member.arrayTotalSize);
+#*--*##end
+#end
+
+#macro(createString $member $isArray)
+#*--*##if($member.typeName.equals("string"))
+dtf.CreateString(#getStrSize($member "create"))#*
+#*--*##else
+dtf.CreateWideString(#getStrSize($member "create"))#*
+#*--*##end
+#end
+
+#macro(generateArrayDimensionsForAccessInfo $member)
+#*--*##foreach($dim in $member.dimensionList)
+$dim#if($foreach.hasNext), #end#*
+#*--*##end
+#end
+
+#macro(generateDimensionArray $member)
+new uint[] {#generateArrayDimensionsForAccessInfo($member)}
+#end
+
+#macro(createArrayAccessInfo $member)
+#*--*##if($member.strSize)
+tsf.CreateArrayWithAccessInfo<$member.nativeTypeFQNameUnmanaged>(dtf, #createString($member), #generateDimensionArray($member))#*
+#*--*##elseif(!$member.typeKind.equals("user"))
+tsf.CreateArrayWithAccessInfo<${member.nativeTypeFQName}>(dtf, dtf.GetPrimitiveType<$member.arrayAccessInfoName>(), #generateDimensionArray($member))#*
+#*--*##elseif($member.isEnum)
+tsf.CreateArrayWithAccessInfo<int>(dtf, ${member.nativeTypeFQName}Support.Instance.GetDynamicTypeInternal(isPublic), #generateDimensionArray($member))#*
+#*--*##else
+tsf.CreateArrayWithAccessInfo<$member.nativeTypeFQNameUnmanaged>(dtf, ${member.nativeTypeFQName}Support.Instance.GetDynamicTypeInternal(isPublic), #generateDimensionArray($member))#*
+#*--*##end
+#end
+
+#macro(declareUnmanagedMembers $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##handleCopyDirective($member.directive $member.value false)
+#*----*##else
+        private#*
+#*------*##if ($member.isOptional && !$member.strSize && !$member.seqSize)
+#*--------*##if($member.typeKind.equals("user") && !$member.isEnum)
+ NativeManagedOptional#*
+#*--------*##else
+ NativeUnmanagedOptional#*
+#*--------*##end
+#*------*##elseif ($member.seqSize)
+#*-------*##if($member.strSize && !$member.isAlias)
+#*------*##if($member.typeName.equals("string"))
+ NativeStringSeq#*
+#*------*##else
+ NativeWstringSeq#*
+#*------*##end
+#*-------*##else
+ NativeSeq#*
+#*-------*##end
+#*------*##elseif($member.arrayTotalSize)
+#*-------*##if($member.strSize && !$member.isAlias)
+#*--------*##if($member.typeName.equals("string"))
+ NativeStringArray#*
+#*--------*##else
+ NativeWstringArray#*
+#*--------*##end
+#*-------*##elseif(!$member.typeKind.equals("user") || $member.isEnum)
+ NativeUnmanagedArray#*
+#*-------*##else
+ NativeManagedArray#*
+#*-------*##end
+#*------*##else
+ $member.nativeTypeFQNameUnmanaged#*
+#*------*##end
+ ${member.name};
+#*----*##end
+#*--*##end
+#end
+
+#macro(generateDestroy $node)
+public void Destroy(bool optionalsOnly)
+{
+#*----*##if($node.baseTypeFQName)
+        parent.Destroy(optionalsOnly);
+#*----*##end
+#*----*##set($nonOptionalGenerated = 0)
+#*----*##foreach ($number in [1..2])
+#*------*##foreach($member in $node.memberFieldMapList)
+#*--------*##if($number == 1 && ((!$member.isOptional && !$member.hasNestedOptionalMember && !$member.hasOptionalMember && !$member.unresolvedUnmanagedType)
+                || ($member.seqSize && $member.isOptional)) && (!$member.typeKind.equals("builtin") || $member.strSize) && !$member.isEnum)
+#*----------*##set($nonOptionalGenerated = 1)
+#*--------*##end
+#*--------*##if(((($member.isOptional || $member.hasOptionalMember|| $member.hasNestedOptionalMember || $member.unresolvedUnmanagedType)
+                && !($member.seqSize && $member.isOptional)) && $number == 1) ||
+                (((!$member.isOptional && !$member.hasNestedOptionalMember && !$member.hasOptionalMember && !$member.unresolvedUnmanagedType)
+                        || ($member.seqSize && $member.isOptional)) && $number == 2))
+#*----------*##if($member.strSize && !$member.isAlias)
+#*------------*##if($member.arrayTotalSize && !$member.seqSize)
+${member.name}.Destroy(dimension: $member.arrayTotalSize);
+#*------------*##else
+${member.name}.Destroy();
+#*------------*##end
+#*----------*##elseif($member.seqSize)
+#*------------*##if($member.typeKind.equals("user") && !$member.isEnum)
+${member.name}.Destroy<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(optionalsOnly);
+#*------------*##else
+${member.name}.Destroy(optionalsOnly);
+#*------------*##end
+#*----------*##elseif($member.arrayTotalSize)
+#*------------*##if(!$member.typeKind.equals("user")  || $member.isEnum)
+${member.name}.Destroy(optionalsOnly);
+#*------------*##else
+${member.name}.Destroy<${member.nativeTypeFQName},$member.nativeTypeFQNameUnmanaged>(dimension: $member.arrayTotalSize, optionalsOnly: optionalsOnly);
+#*------------*##end
+#*----------*##elseif ($member.typeKind.equals("user") && !$member.isEnum)
+${member.name}.Destroy#if($member.isOptional)<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>#end(optionalsOnly);
+#*----------*##elseif ($member.isOptional)
+${member.name}.Destroy(optionalsOnly);
+#*----------*##end
+#*--------*##end
+#*------*##end
+#*------*##if($number == 1 && $nonOptionalGenerated == 1)
+    if (optionalsOnly)
+    {
+            return;
+    }
+#*------*##end
+#*----*##end
+}
+#end
+
+#macro(memberFromNative $member)
+#*--*##if($member.seqSize)
+#*----*##if($member.hasArray && $member.typeKind.equals("user"))
+            ${member.name}.FromNative((Sequence<${member.nativeTypeFQName}>) sample.${member.name});
+#*----*##elseif($member.typeKind.equals("user") && !$member.isEnum)
+             ${member.name}.FromNative<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(sample.${member.name});
+#*----*##elseif($member.strSize && !$member.isAlias)
+            ${member.name}.FromNative(sample.${member.name});
+#*----*##elseif($member.typeName.equals("char"))
+            ${member.name}.FromNativeUtf8((Sequence<char>) sample.${member.name});
+#*----*##else
+            ${member.name}.FromNative((Sequence<${member.nativeTypeFQName}>) sample.${member.name});
+#*----*##end
+#*--*##elseif($member.arrayTotalSize)
+#arrayFromNative($member)
+#*--*##elseif($member.typeKind.equals("user") && $member.isOptional && !$member.isEnum)
+            ${member.name}.FromNative<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(out var ${member.name}Temporary_);
+            sample.${member.name} = ${member.name}Temporary_;
+#*--*##elseif($member.strSize && !$member.isAlias)
+#*----*##if($member.isOptional)
+            sample.${member.name} = ${member.name}.FromNativeOptional();
+#*----*##else
+            sample.${member.name} = ${member.name}.FromNative();
+#*----*##end
+#*--*##elseif($member.typeKind.equals("user") && !$member.isEnum)
+            ${member.name}.FromNative(sample.${member.name}#if(!$member.isOptional), keysOnly: #if(!$node.hasKey)false#{else}keysOnly#{end}#end);
+#*--*##elseif($member.isOptional)
+#*----*##if($member.isEnum)
+            sample.${member.name} = (${member.nativeTypeFQName} ?) ${member.name}.FromNative<int>();
+#*----*##elseif($member.typeName.equals("char"))
+            sample.${member.name} = ${member.name}.FromNativeChar();
+#*----*##else
+            sample.${member.name} = ${member.name}.FromNative<${member.nativeTypeFQName}>();
+#*----*##end
+#*--*##else
+            sample.${member.name} = $member.fromNative;
+#*--*##end
+#end
+
+#macro(generateInitialize $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##handleCopyDirective($member.directive $member.value false)
+#*----*##else
+#*------*##if(!$member.isOptional || $member.seqSize)
+#*--------*##if ($member.seqSize)
+#*----------*##if($member.strSize && !$member.isAlias)
+                ${member.name}.Initialize(max: #getSeqSize($member "init"), absoluteMax: #getSeqSize($member "init_abs_max"), maxStrLen: #getStrSize($member "init_abs_max"), allocateMemory: allocateMemory);
+#*----------*##else
+                ${member.name}.Initialize<${member.nativeTypeFQName} #if ($member.typeKind.equals("user") && !$member.isEnum), $member.nativeTypeFQNameUnmanaged #end>(max: #getSeqSize($member "init"), absoluteMax: #getSeqSize($member "init_abs_max"), allocateMemory: allocateMemory);
+#*----------*##end
+#*--------*##elseif($member.arrayTotalSize)
+#*----------*##initializeArrayPlugin($member)
+#*--------*##elseif( $member.typeKind.equals("user") && !$member.isEnum)
+                ${member.name}.Initialize(allocatePointers, allocateMemory);
+#*--------*##elseif( $member.strSize && !$member.isAlias)
+            ${member.name}.Initialize(size: #getStrSize($member "init"), allocateMemory: allocateMemory);
+#*----------*##if($member.explicitDefaultValue)
+            ${member.name}.ToNative(${member.explicitDefaultValue}, #getStrSize($member "init_abs_max"));
+#*----------*##end
+#*--------*##elseif($member.nativeTypeFQName.equals("bool"))
+            ${member.name} = ${member.unmanageDefaultValue};
+#*--------*##elseif($member.nativeTypeFQName.equals("char"))
+            ${member.name} = (byte) ${member.unmanageDefaultValue};
+#*--------*##else
+            ${member.name} = ($member.nativeTypeFQName) (${member.unmanageDefaultValue});
+#*--------*##end
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+#macro(memberToNative $member)
+#*--*##if ($member.seqSize)
+#*----*##if($member.hasArray && $member.typeKind.equals("user"))
+            ${member.name}.ToNative((Sequence< ${member.nativeTypeFQName}[]>) sample.${member.name});
+#*----*##elseif($member.typeKind.equals("user") && !$member.isEnum)
+            ${member.name}.ToNative<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>(sample.${member.name});
+#*----*##elseif($member.strSize && !$member.isAlias)
+            ${member.name}.ToNative(sample.${member.name}, #getStrSize($member "init_abs_max"));
+#*----*##elseif($member.typeName.equals("char"))
+            ${member.name}.ToNativeUtf8((Sequence<char>) sample.${member.name});
+#*----*##else
+            ${member.name}.ToNative((Sequence<${member.nativeTypeFQName}>) sample.${member.name});
+#*----*##end
+#*--*##elseif ($member.seqSize)
+            ${member.name}.ToNative((Sequence<${member.nativeTypeFQName} #if($member.typeKind.equals("user")), $member.nativeTypeFQNameUnmanaged#end>) sample.${member.name});
+#*--*##elseif($member.arrayTotalSize)
+#arrayToNative($member)
+#*--*##elseif($member.strSize && !$member.isOptional && !$member.isAlias)
+            ${member.name}.ToNative(sample.${member.name}, #getStrSize($member "init_abs_max"));
+#*--*##elseif($member.typeKind.equals("user") && !$member.isEnum)
+             ${member.name}.ToNative#*
+#*----*##if($member.isOptional)
+<${member.nativeTypeFQName}, $member.nativeTypeFQNameUnmanaged>#*
+#*----*##end
+(sample.${member.name}#*
+#*----*##if(!$member.isOptional)
+, keysOnly: #*
+#*------*##if(!$node.hasKey)
+false#*
+#*------*##else
+keysOnly#*
+#*------*##end
+#*----*##end
+);
+#*--*##elseif($member.isOptional)
+#*----*##if($member.strSize && !$member.isAlias)
+             ${member.name}.ToNativeOptional(sample.${member.name}, #getStrSize($member "init_abs_max"));
+#*----*##elseif($member.typeName.equals("char"))
+             ${member.name}.ToNativeChar(sample.${member.name});
+#*----*##else
+             ${member.name}.ToNative<${member.nativeTypeFQName}>(sample.${member.name});
+#*----*##end
+#*--*##else
+            ${member.name} = $member.toNative;
+#*--*##end
+#end
+
+#macro(generateTypeSupport $node)
+    public class ${node.name}Support : Rti.Dds.Topics.TypeSupport<${node.nativeFQName}>
+    {
+        public ${node.name}Support() : base(
+            new Implementation.${node.name}Plugin(),
+            new Lazy<DynamicType>(() =>Implementation.${node.name}Plugin.CreateDynamicType(isPublic: true)))
+        {
+        }
+
+        public static ${node.name}Support Instance { get; } =
+                ServiceEnvironment.Instance.Internal.TypeSupportFactory.CreateTypeSupport<${node.name}Support, ${node.nativeFQName}>();
+    }
+#end
+
+#macro(generateUnionMemberArray, $member)
+new int[] {#*
+#*--*##foreach($label in $member.labelList)
+#*----*##if($label.equals("true"))
+1
+#*----*##elseif($label.equals("false"))
+0
+#*----*##else
+#*------*##if($label.equals("default"))
+(int) UnionMember.DefaultLabel#*
+#*------*##else
+(int) $label#*
+#*------*##end
+#*----*##end
+#*----*##if($foreach.hasNext), #else}#end
+#*--*##end
+#end
+
+#macro(generateTypePlugin $node $union)
+internal class ${node.name}Plugin : Rti.Dds.NativeInterface.TypePlugin.InterpretedTypePlugin<${node.nativeFQName}, ${node.name}Unmanaged>
+{
+        internal ${node.name}Plugin() : base("${node.nativeFQName}", isKeyed: #if($node.hasKey || $node.hasKeyBaseType)true#{else}false#end, CreateDynamicType(isPublic: false))
+        {
+        }
+
+        public static DynamicType CreateDynamicType(bool isPublic = true)
+        {
+            var dtf = ServiceEnvironment.Instance.Internal.GetTypeFactory(isPublic);
+            var tsf = ServiceEnvironment.Instance.Internal.TypeSupportFactory;
+
+#*--*##if($node.constructKind.equals("alias"))
+            return tsf.CreateAliasWithAccessInfo<${node.name}Unmanaged>(
+                    dtf,
+                    "${node.name}",
+#*----*##generateTypecode($node.memberFieldMapList[0] true);
+#*--*##else
+#*----*##if($union)
+            // ${node.name} union
+            var ${node.name}StructMembers = new UnionMember[]
+            {
+#*----*##else
+            // ${node.name} struct
+            var ${node.name}StructMembers = new StructMember[]
+            {
+#*----*##end
+#*----*##foreach($member in $node.typeCodeMemberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value false)
+#*------*##else
+#*--------*##if(!($member.seqSize && $member.hasArray))
+#*----------*##if($union)
+new UnionMember("${member.typecodeName}",#*
+#*----------*##else
+new StructMember("${member.typecodeName}",#*
+#*----------*##end
+#*----------*##generateTypecode($member false)
+#*--------*##end
+#*--------*##if(!$member.lastMemberNotDirective)
+,
+#*--------*##end
+#*------*##end
+#*----*##end
+
+        };
+
+            return tsf.CreateTypeWithAccessInfo<${node.name}Unmanaged>(
+#*--*##if($union)
+                    dtf.BuildUnion()
+                    .WithDiscriminator(#*
+#*----*##if($node.unionDiscriminatorMap.isEnum)
+${node.unionDiscriminatorMap.nativeTypeFQName}Support.Instance.GetDynamicTypeInternal(isPublic))
+#*----*##else
+dtf.GetPrimitiveType<${node.unionDiscriminatorMap.nativeTypeFQName}>())
+#*----*##end
+#*--*##else
+                    dtf.BuildStruct()
+#*----*##if($node.baseTypeFQName)
+                        .WithParent((StructType) ${node.baseTypeFQName}Support.Instance.GetDynamicTypeInternal(isPublic))
+#*----*##end
+#*--*##end
+                        .WithExtensibility(#getExtensibilityEnum($node))
+                        .WithName("${node.typeCodeFQName}")
+                        .AddMembers(${node.name}StructMembers));
+#*--*##end
+        }
+}
+#end
+
+#macro(generateTypecode $member $alias)
+#*--*##if($member.seqSize)
+#*----*##if($member.hasArray && $member.typeKind.equals("user"))
+ tsf.CreateSequenceWithAccessInfo(dtf,  dtf.CreateArray(dtf.GetPrimitiveType<${member.nativeTypeFQName}>(), $member.arrayTotalSize), #getSeqSize($member "init_abs_max"))#*
+#*----*##elseif($member.typeKind.equals("user"))
+ tsf.CreateSequenceWithAccessInfo(dtf, ${member.nativeTypeFQName}Support.Instance.GetDynamicTypeInternal(isPublic), #getSeqSize($member "init_abs_max"))#*
+#*----*##elseif($member.strSize)
+ tsf.CreateSequenceWithAccessInfo(dtf, #createString($member), #getSeqSize($member "init_abs_max"))#*
+#*----*##elseif($member.typeName.equals("wchar"))
+ tsf.CreateSequenceWithAccessInfo(dtf, dtf.GetPrimitiveType<DynamicTypeFactory.WideCharType>(), #getSeqSize($member "init_abs_max"))#*
+#*----*##else
+ tsf.CreateSequenceWithAccessInfo(dtf, dtf.GetPrimitiveType<${member.nativeTypeFQName}>(), #getSeqSize($member "init_abs_max"))#*
+#*----*##end
+#*--*##elseif($member.arrayTotalSize)
+ #createArrayAccessInfo($member)#*
+#*--*##elseif( $member.strSize && !$member.isAlias)
+#*--*# #createString($member)
+#*--*##elseif( $member.typeKind.equals("user"))
+ ${member.nativeTypeFQName}Support.Instance.GetDynamicTypeInternal(isPublic)#*
+#*--*##elseif( $member.typeName.equals("wchar"))
+ dtf.GetPrimitiveType<DynamicTypeFactory.WideCharType>()#*
+#*--*##else
+ dtf.GetPrimitiveType<${member.nativeTypeFQName}>()#*
+#*--*##end
+#*--*##if($union), #generateUnionMemberArray($member)#end#*
+#*--*##if($member.isOptional && !$member.seqSize), isOptional: true#end#*
+#*--if($member.isPointer), isExternal: true#end
+#*--*##if($member.isKey), isKey: true#end#*
+#*--*##if($member.id && !$alias), id: $member.id#end#*
+*#)#*
+#*--*##end
+
+

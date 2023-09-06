@@ -1,0 +1,238 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.3,11aug15,eys PLATFORMS-664 Added Android 5 port using ndkr10e
+## 2.2,2sep14,vmg created
+##========================================================================
+#[[#]]#
+#[[#]]# variables for android only
+#[[#]]#
+
+.SECONDARY:
+
+ANDROID_PACKAGE_PREFIX = ${typePackage}
+
+ANDROID_PUSH_DEST = /data/data/#[[$]]#(ANDROID_PACKAGE_PREFIX)
+
+#[[#]]# replace TARGET_ID with the android platform that you want to use
+#[[#]]# use "android list targets" to see the list of available targets
+TARGET_ID = ${archMap.TARGET_ID}
+
+#[[#]]# if you have more than 1 device connected, you may need to define this
+#[[#]]# use "adb devices" to check which devices are connected
+#[[#]]#DEVICE = -s emulator-5554
+
+ANDROID_ABI = ${archMap.ANDROID_ABI}
+
+ifeq (#[[$]]#(OS),Windows_NT)
+ANDROID_CMD = android.bat
+else
+ANDROID_CMD = android
+endif
+
+#[[#]]#
+#[[#]]# Commands to copy and run executables as root on shell on the device
+#[[#]]#
+
+#[[#]]# copy all necessary files to shell
+${global.idlFileName}.pushexe :
+	adb #[[$]]#(DEVICE) shell mkdir #[[$]]#(ANDROID_PUSH_DEST)
+#if(${global.idlFileName})
+	adb #[[$]]#(DEVICE) push objs/#[[$]]#(TARGET_ARCH)/${global.idlFileName}${global.pubSuffix} #[[$]]#(ANDROID_PUSH_DEST)/${global.idlFileName}${global.pubSuffix}
+	adb #[[$]]#(DEVICE) push objs/#[[$]]#(TARGET_ARCH)/${global.idlFileName}${global.subSuffix} #[[$]]#(ANDROID_PUSH_DEST)/${global.idlFileName}${global.subSuffix}
+#else 
+	adb #[[$]]#(DEVICE) push objs/#[[$]]#(TARGET_ARCH)/${global.execNames} #[[$]]#(ANDROID_PUSH_DEST)/${global.execNames}
+#end
+#[[#]]# optionally you can also use USER_QOS_PROFILES.xml for the example
+#[[#]]#	adb #[[$]]#(DEVICE) push USER_QOS_PROFILES.xml #[[$]]#(ANDROID_PUSH_DEST)/USER_QOS_PROFILES.xml
+
+#[[#]]# example commands for running
+#[[#]]# > adb #[[$]]#(DEVICE) shell
+#[[#]]# > cd #[[$]]#(ANDROID_PUSH_DEST)
+#if(${global.idlFileName})
+#[[#]]# running publisher
+#[[#]]# > ./${global.idlFileName}${global.pubSuffix} #[[$]]#(ARGS)
+#[[#]]# running subscriber
+#[[#]]# > ./${global.idlFileName}${global.subSuffix} #[[$]]#(ARGS)
+#else 
+#[[#]]# > ./${global.execNames} #[[$]]#(ARGS)
+#end
+#[[#]]# > exit
+
+#[[#]]#
+#[[#]]# Building .so to be used by apk
+#[[#]]#
+
+#if(${global.idlFileName})
+${global.idlFileName}.so : #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%.so) #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so) ;
+#else
+${global.execNames}.so : #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%.so) #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so) ;
+#end
+#[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%.so) : objs/#[[$]]#(TARGET_ARCH)/lib%.so : objs/#[[$]]#(TARGET_ARCH)/%.o #[[$]]#(COMMONOBJS)
+	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS) -shared -o #[[$]]#@ objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*.o #[[$]]#(COMMONOBJS) #[[$]]#(LIBS)
+
+$(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so) : objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so: %_jni${sourceFileExtension} objs/#[[$]]#(TARGET_ARCH)/lib%.so
+	#[[$]]#(COMPILER) #[[$]]#(COMPILER_FLAGS) -o objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*_jni.o #[[$]]#(DEFINES) -c #[[$]]#<
+	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS) -shared -o #[[$]]#@ objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*_jni.o -Lobjs/#[[$]]#(TARGET_ARCH) -l#[[$]]#* #[[$]]#(LIBS)
+
+#if(${global.idlFileName})
+#[[#]]#
+#[[#]]# Convenient way to create projects
+#[[#]]#
+
+${global.idlFileName}.projects : ${global.idlFileName}Publisher/publisher \
+		  	       ${global.idlFileName}Subscriber/subscriber ;
+
+${global.idlFileName}%/publisher ${global.idlFileName}%/subscriber :
+	#[[$]]#(ANDROID_CMD) update project -n ${global.idlFileName}_$(notdir #[[$]]#@) -t #[[$]]#(TARGET_ID) -p objs/#[[$]]#(TARGET_ARCH)/#[[$]]#(notdir #[[$]]#@)
+
+#[[#]]#
+#[[#]]# Convenient way to build apks
+#[[#]]#
+
+#[[#]]# this command will work only if cygwin is installed
+${global.idlFileName}.apks : ${global.idlFileName}Project.publisherlib \
+			   ${global.idlFileName}Project.subscriberlib
+	cd objs/#[[$]]#(TARGET_ARCH)/publisher; ant debug
+	cd objs/#[[$]]#(TARGET_ARCH)/subscriber; ant debug
+
+${global.idlFileName}Project.publisherlib : objs/#[[$]]#(TARGET_ARCH)/publisher/libs.dir \
+				  objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI).dir \
+			          objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}.so \
+				  objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}_jni.so copyddslib_shared.publisher #if(${global.dynamicLinking})copyddslib.publisher#end;
+
+${global.idlFileName}Project.subscriberlib : objs/#[[$]]#(TARGET_ARCH)/subscriber/libs.dir \
+				  objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI).dir \
+			          objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}.so \
+				  objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}_jni.so copyddslib_shared.subscriber #if(${global.dynamicLinking})copyddslib.subscriber#end;
+
+
+objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/%.so \
+objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/%.so : objs/#[[$]]#(TARGET_ARCH)/%.so
+	cp #[[$]]#< #[[$]]#@
+
+copyddslib_shared.%:
+		
+#if(${global.language}!="C")
+	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
+		
+	#else
+		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+	#end
+#end
+
+
+#if(${global.dynamicLinking})
+copyddslib.%:
+#foreach($coreLib in ${corelibs})
+	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${coreLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#end
+#if(${global.language}!="C")
+	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
+		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/gnu-libstdc++/${archMap.ANDROID_GCC}/libs/${archMap.ANDROID_ABI}/libgnustl_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+	#else
+		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+	#end
+#end
+#end
+
+#[[#]]#
+#[[#]]# Example to install apks on device
+#[[#]]#
+
+${global.idlFileName}.installapks :
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/publisher/bin/${global.idlFileName}${global.pubSuffix}-debug.apk
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/subscriber/bin/${global.idlFileName}${global.subSuffix}-debug.apk
+	
+#[[#]]#
+#[[#]]# Example to unistall apks on device
+#[[#]]#
+
+${global.idlFileName}.uninstallapks :
+	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).publisher
+	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).subscriber
+#else
+#[[#]]# Example makefile creation
+
+#[[#]]# Convenient way to create projects
+#[[#]]#
+
+${global.execNames}.projects : ${global.execNames} ;
+
+${global.execNames}%/ :
+	#[[$]]#(ANDROID_CMD) update project -n ${global.execNames}_$(notdir #[[$]]#@) -t #[[$]]#(TARGET_ID) -p objs/#[[$]]#(TARGET_ARCH)/#[[$]]#(notdir #[[$]]#@)
+
+#[[#]]#
+#[[#]]# Convenient way to build apks
+#[[#]]#
+
+#[[#]]# this command will work only if cygwin is installed
+${global.execNames}.apks : ${global.execNames}Project.lib 
+	cd objs/#[[$]]#(TARGET_ARCH)/${global.execNames}; ant debug
+
+${global.execNames}Project.lib : objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs.dir \
+                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI).dir \
+                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}.so \
+                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}_jni.so copyddslib_shared #if(${global.dynamicLinking})copyddslib#end;
+
+
+objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/%.so : objs/#[[$]]#(TARGET_ARCH)/%.so
+	cp #[[$]]#< #[[$]]#@
+
+copyddslib_shared.%:
+		
+#if(${global.language}!="C")
+	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
+		
+	#else
+		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+	#end
+#end
+
+
+#if(${global.dynamicLinking})
+copyddslib%:
+#foreach($coreLib in ${corelibs})
+	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${coreLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#end
+#if(${global.language}!="C")
+	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
+		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/gnu-libstdc++/${archMap.ANDROID_GCC}/libs/${archMap.ANDROID_ABI}/libgnustl_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+	#else
+		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+	#end
+#end
+#end
+
+#[[#]]#
+#[[#]]# Example to install apks on device
+#[[#]]#
+
+${global.execNames}.installapks :
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/bin/${global.execNames}-debug.apk
+
+#[[#]]#
+#[[#]]# Example to unistall apks on device
+#[[#]]#
+
+${global.execNames}.uninstallapks :
+	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).${global.execNames}
+#end
+
+#[[#]]#
+#[[#]]# Example to capture logs
+#[[#]]#
+
+logcat:
+	adb $(DEVICE) logcat    	
+	
+logcat.clear:
+	adb $(DEVICE) logcat -c

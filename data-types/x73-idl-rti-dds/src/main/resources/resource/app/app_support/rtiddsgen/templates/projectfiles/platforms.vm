@@ -26,150 +26,7 @@
 	$!{architectures.put("$name$compiler", [$name, $compiler, $params])}
 #end
 
-
-#******************** SOLARIS ********************#
-#arch("i86Sol2.9","gcc3.3.2", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m32"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m32"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m32"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lsocket", "lgen", "lposix4", "lpthread", "lm", "lc"],
-    $INCLUDES : [],
-    $DEFINES : ["DRTI_UNIX"],
-    $HIDDEN : true
-})
-
-
-#arch("sparc64Sol2.10","gcc3.4.2", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lsocket", "lgen", "lposix4", "lpthread", "lm", "lc"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_64BIT"],
-    $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : ["pthreads"],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("sparcSol2.10","gcc3.4.2", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m32"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m32"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m32"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lsocket", "lgen", "lposix4", "lpthread", "lm", "lc"],
-    $DEFINES : ["DRTI_UNIX"],
-    $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : ["pthreads"],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("sparcSol2.9","cc5.4", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "cc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "cc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "CC",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "CC",
-    $CXX_LINKER_FLAGS : [],
-    $SYSLIBS : ["ldl", "lnsl", "lgenIO", "lsocket", "lgen", "lposix4", "lpthread", "lm", "lc"],
-    $DEFINES : ["DRTI_UNIX"],
-    $INCLUDES : [],
-    $HIDDEN : true
-})
-
-#arch("sparcSol2.9","gcc3.2", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m32"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m32"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m32"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lgenIO", "lsocket", "lgen", "lposix4", "lpthread", "lm", "lc"],
-    $DEFINES : ["DRTI_UNIX"],
-    $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $HIDDEN : true
-})
-
 #******************** ANDROID ********************#
-#arch("armv7aAndroid2.3","gcc4.8", {
-	$OS : $OS.ANDROID,
-	$PLATFORM : $PLATFORM.armv7a,
-	$C_COMPILER : "arm-linux-androideabi-gcc",
-	$C_COMPILER_FLAGS : ["Wall", "I$(ANDROID_NDK_PATH)/platforms/android-9/arch-arm/usr/include"],
-	$C_LINKER : "arm-linux-androideabi-gcc",
-	$C_LINKER_FLAGS : [],
-	$CXX_COMPILER : "arm-linux-androideabi-g++",
-	$CXX_COMPILER_FLAGS : ["Wall", "I$(ANDROID_NDK_PATH)/platforms/android-9/arch-arm/usr/include"],
-	$CXX_LINKER : "arm-linux-androideabi-g++",
-	$CXX_LINKER_FLAGS : [],
-	$C_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-9/arch-arm", "llog", "lc", "lm"],
-	$CXX_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-9/arch-arm", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a", "lgnustl_static"],
-	$DEFINES : ["fpic", "DRTI_UNIX", "DLINUX", "DRTI_LINUX", "DRTI_ANDROID"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
- 	$CPP03_COMPILER_FLAGS : [], 
- 	$SUPPORTS_CPP03: true,
- 	$CPP11_COMPILER_FLAGS : ["std=c++0x"],  
- 	$SUPPORTS_CPP11: true,
- 	"TARGET_ID" : "1",
- 	"ANDROID_GCC" : "4.8",
- 	"ANDROID_ABI" : "armeabi-v7a"
-})
-
-#arch("armv7aAndroid5.0","gcc4.9ndkr10e", {
-	$OS : $OS.ANDROID,
-	$PLATFORM : $PLATFORM.armv7a,
-	$C_COMPILER : "arm-linux-androideabi-gcc",
-	$C_COMPILER_FLAGS : ["Wall", "I$(ANDROID_NDK_PATH)/platforms/android-21/arch-arm/usr/include"],
-	$C_LINKER : "arm-linux-androideabi-gcc",
-	$C_LINKER_FLAGS : [],
-	$CXX_COMPILER : "arm-linux-androideabi-g++",
-	$CXX_COMPILER_FLAGS : ["Wall", "I$(ANDROID_NDK_PATH)/platforms/android-21/arch-arm/usr/include"],
-	$CXX_LINKER : "arm-linux-androideabi-g++",
-	$CXX_LINKER_FLAGS : [],
-	$C_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-21/arch-arm", "llog", "lc", "lm"],
-	$CXX_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-21/arch-arm", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a", "lgnustl_static"],
-	$DEFINES : ["fpic", "DRTI_UNIX", "DLINUX", "DRTI_LINUX", "DRTI_ANDROID"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
- $CPP03_COMPILER_FLAGS : [],
- $SUPPORTS_CPP03: true,
- $CPP11_COMPILER_FLAGS : ["std=c++0x"],
- $SUPPORTS_CPP11: true,
- "TARGET_ID" : "android-21",
- "ANDROID_GCC" : "4.9",
- "ANDROID_ABI" : "armeabi-v7a"
-})
 
 #arch("arm64Android9.0","clang8.0ndkr19b", {
     $OS : $OS.ANDROID,
@@ -182,13 +39,11 @@
     $CXX_COMPILER_FLAGS : ["Wall", "Wno-return-type-c-linkage", "Wno-deprecated-register"],
     $CXX_LINKER : "aarch64-linux-android28-clang++",
     $CXX_LINKER_FLAGS : [],
-    $C_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm64", "llog", "lc", "lm"],
-    $CXX_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm64", "L$(ANDROID_NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/28", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/arm64-v8a", "lc++_shared", "lc++abi"],
+    $C_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm64", "llog", "lc", "lm", "rdynamic"],
+    $CXX_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm64", "L$(ANDROID_NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/28", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/arm64-v8a", "lc++_shared", "lc++abi", "rdynamic"],
     $DEFINES : ["fpic", "DLINUX", "DRTI_LINUX", "DRTI_ANDROID", "DRTI_ANDROID9", "DRTI_64BIT", "DRTI_LINUX26", "DRTI_UNIX"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true,
     "TARGET_ID" : "android-28",
@@ -206,43 +61,16 @@
     $CXX_COMPILER_FLAGS : ["Wall", "Wno-return-type-c-linkage", "Wno-deprecated-register"],
     $CXX_LINKER : "armv7a-linux-androideabi28-clang++",
     $CXX_LINKER_FLAGS : [],
-    $C_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a"],
-    $CXX_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm", "L$(ANDROID_NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/28", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a", "lc++_shared", "lc++abi"],
+    $C_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a", "rdynamic"],
+    $CXX_SYSLIBS : ["-sysroot=$(ANDROID_NDK_PATH)/platforms/android-28/arch-arm", "L$(ANDROID_NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/28", "llog", "lc", "lm", "L$(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a", "lc++_shared", "lc++abi", "rdynamic"],
     $DEFINES : ["fpic", "DLINUX", "DRTI_LINUX", "DRTI_ANDROID", "DRTI_ANDROID9", "DRTI_LINUX26", "DRTI_UNIX"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true,
     "TARGET_ID" : "android-28",
     "ANDROID_ABI" : "armeabi-v7a"
 })
-
-#******************** IOS ********************#
-#arch("arm64iOS8","clang6.1", {
-    $OS : $OS.IOS,
-    $CXX_COMPILER_FLAGS : ["arch arm64", 'Wno-return-type-c-linkage'],
-    $DEFINES : ['DRTI_UNIX', 'DRTI_IOS'],
-    $CPP03_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP11: true
-})
-#    $C_LINKER_FLAGS : ["std=libc++"],
-#    $CXX_LINKER_FLAGS : ["std=libc++"],
-
-#arch("x86_64iOS8","clang6.1", {
-    $OS : $OS.IOS,
-    $CXX_COMPILER_FLAGS : ["arch x86_64", 'Wno-return-type-c-linkage'],
-    $DEFINES : ['DRTI_UNIX', 'DRTI_IOS'],
-    $CPP03_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP11: true
-})
-#    $C_LINKER_FLAGS : ["std=libc++"],
-#    $CXX_LINKER_FLAGS : ["std=libc++"],
 
 #******************** LINUX ********************#
 #* All the unix use the template in ./Mekfile/makefileC.vm if you want to specify
@@ -250,24 +78,23 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 #arch("armv6vfphLinux3.x","gcc4.7.2", {
 	$OS : $OS.UNIX,
 	$C_COMPILER : "arm-linux-gnueabihf-gcc",
-	$C_COMPILER_FLAGS : [],
+	$C_COMPILER_FLAGS : ["march=armv6", "mfpu=vfp", "mfloat-abi=hard", "mlong-calls", "funwind-tables"],
 	$C_LINKER : "arm-linux-gnueabihf-gcc",
 	$C_LINKER_FLAGS : [],
 	$CXX_COMPILER : "arm-linux-gnueabihf-g++",
-	$CXX_COMPILER_FLAGS : [],
+	$CXX_COMPILER_FLAGS : ["march=armv6", "mfpu=vfp", "mfloat-abi=hard", "mlong-calls", "funwind-tables"],
 	$CXX_LINKER : "arm-linux-gnueabihf-g++",
 	$CXX_LINKER_FLAGS : [],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX", "march=armv6", "mfpu=vfp", "mfloat-abi=hard", "mlong-calls"],
+	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+	$DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv6", "mfpu=vfp", "mfloat-abi=hard", "mlong-calls", "funwind-tables"],
 	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true
+	$SUPPORTS_JAVA : false,
+    $CPP11_COMPILER_FLAGS : [],
+    $SUPPORTS_CPP11: false,
+    $HIDDEN: true
 })
 
-#arch("armv7Linux3.0","gcc4.6.1.cortex-a9" {
+#arch("armv7Linux3.0","gcc4.6.1.cortex-a9", {
         $OS : $OS.UNIX,
         $C_COMPILER : "arm-xilinx-linux-gnueabi-gcc",
         $C_COMPILER_FLAGS : [],
@@ -277,17 +104,16 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $CXX_COMPILER_FLAGS : [],
         $CXX_LINKER : "arm-xilinx-linux-gnueabi-g++",
         $CXX_LINKER_FLAGS : [],
-        $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-        $DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mlong-calls"],
+        $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mlong-calls"],
         $INCLUDES : [],
         $SUPPORTS_JAVA :false,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP11: false
+    $SUPPORTS_CPP11: false,
+    $HIDDEN: true
 })
 
-#arch("armv7aLinux3.12","gcc4.9.3cortex-a9" {
+#arch("armv7aLinux3.12","gcc4.9.3cortex-a9", {
         $OS : $OS.UNIX,
         $C_COMPILER : "arm-linux-gnueabihf-gcc",
         $C_COMPILER_FLAGS : [],
@@ -297,12 +123,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $CXX_COMPILER_FLAGS : [],
         $CXX_LINKER : "arm-linux-gnueabihf-g++",
         $CXX_LINKER_FLAGS : ["static-libgcc"],
-        $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-        $DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mlong-calls"],
+        $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mlong-calls", "funwind-tables"],
         $INCLUDES : [],
         $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true
 })
@@ -317,14 +141,13 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["-sysroot=$(SYSROOT)"],
     $CXX_LINKER : "aarch64-poky-linux-g++",
     $CXX_LINKER_FLAGS : ["static-libgcc", "-sysroot=$(SYSROOT)"],
-    $SYSLIBS : ["lnsl", "lm", "lpthread", "lrt", "ldl"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "funwind-tables"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : false,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("armv7Linux","gcc7.3.0", {
@@ -337,112 +160,87 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["-sysroot=$(SYSROOT) -march=armv7 -mthumb -mfloat-abi=hard -mabi=aapcs-linux"],
     $CXX_LINKER : "arm-poky-linux-g++",
     $CXX_LINKER_FLAGS : ["static-libgcc", "-sysroot=$(SYSROOT)"],
-    $SYSLIBS : ["lnsl", "lm", "lpthread", "lrt", "ldl"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "funwind-tables"],
     $INCLUDES : [],
     "CSR_VAR" : "#SYSROOT = # Set the location of the Yocto toolchain sysroot",
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++11"],
     $SUPPORTS_CPP11: true
 })
 
-#arch("cell64Linux2.6","gcc4.5.1", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.x64,
-	$C_COMPILER : "powerpc64-ngc-linux-gcc",
-	$C_COMPILER_FLAGS : ["O3", "mminimal-toc", "mcpu=cell", "mtune=cell"],
-	$C_LINKER : "powerpc64-ngc-linux-gcc",
-	$C_LINKER_FLAGS : [],
-	$CXX_COMPILER : "powerpc64-ngc-linux-g++",
-	$CXX_COMPILER_FLAGS : ["O3", "mminimal-toc", "mcpu=cell", "mtune=cell"],
-	$CXX_LINKER : "powerpc64-ngc-linux-g++",
-	$CXX_LINKER_FLAGS : ["static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-	$INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+#arch("armv7Linux4","gcc7.5.0" {
+    $OS : $OS.UNIX,
+    $C_COMPILER : "arm-linux-gnueabihf-gcc",
+    $C_COMPILER_FLAGS : ["march=armv7", "mthumb", "mfloat-abi=hard", "mabi=aapcs-linux", "pthread"],
+    $C_LINKER : "arm-linux-gnueabihf-gcc",
+    $C_LINKER_FLAGS : ["pthread"],
+    $CXX_COMPILER : "arm-linux-gnueabihf-g++",
+    $CXX_COMPILER_FLAGS : ["march=armv7", "mthumb", "mfloat-abi=hard", "mabi=aapcs-linux", "pthread"],
+    $CXX_LINKER : "arm-linux-gnueabihf-g++",
+    $CXX_LINKER_FLAGS : ["static-libgcc", "pthread"],
+    $SYSLIBS : ["ldl", "lm", "lrt"],
+    $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true
 })
 
-#arch("i86Linux2.6","gcc3.4.3", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "L/usr/lib/nptl", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+#arch("armv8Linux4.4","gcc5.4.0", {
+        $OS : $OS.UNIX,
+        $C_COMPILER : "gcc",
+        $C_COMPILER_FLAGS : [],
+        $C_LINKER : "gcc",
+        $C_LINKER_FLAGS : [],
+        $CXX_COMPILER : "g++",
+        $CXX_COMPILER_FLAGS : [],
+        $CXX_LINKER : "g++",
+        $CXX_LINKER_FLAGS : ["static-libgcc"],
+        $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT", "funwind-tables"],
+        $INCLUDES : [],
+        $SUPPORTS_JAVA : true,
+        $CPP11_COMPILER_FLAGS : ["std=c++0x"],
+        $SUPPORTS_CPP11: true,
+        $HIDDEN: true
 })
 
-#arch("i86Linux2.6","gcc4.1.1", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+#arch("armv8Linux4","gcc7.3.0", {
+        $OS : $OS.UNIX,
+        $C_COMPILER : "aarch64-linux-gnu-gcc",
+        $C_COMPILER_FLAGS : [],
+        $C_LINKER : "aarch64-linux-gnu-gcc",
+        $C_LINKER_FLAGS : [],
+        $CXX_COMPILER : "aarch64-linux-gnu-g++",
+        $CXX_COMPILER_FLAGS : [],
+        $CXX_LINKER : "aarch64-linux-gnu-g++",
+        $CXX_LINKER_FLAGS : ["static-libgcc"],
+        $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "no-pie", "rdynamic"],
+        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT", "funwind-tables"],
+        $INCLUDES : [],
+        $SUPPORTS_JAVA : true,
+        $CPP11_COMPILER_FLAGS : ["std=c++0x"],
+        $SUPPORTS_CPP11: true
 })
 
-#arch("i86Linux2.6","gcc4.1.2", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("i86Linux2.6","gcc4.2.1", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "gcc",
-	$C_COMPILER_FLAGS : ["m32"],
-	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "g++",
-	$CXX_COMPILER_FLAGS : ["m32"],
-	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+#arch("armv8Linux","-armgcc9.2.1", {
+        $OS : $OS.UNIX,
+        $C_COMPILER : "aarch64-none-linux-gnu-gcc",
+        $C_COMPILER_FLAGS : ["-sysroot=$(SYSROOT)", "feliminate-unused-debug-types"],
+        $C_LINKER : "aarch64-none-linux-gnu-gcc",
+        $C_LINKER_FLAGS : ["-sysroot=$(SYSROOT)"],
+        $CXX_COMPILER : "aarch64-none-linux-gnu-g++",
+        $CXX_COMPILER_FLAGS : ["-sysroot=$(SYSROOT)", "feliminate-unused-debug-types"],
+        $CXX_LINKER : "aarch64-none-linux-gnu-g++",
+        $CXX_LINKER_FLAGS : ["-sysroot=$(SYSROOT)", "static-libgcc"],
+        $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "no-pie", "rdynamic"],
+        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
+        $INCLUDES : [],
+        "CSR_VAR" : "#SYSROOT = # Set the location of thetoolchain sysroot",
+        $SUPPORTS_JAVA : true,
+        $CPP11_COMPILER_FLAGS : ["std=c++11"],
+        $SUPPORTS_CPP11: true
 })
 
 #arch("i86Linux2.6","gcc4.4.5", {
@@ -456,31 +254,11 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$CXX_COMPILER_FLAGS : ["m32"],
 	$CXX_LINKER : "g++",
 	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt"],
+	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
 	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
 	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("i86Linux3.x","gcc4.6.3", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32", "Wl,--no-as-needed"],
-	$CXX_COMPILER : "g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc", "Wl,--no-as-needed"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+	$SUPPORTS_JAVA : false,
+    $HIDDEN: true
 })
 
 #arch("i86Linux3","gcc4.8.2", {
@@ -489,98 +267,17 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$C_COMPILER : "gcc",
 	$C_COMPILER_FLAGS : ["m32", "Wall"],
 	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32", "Wl,--no-as-needed"],
+	$C_LINKER_FLAGS : ["m32"],
 	$CXX_COMPILER : "g++",
 	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
 	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc", "Wl,--no-as-needed"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
+	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
+	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
 	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
 	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
+	$SUPPORTS_JAVA : false,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true
-})
-
-#arch("i86Linux3","gcc4.3.4", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("i86Linux3.10","gcc4.9.1", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "i686-pc-linux-gnu-gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "i686-pc-linux-gnu-gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "i686-pc-linux-gnu-g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "i686-pc-linux-gnu-g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : false,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("i86Linux2.6","gcc4.9.2", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "i686-pc-linux-gnu-gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "i686-pc-linux-gnu-gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "i686-pc-linux-gnu-g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "i686-pc-linux-gnu-g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : false,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("i86RedHawk5.4","gcc4.9.2", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "i686-pc-linux-gnu-gcc",
-	$C_COMPILER_FLAGS : ["m32", "Wall"],
-	$C_LINKER : "i686-pc-linux-gnu-gcc",
-	$C_LINKER_FLAGS : ["m32"],
-	$CXX_COMPILER : "i686-pc-linux-gnu-g++",
-	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
-	$CXX_LINKER : "i686-pc-linux-gnu-g++",
-	$CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : false,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
 })
 
 #arch("i86RedHawk6.5","gcc4.9.2", {
@@ -594,15 +291,35 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["m32", "Wall"],
     $CXX_LINKER : "g++",
     $CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-    $SYSLIBS : ["lnsl", "lm", "lpthread", "lrt", "ldl"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
     $INCLUDES : [],
     $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [], 
-    $SUPPORTS_CPP03: true,
+    $SUPPORTS_JAVA : false,
     $CPP11_COMPILER_FLAGS : ["std=c++11"], 
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["/usr/lib/libssl.so", "/usr/lib/libcrypto.so"],
+    $HIDDEN: true
+})
+
+#arch("i86RedHawk8.4","gcc8.5.0", {
+    $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.i86,
+    $C_COMPILER : "gcc",
+    $C_COMPILER_FLAGS : ["m32", "Wall"],
+    $C_LINKER : "gcc",
+    $C_LINKER_FLAGS : ["m32"],
+    $CXX_COMPILER : "g++",
+    $CXX_COMPILER_FLAGS : ["m32", "Wall"],
+    $CXX_LINKER : "g++",
+    $CXX_LINKER_FLAGS : ["m32"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++11"], 
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["/usr/lib/libssl.so", "/usr/lib/libcrypto.so"]
 })
 
 #arch("x64RedHawk6.5","gcc4.9.2", {
@@ -616,34 +333,54 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["m64", "Wall"],
     $CXX_LINKER : "g++",
     $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["lnsl", "lm", "lpthread", "lrt", "ldl"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [], 
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++11"], 
-    $SUPPORTS_CPP11: true
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["/usr/lib64/libssl.so", "/usr/lib64/libcrypto.so"],
+    $HIDDEN: true
 })
 
-#arch("mpc8270Linux3.10","gcc4.9.1", {
-	$OS : $OS.UNIX,
-	$PLATFORM : $PLATFORM.ppc,
-	$C_COMPILER : "powerpc-603e-linux-gnu-gcc",
-	$C_COMPILER_FLAGS : ["Zpc", "Wall"],
-	$C_LINKER : "powerpc-603e-linux-gnu-gcc",
-	$C_LINKER_FLAGS : ["mcpu=powerpc"],
-	$CXX_COMPILER : "powerpc-603e-linux-gnu-g++",
-	$CXX_COMPILER_FLAGS : ["mcpu=powerpc", "Wall"],
-	$CXX_LINKER : "powerpc-603e-linux-gnu-g++",
-	$CXX_LINKER_FLAGS : ["mcpu=powerpc", "static-libgcc"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : false,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+#arch("x64RedHawk8.2","gcc8.3.1", {
+    $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.x64,
+    $C_COMPILER : "gcc",
+    $C_COMPILER_FLAGS : ["m64", "Wall", "fno-omit-frame-pointer"],
+    $C_LINKER : "gcc",
+    $C_LINKER_FLAGS : ["m64"],
+    $CXX_COMPILER : "g++",
+    $CXX_COMPILER_FLAGS : ["m64", "Wall", "fno-omit-frame-pointer"],
+    $CXX_LINKER : "g++",
+    $CXX_LINKER_FLAGS : ["m64"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++11", "fno-omit-frame-pointer"],
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["/usr/lib64/libssl.so", "/usr/lib64/libcrypto.so"]
+})
+
+#arch("x64RedHawk8.4","gcc8.5.0", {
+    $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.x64,
+    $C_COMPILER : "gcc",
+    $C_COMPILER_FLAGS : ["m64", "Wall", "fno-omit-frame-pointer"],
+    $C_LINKER : "gcc",
+    $C_LINKER_FLAGS : ["m64"],
+    $CXX_COMPILER : "g++",
+    $CXX_COMPILER_FLAGS : ["m64", "Wall", "fno-omit-frame-pointer"],
+    $CXX_LINKER : "g++",
+    $CXX_LINKER_FLAGS : ["m64"],
+    $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++11", "fno-omit-frame-pointer"], 
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["/usr/lib64/libssl.so", "/usr/lib64/libcrypto.so"]
 })
 
 #arch("ppce500mcLinux3","gcc4.7.2", {
@@ -657,73 +394,32 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$CXX_COMPILER_FLAGS : ["m32", "mhard-float", "mcpu=e500mc", "Wall", "Wno-unknown-pragmas", "-sysroot=$(SYSROOT_e500mc)/ppce500mc-fsl_networking-linux"],
 	$CXX_LINKER : "powerpc-fsl_networking-linux-g++",
 	$CXX_LINKER_FLAGS : ["m32", "mcpu=e500mc", "static-libgcc", "-sysroot=$(SYSROOT_e500mc)/ppce500mc-fsl_networking-linux"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
+	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
 	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DPOWERPC"],
 	$INCLUDES : [],
 	$SUPPORTS_JAVA : false,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true
 })
 
-#arch("x64Linux2.6","gcc3.4.5", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64", "Wall"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64", "Wall"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "L/usr/lib64/nptl", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("x64Linux2.6","gcc4.1.1", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64", "Wall"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64", "Wall"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-    $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("x64Linux2.6","gcc4.1.2", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64", "Wall"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64", "Wall"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-    $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+#arch("ppc32e6500Linux","gcc4.9.1", {
+	$OS : $OS.UNIX,
+	$PLATFORM : $PLATFORM.ppc,
+	$C_COMPILER : "powerpc-wrsmllib32-linux-gcc",
+	$C_COMPILER_FLAGS : ["m32", "Wall", "Wno-unknown-pragmas"],
+	$C_LINKER : "powerpc-wrsmllib32-linux-gcc",
+	$C_LINKER_FLAGS : ["m32"],
+	$CXX_COMPILER : "powerpc-wrsmllib32-linux-g++",
+	$CXX_COMPILER_FLAGS : ["m32", "Wall", "Wno-unknown-pragmas"],
+	$CXX_LINKER : "powerpc-wrsmllib32-linux-g++",
+	$CXX_LINKER_FLAGS : ["m32"],
+	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
+	$INCLUDES : [],
+	$SUPPORTS_JAVA : false,
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Linux2.6","gcc4.3.4", {
@@ -737,31 +433,11 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["m64", "Wall"],
     $CXX_LINKER : "g++",
     $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("x64Linux2.6","gcc4.4.4", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $INCLUDES : [],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+    $HIDDEN: true
 })
 
 #arch("x64Linux2.6","gcc4.4.5", {
@@ -775,31 +451,31 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["m64"],
     $CXX_LINKER : "g++",
     $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
 
-#arch("x64Linux2.6","gcc4.5.1", {
+#arch("x64Linux3","gcc4.8.2FACE_GP", {
     $OS : $OS.UNIX,
     $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "x86_64-ngc-linux-gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "x86_64-ngc-linux-gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "x86_64-ngc-linux-g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "x86_64-ngc-linux-g++",
-    $CXX_LINKER_FLAGS : ["static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
+    $C_COMPILER : "gcc",
+    $C_COMPILER_FLAGS : ["m64", "Wall"],
+    $C_LINKER : "gcc",
+    $C_LINKER_FLAGS : ["m64"],
+    $CXX_COMPILER : "g++",
+    $CXX_COMPILER_FLAGS : ["m64", "Wall"],
+    $CXX_LINKER : "g++",
+    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT", "DFACE_COMPLIANCE_LEVEL_GENERAL=4", "DENABLE_FACE_COMPLIANCE=FACE_COMPLIANCE_LEVEL_GENERAL", "D_FORTIFY_SOURCE=0"],
     $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+    $SUPPORTS_ADA : true,
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++0x"],
+    $SUPPORTS_CPP11: true
 })
 
 #arch("x64Linux3","gcc4.8.2", {
@@ -808,39 +484,19 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $C_COMPILER : "gcc",
     $C_COMPILER_FLAGS : ["m64", "Wall"],
     $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64","Wl,--no-as-needed"],
+    $C_LINKER_FLAGS : ["m64"],
     $CXX_COMPILER : "g++",
     $CXX_COMPILER_FLAGS : ["m64", "Wall"],
     $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc","Wl,--no-as-needed"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
+    $CXX_LINKER_FLAGS : ["m64", "static-libgcc"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
     $INCLUDES : [],
     $SUPPORTS_ADA : true,
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true
-})
-
-#arch("x64Linux3.x","gcc4.6.3", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64", "Wall"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64", "Wl,--no-as-needed"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64", "Wall"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "static-libgcc", "Wl,--no-as-needed"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-    $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $SUPPORTS_CPP11: true,
+    $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/x64Linux3gcc4.8.2/release/lib/libwolfssl.a"]
 })
 
 #arch("armv7AngstromLinux3.2","gcc4.4.1.cortex-a9", {
@@ -853,114 +509,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : [],
     $CXX_LINKER : "arm-none-linux-gnueabi-g++",
     $CXX_LINKER_FLAGS : ["static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mthumb", "mlong-calls"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+    $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mthumb", "mlong-calls"],
+    $INCLUDES : []
 })
 
-#arch("ppc7400WRLinux2.6","gcc4.3.2", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "powerpc-wrs-linux-gnu-gcc",
-    $C_COMPILER_FLAGS : ["mcpu=powerpc", "B\$(WIND_BASE)/layers/wrll-toolchain-4.3a-291/powerpc/toolchain/\$(WIND_HOST_TYPE)/bin/", "-sysroot=\$(WIND_BASE)/sysroots/qemu_ppc32-glibc_std/sysroot/"],
-    $C_LINKER : "powerpc-wrs-linux-gnu-gcc",
-    $C_LINKER_FLAGS : ["mcpu=powerpc", "B\$(WIND_BASE)/layers/wrll-toolchain-4.3a-291/powerpc/toolchain/\$(WIND_HOST_TYPE)/bin/", "-sysroot=\$(WIND_BASE)/sysroots/qemu_ppc32-glibc_std/sysroot/", "static-libgcc"],
-    $CXX_COMPILER : "powerpc-wrs-linux-gnu-g++",
-    $CXX_COMPILER_FLAGS : ["mcpu=powerpc", "B\$(WIND_BASE)/layers/wrll-toolchain-4.3a-291/powerpc/toolchain/\$(WIND_HOST_TYPE)/bin/", "-sysroot=\$(WIND_BASE)/sysroots/qemu_ppc32-glibc_std/sysroot/"],
-    $CXX_LINKER : "powerpc-wrs-linux-gnu-g++",
-    $CXX_LINKER_FLAGS : ["mcpu=powerpc", "B\$(WIND_BASE)/layers/wrll-toolchain-4.3a-291/powerpc/toolchain/\$(WIND_HOST_TYPE)/bin/", "-sysroot=\$(WIND_BASE)/sysroots/qemu_ppc32-glibc_std/sysroot/", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("i86WRLinux2.6","gcc4.3.2", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "i586-wrs-linux-gnu-gcc",
-    $C_COMPILER_FLAGS : ["m32", "march=i686", "mtune=generic", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/i586/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/common_pc-glibc_std/sysroot/"],
-    $C_LINKER : "i586-wrs-linux-gnu-gcc",
-    $C_LINKER_FLAGS : ["m32", "march=i686", "mtune=generic", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/i586/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/common_pc-glibc_std/sysroot/", "static-libgcc"],
-    $CXX_COMPILER : "i586-wrs-linux-gnu-g++",
-    $CXX_COMPILER_FLAGS : ["m32", "march=i686", "mtune=generic", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/i586/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/common_pc-glibc_std/sysroot/"],
-    $CXX_LINKER : "i586-wrs-linux-gnu-g++",
-    $CXX_LINKER_FLAGS : ["m32", "march=i686", "mtune=generic", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/i586/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/common_pc-glibc_std/sysroot/", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("x64WRLinux2.6","gcc4.4.1", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "i586-wrs-linux-gnu-gcc",
-    $C_COMPILER_FLAGS : ["B$(WIND_BASE)/layers/wrll-toolchain-4.4a-341/i586/toolchain/x86-linux2/bin/", "m64", "march=x86-64", "mtune=generic", "-sysroot=$(WIND_BASE)/sysroots/x64WRLinux2.6gcc4.4.1/libc"],
-    $C_LINKER : "i586-wrs-linux-gnu-gcc",
-    $C_LINKER_FLAGS : ["B$(WIND_BASE)/layers/wrll-toolchain-4.4a-341/i586/toolchain/x86-linux2/bin/", "m64", "march=x86-64", "mtune=generic", "-sysroot=$(WIND_BASE)/sysroots/x64WRLinux2.6gcc4.4.1/libc", "m64", "Xlinker", "Bsymbolic-functions"],
-    $CXX_COMPILER : "i586-wrs-linux-gnu-g++",
-    $CXX_COMPILER_FLAGS : ["B$(WIND_BASE)/layers/wrll-toolchain-4.4a-341/i586/toolchain/x86-linux2/bin/", "m64", "march=x86-64", "mtune=generic", "-sysroot=$(WIND_BASE)/sysroots/x64WRLinux2.6gcc4.4.1/libc"],
-    $CXX_LINKER : "i586-wrs-linux-gnu-g++",
-    $CXX_LINKER_FLAGS : ["B$(WIND_BASE)/layers/wrll-toolchain-4.4a-341/i586/toolchain/x86-linux2/bin/", "m64", "march=x86-64", "mtune=generic", "-sysroot=$(WIND_BASE)/sysroots/x64WRLinux2.6gcc4.4.1/libc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("x64WRLinux7","gcc4.9.1", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "$(COMPILERS_PATH)/x86_64-wrs-linux-gcc",
-    $C_COMPILER_FLAGS : ["m64", "march=x86-64", "mtune=generic", "-sysroot=$(COMPILERSYSROOT)"],
-    $C_LINKER : "$(COMPILERS_PATH)/x86_64-wrs-linux-gcc",
-    $C_LINKER_FLAGS : ["m64", "march=x86-64", "mtune=generic", "-sysroot=$(COMPILERSYSROOT)"],
-    $CXX_COMPILER : "$(COMPILERS_PATH)/x86_64-wrs-linux-g++",
-    $CXX_COMPILER_FLAGS : ["m64", "march=x86-64", "mtune=generic", "-sysroot=$(COMPILERSYSROOT)"],
-    $CXX_LINKER : "$(COMPILERS_PATH)/x86_64-wrs-linux-g++",
-    $CXX_LINKER_FLAGS : ["m64", "march=x86-64", "mtune=generic", "-sysroot=$(COMPILERSYSROOT)"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $MAKEFILE_TEMPLATE: "makefileC.vm",
-    "TR_VAR" : "#TOOLSROOT = # Set the location of the platform project of WR Linux 7",
-    "CSR_VAR" : "COMPILERSYSROOT = $(TOOLSROOT)/host-cross/x86_64-wrs-linux/sysroot/",
-    "COMP_PATH_VAR" : "COMPILERS_PATH = $(TOOLSROOT)/host-cross/usr/bin/x86_64-wrs-linux",
-    $CPP03_COMPILER_FLAGS : ["std=c++14"],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++14"],
-    $SUPPORTS_CPP11: true
-})
-
-#arch("armv7aWRLinux7","gcc4.9.1cortex-a15", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "$(COMPILER_PATH)/arm-wrs-linux-gnueabi-gcc",
-    $C_COMPILER_FLAGS : ["march=armv7-a", "mfloat-abi=hard", "mfpu=neon ", "marm", "mthumb-interwork", "mtune=cortex-a15", "-sysroot=$(COMPILERSYSROOT)"],
-    $C_LINKER : "$(COMPILER_PATH)/arm-wrs-linux-gnueabi-gcc",
-    $C_LINKER_FLAGS : ["march=armv7-a", "mfloat-abi=hard", "mfpu=neon ", "marm", "mthumb-interwork", "mtune=cortex-a15", "-sysroot=$(COMPILERSYSROOT)"],
-    $CXX_COMPILER : "$(COMPILER_PATH)/arm-wrs-linux-gnueabi-g++",
-    $CXX_COMPILER_FLAGS : ["march=armv7-a", "mfloat-abi=hard", "mfpu=neon ", "marm", "mthumb-interwork", "mtune=cortex-a15", "-sysroot=$(COMPILERSYSROOT)"],
-    $CXX_LINKER : "$(COMPILER_PATH)/arm-wrs-linux-gnueabi-g++",
-    $CXX_LINKER_FLAGS : ["march=armv7-a", "mfloat-abi=hard", "mfpu=neon ", "marm", "mthumb-interwork", "mtune=cortex-a15", "-sysroot=$(COMPILERSYSROOT)"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $MAKEFILE_TEMPLATE: "makefileC.vm",
-    "TR_VAR" : "#TOOLSROOT = # Set the location of the platform project of WR Linux 7",
-    "CSR_VAR" : "COMPILERSYSROOT = $(TOOLSROOT)/arm-wrs-linux-gnueabi/sysroot",
-    "COMP_PATH_VAR" : "COMPILER_PATH = $(TOOLSROOT)/usr/bin/arm-wrs-linux-gnueabi",
-    $CPP03_COMPILER_FLAGS : ["std=c++14"],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++14"],
-    $SUPPORTS_CPP11: true
-})
-
-#arch("armv7aWRLinux8","gcc5.2.0" {
+#arch("armv7aWRLinux8","gcc5.2.0", {
         $OS : $OS.UNIX,
         $C_COMPILER : "arm-wrs-linux-gnueabi-gcc",
         $C_COMPILER_FLAGS : ["-sysroot=$(COMPILERSYSROOT)", "B$(COMPILERSYSROOT)/../../../../host-cross/", "march=armv7-a", "marm", "mfpu=neon", "mfloat-abi=hard", "mtune=cortex-a7"],
@@ -970,14 +524,13 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $CXX_COMPILER_FLAGS : ["-sysroot=$(COMPILERSYSROOT)", "B$(COMPILERSYSROOT)/../../../../host-cross/", "march=armv7-a", "marm", "mfpu=neon", "mfloat-abi=hard", "mtune=cortex-a7"],
         $CXX_LINKER : "arm-wrs-linux-gnueabi-g++",
         $CXX_LINKER_FLAGS : ["-sysroot=$(COMPILERSYSROOT)", "B$(COMPILERSYSROOT)/../../../../host-cross/", "march=armv7-a", "marm", "mfpu=neon", "mfloat-abi=hard", "mtune=cortex-a7"],
-        $SYSLIBS : ["lnsl", "lm", "lpthread", "lrt", "ldl"],
-        $DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX"],
+        $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "rdynamic"],
+        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "funwind-tables"],
         $INCLUDES : [],
         $SUPPORTS_JAVA :true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++14"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("ppce6500Linux","gcc5.2.0", {
@@ -990,104 +543,14 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["-sysroot=$(SYSROOT)"],
     $CXX_LINKER : "$(COMPILER_PATH)/powerpc-wrsmllib32-linux-g++",
     $CXX_LINKER_FLAGS : ["-sysroot=$(SYSROOT)"],
-    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
     $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : ["-sysroot=$(SYSROOT)"],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["-sysroot=$(SYSROOT)","std=c++11"],
     $SUPPORTS_CPP11: true,
     "CSR_VAR" : "#SYSROOT = # Set the location of the toolchain sysroot",
-    "COMP_PATH_VAR" : "#COMPILER_PATH = # Set the location of the toolchain path"
-})
-
-#arch("power7Linux2.6","gcc4.4.4", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m64", "mcpu=powerpc64", "mtune=powerpc64", "Wall"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64", "mcpu=powerpc64", "mtune=powerpc64", "Wall"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m64", "mcpu=powerpc64", "mtune=powerpc64", "Wall"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("ppc4xxFPLinux2.6","gcc4.5.1", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "powerpc-ngc-linux-gcc",
-    $C_COMPILER_FLAGS : ["mcpu=405fp", "mhard-float"],
-    $C_LINKER : "powerpc-ngc-linux-gcc",
-    $C_LINKER_FLAGS : ["mcpu=405fp", "mhard-float"],
-    $CXX_COMPILER : "powerpc-ngc-linux-g++",
-    $CXX_COMPILER_FLAGS : ["mcpu=405fp", "mhard-float"],
-    $CXX_LINKER : "powerpc-ngc-linux-g++",
-    $CXX_LINKER_FLAGS : ["mcpu=405fp", "mhard-float", "lstdc++"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $INCLUDES : [],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("ppc7400Linux2.6","gcc3.3.3", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["m32"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m32"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["m32"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m32", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "L/usr/lib/nptl", "lpthread", "lrt"],
-    $INCLUDES : [],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $HIDDEN : true
-})
-
-#arch("ppc85xxLinux2.6","gcc4.3.2", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "powerpc-none-linux-gnuspe-gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "powerpc-none-linux-gnuspe-gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "powerpc-none-linux-gnuspe-g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "powerpc-none-linux-gnuspe-g++",
-    $CXX_LINKER_FLAGS : ["static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "L/usr/lib/nptl", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("ppc85xxWRLinux2.6","gcc4.3.2", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "powerpc-wrs-linux-gnu-gcc",
-    $C_COMPILER_FLAGS : ["mcpu=powerpc", "msoft-float", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/powerpc/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/powerpc-wrs-linux-gnu/libc/"],
-    $C_LINKER : "powerpc-wrs-linux-gnu-gcc",
-    $C_LINKER_FLAGS : ["mcpu=powerpc", "msoft-float", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/powerpc/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/powerpc-wrs-linux-gnu/libc/", "static-libgcc"],
-    $CXX_COMPILER : "powerpc-wrs-linux-gnu-g++",
-    $CXX_COMPILER_FLAGS : ["mcpu=powerpc", "msoft-float", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/powerpc/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/powerpc-wrs-linux-gnu/libc/"],
-    $CXX_LINKER : "powerpc-wrs-linux-gnu-g++",
-    $CXX_LINKER_FLAGS : ["mcpu=powerpc", "msoft-float", "B$(WIND_BASE)/layers/wrll-toolchain-4.3-85/powerpc/toolchain/$(WIND_HOST_TYPE)/bin/", "-sysroot=$(WIND_BASE)/sysroots/powerpc-wrs-linux-gnu/libc/", "static-libgcc"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+    "COMP_PATH_VAR" : "#COMPILER_PATH = # Set the location of the toolchain path",
+    $HIDDEN: true
 })
 
 #arch("i86Linux3","gcc5.4.0", {
@@ -1096,19 +559,18 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$C_COMPILER : "gcc",
 	$C_COMPILER_FLAGS : ["m32", "Wall"],
 	$C_LINKER : "gcc",
-	$C_LINKER_FLAGS : ["m32", "Wl,--no-as-needed"],
+	$C_LINKER_FLAGS : ["m32"],
 	$CXX_COMPILER : "g++",
 	$CXX_COMPILER_FLAGS : ["m32", "Wall"],
 	$CXX_LINKER : "g++",
-	$CXX_LINKER_FLAGS : ["m32", "Wl,--no-as-needed"],
-	$SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
+	$CXX_LINKER_FLAGS : ["m32"],
+	$SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
 	$DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
 	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
+	$SUPPORTS_JAVA : false,
     $CPP11_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Linux3","gcc5.4.0", {
@@ -1117,32 +579,32 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $C_COMPILER : "gcc",
     $C_COMPILER_FLAGS : ["m64", "Wall"],
     $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["m64", "Wl,--no-as-needed"],
+    $C_LINKER_FLAGS : ["m64"],
     $CXX_COMPILER : "g++",
     $CXX_COMPILER_FLAGS : ["m64", "Wall"],
     $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["m64", "Wl,--no-as-needed"],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
+    $CXX_LINKER_FLAGS : ["m64"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Linux4","gcc7.3.0", {
     $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.x64,
     $C_COMPILER : "$(COMPILER_PATH)$(GCC_PREFIX)gcc",
     $C_COMPILER_FLAGS : ["m64", "Wall $(ADDITIONAL_COMPILER_FLAGS)"],
     $C_LINKER : "$(COMPILER_PATH)$(GCC_PREFIX)gcc",
-    $C_LINKER_FLAGS : ["m64 $(ADDITIONAL_LINKER_FLAGS)", "Wl,--no-as-needed"],
+    $C_LINKER_FLAGS : ["m64 $(ADDITIONAL_LINKER_FLAGS)"],
     $CXX_COMPILER : "$(COMPILER_PATH)$(GCC_PREFIX)g++",
     $CXX_COMPILER_FLAGS : ["m64", "Wall $(ADDITIONAL_COMPILER_FLAGS)"],
     $CXX_LINKER : "$(COMPILER_PATH)$(GCC_PREFIX)g++",
-    $CXX_LINKER_FLAGS : ["m64 $(ADDITIONAL_LINKER_FLAGS)", "Wl,--no-as-needed"],
-    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt"],
+    $CXX_LINKER_FLAGS : ["m64 $(ADDITIONAL_LINKER_FLAGS)"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "no-pie", "rdynamic"],
     $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
@@ -1150,121 +612,73 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "TR_VAR" : "#TOOLSROOT = # Set the location of the toolchain",
     "CSR_VAR" : "#COMPILERSYSROOT = $(TOOLSROOT)/build/tmp/sysroots/genericx86-64",
     "COMP_PATH_VAR" : "#COMPILER_PATH = $(TOOLSROOT)/build/tmp/sysroots/x86_64-linux/usr/bin/x86_64-wrs-linux",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
+    $CPP11_COMPILER_FLAGS : ["std=c++14"],
+    $SUPPORTS_CPP11: true,
+    $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/x64Linux4gcc7.3.0/release/lib/libwolfssl.a"]
+})
+
+#arch("x64Linux","gcc7.4.1", {
+    $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.x64,
+    $C_COMPILER : "gcc",
+    $C_COMPILER_FLAGS : ["m64", "pthread", "Wall"],
+    $C_LINKER : "gcc",
+    $C_LINKER_FLAGS : ["m64", "pthread"],
+    $CXX_COMPILER : "g++",
+    $CXX_COMPILER_FLAGS : ["m64", "pthread", "Wall"],
+    $CXX_LINKER : "g++",
+    $CXX_LINKER_FLAGS : ["m64", "pthread"],
+    $SYSLIBS : ["ldl", "lm", "lrt", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
+})
+#arch("x64Linux4","gcc7.3.0FACE_GP", {
+    $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.x64,
+    $C_COMPILER : "$(COMPILER_PATH)$(GCC_PREFIX)gcc",
+    $C_COMPILER_FLAGS : ["m64", "Wall $(ADDITIONAL_COMPILER_FLAGS)"],
+    $C_LINKER : "$(COMPILER_PATH)$(GCC_PREFIX)gcc",
+    $C_LINKER_FLAGS : ["m64 $(ADDITIONAL_LINKER_FLAGS)"],
+    $CXX_COMPILER : "$(COMPILER_PATH)$(GCC_PREFIX)g++",
+    $CXX_COMPILER_FLAGS : ["m64", "Wall $(ADDITIONAL_COMPILER_FLAGS)"],
+    $CXX_LINKER : "$(COMPILER_PATH)$(GCC_PREFIX)g++",
+    $CXX_LINKER_FLAGS : ["m64 $(ADDITIONAL_LINKER_FLAGS)"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "no-pie", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT", "DFACE_COMPLIANCE_LEVEL_GENERAL=4", "DENABLE_FACE_COMPLIANCE=FACE_COMPLIANCE_LEVEL_GENERAL", "D_FORTIFY_SOURCE=0"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $MAKEFILE_TEMPLATE: "makefileC.vm",
+    "TR_VAR" : "#TOOLSROOT = # Set the location of the toolchain",
+    "CSR_VAR" : "#COMPILERSYSROOT = $(TOOLSROOT)/build/tmp/sysroots/genericx86-64",
+    "COMP_PATH_VAR" : "#COMPILER_PATH = $(TOOLSROOT)/build/tmp/sysroots/x86_64-linux/usr/bin/x86_64-wrs-linux",
     $CPP11_COMPILER_FLAGS : ["std=c++14"],
     $SUPPORTS_CPP11: true
 })
 
-#arch("mips64Linux2.6","gcc4.4.6", {
-    $OS : $OS.UNIX,
-    $PLATFORM : $PLATFORM.mips64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["Wall"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : [],
-    $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX"],
-    $INCLUDES : [],
-    $SUPPORTS_ADA : false,
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
 #******************** WINDOWS ********************#
-#arch("i86Win32","VS2008", {
-    $OS : $OS.WIN,
-    $PLATFORM : $PLATFORM.i86,
-    $VS_VERSION : "VS2008",
-    $VS_NUMBER : "2008",
-    $DOTNET_VERSION : "2.0",
-    $SUPPORTS_JAVA : true,
-    $PROJECT_FILE_EXT: ".vcproj",
-    $C_PUBSUB_PROJECT_TEMPLATE :"vcproj.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet2.vm",
-    $CS_PUBSUB_EXPRESS_PROJECT_TEMPLATE : "csprojExpressDotnet2.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcproj.vm",
-    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "solutionDotnet2.vm",
-    $CS_TYPE_EXPRESS_SOLUTION_TEMPLATE : "solutionTypeExpress.vm",
-    $CS_PUBSUB_EXPRESS_SOLUTION_TEMPLATE :"solutionExampleExpress.vm",
-    "PROJECT_FORMAT_VERSION" : "9.00",
-    "SOL_FORMAT_VERSION" : "10.00",
-    "DEBUG_INFORMATION_FORMAT" : "4",
-    "TARGET_MACHINE" : "1",
-    "DOTNET_DLL_NAME": "nddsdotnet",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet",
-    "PROJECT_TOOLSVERSION" : "3.5",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("x64Win64","VS2008", {
-    $OS : $OS.WIN,
-    $PLATFORM : $PLATFORM.x64,
-    $VS_VERSION : "VS2008",
-    $VS_NUMBER : "2008",
-    $DOTNET_VERSION : "2.0",
-    $SUPPORTS_JAVA : true,
-    $PROJECT_FILE_EXT: ".vcproj",
-    $C_PUBSUB_PROJECT_TEMPLATE :"vcproj.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet2.vm",
-    $CS_PUBSUB_EXPRESS_PROJECT_TEMPLATE : "csprojExpressDotnet2.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcproj.vm",
-    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "../common/projectVSSolution.vm",
-    $CS_TYPE_EXPRESS_SOLUTION_TEMPLATE : "solutionTypeExpress.vm",
-    $CS_PUBSUB_EXPRESS_SOLUTION_TEMPLATE :"solutionExampleExpress.vm",
-    "PROJECT_FORMAT_VERSION" : "9.00",
-    "SOL_FORMAT_VERSION" : "10.00",
-    "DEBUG_INFORMATION_FORMAT" : "3",
-    "TARGET_MACHINE" : "17",
-    "DOTNET_DLL_NAME": "nddsdotnet",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet",
-    "PROJECT_TOOLSVERSION" : "3.5",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
 #arch("i86Win32","VS2010", {
     $OS : $OS.WIN,
     $PLATFORM : $PLATFORM.i86,
     $VS_VERSION : "VS2010",
     $VS_NUMBER : "2010",
-    $DOTNET_VERSION : "4.0",
-    $SUPPORTS_JAVA : true,
+    $SUPPORTS_JAVA : false,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet4.vm",
-    $CS_PUBSUB_EXPRESS_PROJECT_TEMPLATE : "csprojExpressDotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "solutionDotnet4.vm",
-    $CS_TYPE_EXPRESS_SOLUTION_TEMPLATE : "solutionTypeExpress.vm",
-    $CS_PUBSUB_EXPRESS_SOLUTION_TEMPLATE :"solutionExampleExpress.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "11.00",
     "DEBUG_INFORMATION_FORMAT" : "EditAndContinue",
     "TARGET_MACHINE" : "MachineX86",
     "PLATFORM_TOOLSET": "",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "<TargetFrameworkProfile>Client</TargetFrameworkProfile>",
-    "DOTNET_DLL_NAME": "nddsdotnet40",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet40",
     "PROJECT_TOOLSVERSION" : "4.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN : true
 })
 
 #arch("x64Win64","VS2010", {
@@ -1272,30 +686,20 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.x64,
     $VS_VERSION : "VS2010",
     $VS_NUMBER : "2010",
-    $DOTNET_VERSION : "4.0",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
-    $CS_PUBSUB_EXPRESS_PROJECT_TEMPLATE : "csprojExpressDotnet4.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojx64Dotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "../common/projectVSSolution.vm",
-    $CS_TYPE_EXPRESS_SOLUTION_TEMPLATE : "solutionTypeExpress.vm",
-    $CS_PUBSUB_EXPRESS_SOLUTION_TEMPLATE :"solutionExampleExpress.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "11.00",
     "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
     "TARGET_MACHINE" : "MachineX64",
     "PLATFORM_TOOLSET": "",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "<TargetFrameworkProfile>Client</TargetFrameworkProfile>",
-    "DOTNET_DLL_NAME": "nddsdotnet40",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet40",
     "PROJECT_TOOLSVERSION" : "4.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN : true
 })
 
 #arch("i86Win32","VS2012", {
@@ -1303,28 +707,21 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.i86,
     $VS_VERSION : "VS2012",
     $VS_NUMBER : "2012",
-    $DOTNET_VERSION : "4.5",
-    $SUPPORTS_JAVA : true,
+    $SUPPORTS_JAVA : false,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "solutionDotnet4.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "EditAndContinue",
     "TARGET_MACHINE" : "MachineX86",
     "PLATFORM_TOOLSET": "<PlatformToolset>v110</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet45",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet45",
     "PROJECT_TOOLSVERSION" : "4.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Win64","VS2012", {
@@ -1332,28 +729,21 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.x64,
     $VS_VERSION : "VS2012",
     $VS_NUMBER : "2012",
-    $DOTNET_VERSION : "4.5",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojx64Dotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "../common/projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
     "TARGET_MACHINE" : "MachineX64",
     "PLATFORM_TOOLSET": "<PlatformToolset>v110</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet45" ,
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet45",
     "PROJECT_TOOLSVERSION" : "4.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("i86Win32","VS2013", {
@@ -1361,28 +751,21 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.i86,
     $VS_VERSION : "VS2013",
     $VS_NUMBER : "2013",
-    $DOTNET_VERSION : "4.5.1",
-    $SUPPORTS_JAVA : true,
+    $SUPPORTS_JAVA : false,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "solutionDotnet4.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "EditAndContinue",
     "TARGET_MACHINE" : "MachineX86",
     "PLATFORM_TOOLSET": "<PlatformToolset>v120</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet451",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet451",
     "PROJECT_TOOLSVERSION" : "12.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Win64","VS2013", {
@@ -1390,28 +773,81 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.x64,
     $VS_VERSION : "VS2013",
     $VS_NUMBER : "2013",
-    $DOTNET_VERSION : "4.5.1",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojx64Dotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "../common/projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
     "TARGET_MACHINE" : "MachineX64",
     "PLATFORM_TOOLSET": "<PlatformToolset>v120</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet451" ,
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet451",
     "PROJECT_TOOLSVERSION" : "12.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
+})
+
+#arch("net7","", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $DOTNET_VERSION : 7,
+    $PROJECT_FILE_EXT: ".csproj",
+    $CS_TYPE_PROJECT_TEMPLATE : "csproj.vm",
+    $CS_NUGET_CONF_TEMPLATE : "nuget.vm",
+    $SUPPORTS_JAVA : false,
+    $SUPPORTS_CPP11: false,
+    "PLATFORM_TOOLSET": "net7"
+})
+
+#arch("net6","", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $DOTNET_VERSION : 6,
+    $PROJECT_FILE_EXT: ".csproj",
+    $CS_TYPE_PROJECT_TEMPLATE : "csproj.vm",
+    $CS_NUGET_CONF_TEMPLATE : "nuget.vm",
+    $SUPPORTS_JAVA : false,
+    $SUPPORTS_CPP11: false,
+    "PLATFORM_TOOLSET": "net6"
+})
+
+#arch("net5","", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $DOTNET_VERSION : 5,
+    $PROJECT_FILE_EXT: ".csproj",
+    $CS_TYPE_PROJECT_TEMPLATE : "csproj.vm",
+    $CS_NUGET_CONF_TEMPLATE : "nuget.vm",
+    $SUPPORTS_JAVA : false,
+    $SUPPORTS_CPP11: false,
+    "PLATFORM_TOOLSET": "net5.0"
+})
+
+#arch("netcoreapp3.1","", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $DOTNET_VERSION : 3,
+    $PROJECT_FILE_EXT: ".csproj",
+    $CS_TYPE_PROJECT_TEMPLATE : "csproj.vm",
+    $CS_NUGET_CONF_TEMPLATE : "nuget.vm",
+    $SUPPORTS_JAVA : false,
+    $SUPPORTS_CPP11: false,
+    "PLATFORM_TOOLSET": "netcoreapp3.1"
+})
+
+#arch("netcoreapp2.1","", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $DOTNET_VERSION : 2,
+    $PROJECT_FILE_EXT: ".csproj",
+    $CS_TYPE_PROJECT_TEMPLATE : "csproj.vm",
+    $CS_NUGET_CONF_TEMPLATE : "nuget.vm",
+    $SUPPORTS_JAVA : false,
+    $SUPPORTS_CPP11: false,
+    "PLATFORM_TOOLSET": "netcoreapp2.1"
 })
 
 #arch("i86Win32","VS2015", {
@@ -1419,28 +855,22 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.i86,
     $VS_VERSION : "VS2015",
     $VS_NUMBER : "14",
-    $DOTNET_VERSION : "4.6",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "solutionDotnet4.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "EditAndContinue",
     "TARGET_MACHINE" : "MachineX86",
     "PLATFORM_TOOLSET": "<PlatformToolset>v140</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet46",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet46",
     "PROJECT_TOOLSVERSION" : "14.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\i86Win32VS2015\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\i86Win32VS2015\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\i86Win32VS2015\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\i86Win32VS2015\static_release\lib\libcrypto.lib", "crypt32.lib"]
 })
 
 #arch("x64Win64","VS2015", {
@@ -1448,28 +878,22 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.x64,
     $VS_VERSION : "VS2015",
     $VS_NUMBER : "14",
-    $DOTNET_VERSION : "4.6",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojx64Dotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "../common/projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
     "TARGET_MACHINE" : "MachineX64",
     "PLATFORM_TOOLSET": "<PlatformToolset>v140</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet46" ,
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet46",
     "PROJECT_TOOLSVERSION" : "14.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2015\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2015\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2015\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2015\static_release\lib\libcrypto.lib", "crypt32.lib"]
 })
 
 #arch("i86Win32","VS2017", {
@@ -1477,28 +901,22 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.i86,
     $VS_VERSION : "VS2017",
     $VS_NUMBER : "15",
-    $DOTNET_VERSION : "4.6.1",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojDotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "solutionDotnet4.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "EditAndContinue",
     "TARGET_MACHINE" : "MachineX86",
     "PLATFORM_TOOLSET": "<PlatformToolset>v141</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "10.0.17134.0",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet461",
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet461",
     "PROJECT_TOOLSVERSION" : "15.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\i86Win32VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\i86Win32VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\i86Win32VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\i86Win32VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"]
 })
 
 #arch("i86INtime6.3","VS2017", {
@@ -1511,6 +929,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $C_PUBSUB_PROJECT_TEMPLATE :"intime_vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
+    $DEFINES : ["__C99__", "__INTIME__", "RTI_INTIME", "__INTIME_CPP17", "_HAS_NAMESPACE ", "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS", "_CONSOLE"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "Enabled",
     "TARGET_MACHINE" : "MachineX86",
@@ -1518,9 +937,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "TARGET_PLATFORM_VERSION" : "10.0.17134.0",
     "FRAMEWORK_PROFILE": "",
     "PROJECT_TOOLSVERSION" : "15.0",
-    $CPP03_COMPILER_FLAGS : [], 
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Win64","VS2017", {
@@ -1528,105 +946,123 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $PLATFORM : $PLATFORM.x64,
     $VS_VERSION : "VS2017",
     $VS_NUMBER : "15",
-    $DOTNET_VERSION : "4.6.1",
     $SUPPORTS_JAVA : true,
     $PROJECT_FILE_EXT: ".vcxproj",
     $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
     $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
-    $Cppcli_PUBSUB_PROJECT_TEMPLATE : "vcxproj.vm",
-    $CS_PUBSUB_PROJECT_TEMPLATE : "csprojx64Dotnet4.vm",
-    $CS_TYPE_PROJECT_TEMPLATE : "vcxproj.vm",
     $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
-    $CS_PUBSUB_SOLUTION_TEMPLATE : "../common/projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
     "SOL_FORMAT_VERSION" : "12.00",
     "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
     "TARGET_MACHINE" : "MachineX64",
     "PLATFORM_TOOLSET": "<PlatformToolset>v141</PlatformToolset>",
 	"TARGET_PLATFORM_VERSION" : "10.0.17134.0",
     "FRAMEWORK_PROFILE": "",
-    "DOTNET_DLL_NAME": "nddsdotnet461" ,
-    "DOTNET_MSG_DLL_NAME": "rticonnextmsgdotnet461",
     "PROJECT_TOOLSVERSION" : "15.0",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"]
+})
+
+## We support VS2019 with VS2017 libraries. The parameters changed were
+## VS_VERSION, VS_NUMBER, PLATFORM_TOOLSET, TARGET_PLATFORM_VERSION
+## and PROJECT_TOOLSVERSION
+#arch("i86Win32","VS2019", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.i86,
+    $VS_VERSION : "VS2019",
+    $BASE_VERSION : "VS2017",
+    $VS_NUMBER : "16",
+    $SUPPORTS_JAVA : true,
+    $PROJECT_FILE_EXT: ".vcxproj",
+    $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
+    $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
+    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
+    "SOL_FORMAT_VERSION" : "12.00",
+    "DEBUG_INFORMATION_FORMAT" : "EditAndContinue",
+    "TARGET_MACHINE" : "MachineX86",
+    "PLATFORM_TOOLSET": "<PlatformToolset>v142</PlatformToolset>",
+	"TARGET_PLATFORM_VERSION" : "10.0",
+    "FRAMEWORK_PROFILE": "",
+    "PROJECT_TOOLSVERSION" : "16.0",
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\i86Win32VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\i86Win32VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\i86Win32VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\i86Win32VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"]
+})
+
+#arch("i86INtime6.3","VS2019", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.intime,
+    $VS_VERSION : "VS2019",
+    $BASE_VERSION : "VS2017",
+    $VS_NUMBER : "16",
+    $SUPPORTS_JAVA : false,
+    $PROJECT_FILE_EXT: ".vcxproj",
+    $C_PUBSUB_PROJECT_TEMPLATE :"intime_vcxproj.vm",
+    $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
+    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
+    $DEFINES : ["__C99__", "__INTIME__", "RTI_INTIME", "__INTIME_CPP17", "_HAS_NAMESPACE ", "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS", "_CONSOLE"],
+    "SOL_FORMAT_VERSION" : "12.00",
+    "DEBUG_INFORMATION_FORMAT" : "Enabled",
+    "TARGET_MACHINE" : "MachineX86",
+    "PLATFORM_TOOLSET": "<PlatformToolset>v142</PlatformToolset>",
+    "TARGET_PLATFORM_VERSION" : "10.0",
+    "FRAMEWORK_PROFILE": "",
+    "PROJECT_TOOLSVERSION" : "16.0",
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
+})
+
+#arch("x64Win64","VS2019", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $VS_VERSION : "VS2019",
+    $BASE_VERSION : "VS2017",
+    $VS_NUMBER : "16",
+    $SUPPORTS_JAVA : true,
+    $PROJECT_FILE_EXT: ".vcxproj",
+    $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
+    $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
+    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
+    "SOL_FORMAT_VERSION" : "12.00",
+    "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
+    "TARGET_MACHINE" : "MachineX64",
+    "PLATFORM_TOOLSET": "<PlatformToolset>v142</PlatformToolset>",
+	"TARGET_PLATFORM_VERSION" : "10.0",
+    "FRAMEWORK_PROFILE": "",
+    "PROJECT_TOOLSVERSION" : "16.0",
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"]
+})
+
+#arch("x64Win64","VS2022", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $VS_VERSION : "VS2022",
+    $BASE_VERSION : "VS2017",
+    $VS_NUMBER : "16",
+    $SUPPORTS_JAVA : true,
+    $PROJECT_FILE_EXT: ".vcxproj",
+    $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
+    $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
+    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
+    "SOL_FORMAT_VERSION" : "12.00",
+    "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
+    "TARGET_MACHINE" : "MachineX64",
+    "PLATFORM_TOOLSET": "<PlatformToolset>v143</PlatformToolset>",
+	"TARGET_PLATFORM_VERSION" : "10.0",
+    "FRAMEWORK_PROFILE": "",
+    "PROJECT_TOOLSVERSION" : "16.0",
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"]
 })
 
 #******************** DARWIN ********************#
-#arch("i86Darwin10","gcc4.2.1", {
-    $OS : $OS.DARWIN,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ['m32'],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ['m32'],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ['m32'],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ['m32', 'static-libgcc'],
-    $SYSLIBS : ['ldl', 'lm', 'lpthread'],
-    $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN'],
-    $HIDDEN : true
-})
-
-#arch("x64Darwin10","gcc4.2.1", {
-    $OS : $OS.DARWIN,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ['m64'],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ['m64'],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ['m64'],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ['m64', 'static-libgcc'],
-    $SYSLIBS : ['ldl', 'lm', 'lpthread'],
-    $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
-    $HIDDEN : true
-})
-
-#arch("x64Darwin12","clang4.1", {
-    $OS : $OS.DARWIN,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "clang",
-    $C_COMPILER_FLAGS : ['m64'],
-    $C_LINKER : "clang",
-    $C_LINKER_FLAGS : ['m64'],
-    $CXX_COMPILER : "clang++",
-    $CXX_COMPILER_FLAGS : ['m64', 'Wno-return-type-c-linkage','stdlib=libc++'],
-    $CXX_LINKER : "clang++",
-    $CXX_LINKER_FLAGS : ['m64',"stdlib=libc++"],
-    $SYSLIBS : ['ldl', 'lm', 'lpthread'],
-    $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true,
-    $HIDDEN : true
-})
-
-#arch("x64Darwin14","clang6.0", {
-    $OS : $OS.DARWIN,
-    $PLATFORM : $PLATFORM.x64,
-    $C_COMPILER : "clang",
-    $C_COMPILER_FLAGS : ['m64'],
-    $C_LINKER : "clang",
-    $C_LINKER_FLAGS : ['m64'],
-    $CXX_COMPILER : "clang++",
-    $CXX_COMPILER_FLAGS : ['m64', 'Wno-return-type-c-linkage'],
-    $CXX_LINKER : "clang++",
-    $CXX_LINKER_FLAGS : ['m64'],
-    $SYSLIBS : ['ldl', 'lm', 'lpthread'],
-    $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
-    $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true,
-    $HIDDEN : true
-})
-
 #arch("x64Darwin15","clang7.0", {
     $OS : $OS.DARWIN,
     $PLATFORM : $PLATFORM.x64,
@@ -1638,13 +1074,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ['m64', 'Wno-return-type-c-linkage'],
     $CXX_LINKER : "clang++",
     $CXX_LINKER_FLAGS : ['m64'],
-    $SYSLIBS : ['ldl', 'lm', 'lpthread'],
+    $SYSLIBS : ['ldl', 'lm', 'lpthread', 'rdynamic'],
     $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
     $SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN : true
 })
 
 #arch("x64Darwin16","clang8.0", {
@@ -1658,14 +1093,13 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$CXX_COMPILER_FLAGS : ['m64', 'Wno-return-type-c-linkage'],
 	$CXX_LINKER : "clang++",
 	$CXX_LINKER_FLAGS : ['m64'],
-	$SYSLIBS : ['ldl', 'lm', 'lpthread'],
+	$SYSLIBS : ['ldl', 'lm', 'lpthread', 'rdynamic'],
 	$DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
 	$SUPPORTS_JAVA : true,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
 	$CPP11_COMPILER_FLAGS : ["std=c++0x"],
 	$SUPPORTS_CPP11: true,
-	"COPY_DYNAMIC_LIBS" : "true"
+	"COPY_DYNAMIC_LIBS" : "true",
+        $HIDDEN : true
 })
 
 #arch("x64Darwin17","clang9.0", {
@@ -1679,234 +1113,57 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$CXX_COMPILER_FLAGS : ['m64', 'Wno-return-type-c-linkage'],
 	$CXX_LINKER : "clang++",
 	$CXX_LINKER_FLAGS : ['m64'],
-	$SYSLIBS : ['lm', 'lpthread', 'ldl'],
+	$SYSLIBS : ['lm', 'lpthread', 'ldl', 'rdynamic'],
 	$DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
 	$SUPPORTS_JAVA : true,
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
 	$CPP11_COMPILER_FLAGS : ["std=c++0x"],
+	$SUPPORTS_CPP11: true,
+	"COPY_DYNAMIC_LIBS" : "true",
+	$HIDDEN : true
+})
+
+#arch("x64Darwin20","clang12.0", {
+    $OS : $OS.DARWIN,
+	$PLATFORM : $PLATFORM.x64,
+	$C_COMPILER : "clang",
+	$C_COMPILER_FLAGS : ['m64'],
+	$C_LINKER : "clang",
+	$C_LINKER_FLAGS : ['m64'],
+	$CXX_COMPILER : "clang++",
+	$CXX_COMPILER_FLAGS : ['m64', 'Wno-return-type-c-linkage'],
+	$CXX_LINKER : "clang++",
+	$CXX_LINKER_FLAGS : ['m64'],
+	$SYSLIBS : ['lm', 'lpthread', 'ldl', 'rdynamic'],
+	$DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN', 'DRTI_64BIT'],
+	$SUPPORTS_JAVA : true,
+	$CPP11_COMPILER_FLAGS : ["std=c++11"],
 	$SUPPORTS_CPP11: true,
 	"COPY_DYNAMIC_LIBS" : "true"
 })
 
-#******************** LYNX ********************#
-
-#arch("i86Lynx4.0.0","gcc3.2.2", {
-    $OS : $OS.LYNX,
-    $PLATFORM : $PLATFORM.i86,
-    $C_COMPILER : "gcc",
+#arch("arm64Darwin20","clang12.0", {
+    $OS : $OS.DARWIN,
+    $PLATFORM : $PLATFORM.armv8,
+    $C_COMPILER : "clang",
     $C_COMPILER_FLAGS : [],
-    $C_LINKER : "gcc",
+    $C_LINKER : "clang",
     $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
+    $CXX_COMPILER : "clang++",
     $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["static-libgcc"],
-    $SYSLIBS : ["ldb", "lm", "lrpc", "lc", "llynx", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX"],
-    $INCLUDES : [],
-    $ENV_PREFIX : "/usr/lynx/4.0.0/x86",
-    $HIDDEN : true
-})
-
-
-#arch("ppc7400Lynx4.0.0","gcc3.2.2", {
-    $OS : $OS.LYNX,
-    $PLATFORM : $PLATFORM.ppc,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
+    $CXX_LINKER : "clang++",
     $CXX_LINKER_FLAGS : [],
-    $SYSLIBS : ["ldb", "lm", "lrpc", "lc", "llynx", "lgcc", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX"],
-    $INCLUDES : [],
-    $ENV_PREFIX : "/usr/lynx/4.0.0/ppc",
-    $HIDDEN : true
+    $SYSLIBS : [],
+    $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN'],
+    $SUPPORTS_JAVA : false,
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true,
+    "COPY_DYNAMIC_LIBS" : "true"
 })
-
-#arch("ppc7400Lynx4.2.0","gcc3.2.2", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["static-libgcc"],
-    $SYSLIBS : ["ldb", "lm", "lrpc", "lc", "llynx", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX"],
-    $INCLUDES : [],
-    $ENV_PREFIX : "/usr/lynx/4.2.0/ppc",
-    $HIDDEN : true
-})
-
-#arch("ppc7400Lynx5.0.0","gcc3.4.3", {
-    $OS : $OS.LYNX,
-    $PLATFORM : $PLATFORM.ppc5,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : ["maltivec", "mabi=altivec", "mthreads"],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : ["maltivec", "mabi=altivec"],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : ["maltivec", "mabi=altivec", "mthreads"],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["maltivec", "mabi=altivec", "static-libgcc"],
-    $SYSLIBS : ["ldbposix", "lrpc", "lbsd", "lm", "lc", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX", "DRTI_LYNX500"],
-    $INCLUDES : [],
-    $ENV_PREFIX : "/usr/lynx/5.0.0/ppc",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("ppc750Lynx4.0.0","gcc3.2.2", {
-    $OS : $OS.LYNX,
-    $PLATFORM : $PLATFORM.ppc,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : [],
-    $SYSLIBS : ["ldb", "lm", "lrpc", "lc", "llynx", "lgcc", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX"],
-    $INCLUDES : [],
-    $ENV_PREFIX : "/usr/lynx/4.0.0/ppc",
-    $HIDDEN : true
-})
-
-#arch("ppc604Lynx4.0.0","gcc2.95.3", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : [],
-    $SYSLIBS : ["ldb", "lbsd", "lm", "lnsl", "lrpc", "lc", "llynx", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX"],
-    $ENV_PREFIX : "/usr/lynx/4.0.0/ppc",
-    $INCLUDES : [],
-    $HIDDEN : true
-})
-
-#arch("ppc604Lynx4.0.0","gcc3.2.2", {
-    $OS : $OS.UNIX,
-    $C_COMPILER : "gcc",
-    $C_COMPILER_FLAGS : [],
-    $C_LINKER : "gcc",
-    $C_LINKER_FLAGS : [],
-    $CXX_COMPILER : "g++",
-    $CXX_COMPILER_FLAGS : [],
-    $CXX_LINKER : "g++",
-    $CXX_LINKER_FLAGS : ["static-libgcc"],
-    $SYSLIBS : ["ldb", "lm", "lrpc", "lc", "llynx", "mthreads", "mshared"],
-    $DEFINES : ["DRTI_LYNX"],
-    $INCLUDES : [],
-    $ENV_PREFIX : "/usr/lynx/4.0.0/ppc",
-    $HIDDEN : true
-})
-
-
 
 #******************** QNX ********************#
-#arch("ppcbeQNX6.3.0","qcc_cpp", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.ppcbe,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_cpp","lang-c"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_cpp","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_cpp","lang-c++"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_cpp","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-	$HIDDEN : true
-})
-
-#arch("ppcbeQNX6.3.0","qcc_acpp", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.ppcbe,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_acpp","lang-c"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_acpp","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_acpp","lang-c++"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["V3.3.1,gcc_ntoppcbe","Y_acpp","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-	$HIDDEN : true
-})
-
-#arch("ppcbeQNX6.4.0","qcc_acpp4.2.4", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.ppcbe,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["V4.2.4,gcc_ntoppcbe","Y_acpp","lang-c"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["V4.2.4,gcc_ntoppcbe","Y_acpp","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["V4.2.4,gcc_ntoppcbe","Y_acpp","lang-c++"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["V4.2.4,gcc_ntoppcbe","Y_acpp","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-	$HIDDEN : true
-})
-
-#arch("i86QNX6.3.0","qcc_cpp", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.i86,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["V3.3.1,gcc_ntox86","Y_cpp","lang-c"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["V3.3.1,gcc_ntox86","Y_cpp","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["V3.3.1,gcc_ntox86","Y_cpp","lang-c++"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["V3.3.1,gcc_ntox86","Y_cpp","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-	$HIDDEN : true
-})
-
-#arch("i86QNX6.3.0","qcc_acpp", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.i86,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["V3.3.1,gcc_ntox86","Y_acpp","lang-c"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["V3.3.1,gcc_ntox86","Y_acpp","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["V3.3.1,gcc_ntox86","Y_acpp","lang-c++"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["V3.3.1,gcc_ntox86","Y_acpp","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-	$HIDDEN : true
-})
-
 #arch("i86QNX6.4.1","qcc_gpp", {
 	$OS : $OS.QNX,
-	$CPU : $CPU.i86,
+	$PLATFORM : $PLATFORM.i86,
 	$C_COMPILER : "qcc",
 	$C_COMPILER_FLAGS : ["V4.3.3,gcc_ntox86","Y_gpp","lang-c"],
 	$C_LINKER : "qcc",
@@ -1918,13 +1175,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$SYSLIBS : ['lm', 'lsocket'],
 	$DEFINES : ['DRTI_QNX'],
 	$INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
 
 #arch("i86QNX6.5","qcc_gpp4.4.2", {
 	$OS : $OS.QNX,
-	$CPU : $CPU.i86,
+	$PLATFORM : $PLATFORM.i86,
 	$C_COMPILER : "qcc",
 	$C_COMPILER_FLAGS : ["V4.4.2,gcc_ntox86","Y_gpp","lang-c"],
 	$C_LINKER : "qcc",
@@ -1936,30 +1192,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$SYSLIBS : ['lm', 'lsocket'],
 	$DEFINES : ['DRTI_QNX'],
 	$INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("i86QNX6.4.0","qcc_acpp4.2.4", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.i86,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["V4.2.4,gcc_ntox86","Y_acpp","lang-c"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["V4.2.4,gcc_ntox86","Y_acpp","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["V4.2.4,gcc_ntox86","Y_acpp","lang-c++"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["V4.2.4,gcc_ntox86","Y_acpp","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-	$HIDDEN : true
+    $HIDDEN: true
 })
 
 #arch("armv7aQNX6.5.0SP1","qcc_cpp4.4.2", {
 	$OS : $OS.QNX,
-	$CPU : $CPU.armv7a,
+	$PLATFORM : $PLATFORM.armv7a,
 	$C_COMPILER : "qcc",
 	$C_COMPILER_FLAGS : ["V4.4.2,gcc_ntoarmv7le_cpp","lang-c"],
 	$C_LINKER : "qcc",
@@ -1971,13 +1209,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$SYSLIBS : ['lm', 'lsocket'],
 	$DEFINES : ['DRTI_QNX'],
 	$INCLUDES : [],
-        $CPP03_COMPILER_FLAGS : [],
-        $SUPPORTS_CPP03: true
+    $HIDDEN:true
 })
 
 #arch("ppce500v2QNX6.5.0","qcc_cpp4.4.2", {
 	$OS : $OS.QNX,
-	$CPU : $CPU.ppcbe,
+	$PLATFORM : $PLATFORM.ppcbe,
 	$C_COMPILER : "qcc",
 	$C_COMPILER_FLAGS : ["Vgcc/4.4.2,gcc_ntoppcbespe","lang-c","mcpu=8540","me500v2","mno-isel","mspe","mhard-float"],
 	$C_LINKER : "qcc",
@@ -1989,32 +1226,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$SYSLIBS : ['lm', 'lsocket'],
 	$DEFINES : ['DRTI_QNX'],
 	$INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("ppce500v2QNX6.5.0SP1","qcc_cpp4.4.2", {
-	$OS : $OS.QNX,
-	$CPU : $CPU.ppcbe,
-	$C_COMPILER : "qcc",
-	$C_COMPILER_FLAGS : ["Vgcc/4.4.2,gcc_ntoppcbespe","lang-c","mcpu=8540","mno-isel", "mhard-float","mspe"],
-	$C_LINKER : "qcc",
-	$C_LINKER_FLAGS : ["Vgcc/4.4.2,gcc_ntoppcbespe","lang-c"],
-	$CXX_COMPILER : "qcc",
-	$CXX_COMPILER_FLAGS : ["Vgcc/4.4.2,gcc_ntoppcbespe","lang-c++","mcpu=8540","mno-isel","mhard-float","mspe"],
-	$CXX_LINKER : "qcc",
-	$CXX_LINKER_FLAGS : ["Vgcc/4.4.2,gcc_ntoppcbespe","lang-c++"],
-	$SYSLIBS : ['lm', 'lsocket'],
-	$DEFINES : ['DRTI_QNX'],
-	$INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+    $HIDDEN: true
 })
 
 #arch("i86QNX6.6","qcc_cpp4.7.3", {
     $OS : $OS.QNX,
-    $CPU : $CPU.i86,
+    $PLATFORM : $PLATFORM.i86,
     $C_COMPILER : "qcc",
     $C_COMPILER_FLAGS : ["Vgcc/4.7.3,gcc_ntox86","Y_cpp","lang-c"],
     $C_LINKER : "qcc",
@@ -2026,14 +1243,13 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $SYSLIBS : ['lm', 'lsocket'],
     $DEFINES : ['DRTI_QNX'],
     $INCLUDES : [],
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("armv7aQNX6.6.0","qcc_cpp4.7.3", {
         $OS : $OS.QNX,
-        $CPU : $CPU.armv7a,
+        $PLATFORM : $PLATFORM.armv7a,
         $C_COMPILER : "qcc",
         $C_COMPILER_FLAGS : ["Vgcc/4.7.3,gcc_ntoarmv7le","Y_cpp","lang-c"],
         $C_LINKER : "qcc",
@@ -2045,9 +1261,24 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX'],
         $INCLUDES : [],
-	$CPP03_COMPILER_FLAGS : [],
-	$SUPPORTS_CPP03: true,
-	$SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true,
+        $HIDDEN: true
+})
+
+#arch("armv7aQNX7","qcc_cxx", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc_ntoarmv7le","Y_cxx","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc_ntoarmv7le","Y_cxx","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc_ntoarmv7le","Y_cxx","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc_ntoarmv7le","Y_cxx","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true
 })
 
 #arch("armv7QNX7.0.0","qcc_cxx5.4.0", {
@@ -2063,8 +1294,6 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
- $CPP03_COMPILER_FLAGS : [],
- $SUPPORTS_CPP03: true,
  $SUPPORTS_CPP11: true
 })
 
@@ -2081,9 +1310,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
- $CPP03_COMPILER_FLAGS : [],
- $SUPPORTS_CPP03: true,
- $SUPPORTS_CPP11: true
+ $SUPPORTS_CPP11: true,
+ $HIDDEN : true
 })
 
 #arch("armv8QNX7.0.0","qcc_cxx5.4.0", {
@@ -2099,9 +1327,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
-	$CPP03_COMPILER_FLAGS : [],
-	$SUPPORTS_CPP03: true,
-	$SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true,
+        $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/armv8QNX7.0.0qcc_cxx5.4.0/release/lib/libwolfssl.a"]
 })
 
 #arch("armv8QNX7.0.0","qcc_gpp5.4.0", {
@@ -2117,14 +1344,128 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
-	$CPP03_COMPILER_FLAGS : [],
-	$SUPPORTS_CPP03: true,
-	$SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true
+})
+
+#arch("armv7QNX7.1","qcc_cxx8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true,
+        $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/armv7QNX7qcc_cxx8.3.0/release/lib/libwolfssl.a"]
+})
+
+#arch("armv7QNX7.1","qcc_gpp8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true,
+        $HIDDEN: true
+})
+
+#arch("armv8QNX7.1","qcc_cxx8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true
+})
+
+#arch("armv8QNX7.1","qcc_gpp8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true,
+        $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/armv8QNX7.1qcc_gpp8.3.0/release/lib/libwolfssl.a"]
+})
+
+#arch("x64QNX7.1","qcc_cxx8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true
+})
+
+#arch("x64QNX7.1","qcc_gpp8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true
+})
+
+#arch("i86QNX7.0.0","qcc_gpp5.4.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/5.4.0,gcc_ntox86","Y_gpp","lang-c", "m32", "march=i586", "mtune=generic"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/5.4.0,gcc_ntox86","Y_gpp","lang-c"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/5.4.0,gcc_ntox86","Y_gpp","lang-c++", "m32", "march=i586", "mtune=generic"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/5.4.0,gcc_ntox86","Y_gpp","lang-c++", "latomic"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
+        $INCLUDES : [],
+	$SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64QNX7.0.0","qcc_cxx5.4.0", {
         $OS : $OS.QNX,
-        $CPU : $CPU.x64,
+        $PLATFORM : $PLATFORM.x64,
         $C_COMPILER : "qcc",
         $C_COMPILER_FLAGS : ["Vgcc/5.4.0,gcc_ntox86_64","Y_cxx","lang-c"],
         $C_LINKER : "qcc",
@@ -2136,14 +1477,12 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
-	$CPP03_COMPILER_FLAGS : [],
-	$SUPPORTS_CPP03: true,
 	$SUPPORTS_CPP11: true
 })
 
 #arch("x64QNX7.0.0","qcc_gpp5.4.0", {
         $OS : $OS.QNX,
-        $CPU : $CPU.x64,
+        $PLATFORM : $PLATFORM.x64,
         $C_COMPILER : "qcc",
         $C_COMPILER_FLAGS : ["Vgcc/5.4.0,gcc_ntox86_64","Y_gpp","lang-c"],
         $C_LINKER : "qcc",
@@ -2155,882 +1494,11 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
-	$CPP03_COMPILER_FLAGS : [],
-	$SUPPORTS_CPP03: true,
 	$SUPPORTS_CPP11: true
 })
 
 
 #******************** VXWORKS ********************#
-
-#arch("armv6Vx6.8","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-	$CXX_COMPILER_FLAGS : ['t6', 'ansi', 'fno-builtin', 'mlong-calls', 'mapcs-frame'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldarm",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldarm",
-	$CXX_LINKER_FLAGS : ['r', 'EL', 'X'],
-	$SYSLIBS : [],
-	$DEFINES : ['DARMEL', 'DCPU=ARMARCH6', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(WIND_BASE)/target/lib/h/config/vsbConfig.h\"', 'DINET', 'DINET6', 'DRTI_VFP_TASK', 'DRTI_VXWORKS', 'DRTI_SHARED_MEMORY', 'DRTI_IPV6'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/utilities-1.0/$(WIND_HOST_TYPE)/bin/nmarm",
-    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c arm",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
-})
-
-#arch("armv6Vx6.8","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-	$C_LINKER_FLAGS : ['mrtp', 't6', 'ansi', 'fno-builtin', 'mlong-calls', 'mapcs-frame'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : [],
-	$DEFINES : ['DARMEL', 'DCPU=ARMARCH6', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(WIND_BASE)/target/lib/h/config/vsbConfig.h\"', 'DINET', 'DINET6', 'DRTI_VFP_TASK', 'DRTI_VXWORKS', 'DRTI_SHARED_MEMORY', 'DRTI_IPV6'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-#arch("ppc604Vx5.4","gcc", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'mstrict-align', 'fstrength-reduce', 'fno-builtin', 'mlongcall', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm"
-})
-
-
-#arch("pentiumVx5.5","gcc", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccpentium",
-	$C_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'nostdlib', 'fno-defer-pop', 'fno-builtin', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm"
-})
-
-
-#arch("ppc405Vx5.5","gcc", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=405', 'G', '0', 'fno-builtin', 'mlongcall', 'DCPU=PPC405'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm"
-})
-
-
-#arch("ppc604Vx5.5","gcc", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'G 0', 'fno-builtin', 'mlongcall', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $HIDDEN : true
-})
-
-
-#arch("ppc603Vx5.5","gcc", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/host/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_BASE)/host/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=603', 'G 0', 'fno-builtin', 'mlongcall', 'DCPU=PPC603'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $HIDDEN : true
-})
-
-
-#arch("pentiumVx6.0","gcc3.3.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(gnuBin)/nmpentium",
-    "MUNCH_VAR" : "MUNCH =  $(gnuBin)/munch",
-    "MUNCHFLAGS_VAR" : ""
-})
-
-
-#arch("ppc604Vx6.0","gcc3.3.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm" ,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(gnuBin)/nmppc",
-    "MUNCH_VAR" : "MUNCH = $(gnuBin)/munch",
-    "MUNCHFLAGS_VAR" : "",
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.2","gcc3.3.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(gnuBin)/nmppc",
-    "MUNCH_VAR" : "MUNCH = $(gnuBin)/munch",
-    "MUNCHFLAGS_VAR" : ""
-})
-
-
-#arch("pentiumVx6.0","gcc3.3.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("ppc604Vx6.0","gcc3.3.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("ppc604Vx6.2","gcc3.3.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("pentiumVx6.3","gcc3.4.4", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm" ,
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/workbench-2.5/$(WIND_HOST_TYPE)/bin/nmpentium",
-    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/4.0.9/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
-})
-
-
-#arch("ppc604Vx6.3","gcc3.4.4", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/workbench-2.5/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/4.0.9/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("ppc604VxT2.2.2","gcc3.3.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ccppc",
-	$C_LINKER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ccppc",
-	$CXX_LINKER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'G 0', 'fno-builtin', 'mlongcall', 'DCPU=PPC604', 'DVTHREADS'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(gnuBin)/nmppc",
-    "MUNCH_VAR" : "MUNCH = $(WIND_HOME)/workbench-3.0/foundation/4.1.2/x86-win32/bin/tclsh $(subst \,/,$(WIND_HOME))/vthreads-2.2.2/host/src/hutils/munch.tcl",
-    "MUNCHFLAGS_VAR" : ""
-})
-
-
-#arch("ppc604VxT2.2.2","gcc3.3.2_v6", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ccppc",
-	$C_LINKER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ccppc",
-	$CXX_LINKER : "$(WIND_BASE)/../gnu/3.3.2-vxworks653/x86-win32/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'G 0', 'fno-builtin', 'mlongcall', 'DCPU=PPC604', 'DVTHREADS'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(gnuBin)/nmppc",
-    "MUNCH_VAR" : "MUNCH = $(WIND_HOME)/workbench-3.0/foundation/4.1.2/x86-win32/bin/tclsh $(subst \,/,$(WIND_HOME))/vthreads-2.2.2/host/src/hutils/munch.tcl",
-    "MUNCHFLAGS_VAR" : ""
-})
-
-#arch("mpc8560Vx6.4","gcc3.4.4", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=8540', 'msoft-float', 'fno-builtin', 'mlongcall', 'DTOOL=sfgnu', 'DCPU=PPC85XX'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("pentiumVx6.3","gcc3.4.4_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("ppc604Vx6.3","gcc3.4.4_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("mpc8560Vx6.4","gcc3.4.4_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccppc",
-	$C_LINKER_FLAGS : ['msoft-float', 'mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['msoft-float', 'mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/sfcommon', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'msoft-float', 'mcpu=8540', 'fno-builtin', 'mlongcall', 'DTOOL=sfgnu', 'DCPU=PPC85XX'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm"
-})
-
-
-#arch("pentiumVx6.5","gcc3.4.4", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm"
-})
-
-
-#arch("pentiumVx6.5","gcc3.4.4_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/sun4-solaris2/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-	$HIDDEN : true,
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("ppc604Vx6.5","gcc3.4.4", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/workbench-2.6/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/4.0.11/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.5","gcc3.4.4_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("ppc405Vx6.6","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=405', 'fno-builtin', 'mlongcall', 'msoft-float', 'DTOOL=gnu', 'DCPU=PPC405'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/workbench-3.0/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/4.1.1/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("ppc405Vx6.6","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp', 'msoft-float', 'mstrict-align'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp', 'msoft-float', 'mstrict-align'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/sfcommon', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=405', 'fno-builtin', 'mlongcall', 'msoft-float', 'DTOOL=sfgnu', 'DCPU=PPC405'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("pentiumVx6.6","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/workbench-3.0/$(WIND_HOST_TYPE)/bin/nmpentium",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/4.1.1/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-
-})
-
-
-#arch("pentiumVx6.6","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.6","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM =  $(WIND_HOME)/workbench-3.0/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/4.1.1/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.6","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC604'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.7","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$PLATFORM : $PLATFORM.ppc6xx_be,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM =  $(WIND_HOME)/utilities-1.0/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
-})
-
-
-#arch("ppc604Vx6.7","gcc4.1.2_smp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM =  $(WIND_HOME)/utilities-1.0/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.7","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$PLATFORM : $PLATFORM.ppc6xx_be_rtp,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-
-#arch("pentiumVx6.7","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/utilities-1.0/$(WIND_HOST_TYPE)/bin/nmpentium",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
-})
-
-
-#arch("pentiumVx6.7","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("pentiumVx6.8","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-	$MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_HOME)/utilities-1.0/$(WIND_HOST_TYPE)/bin/nmpentium",
-    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("pentiumVx6.8","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/lib/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.8","gcc4.1.2", {
-	$OS : $OS.VXWORKS,
-	$PLATFORM : $PLATFORM.ppc6xx_be,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM =  $(WIND_HOME)/utilities-1.0/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.8","gcc4.1.2_rtp", {
-	$OS : $OS.VXWORKS,
-	$PLATFORM : $PLATFORM.ppc6xx_be_rtp,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/lib/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
-})
-
-
-#arch("ppc604Vx6.9","gcc4.3.3", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldppc",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM =  $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmppc",
-    "MUNCH_VAR" : "MUNCH =$(WIND_HOME)/workbench-3.3/foundation/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
-})
-
-
-#arch("ppc604Vx6.9","gcc4.3.3_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/lib/usr/lib/ppc/PPC32/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
-	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
 
 #arch("ppc604Vx6.9.4","gcc4.3.3", {
 	$OS : $OS.VXWORKS,
@@ -3045,11 +1513,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
 	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     "NM_VAR"  : "NM =  $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmppc",
     "MUNCH_VAR" : "MUNCH =$(WIND_HOME)/workbench-3.3/foundation/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 
@@ -3068,8 +1535,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'mcpu=604', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32'],
 	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
 
 
@@ -3086,7 +1552,11 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'DCPU=_VX_PPC85XX', 'DTOOL=diab', 'DTOOL_FAMILY=diab', 'D_WRS_KERNEL', 'DCPU_VARIANT=_e6500', 'Xkeywords=0x0fffffde', 'tPPCE6500FV:vxworks69', 'DVSB_CONFIG_FILE="$(WIND_BASE)/target/lib/h/config/vsbConfig.h"'],
 	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    "LINKER_DEBUG_FLAGS": ""
+    "NM_VAR"  : "NM =  $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmppc",
+    "MUNCH_VAR" : "MUNCH=$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = ",
+    "LINKER_DEBUG_FLAGS": "",
+    $HIDDEN: true
 })
 
 
@@ -3104,7 +1574,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$SYSLIBS : ['L$(WIND_BASE)/target/lib/usr/lib/ppc/PPC32/common', 'lstlstd'],
 	$DEFINES : ['DRTI_VXWORKS', 'tPPCEH:rtp', 'DCPU=_VX_PPC32', 'D_VX_TOOL_FAMILY=diab', 'D_VX_TOOL=diab', 'WDVSB_DIR=$(WIND_BASE)/target/lib', 'Xstsw-slow', 'Xstmw-slow', 'DRTI_VXWORKS', 'DRTI_RTP'],
 	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm"
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    $HIDDEN: true
 })
 
 
@@ -3121,11 +1592,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32', 'te500v2', 'mcpu=8548', 'mfloat-gprs=double', 'mspe=yes', 'mabi=spe'],
 	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     "NM_VAR"  : "NM =  $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmppc",
     "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 
@@ -3144,8 +1614,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'fno-builtin', 'mlongcall', 'DTOOL=gnu', 'DCPU=PPC32', 'te500v2', 'mcpu=8548', 'mfloat-gprs=double', 'mspe=yes', 'mabi=spe'],
 	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
 
 #arch("ppce500v2Vx6.9.4","gcc4.3.3", {
@@ -3161,12 +1630,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'fno-builtin', 'mlongcall', 'DTOOL=e500v2gnu', 'DTOOL_FAMILY=gnu', 'DCPU=PPC32', 'te500v2', 'mcpu=8548', 'mfloat-gprs=double', 'mspe=yes', 'mabi=spe'],
 	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     "NM_VAR"  : "NM =  $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmppc",
     "MUNCH_VAR" : "MUNCH =$(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc",
     "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
-    $HIDDEN : true
+    $HIDDEN: true
 })
 
 #arch("ppce500v2Vx6.9.4","gcc4.3.3_rtp", {
@@ -3184,9 +1651,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'fno-builtin', 'mlongcall', 'DTOOL=e500v2gnu', 'DTOOL_FAMILY=gnu', 'DCPU=PPC32', 'te500v2', 'mcpu=8548', 'mfloat-gprs=double', 'mspe=yes', 'mabi=spe'],
 	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    $HIDDEN : true
+    $HIDDEN: true
 })
 
 #arch("armv7aVx6.9.4","gcc4.3.3", {
@@ -3196,17 +1661,16 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldarm",
 	$C_LINKER_FLAGS : ['r'],
 	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccarm",
-        $CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldarm",
+    $CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldarm",
 	$CXX_LINKER_FLAGS : ['r'],
 	$SYSLIBS : ['L$(WIND_HOME)/gnu/4.3.3-vxworks-6.9/lib/gcc/arm-wrs-vxworks/4.3.3'],
 	$DEFINES : ['DRTI_VXWORKS', 't7', 'mfpu=vfp', 'mfloat-abi=softfp', 'ansi', 'fno-zero-initialized-in-bss', 'fno-builtin', 'fvolatile', 'mlong-calls', 'mapcs-frame', 'DCPU=_VX_ARMARCH7', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'D_WRS_KERNEL', 'DARMEL', 'DARM_USE_VFP'],
 	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
 	$MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-        $CPP03_COMPILER_FLAGS : [],
-        $SUPPORTS_CPP03: true,
-        "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmarm",
-        "MUNCH_VAR" : "MUNCH = $(WIND_BASE)/host/$(WIND_HOST_TYPE)/bin/munch",
-        "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
+    "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmarm",
+    "MUNCH_VAR" : "MUNCH = $(WIND_BASE)/host/$(WIND_HOST_TYPE)/bin/munch",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 #arch("armv7aVx6.9.4","gcc4.3.3_rtp", {
@@ -3223,9 +1687,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$SYSLIBS : ['L$(WIND_HOME)/gnu/4.3.3-vxworks-6.9/lib/gcc/arm-wrs-vxworks/4.3.3/mrtp', 'L$(WIND_BASE)/target/lib/usr/lib/arm/ARMARCH7/common'],
 	$DEFINES : ['DRTI_VXWORKS', 't7', 'mfpu=vfp', 'mfloat-abi=softfp', 'mrtp', 'fno-strict-aliasing', 'fno-zero-initialized-in-bss', 'fno-builtin', 'fvolatile', 'mlong-calls', 'mapcs-frame', 'D_VX_CPU=_VX_ARMARCH7', 'D_VX_DTOOL=gnu', 'D_VX_TOOL_FAMILY=gnu', 'DARMEL', 'DARM_USE_VFP'],
 	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-        $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-        $CPP03_COMPILER_FLAGS : [],
-        $SUPPORTS_CPP03: true
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    $HIDDEN: true
 })
 
 #arch("armv7aVx6.9","gcc4.3.3", {
@@ -3241,11 +1704,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $DEFINES : ['DRTI_VXWORKS', 'fno-builtin', 'mlong-calls', 'DTOOL=gnu', 'DTOOL_FAMILY=gnu', 'DCPU=ARMARCH7', 't7', 'mfpu=vfp', 'mfloat-abi=softfp', 'ansi', 'fno-zero-initialized-in-bss', 'fvolatile', 'mapcs-frame'],
     $INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmarm",
     "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c arm",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 
@@ -3264,48 +1726,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $DEFINES : ['t7', 'mfpu=vfp', 'mfloat-abi=softfp', 'ansi', 'fno-zero-initialized-in-bss', 'fno-builtin', 'fvolatile', 'mlong-calls', 'mapcs-frame', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'DCPU=ARMARCH7', 'DRTI_VXWORKS'],
         $INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("armv8Linux4.4","gcc5.4.0" {
-        $OS : $OS.UNIX,
-        $C_COMPILER : "gcc",
-        $C_COMPILER_FLAGS : [],
-        $C_LINKER : "gcc",
-        $C_LINKER_FLAGS : [],
-        $CXX_COMPILER : "g++",
-        $CXX_COMPILER_FLAGS : [],
-        $CXX_LINKER : "g++",
-        $CXX_LINKER_FLAGS : ["static-libgcc"],
-        $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-        $DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-        $INCLUDES : [],
-        $SUPPORTS_JAVA : true,
-        $CPP03_COMPILER_FLAGS : [],
-        $SUPPORTS_CPP03: true,
-        $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-        $SUPPORTS_CPP11: true
-})
-
-#arch("armv8Linux4","gcc7.3.0" {
-        $OS : $OS.UNIX,
-        $C_COMPILER : "aarch64-linux-gnu-gcc",
-        $C_COMPILER_FLAGS : [],
-        $C_LINKER : "aarch64-linux-gnu-gcc",
-        $C_LINKER_FLAGS : ["Wl,--no-as-needed"],
-        $CXX_COMPILER : "aarch64-linux-gnu-g++",
-        $CXX_COMPILER_FLAGS : [],
-        $CXX_LINKER : "aarch64-linux-gnu-g++",
-        $CXX_LINKER_FLAGS : ["static-libgcc", "Wl,--no-as-needed"],
-        $SYSLIBS : ["ldl", "lnsl", "lm", "lpthread", "lrt"],
-        $DEFINES : ["fpic", "DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
-        $INCLUDES : [],
-        $SUPPORTS_JAVA : true,
-        $CPP03_COMPILER_FLAGS : [],
-        $SUPPORTS_CPP03: true,
-        $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-        $SUPPORTS_CPP11: true
+    $HIDDEN: true
 })
 
 #arch("mips32r2sfbeVx6.9","gcc4.3.3", {
@@ -3321,11 +1742,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'G 0', 'mno-branch-likely', 'mips32r2', 'mgp32', 'mfp32', 'EB', 'msoft-float', 'DTOOL=sfgnu', 'mlong-calls'],
 	$INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmmips",
     "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c mips",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 
@@ -3344,51 +1764,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'G 0', 'mno-branch-likely', 'mips32r2', 'mgp32', 'mfp32', 'EB', 'msoft-float', 'DTOOL=sfgnu', 'mlong-calls'],
 	$INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
-
-
-#arch("pentiumVx6.9","gcc4.3.3", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-    $INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmpentium",
-    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
-})
-
-
-#arch("pentiumVx6.9","gcc4.3.3_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/lib/usr/lib/pentium/PENTIUM/common', 'lstdc++'],
-	$DEFINES : ['DRTI_VXWORKS', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=PENTIUM'],
-    $INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
 
 #arch("pentium64Vx6.9","gcc4.3.3", {
 	$OS : $OS.VXWORKS,
@@ -3405,11 +1782,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['DRTI_VXWORKS', 'march=x86-64', 'fno-builtin', 'mcmodel=large', 'mno-red-zone', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'DRTI_64BIT', 'D_WRS_KERNEL'],
     $INCLUDES : ['$(WIND_BASE)/target/h', '$(WIND_BASE)/target/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
     "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmpentium",
     "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/wtxtcl.ex $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 
@@ -3428,51 +1804,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 	$DEFINES : ['m64', 'march=x86-64', 'mcmodel=small', 'DRTI_VXWORKS', 'fno-builtin', 'DTOOL_FAMILY=gnu', 'DTOOL=gnu', 'DRTI_64BIT', 'mrtp'],
     $INCLUDES : ['$(WIND_BASE)/target/usr/h', '$(WIND_BASE)/target/usr/h/wrn/coreip'],
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("pentiumVx7.0","gcc4.3.3", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$C_LINKER_FLAGS : ['r'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ldpentium",
-	$CXX_LINKER_FLAGS : ['r'],
-	$SYSLIBS : [],
-	$DEFINES : ['DRTI_VXWORKS', 'mtune=pentium', 'march=pentium', 'fno-builtin', 'DTOOL=gnu', 'DCPU=_VX_PENTIUM', 'fno-defer-pop', 'fno-implicit-fp', 'ansi', 'fno-zero-initialized-in-bss', 'Wall', 'MD', 'MP', 'DTOOL_FAMILY=gnu', 'D_WRS_KERNEL', 'nostdlib', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'],
-    $INCLUDES : ['$(VSB_DIR)/share/h', '$(VSB_DIR)/krnl/h/public', '$(VSB_DIR)/krnl/h/system'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
-	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true,
-    "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmpentium",
-    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/tcl/$(WIND_HOST_TYPE)/bin/tclsh $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/build/tool/gnu_4_3_3/krnl/ldscripts/link.OUT"
-})
-
-#arch("pentiumVx7.0","gcc4.3.3_rtp", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : true,
-	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_COMPILER_FLAGS : ['mrtp'],
-	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccpentium",
-	$C_LINKER_FLAGS : ['mrtp'],
-	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_COMPILER_FLAGS : ['mrtp'],
-	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++pentium",
-	$CXX_LINKER_FLAGS : ['mrtp'],
-	$SYSLIBS : ['L$(WIND_BASE)/target/lib/usr/lib/pentium/PENTIUM/common', 'L$(VSB_DIR)/usr/lib/common'],
-	$DEFINES : ['DRTI_VXWORKS', 'mtune=pentium4', 'march=pentium4', 'fno-strict-aliasing', 'fasm', 'fno-builtin', 'Wall', 'MD', 'MP', 'D_VX_CPU=_VX_PENTIUM', 'D_VX_TOOL_FAMILY=gnu', 'D_VX_TOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'],
-    $INCLUDES : ['$(VSB_DIR)/share/h', '$(VSB_DIR)/usr/h/public', '$(VSB_DIR)/usr/h'],
-    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
-	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
-	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
-    $CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
 
 #arch("pentium64Vx7.0","gcc4.8.1", {
@@ -3490,11 +1822,10 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
 	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
 	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03 : true,
     "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmpentium",
     "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/tclsh $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/build/tool/gnu_4_8_1/krnl/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/build/tool/gnu_4_8_1/krnl/ldscripts/link.OUT",
+    $HIDDEN: true
 })
 
 #arch("pentium64Vx7.0","gcc4.8.1_rtp", {
@@ -3517,7 +1848,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CPP11_COMPILER_FLAGS : ['mrtp', 'march=atom', 'mpopcnt', 'm64', 'mcmodel=small', 'fno-builtin', 'fno-omit-frame-pointer', 'ansi', 'fno-strict-aliasing', 'std=c++11', 'isystem$(VSB_DIR)/usr/h/public/c++11'],
     $SUPPORTS_CPP11 : true,
     "CPP11_SYSLIBS" : "-Wl,--start-group -Wl,-lsupc++ -Wl,-lstdc++11 -Wl,--end-group",
-    "CPP_SYSLIBS" : "-Wl,--start-group -Wl,-lstdc++ -Wl,--end-group"
+    "CPP_SYSLIBS" : "-Wl,--start-group -Wl,-lstdc++ -Wl,--end-group",
+    $HIDDEN: true
 })
 
 #arch("pentiumVx7.0SR0540","gcc4.8.1.10", {
@@ -3535,38 +1867,279 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
 	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
 	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
-	$CPP03_COMPILER_FLAGS : [],
-    $SUPPORTS_CPP03 : true,
     "NM_VAR"  : "NM = $(WIND_BASE)/host/binutils/$(WIND_HOST_TYPE)/bin/nmpentium",
     "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/tclsh $(WIND_BASE)/build/mk/tcl/munch.tcl -c pentium",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/build/tool/gnu_4_8_1/krnl/ldscripts/link.OUT"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(WIND_BASE)/build/tool/gnu_4_8_1/krnl/ldscripts/link.OUT",
+    $HIDDEN: true
+})
+
+#arch("ppc32Vx7SR0540","gcc4.8.1.10_rtp", {
+	$OS : $OS.VXWORKS,
+	$IS_RTP : true,
+	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
+	$C_COMPILER_FLAGS : ['B$(WIND_HOME)/compilers/gnu-4.8.1.10/x86-linux2/libexec/gcc/powerpc-wrs-vxworks/4.8.1', 'mrtp', 'gdwarf-3', 'fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'fno-implicit-fp', 'D_WRS_HARDWARE_FP', 'mrtp', 'fno-strict-aliasing', 'std=c99', 'fasm', 'fno-implicit-fp', 'Wall', 'MD', 'MP', 'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h'],
+	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
+	$C_LINKER_FLAGS : ['fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'D_WRS_HARDWARE_FP', 'ansi', 'mrtp', 'fno-strict-aliasing', 'D_C99', 'D_HAS_C9X', 'std=c99', 'fasm', 'Wall ', 'MD', 'MP', 'Wl,--defsym,__wrs_rtp_base=0x80000000', 'Wl,-T$(WIND_BASE)/build/tool/gnu_4_8_1_8/usr/ldscript.vxe.ppc', 'Wl,-u,__tls__'],
+	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
+	$CXX_COMPILER_FLAGS : ['fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'fno-implicit-fp', 'D_WRS_HARDWARE_FP', 'ansi', 'mrtp', 'fno-strict-aliasing', 'D_C99', 'D_HAS_C9X', 'fno-implicit-fp', 'Wall', 'MD', 'MP', 'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h'],
+	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
+	$CXX_LINKER_FLAGS : ['fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'D_WRS_HARDWARE_FP', 'ansi', 'mrtp', 'fno-strict-aliasing', 'D_C99', 'D_HAS_C9X', 'std=c++03', 'fasm', 'Wall ', 'MD', 'MP', 'D_VX_CPU=_VX_PPCE500MC', 'D_VX_TOOL_FAMILY=gnu', 'D_VX_TOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)', 'Wl,--defsym,__wrs_rtp_base=0x80000000', 'Wl,-T$(WIND_BASE)/build/tool/gnu_4_8_1_8/usr/ldscript.vxe.ppc', 'Wl,-u,__tls__'],
+	$SYSLIBS : ['L$(VSB_DIR)/usr/lib/common'],
+	$DEFINES : ['DRTI_VXWORKS', 'D_C99', 'D_HAS_C9X', 'D_VX_CPU=_VX_PPCE500MC', 'D_VX_TOOL_FAMILY=gnu', 'D_VX_TOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'],
+    $INCLUDES : ['$(VSB_DIR)/share/h'],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $SUPPORTS_CPP11 : false,
+    "CPP_SYSLIBS" : "-Wl,--start-group -Wl,-lstdc++ -Wl,--end-group",
+    $HIDDEN : true
+})
+
+#arch("ppc32Vx7SR0541","gcc4.8.1.11_rtp", {
+	$OS : $OS.VXWORKS,
+	$IS_RTP : true,
+	$C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
+	$C_COMPILER_FLAGS : ['mrtp', 'gdwarf-3', 'fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'fno-implicit-fp', 'D_WRS_HARDWARE_FP', 'fno-strict-aliasing', 'std=c99', 'fasm', 'fno-implicit-fp', 'Wall', 'MD', 'MP', 'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h'],
+	$C_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/ccppc",
+	$C_LINKER_FLAGS : ['fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'D_WRS_HARDWARE_FP', 'ansi', 'mrtp', 'fno-strict-aliasing', 'D_C99', 'D_HAS_C9X', 'std=c99', 'fasm', 'Wall ', 'MD', 'MP', 'Wl,--defsym,__wrs_rtp_base=0x80000000', 'Wl,-T$(WIND_BASE)/build/tool/gnu_4_8_1_8/usr/ldscript.vxe.ppc', 'Wl,-u,__tls__'],
+	$CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
+	$CXX_COMPILER_FLAGS : ['fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'fno-implicit-fp', 'D_WRS_HARDWARE_FP', 'ansi', 'mrtp', 'fno-strict-aliasing', 'D_C99', 'D_HAS_C9X', 'fno-implicit-fp', 'Wall', 'MD', 'MP', 'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h'],
+	$CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_HOST_TYPE)/bin/c++ppc",
+	$CXX_LINKER_FLAGS : ['fno-builtin', 'fstrength-reduce', 'mstrict-align', 'mregnames', 'mhard-float', 'D_WRS_HARDWARE_FP', 'ansi', 'mrtp', 'fno-strict-aliasing', 'D_C99', 'D_HAS_C9X', 'std=c++03', 'fasm', 'Wall ', 'MD', 'MP', 'D_VX_CPU=_VX_PPCE500MC', 'D_VX_TOOL_FAMILY=gnu', 'D_VX_TOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)', 'Wl,--defsym,__wrs_rtp_base=0x80000000', 'Wl,-T$(WIND_BASE)/build/tool/gnu_4_8_1_8/usr/ldscript.vxe.ppc', 'Wl,-u,__tls__'],
+	$SYSLIBS : ['L$(VSB_DIR)/usr/lib/common'],
+	$DEFINES : ['DRTI_VXWORKS', 'D_C99', 'D_HAS_C9X', 'D_VX_CPU=_VX_PPCE500MC', 'D_VX_TOOL_FAMILY=gnu', 'D_VX_TOOL=gnu', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'],
+    $INCLUDES : ['$(VSB_DIR)/share/h'],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $SUPPORTS_CPP11 : false,
+    "CPP_SYSLIBS" : "-Wl,--start-group -Wl,-lstdc++ -Wl,--end-group",
+    $HIDDEN: true
+})
+
+#arch("x64Vx7SR0630","llvm8.0.0.2", {
+	$OS : $OS.VXWORKS,
+	$IS_RTP : false,
+	$C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64", "m64", "std=c11",
+        "mcmodel=kernel", "mno-red-zone", "nostdlib","fno-omit-frame-pointer",
+        "march=core2", "nostdlibinc", "nostdinc++","mno-implicit-float",
+        "ftls-model=local-exec", "fno-builtin", "fno-strict-aliasing"],
+	$C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+	$C_LINKER_FLAGS : ['r'],
+	$CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64", "m64", "mcmodel=kernel",
+        "mno-red-zone", "nostdlib","fno-omit-frame-pointer", "std=c++14",
+        "march=core2", "nostdlibinc", "nostdinc++","mno-implicit-float",
+        "ftls-model=local-exec", "fno-builtin", "fno-strict-aliasing",
+        "Wno-return-type-c-linkage"],
+	$CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+	$CXX_LINKER_FLAGS :  [ "r"],
+	$SYSLIBS : [],
+	$DEFINES : ['DRTI_CLANG','DRTI_VXWORKS', 'DRTI_64BIT',"D__vxworks", "D__VXWORKS__",
+        "D__ELF__", "D_HAVE_TOOL_XTORS", "D_USE_INIT_ARRAY", "DCPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", "D_WRS_KERNEL", "D_WRS_VX_SMP",
+        "D_WRS_CONFIG_SMP", 'D_VSB_CONFIG_FILE=\"$(VSB_DIR)/h/config/vsbConfig.h\"'],
+    $INCLUDES : ['$(VSB_DIR)/share/h', '$(VSB_DIR)/krnl/h/public', '$(VSB_DIR)/krnl/h/system'],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "NM_VAR"  : "NM = $(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/nmpentium",
+    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_HOST_TYPE)/bin/tclsh $(WIND_BASE)/build/mk/tcl/munch.tcl -c pentium -tags $(VSB_DIR)/krnl/tags/dkm.tags",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -m elf_x86_64 -X -r --eh-frame-hdr --force-group-allocation -T $(VSB_DIR)/krnl/ldscripts/dkm.ld"
+})
+
+#arch("x64Vx7SR0630","llvm8.0.0.2_rtp", {
+	$OS : $OS.VXWORKS,
+	$IS_RTP : true,
+	$C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+	$C_COMPILER_FLAGS : [ '-target=x86_64', 'm64', 'mcmodel=small', 'std=c11',
+        'fno-omit-frame-pointer', 'march=core2', 'fno-strict-aliasing',
+        'fno-builtin', 'nostdlibinc', 'nostdinc++', 'fasm',
+        'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h'],
+	$C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+	$C_LINKER_FLAGS : ['m elf_x86_64', '-defsym __wrs_rtp_base=0x200000',
+        'u __wr_need_frame_add', 'u __tls__',
+        'T$(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o'],
+	$CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+	$CXX_COMPILER_FLAGS : [ '-target=x86_64', 'm64', 'mcmodel=small',
+        'fno-omit-frame-pointer', 'march=core2', 'fno-strict-aliasing',
+        'fno-builtin', 'nostdlibinc', 'nostdinc++', 'fasm', 'std=c++14',
+        'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h',
+        'Wno-return-type-c-linkage'],
+	$CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+	$CXX_LINKER_FLAGS : ['m elf_x86_64', '-defsym __wrs_rtp_base=0x200000',
+        'u __wr_need_frame_add', 'u __tls__',
+        'T$(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o'],
+	$SYSLIBS : ['L$(VSB_DIR)/usr/lib/common', '-start-group', '-as-needed',
+        'lc', 'lc_internal', 'lllvm', 'lcplusplus', 'lllvmcplus', 'ldl',
+        'lnet', '-end-group'],
+	$DEFINES : ['DRTI_CLANG','DRTI_VXWORKS', 'DRTI_64BIT', 'D__vxworks', 'D__VXWORKS__',
+        'D__RTP__', 'D__ELF__', 'D_USE_INIT_ARRAY', 'DCPU=_VX_CORE',
+        'DTOOL_FAMILY=llvm', 'DTOOL=llvm', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'
+    ],
+    $INCLUDES : ['$(VSB_DIR)/share/h'],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+	"VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+	"vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $CPP11_COMPILER_FLAGS : [],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : ""
+})
+
+#arch("armv8Vx7SR0660","llvm10.0.1.cortex-a53", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : false,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=arm64", "ffixed-x18", "std=c11",
+        "nostdlibinc", "nostdinc++", "nostdlib" ,"ftls-model=local-exec", "fno-builtin",
+        "fno-strict-aliasing", "mllvm", "two-entry-phi-node-folding-threshold=2",
+	    "mno-implicit-float"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldarm64",
+    $C_LINKER_FLAGS : ['X','r',"EL","eh-frame-hdr"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $CXX_COMPILER_FLAGS : [ "-target=arm64", "ffixed-x18",
+        "nostdlibinc", "nostdinc++", "nostdlib", "ftls-model=local-exec", "fno-builtin",
+	    "fno-strict-aliasing", "mllvm", "two-entry-phi-node-folding-threshold=2", "mno-implicit-float",
+        "Wno-return-type-c-linkage"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldarm64",
+    $CXX_LINKER_FLAGS :  ['X','r',"EL","eh-frame-hdr"],
+    $SYSLIBS : [],
+    $DEFINES : ['DRTI_CLANG','DRTI_VXWORKS', 'DRTI_64BIT',"D__vxworks", "D__VXWORKS__",
+        "D__ELF__", "D_HAVE_TOOL_XTORS", "D_USE_INIT_ARRAY", "DCPU=_VX_CORTEX_A53",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", "D_WRS_KERNEL", "D_WRS_VX_SMP", "DARMEL",
+        "D_WRS_CONFIG_SMP", 'D_VSB_CONFIG_FILE=\"$(VSB_DIR)/h/config/vsbConfig.h\"'],
+    $INCLUDES : ['$(VSB_DIR)/share/h', '$(VSB_DIR)/krnl/h/public', '$(VSB_DIR)/krnl/h/system'],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+        "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "NM_VAR"  : "NM = $(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/nmarm64",
+    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_VX7_HOST_TYPE)/bin/tclsh $(WIND_BASE)/build/mk/tcl/munch.tcl -c arm64 -tags $(VSB_DIR)/krnl/tags/dkm.tags",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -X -r -EL --eh-frame-hdr --force-group-allocation -T $(VSB_DIR)/krnl/ldscripts/dkm.ld",
+    $CPP11_COMPILER_FLAGS : ['std=c++14'],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : ""
+})
+
+#arch("armv8Vx7SR0660","llvm10.0.1.cortex-a53_rtp", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : true,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ '-target=arm64', 'ffixed-x18', 'std=c11',
+        'fno-strict-aliasing', 'fno-builtin', 'nostdlibinc', 'nostdinc++',
+        'mllvm', 'two-entry-phi-node-folding-threshold=2',
+        'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h'],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldarm64",
+    $C_LINKER_FLAGS : ['m aarch64elf', '-defsym __wrs_rtp_base=0x80000000',
+        'u __wr_need_frame_add', 'u __tls__',
+        'T$(VSB_DIR)/usr/ldscripts/rtp.ld -EL $(VSB_DIR)/usr/lib/common/crt0.o'],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $CXX_COMPILER_FLAGS : [ '-target=arm64','ffixed-x18', 'ansi',
+        'fno-strict-aliasing', 'fno-builtin', 'nostdlibinc', 'nostdinc++', 'fasm',
+        'isystem$(VSB_DIR)/usr/h/public', 'isystem$(VSB_DIR)/usr/h', 'mllvm',
+        'two-entry-phi-node-folding-threshold=2','std=c++14'],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldarm64",
+    $CXX_LINKER_FLAGS : ['m aarch64elf', '-defsym __wrs_rtp_base=0x80000000',
+        'u __wr_need_frame_add', 'u __tls__',
+        'T$(VSB_DIR)/usr/ldscripts/rtp.ld -EL $(VSB_DIR)/usr/lib/common/crt0.o'],
+    $SYSLIBS : ['L$(VSB_DIR)/usr/lib/common', '-start-group', '-as-needed',
+        'lc', 'lc_internal', 'lllvm', 'lcplusplus', 'lllvmcplus', 'ldl',
+        'lnet', '-end-group'],
+    $DEFINES : ['DRTI_CLANG','DRTI_VXWORKS', 'DRTI_64BIT', 'D__vxworks', 'D__VXWORKS__',
+        'D__RTP__', 'D__ELF__', 'D_USE_INIT_ARRAY', 'DCPU=_VX_CORTEX_A53', "DARMEL",
+        'DTOOL_FAMILY=llvm', 'DTOOL=llvm', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'
+    ],
+    $INCLUDES : ['$(VSB_DIR)/share/h'],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $CPP11_COMPILER_FLAGS : ['std=c++14'],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : ""
+})
+
+#arch("x64Vx21.11","llvm12.0.1.1", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : false,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c11", "m64",
+        "march=core2", "mcmodel=kernel", "mno-red-zone", "mno-implicit-float",
+        "fno-builtin", "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "ftls-model=local-exec", "nostdlibinc", "nostdinc++"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $C_LINKER_FLAGS : [ "m elf_x86_64", "X", "r", "-eh-frame-hdr",
+        "-force-group-allocation"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang++",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c++11", "m64",
+        "march=core2", "mcmodel=kernel", "mno-red-zone", "mno-implicit-float",
+        "fno-builtin", "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "ftls-model=local-exec", "nostdlibinc", "nostdinc++"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $CXX_LINKER_FLAGS : [ "m elf_x86_64", "X", "r", "-eh-frame-hdr",
+        "-force-group-allocation"],
+    $SYSLIBS : [],
+    $DEFINES : ["DRTI_VXWORKS", "DRTI_CLANG", "DRTI_64BIT",
+        "D__vxworks", "D__VXWORKS__", "D__ELF__", "D_HAVE_TOOL_XTORS",
+        "D_USE_INIT_ARRAY", "DCPU=_VX_CORE", "D_VX_CPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", "D_WRS_KERNEL", "D_WRS_VX_SMP",
+        "D_WRS_CONFIG_SMP", 'D_VSB_CONFIG_FILE=\"$(VSB_DIR)/h/config/vsbConfig.h\"'],
+    $INCLUDES : ["$(VSB_DIR)/share/h", "$(VSB_DIR)/krnl/h/public", "$(VSB_DIR)/krnl/h/system"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    $CPP11_COMPILER_FLAGS : [],
+    $SUPPORTS_CPP11 : true,
+    "NM_VAR"  : "NM = $(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/nmpentium",
+    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_VX7_HOST_TYPE)/bin/tclsh $(WIND_BUILD)/mk/tcl/munch.tcl -c pentium -tags $(VSB_DIR)/krnl/tags/dkm.tags",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(VSB_DIR)/krnl/ldscripts/dkm.ld"
+})
+
+#arch("x64Vx21.11","llvm12.0.1.1_rtp", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : true,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c11", "m64",
+        "march=core2", "mcmodel=small", "fasm", "fno-builtin",
+        "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "nostdlibinc", "nostdinc++",
+        "isystem$(VSB_DIR)/usr/h/public", "isystem$(VSB_DIR)/usr/h"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $C_LINKER_FLAGS : [ "m elf_x86_64", "z noseparate-code",
+        "-defsym __wrs_rtp_base=0x200000", "u __tls__", "u __wr_need_frame_add",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c++11", "m64",
+        "march=core2", "mcmodel=small", "fasm", "fno-builtin",
+        "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "nostdlibinc", "nostdinc++",
+        "isystem$(VSB_DIR)/usr/h/public", "isystem$(VSB_DIR)/usr/h",
+        "Wno-return-type-c-linkage"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $CXX_LINKER_FLAGS : ["m elf_x86_64", "z noseparate-code",
+        "-defsym __wrs_rtp_base=0x200000", "u __tls__", "u __wr_need_frame_add",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o"],
+    $SYSLIBS : ["L$(VSB_DIR)/usr/lib/common", "-start-group", "-as-needed",
+        "lc", "lc_internal", "lllvm", "lcplusplus", "lllvmcplus", "ldl",
+        "lnet", "-end-group"],
+    $DEFINES : ["DRTI_VXWORKS", "DRTI_CLANG", "DRTI_64BIT",
+        "D__vxworks", "D__VXWORKS__", "D__RTP__", "D__ELF__",
+        "D_USE_INIT_ARRAY", "DCPU=_VX_CORE", "D_VX_CPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'
+    ],
+    $INCLUDES : ["$(VSB_DIR)/share/h"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $CPP11_COMPILER_FLAGS : [],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : ""
 })
 
 #arch("sbc8641Vx653-2.3","gcc3.3.2", {
 	$OS : $OS.VXWORKS,
 	$IS_RTP : false,
-	$NO_PROJECTFILES : true
-})
-
-
-#arch("simpcVx653-2.3","gcc3.3.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
 	$NO_PROJECTFILES : true,
-    $HIDDEN : true
-})
-
-#arch("ppc85xxVxT2.2.3","gcc3.3.2", {
-	$OS : $OS.VXWORKS,
-	$IS_RTP : false,
-	$NO_PROJECTFILES : true,
-	$HIDDEN : true
-})
-
-#arch("ppc32Vx653-2.5","gcc4.3.3", {
-        $OS : $OS.VXWORKS,
-        $IS_RTP : false,
-        $NO_PROJECTFILES : true,
         $HIDDEN : true
 })
 
@@ -3578,123 +2151,26 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 })
 
 #******************** AIX ********************#
-#arch("p5AIX5.3","xlc9.0", {
-	$OS : $OS.AIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "xlc_r",
-	$C_COMPILER_FLAGS : ['q32', 'g', 'qlongdouble'],
-	$C_LINKER : "xlc_r",
-	$C_LINKER_FLAGS : ['q32'],
-	$CXX_COMPILER : "xlC_r",
-	$CXX_COMPILER_FLAGS : ['q32'],
-	$CXX_LINKER : "xlC_r",
-	$CXX_LINKER_FLAGS : ['q32'],
-	$SYSLIBS : ['ldl', 'lnsl', 'lm', 'lpthread'],
-	$DEFINES : ['DRTI_UNIX', 'DRTI_AIX'],
-	$INCLUDES : [],
-    $HIDDEN : true
+#arch("64p9AIX7.2","xlclang16.1", {
+        $OS : $OS.AIX,
+        $PLATFORM : $PLATFORM.x64,
+        $C_COMPILER : "xlclang",
+        $C_COMPILER_FLAGS : ['q64', 'g'],
+        $C_LINKER : "xlclang",
+        $C_LINKER_FLAGS : ['q64'],
+        $CXX_COMPILER : "xlclang++",
+        $CXX_COMPILER_FLAGS : ['q64', 'Wno-return-type-c-linkage'],
+        $CXX_LINKER : "xlclang++",
+        $CXX_LINKER_FLAGS : ['q64'],
+        $SYSLIBS : ['lm', 'brtl'],
+        $DEFINES : ['DRTI_UNIX', 'DRTI_AIX', 'DRTI_64BIT'],
+        $INCLUDES : [],
+        $SUPPORTS_JAVA : false
 })
-
-#arch("64p5AIX5.3","xlc9.0", {
-	$OS : $OS.AIX,
-	$PLATFORM : $PLATFORM.x64,
-	$C_COMPILER : "xlc_r",
-	$C_COMPILER_FLAGS : ['q64', 'g', 'qlongdouble'],
-	$C_LINKER : "xlc_r",
-	$C_LINKER_FLAGS : ['q64'],
-	$CXX_COMPILER : "xlC_r",
-	$CXX_COMPILER_FLAGS : ['q64'],
-	$CXX_LINKER : "xlC_r",
-	$CXX_LINKER_FLAGS : ['q64'],
-	$SYSLIBS : ['ldl', 'lnsl', 'lm', 'lpthread'],
-	$DEFINES : ['DRTI_UNIX', 'DRTI_AIX', 'DRTI_64BIT'],
-	$INCLUDES : [],
-    $HIDDEN : true
-})
-
-#arch("p7AIX7.1","xlc12.1", {
-	$OS : $OS.AIX,
-	$PLATFORM : $PLATFORM.i86,
-	$C_COMPILER : "xlc_r",
-	$C_COMPILER_FLAGS : ['q32', 'g', 'qlongdouble'],
-	$C_LINKER : "xlc_r",
-	$C_LINKER_FLAGS : ['q32'],
-	$CXX_COMPILER : "xlC_r",
-	$CXX_COMPILER_FLAGS : ['q32', 'qlongdouble'],
-	$CXX_LINKER : "xlC_r",
-	$CXX_LINKER_FLAGS : ['q32'],
-	$SYSLIBS : ['lC128', 'lm', 'brtl'],
-	$DEFINES : ['DRTI_UNIX', 'DRTI_AIX'],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : ["qrtti=dynamiccast"],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("64p7AIX7.1","xlc12.1", {
-	$OS : $OS.AIX,
-	$PLATFORM : $PLATFORM.x64,
-	$C_COMPILER : "xlc_r",
-	$C_COMPILER_FLAGS : ['q64', 'g', 'qlongdouble'],
-	$C_LINKER : "xlc_r",
-	$C_LINKER_FLAGS : ['q64'],
-	$CXX_COMPILER : "xlC_r",
-	$CXX_COMPILER_FLAGS : ['q64', 'qlongdouble'],
-	$CXX_LINKER : "xlC_r",
-	$CXX_LINKER_FLAGS : ['q64'],
-	$SYSLIBS : ['lC128', 'lm', 'brtl'],
-	$DEFINES : ['DRTI_UNIX', 'DRTI_AIX', 'DRTI_64BIT'],
-	$INCLUDES : [],
-	$SUPPORTS_JAVA : true,
-    $CPP03_COMPILER_FLAGS : ["qrtti=dynamiccast"],
-    $SUPPORTS_CPP03: true
-})
-
 
 
 #******************** INTEGRITY ********************#
-#arch("mpc8349Inty5.0.11.mds8349","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "mpc8349",
-	$MAJOR_VERSION : 5,
-	$SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.v5.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v5_1.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.v5.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v5.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_v5_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v5.gpj.vm",
-    $CXX_COMPILER_FLAGS : ["--exceptions"],
-    "BSP"  : "mds8349",
-    "C_intLIBS": ["libINTEGRITY.so","libc.so"],
-    "Cxx_intLIBS": ["libscxx_e.so"],
-    "primaryTarget" : "ppc_integrity.tgt"
-})
 
-#arch("ppc85xxInty5.0.11.xes-p2020","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "ppc85xx",
-	$MAJOR_VERSION : 5,
-	$SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.v5.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v5_1.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.v5.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v5_1.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_v5_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v5.gpj.vm",
-    $CXX_COMPILER_FLAGS : ["--exceptions"],
-    "BSP": "xes-p2020",
-    "C_intLIBS": ["libINTEGRITY.so","libc.so"],
-    "Cxx_intLIBS": ["libscxx_e.so"],
-    "primaryTarget" : "ppc_integrity.tgt",
-    $HIDDEN : true
-})
 
 #arch("pentiumInty10.0.2.pcx86","", {
 	$OS : $OS.INTEGRITY,
@@ -3716,55 +2192,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "primaryTarget" : "86_integrity.tgt",
     $C_COMPILER_FLAGS : [],
     $CXX_COMPILER_FLAGS : ["--exceptions"],
-    $CPP03_COMPILER_FLAGS : [""],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("p4080Inty10.0.2.xes-p4080-smp","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "p4080",
-	$MAJOR_VERSION : 10,
-    $SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v10.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v10.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v10.gpj.vm",
-    $C_COMPILER_FLAGS : [],
-    $CXX_COMPILER_FLAGS : ["--exceptions"],
-    "BSP": "xes-p4080-smp",
-    "C_intLIBS": ["libINTEGRITY.so","libc.so"],
-    "Cxx_intLIBS": ["libscxx_e.so"],
-    "primaryTarget" : "ppc_integrity.tgt",
-    $HIDDEN : true
-})
-
-#arch("p4080Inty11.devtree-fsl-e500mc.comp2012.1","", {
-    $OS : $OS.INTEGRITY,
-    $CPU_TYPE : "p4080",
-    $MAJOR_VERSION : 11,
-    $SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v11_default.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v11_default.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v11.p4080.gpj.vm",
-    "BSP": "devtree-fsl-e500mc",
-    "C_intLIBS": [],
-    "Cxx_intLIBS": [],
-    "primaryTarget" : "ppc_integrity.tgt",
-    $C_COMPILER_FLAGS : [],
-    $CXX_COMPILER_FLAGS : ["--exceptions"],
-    $CPP03_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"],
-    $SUPPORTS_CPP03: true
+    $HIDDEN: true
 })
 
 #arch("p4080Inty11.devtree-fsl-e500mc.comp2013.5.4","", {
@@ -3786,9 +2214,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "Cxx_intLIBS": [],
     "primaryTarget" : "ppc_integrity.tgt",
     $C_COMPILER_FLAGS : [],
-    $CXX_COMPILER_FLAGS : ["--exceptions"],
-    $CPP03_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"],
-    $SUPPORTS_CPP03: true
+    $CXX_COMPILER_FLAGS : ["--exceptions"]
 })
 
 #arch("pentiumInty11.pcx86-smp","", {
@@ -3811,32 +2237,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "primaryTarget" : "86_integrity.tgt",
     $C_COMPILER_FLAGS : [],
     $CXX_COMPILER_FLAGS : ["--exceptions"],
-    $CPP03_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"],
-    $SUPPORTS_CPP03: true
-})
-
-#arch("pentiumInty11.pcx86","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "pentium",
-	$MAJOR_VERSION : 11,
-    $SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v11_default.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v11_pentium.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v11.pentium.gpj.vm",
-	$HIDDEN : true,
-	"BSP": "pcx86",
-	"C_intLIBS": [],
-    "Cxx_intLIBS": [],
-    "primaryTarget" : "86_integrity.tgt",
-    $CXX_COMPILER_FLAGS : ["--exceptions"],
-    $CPP03_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"], 
-    $SUPPORTS_CPP03: true      
+    $HIDDEN: true
 })
 
 #arch("pentiumInty11.pcx64","", {
@@ -3859,75 +2260,6 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "Cxx_intLIBS": [],
     "primaryTarget" : "86_integrity.tgt",
     $CXX_COMPILER_FLAGS : ["--exceptions", "--c++11"],
-    $CPP03_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"], 
-    $SUPPORTS_CPP03: true,
     $CPP11_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"], 
     $SUPPORTS_CPP11: true
-})
-
-#arch("cellInty5.1.0.ibmpxcab","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "cell",
-	$MAJOR_VERSION : 10,
-	$HIDDEN : true,
-    $SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v10.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v10.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v10.gpj.vm",
-    "BSP": "ibmpxcab",
-    "C_intLIBS": ["libINTEGRITY.so","libc.so"],
-    "Cxx_intLIBS": ["libscxx_e.so"],
-    "primaryTarget" : "ppc_integrity.tgt",
-    $HIDDEN : true
-})
-
-#arch("mpc8572Inty5.1.0.whitefin","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "mpc8572",
-	$MAJOR_VERSION : 10,
-	$HIDDEN : true,
-    $SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v10.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v10.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v10.gpj.vm",
-    "BSP": "whitefin",
-    "C_intLIBS": ["libINTEGRITY.so","libc.so"],
-    "Cxx_intLIBS": ["libscxx_e.so"],
-    "primaryTarget" : "ppc_integrity.tgt",
-    $HIDDEN : true
-})
-
-#arch("mpc8572Inty5.1.0.whitefin-smp","", {
-	$OS : $OS.INTEGRITY,
-	$CPU_TYPE : "mpc8572",
-	$MAJOR_VERSION : 10,
-	$HIDDEN : true,
-    $SHM_AREA_TEMPLATE : "shm_area.c.vm",
-    $POSIX_SHM_MANAGER_GPJ_TEMPLATE : "posix_shm_manager.gpj.vm",
-    $POSIX_SHM_MANAGER_INT_TEMPLATE : "posix_shm_manager.int.vm",
-    $POSIX_SHM_MANAGER_LD_TEMPLATE : "v10.ld.vm",
-    $POSIX_SHM_MANAGER_AS_GPJ_TEMPLATE : "posix_shm_manager_as1.gpj.vm",
-    $PUBSUB_GPJ_TEMPLATE : "pubsub.gpj.vm",
-    $PUBSUB_INT_TEMPLATE : "pubsub.int.vm",
-    $PUBSUB_LD_TEMPLATE : "v10.ld.vm",
-    $PUBSUB_AS_GPJ_TEMPLATE : "pubsub_as1.gpj.vm",
-    $WORKSPACE_TEMPLATE : "workspace.v10.gpj.vm",
-    "BSP": "whitefin-smp",
-    "C_intLIBS": ["libINTEGRITY.so","libc.so"],
-    "Cxx_intLIBS": ["libscxx_e.so"],
-    "primaryTarget" : "ppc_integrity.tgt",
-    $HIDDEN : true,
-    $HIDDEN : true
 })

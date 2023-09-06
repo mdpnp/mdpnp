@@ -1,0 +1,192 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##========================================================================*/*#
+/*
+ * (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
+ * RTI grants Licensee a license to use, modify, compile, and create derivative
+ * works of the software solely for use with RTI Connext DDS. Licensee may
+ * redistribute copies of the software provided that all such copies are subject
+ * to this license. The software is provided "as is", with no warranty of any
+ * type, including any warranty for fitness for any purpose. RTI is under no
+ * obligation to maintain or support the software. RTI shall not be liable for
+ * any incidental or consequential damages arising out of the use or inability
+ * to use the software.
+ */
+
+/* ${envMap.idlFileName}_client.cxx
+
+*/
+
+## This macro prints the proper value for each of the arguments of the server
+## call which are the following:
+## 1) A variable if the type of the argument is out or inout
+## 2) defaultEnumMemberName if it is an enum
+## 3) A new object if the type is a custom one, e.g. an struct
+## 4) The default value if nothing of the above, and for long double we need
+## to cast its default value to ::LongDouble
+#macro(printOperationParameters $operation $isAsync)
+#*-*##foreach($arg in $operation.memberFieldMapList)
+#*-----*##if (!$arg.parameterType.equals("in") || $arg.hasArray || $arg.isSeqAlias)
+${arg.name}_${operation.name}#if($isAsync)_async#end#if($foreach.hasNext), #end
+#*-----*##else
+#*---------*##if ($arg.isEnum)
+$arg.defaultEnumMemberName#if($foreach.hasNext), #end
+#*---------*##elseif ($arg.isAggregationType)
+${arg.specTypeName}()#if($foreach.hasNext), #end
+#*---------*##else
+#if($arg.typeName.equals("long double"))(${arg.specTypeName})#end$arg.defaultValue#if($foreach.hasNext), #end
+#*---------*##end
+#*-----*##end
+#*-*##end
+#end
+
+## This macro prints wcout or cout depending on whether typeName is an wstring
+## or not
+#macro(cout $typeName)
+#if ($typeName.equals("wstring")) std::wcout #else std::cout #end#*
+*##end
+
+#macro(printOperationsCalls $isAsync)
+#*----*##foreach($member in $constructMap.memberFieldMapList)
+#*--------*##if ($member.exceptionCount && $member.exceptionCount > 0)
+                #if($isAsync && !${envMap.rpcTest})//#end try {
+#*--------*##end
+## Iterate only through the list of operations
+#*--------*##if ($member.memberCount)
+## Create new objects to deal with the output arguments and the arrays
+#*------------*##foreach($arg in $member.memberFieldMapList)
+#*----------------*##if (!$arg.parameterType.equals("in") || $arg.hasArray || $arg.isSeqAlias)
+            #if($isAsync && !${envMap.rpcTest})//#end ${arg.specTypeName} ${arg.name}_${member.name}#if($isAsync)_async#end;
+            // Modify ${arg.specTypeName} ${arg.name}_${member.name}#if($isAsync)_async#end here
+#*----------------*##end
+#*------------*##end
+#*------------*##if ($isAsync)
+                    #if(!${envMap.rpcTest})//#end auto future_${member.name} = client.${member.name}_async(#printOperationParameters($member $isAsync));
+#*--------------*##if ($member.hasOutArguments)
+                    #if(!${envMap.rpcTest})//#end auto future_${member.name}_result = future_${member.name}.get();
+#*----------------*##if (!$member.typeName.equals("void"))
+                    #if(!${envMap.rpcTest})//#end #cout($member.typeName) << future_${member.name}_result.return_() << std::endl;
+#*----------------*##end
+#*----------------*##foreach($arg in $member.memberFieldMapList)
+#*--------------------*##if (!$arg.parameterType.equals("in"))
+                    #if(!${envMap.rpcTest})//#end #cout($arg.typeName) << future_${member.name}_result.${arg.name}() << std::endl;
+#*--------------------*##end
+#*----------------*##end
+#*--------------*##else
+                    #if(!${envMap.rpcTest})//#end #if (!$member.typeName.equals("void"))#cout($member.typeName) << #end#*
+                  *#future_${member.name}.get()#*
+                  *##if (!$member.typeName.equals("void")) << std::endl#end;
+#*--------------*##end
+#*------------*##else
+#*----------------*##if ($member.typeName.equals("void"))
+                    client.${member.name}(#printOperationParameters($member));
+#*----------------*##else
+                    #cout($member.typeName) << client.${member.name}(#printOperationParameters($member)) << std::endl;
+#*----------------*##end
+#*--------------*##if ($member.hasOutArguments)
+#*----------------*##foreach($arg in $member.memberFieldMapList)
+#*--------------------*##if (!$arg.parameterType.equals("in"))
+                    #cout($arg.typeName) << ${arg.name}_${member.name} << std::endl;
+#*--------------------*##end
+#*----------------*##end
+#*--------------*##end
+#*------------*##end
+
+
+#*--------*##end
+#*--------*##if ($member.exceptionCount && $member.exceptionCount > 0)
+#*------------*##foreach($excp in $member.exceptionList)
+                #if($isAsync && !${envMap.rpcTest})//#end} catch (const ${excp.FQName}& e) {
+                    #if($isAsync && !${envMap.rpcTest})//#end std::cout << "Exception : " << e << std::endl;
+#*------------*##end
+                #if($isAsync && !${envMap.rpcTest})//#end}
+#*--------*##end
+#*----*##end
+#end
+
+#if (${envMap.rpcTest})
+${envMap.POUND_CHAR}pragma begin_Package
+#end
+${envMap.POUND_CHAR}include <iostream>
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.hpp"
+
+${envMap.POUND_CHAR}include <rti/util/ostream_operators.hpp>
+#if (${envMap.rpcTest})
+${envMap.POUND_CHAR}pragma end_Package
+#end
+
+#if (${envMap.rpcTest})
+## Add the guard if the rpcTest flag is enabled, this is to avoid a compilation
+## error while building the xmq_cpp.2.0 module
+${envMap.POUND_CHAR}pragma begin_Package
+${envMap.POUND_CHAR}if !defined(RTI_NO_CXX11_RPC_SUPPORT)
+${envMap.POUND_CHAR}pragma end_Package
+#end
+
+int#if (!${envMap.rpcTest}) main#else client_${constructMap.name}#end(int argc, char *argv[])
+{
+    int domain_id = 0;
+    int call_count = 0; // infinite loop
+
+    if (argc >= 2) {
+        domain_id = atoi(argv[1]);
+    }
+    if (argc >= 3) {
+        call_count = atoi(argv[2]);
+    }
+
+    // To turn on additional logging, include <rti/config/Logger.hpp> and
+    // uncomment the following line:
+    // rti::config::Logger::instance().verbosity(rti::config::Verbosity::STATUS_ALL);
+
+    // Create a DomainParticipant with default Qos
+    dds::domain::DomainParticipant participant(domain_id);
+
+    // Create a ClientParams
+    dds::rpc::ClientParams client_params(participant);
+
+    // And register the service
+    client_params.service_name("Example ${constructMap.name} Service");
+
+    // Create a client and assign the ClientParams
+    ${constructMap.nativeFQName}Client client(client_params);
+
+    // Wait until the service is started
+    client.wait_for_service();
+
+    for (int i = 0; (i < call_count || call_count == 0); i++) {
+        // Sync operations
+
+        #printOperationsCalls(false)
+
+#*----*##if (!${envMap.rpcTest})
+        // Uncomment the following if you want to use asynchronous calls
+#*----*##end
+
+        #printOperationsCalls(true)
+
+        rti::util::sleep(dds::core::Duration::from_millisecs(500));
+
+    }
+
+    // RTI Connext provides a finalize_participant_factory() method
+    // if you want to release memory used by the participant factory singleton.
+    // Uncomment the following line to release the singleton:
+    //
+    // dds::domain::DomainParticipant::finalize_participant_factory();
+
+    return 0;
+}
+
+#if (${envMap.rpcTest})
+## Add the guard if the rpcTest flag is enabled, this is to avoid a compilation
+## error while building the xmq_cpp.2.0 module
+${envMap.POUND_CHAR}pragma begin_Package
+${envMap.POUND_CHAR}endif // !defined(RTI_NO_CXX11_RPC_SUPPORT)
+${envMap.POUND_CHAR}pragma end_Package
+#end

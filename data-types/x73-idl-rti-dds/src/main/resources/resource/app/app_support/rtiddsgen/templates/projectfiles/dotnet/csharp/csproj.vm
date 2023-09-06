@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>${archMap.PLATFORM_TOOLSET}</TargetFramework>
+  </PropertyGroup>
+
+#if (${sourceDir})
+  <ItemGroup>
+    <Compile Include="${sourceDir}*.cs" />
+  </ItemGroup>
+
+#end
+  <ItemGroup>
+#if(${archMap.DOTNET_VERSION} >= 3)
+    <PackageReference Include="Rti.ConnextDds.Extra" Version="$archMap.CsDdsExtraVersion"/>
+#else
+    <PackageReference Include="Rti.ConnextDds" Version="$archMap.CsDdsVersion"/>
+#end
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21308.1" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,33 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2015.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+##2.2.3,23sep15,djs created 
+##========================================================================*/*#
+//
+//  ViewController.h
+//  #buildProjectName()
+//
+//  Copyright (c) 2015 Real-Time Innovations. All rights reserved.
+//
+#if(${global.idlFileName})
+#[[#]]#include "${sourceDir}#buildProjectName()${headerFileExtension}"
+#end
+#[[#]]#import <UIKit/UIKit.h>
+
+@interface ViewController : UIViewController {
+
+#VC_Pub_Header_class($envMap.language $envMap.namespace)
+    long count;
+    long sample_count;
+    bool is_running;
+}
+@end
+

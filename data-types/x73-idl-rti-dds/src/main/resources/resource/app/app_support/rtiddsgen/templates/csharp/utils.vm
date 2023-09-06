@@ -1,0 +1,180 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##-----------------------------------------------------------------
+##
+##             Utils
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+#macro (assignTypeVariables $node)
+#*------*##foreach($member in $node.memberFieldMapList)#*
+#*--------*##assignMemberVariables($node $member)#*
+#*------*##end
+#*------*##foreach($member in $node.typeCodeMemberFieldMapList)#*
+#*--------*##assignMemberVariables($node $member)#*
+#*------*##end
+#end
+
+#macro (assignMemberVariables $node $member)
+#*--*##if (!$member.initialized)
+#*----*##assignTypeCodeMemberAnnotationsVariables($member)
+##We check that this set is only done once
+#*----*##set($member.initialized="true")#*
+#*--*##end
+
+#*--*##set($member.unmanageDefaultValue=$member.defaultValue)
+#*--*##if(!$member.explicitDefaultValue || !$member.defaultValue)
+#*----*##if($member.nativeTypeFQName.equals("char"))
+#*--------*##set($member.defaultValue="'\0'")
+#*--------*##set($member.unmanageDefaultValue="0")
+#*----*##elseif($member.nativeTypeFQName.equals("bool"))
+#*--------*##set($member.defaultValue="false")
+#*--------*##set($member.unmanageDefaultValue="0")
+#*----*##elseif($member.nativeTypeFQName.equals("long"))
+#*--------*##set($member.defaultValue="0L")
+#*--------*##set($member.unmanageDefaultValue="0L")
+#*----*##elseif($member.nativeTypeFQName.equals("ulong"))
+#*--------*##set($member.defaultValue="0uL")
+#*--------*##set($member.unmanageDefaultValue="0uL")
+#*----*##elseif($member.nativeTypeFQName.equals("string"))
+#*--------*##set($member.defaultValue='"\0"')
+#*--------*##set($member.unmanageDefaultValue='"\0"')
+#*----*##end
+#*--*##else
+#*----*##if($member.nativeTypeFQName.equals("bool"))
+#*------*##if($member.defaultValue.equals("false"))
+#*--------*##set($member.unmanageDefaultValue="0")
+#*------*##else
+#*--------*##set($member.unmanageDefaultValue="1")
+#*------*##end
+#*----*##end
+#*--*##end
+
+#*--*##set($member.toNative="sample.$member.name")
+#*--*##set($member.fromNative=$member.name)
+#*--*##set($member.arrayAccessInfoName=$member.nativeTypeFQName)
+#*--*##set($member.initializeDiscriminator="${node.name}.DefaultDiscriminator")
+#*--*##set($member.discriminatorToNative="sample.Discriminator")
+#*--*##set($member.discriminatorFromNative="_d")
+#*--*##if($member.typeName.equals("wchar"))
+#*----*##set($member.toNative="(short) sample.$member.name")
+#*----*##set($member.fromNative="(char) $member.name")
+#*----*##set($member.arrayAccessInfoName="DynamicTypeFactory.WideCharType")
+#*--*##elseif($member.typeName.equals("char"))
+#*----*##set($member.toNative="NativeChar.ToUtf8(sample.$member.name)")
+#*----*##set($member.fromNative="NativeChar.FromUtf8($member.name)")
+#*----*##set($member.initializeDiscriminator="NativeChar.ToUtf8(${node.name}.DefaultDiscriminator)")
+#*----*##set($member.discriminatorToNative="NativeChar.ToUtf8(sample.Discriminator)")
+#*----*##set($member.discriminatorFromNative="NativeChar.FromUtf8(_d)")
+#*----*##set($member.arrayAccessInfoName="char")
+#*--*##elseif($member.nativeTypeFQName.equals("bool"))
+#*----*##set($member.toNative="Convert.ToByte(sample.$member.name)")
+#*----*##set($member.fromNative="Convert.ToBoolean($member.name)")
+#*----*##set($member.initializeDiscriminator="Convert.ToByte(${node.name}.DefaultDiscriminator)")
+#*----*##set($member.discriminatorToNative="Convert.ToByte(sample.Discriminator)")
+#*----*##set($member.discriminatorFromNative="Convert.ToBoolean(_d)")
+#*--*##end
+
+#*--*##set($member.privateName=$member.name)
+#*--*##if($member.explicitMaxValue || $member.explicitMinValue || $node.constructKind.equals("union"))
+#*----*##set($member.privateName="_$member.name")
+#*--*##end
+#end
+
+#macro(setAliasMemberName $node)
+#*--*##if($node.constructKind.equals("alias"))
+#*----*##set($node.memberFieldMapList[0].name="Value")#*
+#*----*##assignMemberVariables($node $node.memberFieldMapList[0])#*
+#*--*##end
+#end
+
+#macro(setLabelDefaultDiscriminator $node)
+#*--*##if($node.hasADefaultCaseLabel && !$node.hasAllCaseCovered)
+#*----*##set($node.defaultDiscriminator="default")
+#*--*##else
+#*----*##set($node.defaultDiscriminator=${node.unionDiscriminatorMap.labelList[0]})
+#*--*##end
+#end
+
+#macro(getSeqSize $member $kindMethod)
+#*--*##if ($kindMethod.equals("init_abs_max") &&
+     $userVarList.ignore_absolute_maximum.equals("1"))
+ int.MaxValue#*
+#*--*##elseif ($member.seqSize.equals("-1"))
+#*----*##if($kindMethod.equals("init_abs_max"))
+Rti.Types.Dynamic.SequenceType.Unbounded#*
+#*----*##else
+0#*
+#*----*##end
+#*--*##else
+((int)$member.seqSize)#*
+#*--*##end
+#end
+
+#macro(getStrSize $member $kindMethod)
+#*--*##if ($kindMethod.equals("init_abs_max") &&
+     $userVarList.ignore_absolute_maximum.equals("1"))
+ int.MaxValue#*
+#*--*##elseif ($member.strSize.equals("-1"))
+#*----*##if($kindMethod.equals("init_abs_max"))
+#*------*##if($member.typeName.equals("string"))
+StringType.Unbounded#*
+#*------*##else
+WideStringType.Unbounded#*
+#*------*##end
+#*----*##elseif($kindMethod.equals("create"))
+#* Becuase the C# API we generate nothing on the creation for String with unbounded support
+#*----*##else
+0#*
+#*----*##end
+#*--*##else
+((int) $member.strSize)#*
+--*##end
+#end
+
+#macro(initCases $node__ $member__)
+#*--*##if($member__.directive)
+#*----*##handleCopyDirective($member__.directive $member__.value false)
+#*--*##else
+#*----*##foreach($label in $member__.labelList)
+#*------*##if($label.equals("default"))
+                default:
+#*------*##else
+                case $label:
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+#*
+# This Macro generate the parameter name. And it does it based on if there is 
+# belongs to the base class or to the derived class (adding and _2 in that case)
+# $node node processing
+# $member the member we are generating
+# $baseMembers true when is generating the member of the base class, false otherwise
+*#
+#macro(generateParamName $node $member $baseMember)
+#*--*##if($node.baseTypeMembers
+                && $node.baseTypeMembers.size() > 0
+                && $node.baseTypeMembersName.contains($member.name)
+                && !$baseMember)
+_${member.name}_2#*
+#*--*##else
+${member.name}#*
+#*--*##end
+#end
+
+#macro(generateDiscriminatorName $multiDiscriminator)
+#*--*##if($multiDiscriminator)
+discriminator#*
+#*--*##else
+Discriminator#*
+#*--*##end
+#end
+

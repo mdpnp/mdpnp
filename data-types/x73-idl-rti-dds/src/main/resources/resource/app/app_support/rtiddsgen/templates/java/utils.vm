@@ -54,7 +54,7 @@
 #*--*##if (!$constructMap.typeCodeMemberFieldMapList.initialized)
 #*----*##set($constructMap.typeCodeMemberFieldMapList.initialized="true") ##We check that this set is only done once
 #*----*##foreach ($member in $constructMap.typeCodeMemberFieldMapList)
-#*------*##assignMemberVariables ($member $extensibility)
+#*------*##assignMemberVariables ($member $extensibility $constructMap)
 #*----*##end##foreach
 #*--*##end##if
 #end##macro
@@ -63,21 +63,29 @@
 #*--*##if (!$member.initialized)
 #*----*##set($member.initialized="true") ##We check that this set is only done once
 #*----*##if($member.typeName)## to avoid warnings because of the directive members
-#*------*##if($extensibility.equals("MUTABLE_EXTENSIBILITY")|| $member.isOptional)
-#*-------*##set($member.currentAlignment="(xcdr1? 0 : currentAlignment)")
-#*-----*##else
-#*-------*##set($member.currentAlignment="currentAlignment")
-#*-------*##end
-#*----*##if($extensibility.equals("MUTABLE_EXTENSIBILITY") || $member.isOptional)
-#*----*##assignNeedExtendedId($member)
-#*----*##end
+#*
+    We only truly serialize primitive types, that's why if a type is a 
+    user type, it will have a method get_serialized_sample_max_size where 
+    it will use epd.getAlignment(currentAlignment) for its primitive members.
+    The members which type is a user type will call get_serialized_sample_max_size 
+    with (currentAlignment)
+*#
+#*------*##if($member.typeKind=="user" || $member.typeKind=="enum")
+#*--------*##set($member.currentAlignment="(currentAlignment)")
+#*------*##else
+#*--------*##set($member.currentAlignment="epd.getAlignment(currentAlignment)")
+#*------*##end
+#*------*##set($member.currentAlignmentV2="currentAlignment")
+#*------*##if($extensibility.equals("MUTABLE_EXTENSIBILITY") || $member.isOptional)
+#*--------*##assignNeedExtendedId($member)
+#*------*##end
 #if($member.typeKind=="user" ||$member.typeKind=="enum" )
  #set($member.typeClass=$member.typeName)  
  #set($member.defaultValue="null")
 #set($member.nativeTypeSeq="${member.nativeTypeFQName}${envMap.typeSeqSuffix}")
 #elseif($member.typeName=="char")  #*
 *#  
-#set($member.typeClass="Character")
+#set($member.typeClass="java.lang.Character")
 #set($member.defaultValue="0")
 #set($member.typeCode="TypeCode.TC_CHAR")
 #set($member.nativeTypeSeq="CharSeq")
@@ -100,7 +108,7 @@
     
 #elseif($member.typeName=="wchar") #*
 *# 
-#set($member.typeClass="Character")
+#set($member.typeClass="java.lang.Character")
 #set($member.defaultValue="0")
 #set($member.typeCode="TypeCode.TC_WCHAR")
 #set($member.nativeTypeSeq="WcharSeq")
@@ -123,8 +131,11 @@
 
 #elseif($member.typeName=="octet" || $member.typeName.equals("int8") || $member.typeName.equals("uint8"))  #*
 *#  
-#set($member.typeClass="Byte")
+#set($member.typeClass="java.lang.Byte")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_OCTET")
 #set($member.nativeTypeSeq="ByteSeq")
 #set($member.typeEnum="CdrPrimitiveType.BYTE")
@@ -146,8 +157,11 @@
 
 #elseif($member.typeName=="short")  #*
 *# 
-#set($member.typeClass="Short")
+#set($member.typeClass="java.lang.Short")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_SHORT")                   
 #set($member.nativeTypeSeq="ShortSeq")
 #set($member.typeEnum="CdrPrimitiveType.SHORT")
@@ -169,8 +183,11 @@
 
 #elseif($member.typeName=="long") #*
 *#   
-#set($member.typeClass="Integer")
+#set($member.typeClass="java.lang.Integer")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_LONG")
 #set($member.nativeTypeSeq="IntSeq")
 #set($member.typeEnum="CdrPrimitiveType.INT")
@@ -192,8 +209,11 @@
 
 #elseif($member.typeName=="long long") #*
 *#  
-#set($member.typeClass="Long")
+#set($member.typeClass="java.lang.Long")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_LONGLONG")
 #set($member.nativeTypeSeq="LongSeq")
 #set($member.typeEnum="CdrPrimitiveType.LONG")
@@ -215,7 +235,7 @@
 
 #elseif($member.typeName=="float") #*
 *#  
-#set($member.typeClass="Float")
+#set($member.typeClass="java.lang.Float")
 #set($member.defaultValue="0")
 #set($member.typeCode="TypeCode.TC_FLOAT")   
 #set($member.nativeTypeSeq="FloatSeq")
@@ -239,7 +259,7 @@
 
 #elseif($member.typeName=="double")  #*
 *#  
-#set($member.typeClass="Double")
+#set($member.typeClass="java.lang.Double")
 #set($member.defaultValue="0")
 #set($member.typeCode="TypeCode.TC_DOUBLE")
 #set($member.nativeTypeSeq="DoubleSeq")
@@ -262,7 +282,7 @@
 
 #elseif($member.typeName=="boolean")  #*
 *# 
-#set($member.typeClass="Boolean")
+#set($member.typeClass="java.lang.Boolean")
 #set($member.defaultValue="false")
 #set($member.typeCode="TypeCode.TC_BOOLEAN")
 #set($member.nativeTypeSeq="BooleanSeq")
@@ -285,7 +305,7 @@
 
 #elseif($member.typeName=="long double") #*
 *#  
-#set($member.typeClass="Double")
+#set($member.typeClass="java.lang.Double")
 #set($member.defaultValue="0")
 #set($member.typeCode="TypeCode.TC_LONGDOUBLE")
 #set($member.nativeTypeSeq="LongDoubleSeq")
@@ -308,8 +328,11 @@
 
 #elseif($member.typeName=="unsigned long long") #*
 *#   
-#set($member.typeClass="Long")
+#set($member.typeClass="java.lang.Long")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_ULONGLONG") 
 #set($member.nativeTypeSeq="LongSeq")
 #set($member.typeEnum="CdrPrimitiveType.LONG")
@@ -331,8 +354,11 @@
 
 #elseif($member.typeName=="unsigned long") #*
 *#  
-#set($member.typeClass="Integer")
+#set($member.typeClass="java.lang.Integer")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_ULONG")                                                   
 #set($member.nativeTypeSeq="IntSeq")
 #set($member.typeEnum="CdrPrimitiveType.INT")
@@ -355,8 +381,11 @@
 #elseif($member.typeName=="unsigned short") #*
 *# 
 
-#set($member.typeClass="Short")
+#set($member.typeClass="java.lang.Short")
 #set($member.defaultValue="0")
+#if($member.typeKindResolved)
+#set($member.isInteger="true")
+#end
 #set($member.typeCode="TypeCode.TC_USHORT")                                                 
 #set($member.nativeTypeSeq="ShortSeq")
 #set($member.typeEnum="CdrPrimitiveType.SHORT")
@@ -377,7 +406,7 @@
 #set($member.sequenceActualSizeMethod="_cdrPrimitiveType.getShortSequenceSerializedSize")
 
 #elseif($member.typeName=="string")  #*
-*#  #set($member.typeClass="String")  #set($member.typeCode="TCKind.TK_STRING")
+*#  #set($member.typeClass="java.lang.String")  #set($member.typeCode="TCKind.TK_STRING")
 #set($member.elementSerializeMethod="writeString")
 #set($member.arraySerializeMethod="writeStringArray")
 #set($member.sequenceSerializeMethod="writeStringSeq")
@@ -397,7 +426,7 @@
 
 #elseif($member.typeName=="wstring")  #*
 *# 
-#set($member.typeClass="String") 
+#set($member.typeClass="java.lang.String")
 #set($member.typeCode="TCKind.TK_WSTRING")
 #set($member.elementSerializeMethod="writeWstring")
 #set($member.defaultValue="""""")
@@ -450,13 +479,13 @@ ${member.typeClass}.MAX_VALUE#*
 #macro(declareEmptyArraydimensionLists $member)#if($member.dimensionList)#foreach($element in $member.dimensionList)[]#end#end#end
 
 #macro(arraydimensionListsWithIndex $member)#if($member.dimensionList)#foreach($element in $member.dimensionList)#*
-*#[i${velocityCount}__]#end#end#end
+*#[i${foreach.count}__]#end#end#end
 
 
 #macro(openForLoopIfArray $member)
 #if($member.dimensionList)
 #foreach($element in $member.dimensionList)
-    for(int i${velocityCount}__ = 0; i${velocityCount}__< $element; ++i${velocityCount}__){
+    for(int i${foreach.count}__ = 0; i${foreach.count}__< $element; ++i${foreach.count}__){
     
 #end ##for
 #end ##if
@@ -474,8 +503,8 @@ ${member.typeClass}.MAX_VALUE#*
 #macro(openForLoopIfArrayForCopy $member)
 #if($member.dimensionList)
 #foreach($element in $member.dimensionList) 
-#if($velocityCount<$member.dimensionList.size())
-    for(int i${velocityCount}__ = 0; i${velocityCount}__< $element; ++i${velocityCount}__){
+#if($foreach.count<$member.dimensionList.size())
+    for(int i${foreach.count}__ = 0; i${foreach.count}__< $element; ++i${foreach.count}__){
 #end
 #end ##for
 #end ##if
@@ -484,7 +513,7 @@ ${member.typeClass}.MAX_VALUE#*
 #macro(closeForLoopIfArrayForCopy $member)
 #if($member.dimensionList)
 #foreach($element in $member.dimensionList)
-#if($velocityCount<$member.dimensionList.size())
+#if($foreach.count<$member.dimensionList.size())
     }
 #end
 #end ##for
@@ -493,17 +522,20 @@ ${member.typeClass}.MAX_VALUE#*
 
 
 #macro(arraydimensionListsWithIndexForCopy $member)#if($member.dimensionList)#foreach($element in $member.dimensionList)#*
-*##if($velocityCount<$member.dimensionList.size())[i${velocityCount}__]#end#end#end#end
+*##if($foreach.count<$member.dimensionList.size())[i${foreach.count}__]#end#end#end#end
 
 
-#macro(commaIfNeeded $index $member)
-#if( $index <$member.dimensionList.size() ),#end
+##******************************************************************************
+## Macro to insert commas when needed for the size of the list of members
+##******************************************************************************
+#macro(commaIfNeeded $index $size)
+#if( $index < $size), #end
 #end
 
 
 
 #macro(arraydimensionListWithMultiplication  $member)#if($member.dimensionList) #foreach($element in $member.dimensionList)#*
-*#($element)#if( $velocityCount <$member.dimensionList.size())*#end#end#end#end
+*#($element)#if( $foreach.count <$member.dimensionList.size())*#end#end#end#end
 
 #* This macro prints all the directives that are in the array*#
 #macro (copyAllDirectives $directive)
@@ -542,7 +574,7 @@ if (typedDst.${member.name} == null) {
 #*----*##if($member.typeKind=="user")
  #*----*##openForLoopIfArray($member)
     typedDst.${member.name}#arraydimensionListsWithIndex($member) =
-      ($member.nativeTypeFQName) ${member.nativeTypeFQName}.create();
+        ($member.nativeTypeFQName)${member.nativeTypeFQName}.create();
  #*----*##closeForLoopIfArray($member)          
 #*----*##end        
 #*--*##elseif($member.seqSize)
@@ -550,7 +582,7 @@ if (typedDst.${member.name} == null) {
         new  $member.nativeTypeSeq (#getSeqSize($member, "init"));
 #*--*##elseif($member.typeKind=="user")
     typedDst.${member.name} = 
-        ($member.nativeTypeFQName) ${member.nativeTypeFQName}.create();
+        ($member.nativeTypeFQName)${member.nativeTypeFQName}.create();
 #end
 }
 #end
@@ -558,7 +590,7 @@ if (typedDst.${member.name} == null) {
 #macro (getStrSize $member $kindMethod)
 #*--*##if ($member.strSize=="-1")#*
 -------*##if(!$kindMethod.equals("deserialize")) ##For deserialize we want it empty
-Integer.MAX_VALUE#*
+java.lang.Integer.MAX_VALUE#*
 -------*##end#*
 ---*##else
 $member.strSize#*
@@ -572,7 +604,7 @@ $member.strSize#*
 -------*##elseif($kindMethod.equals("deserialize")) #*Include deserialize
 *#-1#*
 -------*##else#*
-*#Integer.MAX_VALUE#*
+*#java.lang.Integer.MAX_VALUE#*
 -------*##end#*
 ---*##else#*
 *#$member.seqSize#*

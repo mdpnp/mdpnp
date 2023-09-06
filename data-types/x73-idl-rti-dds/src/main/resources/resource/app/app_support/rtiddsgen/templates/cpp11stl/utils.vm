@@ -1,0 +1,351 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##2.2,08apr15,ajm EDDY-433: Intializing long double 
+##2.2,5nov14,ajm CODEGENII-395 Changing long long generation
+##2.2,24jun14,ajm CODEGENII-174 Pointers C++PSM Code generation
+##2.2,28may14,ajm CODEGENII-166 C++PSM Constructor with params with inheritance
+##2.2,08may14,ajm CODEGENII-171 Adding support for sequence C++PSM
+##2.2,11apr4,ajm CODEGENII-172 Fixes from CR-247
+##2.2,3abr14,ajm CODEGENII-172 Support for unions
+##2.2,20mar14,ajm CODEGENII-172 union 
+##2.2,20feb14,ajm CODEGENII-165 Enums  CODEGENII-169:String CODEGENII-173:Alias 
+##2.2,20feb14,ajm CODEGENII-167: Copy&Include, CODEGENII-168:Constant and CR-226 
+##2.2.0,19feb12,ajm created  
+##========================================================================*/*#
+
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+#* This file contains macros used by more than one     *#
+#* template.                                           *#
+#* --------------------------------------------------- *#
+
+#macro (assignMemberRefVariables $member $type)
+#*--*##if(${member.name}=="") ##we are defining an alias
+#*----*##if($member.isPointer && !$member.dimensionList)
+#*-------*##set($member.sample="(**sample)")
+#*-------*##set($member.sampleRef="sample->get()")
+#*-------*##set($member.srcSample="(**src)")
+#*-------*##set($member.srcRef="src->get()") 
+#*-------*##set($member.dstSample="(**dst)")
+#*-------*##set($member.dstRef="dst->get()")
+#*-----*##elseif($member.seqSize && $member.dimensionList)
+#*-------*##set($member.sample="(*sample)")
+#*-------*##set($member.sampleRef="&(*sample)")
+#*-------*##set($member.srcSample="(*src)")
+#*-------*##set($member.srcRef="&(*src)")
+#*-------*##set($member.dstSample="(*dst)")
+#*-------*##set($member.dstRef="&(*dst)")
+#*-----*##else
+#*-------*##set($member.sample="(*sample)")
+#*-------*##set($member.sampleRef="sample")
+#*-------*##set($member.srcSample="(*src)")
+#*-------*##set($member.srcRef="src")
+#*-------*##set($member.dstSample="(*dst)")
+#*-------*##set($member.dstRef="dst")
+#*-----*##end
+#*--*##else
+#*------*##if($member.isPointer && (!$member.dimensionList || $member.seqSize))
+#*-------*##if ($member.dimensionList && $member.seqSize)
+#*--------*##set($member.sample="*sample->${member.name}()")
+#*--------*##set($member.sampleRef="sample->${member.name}()")
+#*--------*##set($member.dstSample="*dst->${member.name}()")
+#*--------*##set($member.dstRef="dst->${member.name}()")
+#*--------*##set($member.srcSample="*src->${member.name}()")
+#*--------*##set($member.srcRef="src->${member.name}()")
+#*-------*##else
+#*--------*##set($member.sample="(*sample->${member.name}())")
+#*--------*##set($member.sampleRef="sample->${member.name}().get()")
+#*--------*##set($member.dstSample="(*dst->${member.name}())")
+#*--------*##set($member.dstRef="dst->${member.name}().get()")
+#*--------*##set($member.srcSample="*(src->${member.name}())")
+#*--------*##set($member.srcRef="src->${member.name}().get()")
+#*------*##end
+#*------*##elseif($member.isOptional)
+#*--------*##set($member.sample="sample->${member.name}().get()")
+#*--------*##set($member.sampleRef="sample->${member.name}().get_ptr()")
+#*--------*##set($member.srcSample="src->${member.name}().get()")
+#*--------*##set($member.srcRef="src->${member.name}().get_ptr()") 
+#*--------*##set($member.dstSample="dst->${member.name}().get()")
+#*--------*##set($member.dstRef="dst->${member.name}().get_ptr()")
+#*--------*##set($member.sampleOptional="sample->${member.name}()")
+#*------*##else
+#*--------*##set($member.sample="sample->${member.name}()")
+#*--------*##set($member.sampleRef="&sample->${member.name}()")
+#*--------*##set($member.srcSample="src->${member.name}()")
+#*--------*##set($member.srcRef="&src->${member.name}()") 
+#*--------*##set($member.dstSample="dst->${member.name}()")
+#*--------*##set($member.dstRef="&dst->${member.name}()")
+#*------*##end
+#*--*##end
+#end
+
+#macro(assignTypeVariables $node)
+#*--*##foreach($member in $node.baseTypeMembers)
+#*----*##if (!$member.directive)
+#*------*##assignMemberVariables ($member $node)
+#*------*##assignCppMemberVariables ($member $node.languageBinding $foreach.count)
+#*----*##end
+#*--*##end##foreach
+#*--*##foreach ($member in $node.memberFieldMapList)
+#*----*##if (!$member.directive)
+#*------*##assignMemberVariables ($member $node)
+#*------*##assignCppMemberVariables ($member $node.languageBinding $foreach.count)
+#*----*##end
+#*--*##end##foreach
+#*--*##foreach ($member in $node.typeCodeMemberFieldMapList)
+#*----*##if (!$member.directive)
+#*------*##assignMemberVariables ($member $node)
+#*------*##assignCppMemberVariables ($member $node.languageBinding $foreach.count)
+#*----*##end
+#*--*##end##foreach
+#*--*##if($node.constructKind.equals("union"))
+#*----*##assignMemberVariables($node.unionDiscriminatorMap $node)
+#*----*##assignMemberVariables($node.typeCodeUnionDiscriminatorMap $node)
+#*----*##assignCppMemberVariables($node.unionDiscriminatorMap $node.languageBinding)
+#*----*##assignCppMemberVariables($node.typeCodeUnionDiscriminatorMap $node.languageBinding)
+#*--We change the cName to not have two __ together so it is just d_*#
+#*----*##set($node.unionDiscriminatorMap.cName="m${node.unionDiscriminatorMap.name}_")
+#*----*##set($node.unionMemberCName="m_u_")
+#*----*##set($node.unionStructName="Union_")
+#*----*##set($node.needsSwitchCode=((($node.needsDefaultCase && $node.memberFieldMapList.size() > 0)
+                || ($node.memberFieldMapList.size() > 1 && !$node.needsDefaultCase))))
+#*--*##end  
+#end##macro
+
+
+#macro(assignCppMemberVariables $member $languageBinding $index)
+#*--*##set($aliasTag ="_AliasTag_t")
+#*--*##if (!$member.initialized)
+##We check that this set is only done once
+#*----*##set($member.initialized="true") 
+#*--*##end
+#*--*##set($member.index=$index)
+#*--*##set($member.cName="m_${member.name}_")
+#*--*##if($member.typeKind=="user")
+#*----*##if($member.isAlias)
+#*------*##set($member.typeCode="&::rti::topic::dynamic_type< ${member.nativeTypeFQName}${aliasTag}>::get().native()")
+#*----*##else
+#*------*##set($member.typeCode="&::rti::topic::dynamic_type< ${member.nativeTypeFQName}>::get().native()")
+#*----*##end
+#*--*##end
+#*--*##if($member.typeKind=="user")
+#*------*##set($member.specTypeName=$member.nativeTypeFQName)
+## We need to change the defaultValue for typedef wstring if not it will use
+## {0}
+#*------*##if($member.typeKindResolved=="wstring")
+#*----------*##set($member.defaultValue="L""""")
+#*------*##end
+#*--*##else
+#*------*##set($member.elementSerializeMethod="::rti::topic::cdr::serialize")
+#*------*##set($member.elementDeserializeMethod="::rti::topic::cdr::deserialize") 
+#*----*##if($member.nativeTypeFQName=="DDS_Char")
+#*------*##set($member.nativeTypeFQName="char")
+#*------*##set($member.specTypeName="char")
+#*----*##elseif($member.nativeTypeFQName=="DDS_Wchar")
+#*--------*##if (!$languageBinding.equals("FLAT_DATA"))
+#*------*##set($member.nativeTypeFQName="wchar_t")
+#*------*##set($member.specTypeName="wchar_t")
+#*--------*##else
+#*------*##set($member.nativeTypeFQName="uint16_t")
+#*------*##set($member.specTypeName="uint16_t")
+#*--------*##end
+#*------*##if (!$languageBinding.equals("FLAT_DATA"))
+#*------*##set($member.typeCode="::rti::topic::interpreter::initialize_wchar_typecode()")
+#*------*##end
+#*----*##elseif($member.nativeTypeFQName=="DDS_Octet"
+                || $member.nativeTypeFQName=="DDS_UInt8")
+#*------*##set($member.nativeTypeFQName="uint8_t")
+#*------*##set($member.specTypeName="uint8_t")
+#*----*##elseif($member.nativeTypeFQName=="DDS_Int8")
+#*------*##set($member.nativeTypeFQName="int8_t")
+#*------*##set($member.specTypeName="int8_t")
+#*----*##elseif($member.nativeTypeFQName=="DDS_Short") 
+#*------*##set($member.nativeTypeFQName="int16_t")
+#*------*##set($member.specTypeName="int16_t")
+#*----*##elseif($member.nativeTypeFQName=="DDS_Long")
+#*------*##set($member.nativeTypeFQName="int32_t")
+#*------*##set($member.specTypeName="int32_t")
+#*----*##elseif($member.nativeTypeFQName=="DDS_LongLong")
+#*-----*##if($envMap.language.equals("cpp11stl"))
+#*------*##set($member.specTypeName="int64_t")
+#*-----*##else
+#*------*##set($member.specTypeName="::rti::core::int64")
+#*-----*##end
+#*----*##elseif($member.nativeTypeFQName=="DDS_Float")
+#*------*##set($member.nativeTypeFQName="float")
+#*------*##set($member.specTypeName="float")
+#*----*##elseif($member.nativeTypeFQName=="DDS_Double")
+#*------*##set($member.nativeTypeFQName="double")
+#*------*##set($member.specTypeName="double")
+#*----*##elseif($member.nativeTypeFQName=="DDS_Boolean")
+#*------*##set($member.specTypeName="bool")
+#*--------*##if (!$languageBinding.equals("FLAT_DATA"))
+#*------*##set($member.nativeTypeFQName="bool")
+#*--------*##end
+#*------*##set($member.elementSerializeMethod="::rti::topic::cdr::serialize")
+#*------*##set($member.elementDeserializeMethod="::rti::topic::cdr::deserialize")
+#*------*##if (!$languageBinding.equals("FLAT_DATA"))
+#*------*##set($member.typeCode="::rti::topic::interpreter::initialize_bool_typecode()")
+#*------*##end
+#*----*##elseif($member.nativeTypeFQName=="DDS_UnsignedLongLong")
+#*-----*##if($envMap.language.equals("cpp11stl"))
+#*------*##set($member.specTypeName="uint64_t")
+#*-----*##else
+#*------*##set($member.specTypeName="::rti::core::uint64")
+#*-----*##end
+#*----*##elseif($member.nativeTypeFQName=="DDS_UnsignedLong")
+#*------*##set($member.nativeTypeFQName="uint32_t")
+#*------*##set($member.specTypeName="uint32_t")
+#*----*##elseif($member.nativeTypeFQName=="DDS_UnsignedShort")
+#*------*##set($member.nativeTypeFQName="uint16_t")
+#*------*##set($member.specTypeName="uint16_t")
+#*----*##elseif($member.nativeTypeFQName=="rti::core::LongDouble")
+#*------*##set($member.specTypeName="::rti::core::LongDouble")
+#*------*##set($member.defaultValue="0.0")
+#*----*##elseif($member.nativeTypeFQName=="std::string")
+#*------*##set($member.specTypeName="std::string")
+#*----*##elseif($member.nativeTypeFQName=="dds::core::wstring")
+#*------*##set($member.specTypeName="std::wstring")
+#*------*##set($member.defaultValue="L""""")
+#*----*##elseif($member.nativeTypeFQName=="void")
+#*------*##set($member.specTypeName="void")
+#*----*##end
+#*--*##end
+
+#*--*##if($member.seqSize)
+#*----*##set($member.completeSpecTypeName="#declareSpecSeqType($member)")
+#*--*##else
+#*----*##set($member.completeSpecTypeName="$member.specTypeName")
+#*--*##end
+#*--*##if($member.isPointer)
+#*----*##set($member.pointerTypeName="${member.completeSpecTypeName}")##TODO: document new attribute
+#*----*##if($member.completeSpecTypeName.endsWith(">"))
+#*-----*##set($member.completeSpecTypeName="::dds::core::external< ${member.completeSpecTypeName} >")
+#*----*##else
+#*-----*##set($member.completeSpecTypeName="::dds::core::external< ${member.completeSpecTypeName} >")
+#*----*##end
+#*--*##end
+#*--*##if($member.dimensionList)
+#*--*##set($member.completeSpecTypeName="#declareSpecArrayType($member)")
+#*--*##end
+#*--*##if($member.isOptional)
+#*----*##if($member.completeSpecTypeName.endsWith(">"))
+#** If the spectTypeNamealready contains a > we need to introduce a space **#
+#*------*##set($member.completeSpecTypeName="::dds::core::optional< $member.completeSpecTypeName >")
+#*----*##else
+#*------*##set($member.completeSpecTypeName="::dds::core::optional< $member.completeSpecTypeName >")
+#*----*##end
+#*--*##end
+
+#*--*##if((($member.seqSize) ||($member.strSize) || ($member.typeKind.equals("user")) 
+ || ($member.dimensionList) || ($member.nativeTypeFQName.equals("rti::core::LongDouble")) 
+ ||($member.isOptional))&& (!$member.isPointer || $member.dimensionList))
+#*----*##set($member.complexType="true")
+#*--*##end
+#*--*##set($member.nativeTypeSeqFQName="#declareSpecSeqType($member)")
+
+#*--*##if($member.isPointer  
+            && !$member.seqSize 
+            && !$member.complexType
+            && ($member.specTypeName.equals("wchar_t")
+            || $member.specTypeName.equals("int8_t")
+            || $member.specTypeName.equals("uint8_t")))
+#*----*##set ($member.accessExternal = true)
+#*--*##else
+#*----*##set ($member.accessExternal = false)
+#*--*##end
+
+#*--*##set ($member.aggregationInitialization = false)
+#*--*##if(!$member.isPointer && !$member.isOptional)
+#*----*##if($member.needsInitialize && $member.hasArray)
+#*------*##set ($member.aggregationInitialization = true)
+#*----*##elseif($member.dimensionList && !$member.seqSize)
+#*------*##if($member.needsInitialize || $member.isEnum)
+#*--------*##set ($member.aggregationInitialization = true)
+#*------*##elseif(!$member.typeKind.equals("user") && !$member.strSize)
+#*--------*##set ($member.aggregationInitialization = true)
+#*------*##end
+#*----*##end
+#*--*##end
+
+#end
+
+#macro(declareSpecArrayType $member)
+#foreach($dim in $member.dimensionList)::dds::core::array< #end#*
+*#$member.completeSpecTypeName#*
+*##foreach($dim in $member.dimensionList)#set($i = $member.dimensionList.size() - $foreach.count )
+, $member.dimensionList.get($i)>#end 
+#end
+
+#macro(declareSpecSeqType $member)
+#if($member.seqSize == "-1" || $member.useVector || $envMap.alwaysUseStdVector)
+std::vector< $member.specTypeName >#else
+::rti::core::bounded_sequence< $member.specTypeName, $member.seqSize >#end
+#end
+
+
+#* This macro prints all the directives that are in the array but the ones that contains the word "declaration",
+this is used for the Type File*#
+
+#macro (copyDirectiveNoDeclaration $element)
+#if($element.directive!="copy-c-declaration" && $element.directive!="copy-declaration")
+$element.value
+#end
+#end
+
+#macro (copyAllDirectives $element)
+$element.value
+#end
+
+##******************************************************************************
+## Macro to insert commas when needed for the size of the list of members
+##******************************************************************************
+#macro(commaIfNeeded $index $size)
+#if( $index < $size), #end
+#end
+
+#macro(dotOrArrow $member)
+#if(${member.isPointer})->#else.#end
+#end
+
+#macro(initCases $member)
+#foreach($l in $member.labelList)    
+#if($l=="default")
+          default:
+#else
+          case $l:
+#end
+#end
+          {  
+#end
+
+#macro(generateDefaultCase $node)
+#*--*##if($node.unionDiscriminatorMap.typeName.equals("boolean"))
+${envMap.POUND_CHAR}if !(defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME))
+    default:
+    {
+        /*
+         * For non-Windows platforms, prevents compiler warnings when
+         * discriminator is a boolean.
+         * For Windows platforms, Microsoft's compilers will throw a
+         * warning if the default case is present and all the cases for
+         * the boolean are covered.
+         */
+    }
+${envMap.POUND_CHAR}endif
+#*--*##else
+    default:
+    {
+        /*
+         * Prevents compiler warnings when discriminator is an enum.
+         */
+    }
+#*--*##end
+#end

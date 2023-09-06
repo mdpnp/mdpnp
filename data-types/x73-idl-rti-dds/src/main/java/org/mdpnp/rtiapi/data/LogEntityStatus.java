@@ -2,7 +2,9 @@ package org.mdpnp.rtiapi.data;
 
 import org.slf4j.Logger;
 
+import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantListener;
+import com.rti.dds.domain.InvalidLocalIdentityAdvanceNoticeStatus;
 import com.rti.dds.infrastructure.Cookie_t;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.Locator_t;
@@ -194,4 +196,13 @@ public class LogEntityStatus implements DataReaderListener, DataWriterListener, 
             log.debug("{} on_service_request_accepted: {}", label, arg1);
         }
     }
+
+	@Override
+	public void on_invalid_local_identity_status_advance_notice(DomainParticipant arg0,
+			InvalidLocalIdentityAdvanceNoticeStatus arg1) {
+		if(log.isDebugEnabled()) {
+            log.debug("{} on_invalid_local_identity_status_advance_notice: {}", label, arg1);
+        }
+		
+	}
 }

@@ -1,0 +1,14 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,9jun14,vmg created
+##========================================================================
+char* shm_area_name = "RTINDDS_ShmArea";
+char* shm_area_password = "******";

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+(c) Copyright, Real-Time Innovations, Inc. 2022.  All rights reserved.
+-->
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="configuration">
+    <xsd:complexType>
+      <xsd:sequence>
+        <!-- Command line options -->
+        <xsd:element name="command_line_options">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="command_line_option" maxOccurs="unbounded" minOccurs="0">
+                <xsd:complexType>
+                  <xsd:all>
+                    <xsd:element type="xsd:string" name="name" maxOccurs="1" minOccurs="1"/>
+                    <xsd:element type="xsd:string" name="help_msg" maxOccurs="1" minOccurs="1"/>
+                    <xsd:element type="xsd:boolean" name="supported" maxOccurs="1" minOccurs="1"/>
+                    <xsd:element type="xsd:boolean" name="hidden" maxOccurs="1" minOccurs="1"/>
+                    <!-- The following elements are optional -->
+                    <xsd:element type="xsd:boolean" name="deprecated" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element type="xsd:string" name="param" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element type="xsd:boolean" name="telemetry" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element type="xsd:string" name="short_name" maxOccurs="1" minOccurs="0"/>
+                  </xsd:all>
+                </xsd:complexType>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+        <!-- Annotations -->
+        <xsd:element name="annotations">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="annotation" maxOccurs="unbounded" minOccurs="0">
+                <xsd:complexType>
+                  <xsd:all>
+                    <xsd:element type="xsd:string" name="name" maxOccurs="1" minOccurs="1"/>
+                    <xsd:element type="annotation_status_type" name="status" maxOccurs="1" minOccurs="1"/>
+                    <!-- The following element is optional -->
+                    <xsd:element type="xsd:string" name="custom_warning_msg" maxOccurs="1" minOccurs="0"/>
+                  </xsd:all>
+                </xsd:complexType>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- Possible values status element can get -->
+  <xsd:simpleType name="annotation_status_type">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Supported"/>
+      <xsd:enumeration value="Warning"/>
+      <xsd:enumeration value="Error"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>

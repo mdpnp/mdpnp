@@ -1,0 +1,221 @@
+/*
+* (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
+* RTI grants Licensee a license to use, modify, compile, and create derivative
+* works of the software solely for use with RTI Connext DDS. Licensee may
+* redistribute copies of the software provided that all such copies are subject
+* to this license. The software is provided "as is", with no warranty of any
+* type, including any warranty for fitness for any purpose. RTI is under no
+* obligation to maintain or support the software. RTI shall not be liable for
+* any incidental or consequential damages arising out of the use or inability
+* to use the software.
+*/
+
+#if($constructMap.packageName && $constructMap.packageName!="")   
+package $constructMap.packageName;
+#end 
+
+import java.util.Objects;
+
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.ConditionSeq;
+import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.WaitSet;
+import com.rti.dds.subscription.DataReader;
+import com.rti.dds.subscription.DataReaderAdapter;
+import com.rti.dds.subscription.DataReaderListener;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.LivelinessChangedStatus;
+import com.rti.dds.subscription.ReadCondition;
+import com.rti.dds.subscription.RequestedDeadlineMissedStatus;
+import com.rti.dds.subscription.RequestedIncompatibleQosStatus;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleLostStatus;
+import com.rti.dds.subscription.SampleRejectedStatus;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.SubscriptionMatchedStatus;
+import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.Topic;
+
+/**
+ * Simple example showing all Connext code in one place for readability.
+ */
+public class ${constructMap.name}Subscriber extends Application implements AutoCloseable {
+
+    private DomainParticipant participant = null; // Usually one per application
+    private ${constructMap.name}DataReader reader = null;
+    private final ${constructMap.name}${envMap.typeSeqSuffix} dataSeq = new ${constructMap.name}${envMap.typeSeqSuffix}();
+    private final SampleInfoSeq infoSeq = new SampleInfoSeq();
+    
+    // Listener that will be notified of DataReader events
+    class ${constructMap.name}DataReaderListener extends DataReaderAdapter {
+
+        // Notifications about data
+        @Override
+        public void on_requested_deadline_missed(DataReader reader,
+                RequestedDeadlineMissedStatus requestedDeadlineMissedStatus) {
+            // Add code here to handle deadline missed events
+        }
+
+        @Override
+        public void on_sample_rejected(DataReader reader,
+                SampleRejectedStatus sampleRejectedStatus) {
+            // Add code here to handle sample rejected events
+        }
+        
+        @Override
+        public void on_sample_lost(DataReader reader, SampleLostStatus sampleLostStatus) {
+            // Add code here to handle sample lost events
+        }
+
+        // Notifications about DataWriters
+        @Override
+        public void on_requested_incompatible_qos(DataReader reader,
+                RequestedIncompatibleQosStatus requestedIncompatibleQosStatus) {
+            // Add code here to handle incompatible QoS events
+        }
+        
+        @Override
+        public void on_liveliness_changed(DataReader reader,
+                LivelinessChangedStatus livelinessChangedStatus) {
+            // Add code here to handle liveliness changed events
+        }
+
+        @Override
+        public void on_subscription_matched(DataReader reader,
+                SubscriptionMatchedStatus subscriptionMatchedStatus) {
+            // Add code here to handle subscription matched events
+        } 
+    }
+
+    private int processData() {
+        int samplesRead = 0;
+
+        try {
+            // Take available data from DataReader's queue
+            reader.take(dataSeq, infoSeq,
+                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                    SampleStateKind.ANY_SAMPLE_STATE,
+                    ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE);
+
+            for (int i = 0; i < dataSeq.size(); ++i) {
+                SampleInfo info = infoSeq.get(i);
+
+                if (info.valid_data) {
+                    System.out.println("Received" + dataSeq.get(i));
+                }
+                samplesRead++;
+            }
+        } catch (RETCODE_NO_DATA noData) {
+            // No data to process, not a problem
+        } finally {
+            // Data loaned from Connext for performance. Return loan when done.
+            reader.return_loan(dataSeq, infoSeq);
+        }
+
+        return samplesRead;
+    }
+
+    private void runApplication() {
+        // Start communicating in a domain
+        participant = Objects.requireNonNull(
+                DomainParticipantFactory.get_instance().create_participant_with_profile(
+                        getDomainId(),
+                        "${envMap.idlFileName}_Library",
+                        "${envMap.idlFileName}_Profile",
+                        null, // listener
+                        StatusKind.STATUS_MASK_NONE));
+
+        // A Subscriber allows an application to create one or more DataReaders
+        Subscriber subscriber = Objects.requireNonNull(
+                participant.create_subscriber_with_profile(
+                        "${envMap.idlFileName}_Library",
+                        "${envMap.idlFileName}_Profile",
+                        null, // listener
+                        StatusKind.STATUS_MASK_NONE));
+
+        // Register the datatype to use when creating the Topic
+        String typeName = ${constructMap.name}TypeSupport.get_type_name();
+        ${constructMap.name}TypeSupport.register_type(participant, typeName);
+
+        // Create a Topic with a name and a datatype
+        Topic topic = Objects.requireNonNull(
+                participant.create_topic_with_profile(
+                        "${constructMap.topicName}",
+                        typeName,
+                        "${envMap.idlFileName}_Library",
+                        "${envMap.idlFileName}_Profile",
+                        null, // listener
+                        StatusKind.STATUS_MASK_NONE));
+
+        ${constructMap.name}DataReaderListener listener = new ${constructMap.name}DataReaderListener();
+
+        // This DataReader reads data on "${constructMap.topicName}" Topic
+        reader = (${constructMap.name}DataReader) Objects.requireNonNull(
+                subscriber.create_datareader_with_profile(
+                        topic,
+                        "${envMap.idlFileName}_Library",
+                        "${envMap.idlFileName}_Profile",
+                        listener, // listener
+                        StatusKind.STATUS_MASK_ALL & ~StatusKind.DATA_AVAILABLE_STATUS));
+
+        // Create ReadCondition that triggers when data in reader's queue
+        ReadCondition condition = reader.create_readcondition(
+                SampleStateKind.ANY_SAMPLE_STATE,
+                ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE);
+
+        // WaitSet will be woken when the attached condition is triggered, or timeout
+        WaitSet waitset = new WaitSet();
+        waitset.attach_condition(condition);
+        final Duration_t waitTimeout = new Duration_t(1, 0);
+
+        int samplesRead = 0;
+        ConditionSeq activeConditions = new ConditionSeq();
+
+        // Main loop. Wait for data to arrive and process when it arrives
+        while (!isShutdownRequested() && samplesRead < getMaxSampleCount()) {
+            try {
+                // Wait fills in activeConditions or times out
+                waitset.wait(activeConditions, waitTimeout);
+
+                // Read condition triggered, process data
+                samplesRead += processData();
+
+            } catch (RETCODE_TIMEOUT timeout) {
+                // No data received, not a problem
+                System.out.printf("No data after %d seconds.%n", waitTimeout.sec);
+            }
+        }
+    }
+
+    @Override
+    public void close() {
+        // Delete all entities (DataReader, Topic, Subscriber, DomainParticipant)
+        if (participant != null) {
+            participant.delete_contained_entities();
+
+            DomainParticipantFactory.get_instance().delete_participant(participant);
+        }
+    }
+
+    public static void main(String[] args) {
+        // Create example and run: Uses try-with-resources,
+        // subscriberApplication.close() automatically called
+        try (${constructMap.name}Subscriber subscriberApplication = new ${constructMap.name}Subscriber()) {
+            subscriberApplication.parseArguments(args);
+            subscriberApplication.addShutdownHook();
+            subscriberApplication.runApplication();
+        }
+
+        // Releases the memory used by the participant factory. Optional at application exit.
+        DomainParticipantFactory.finalize_instance();
+    }
+}

@@ -1,0 +1,79 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,2sep14,vmg created
+##========================================================================
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+
+<TextView
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" 
+    android:text="Enter parameters:" />
+
+<EditText android:id="@+id/edit_parameters"
+    	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+        android:singleLine="true"
+	android:inputType="textNoSuggestions"
+	android:typeface="monospace"
+	android:hint="@string/default_parameters" />
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+
+<Button android:id="@+id/run_button"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Run" 
+	android:onClick="runCommand" />
+
+<Button android:id="@+id/clear_button"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Clear" 
+	android:onClick="clearCommand" />
+
+</LinearLayout>
+
+<TextView
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" 
+    android:text="Output:" />
+
+<ScrollView android:id="@+id/vertical_scroll"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="true" >
+
+<HorizontalScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" 
+    android:layout_weight="1.0" >
+
+<TextView android:id="@+id/display_output"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:typeface="monospace" />
+
+</HorizontalScrollView>
+
+</ScrollView>
+
+</LinearLayout>
+

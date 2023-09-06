@@ -1,0 +1,274 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2017.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+##2.4.10,23jun17,fmt created 
+##========================================================================*/*#
+/*
+ * (c) Copyright, Real-Time Innovations, 2012.  All rights reserved.
+ * RTI grants Licensee a license to use, modify, compile, and create derivative
+ * works of the software solely for use with RTI Connext DDS. Licensee may
+ * redistribute copies of the software provided that all such copies are subject
+ * to this license. The software is provided "as is", with no warranty of any
+ * type, including any warranty for fitness for any purpose. RTI is under no
+ * obligation to maintain or support the software. RTI shall not be liable for
+ * any incidental or consequential damages arising out of the use or inability
+ * to use the software.
+ */
+
+${envMap.POUND_CHAR}include <stdio.h>
+${envMap.POUND_CHAR}include <stdlib.h>
+${envMap.POUND_CHAR}include <string.h>
+
+${envMap.POUND_CHAR}ifndef rti_me_cpp_hxx
+${envMap.POUND_CHAR}include "rti_me_cpp.hxx"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Support.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Application.h"
+
+using namespace DDS;
+
+class ${constructMap.nativeFQNameInModule}DataWriterListener : public DataWriterListener
+{
+public:
+    ${constructMap.nativeFQNameInModule}DataWriterListener() : DataWriterListener() { }
+    ~${constructMap.nativeFQNameInModule}DataWriterListener() { }
+};
+
+
+int
+publisher_main_w_args(Long domain_id, char *udp_intf, char *peer,
+                      Long sleep_time, Long count)
+{
+    Application *application = NULL;
+
+    Publisher *publisher = NULL;
+    DataWriter *datawriter = NULL;
+    ${constructMap.nativeFQName}DataWriter *hw_writer = NULL;
+    DataWriterQos dw_qos;
+    ReturnCode_t retcode;
+    ${constructMap.nativeFQName} *sample = NULL;
+    Long i;
+    DataWriterListener *dw_listener = NULL;
+
+    sample = ${constructMap.nativeFQName}TypeSupport::create_data();
+    if (sample == NULL)
+    {
+        printf("failed ${constructMap.nativeFQName}_create\n");
+        return 0;
+    }
+
+    application = new Application();
+    if (application == NULL)
+    {
+        printf("failed Application new\n");
+        goto done;
+    }
+
+    retcode = application->initialize("publisher", 
+                                      "subscriber", 
+                                      domain_id,
+                                      udp_intf, 
+                                      peer, 
+                                      sleep_time, 
+                                      count);
+    if (retcode != RETCODE_OK)
+    {
+        printf("failed Application initialize\n");
+        goto done;
+    }
+
+
+    publisher = application->participant->create_publisher(
+                        PUBLISHER_QOS_DEFAULT,NULL,STATUS_MASK_NONE);
+    if (publisher == NULL)
+    {
+        printf("publisher == NULL\n");
+        goto done;
+    }
+
+    retcode = publisher->get_default_datawriter_qos(dw_qos);
+    if (retcode != RETCODE_OK)
+    {
+        printf("failed get_default_datawriter_qos\n");
+        goto done;
+    }
+
+${envMap.POUND_CHAR}ifdef USE_RELIABLE_QOS
+    dw_qos.reliability.kind = RELIABLE_RELIABILITY_QOS;
+${envMap.POUND_CHAR}else
+    dw_qos.reliability.kind = BEST_EFFORT_RELIABILITY_QOS;
+${envMap.POUND_CHAR}endif
+    dw_qos.resource_limits.max_samples = 32;
+    dw_qos.resource_limits.max_samples_per_instance = 32;
+    dw_qos.resource_limits.max_instances = 1;
+    dw_qos.history.depth = 32;
+
+    /* INTEROPERABILITY NOTE:
+       Non-Connext Micro DDS readers will have default LivelinessQoS kind
+       set to AUTOMATIC_LIVELINESS_QOS.
+     
+       Because Connext Micro currently only supports
+       MANUAL_BY_TOPIC_LIVELINESS_QOS, the non-Connext Micro reader will need
+       to set its liveliness kind to MANUAL_BY_TOPIC_LIVELINESS_QOS as well,
+       in order for Requested-Offered (RxO) semantics to be compatible.
+    */
+ 
+    datawriter = publisher->create_datawriter(application->topic,
+                                              dw_qos,NULL,STATUS_MASK_NONE);
+    if (datawriter == NULL)
+    {
+        printf("datawriter == NULL\n");
+        goto done;
+    }
+
+    retcode = application->enable();
+    if (retcode != RETCODE_OK)
+    {
+        printf("failed to enable application\n");
+        goto done;
+    }
+
+    hw_writer = ${constructMap.nativeFQName}DataWriter::narrow(datawriter);
+    if (hw_writer == NULL)
+    {
+        printf("failed datawriter narrow\n");
+        goto done;
+    }
+
+    for (i = 0;
+        (application->count > 0 && i < application->count) ||
+        (application->count == 0);
+        ++i)
+    {
+        /* TODO set sample attributes here */
+
+        retcode = hw_writer->write(*sample, HANDLE_NIL);
+        if (retcode != RETCODE_OK)
+        {
+            printf("Failed to write sample\n");
+        } 
+        else
+        {
+            printf("Written sample %d\n",(i+1));
+        } 
+
+        OSAPI_Thread_sleep(application->sleep_time);
+    }
+
+  done:
+
+    if (application != NULL)
+    {
+        delete application;
+    }
+
+    if (sample != NULL)
+    {
+        ${constructMap.nativeFQName}TypeSupport::delete_data(sample);
+    } 
+
+    return 0;
+}
+
+${envMap.POUND_CHAR}if !(defined(RTI_VXWORKS) && !defined(__RTP__))
+int
+main(int argc, char **argv)
+{
+
+    Long i = 0;
+    Long domain_id = 0;
+    char *peer = NULL;
+    char *udp_intf = NULL;
+    Long sleep_time = 1000;
+    Long count = 0;
+
+    for (i = 1; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "-domain"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-domain <domain_id>\n");
+                return -1;
+            }
+            domain_id = strtol(argv[i], NULL, 0);
+        }
+        else if (!strcmp(argv[i], "-udp_intf"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-udp_intf <interface>\n");
+                return -1;
+            }
+            udp_intf = argv[i];
+        }
+        else if (!strcmp(argv[i], "-peer"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-peer <address>\n");
+                return -1;
+            }
+            peer = argv[i];
+        }
+        else if (!strcmp(argv[i], "-sleep"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-sleep_time <sleep_time>\n");
+                return -1;
+            }
+            sleep_time = strtol(argv[i], NULL, 0);
+        }
+        else if (!strcmp(argv[i], "-count"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-count <count>\n");
+                return -1;
+            }
+            count = strtol(argv[i], NULL, 0);
+        }
+        else if (!strcmp(argv[i], "-h"))
+        {
+            Application::help(argv[0]);
+            return 0;
+        }
+        else
+        {
+            printf("unknown option: %s\n", argv[i]);
+            return -1;
+        }
+    }
+
+    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count);
+}
+${envMap.POUND_CHAR}elif defined(RTI_VXWORKS)
+int
+publisher_main(void)
+{
+    /* Explicitly configure args below */
+    Long i = 0;
+    Long domain_id = 44;
+    char *peer = "10.10.65.104";
+    char *udp_intf = NULL;
+    Long sleep_time = 1000;
+    Long count = 0;
+
+    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count);
+}
+${envMap.POUND_CHAR}endif

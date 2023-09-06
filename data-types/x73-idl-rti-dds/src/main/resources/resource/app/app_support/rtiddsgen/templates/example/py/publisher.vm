@@ -1,0 +1,66 @@
+
+${envMap.POUND_CHAR} (c) Copyright, Real-Time Innovations, 2022.  All rights reserved.
+${envMap.POUND_CHAR} RTI grants Licensee a license to use, modify, compile, and create derivative
+${envMap.POUND_CHAR} works of the software solely for use with RTI Connext DDS. Licensee may
+${envMap.POUND_CHAR} redistribute copies of the software provided that all such copies are subject
+${envMap.POUND_CHAR} to this license. The software is provided "as is", with no warranty of any
+${envMap.POUND_CHAR} type, including any warranty for fitness for any purpose. RTI is under no
+${envMap.POUND_CHAR} obligation to maintain or support the software. RTI shall not be liable for
+${envMap.POUND_CHAR} any incidental or consequential damages arising out of the use or inability
+${envMap.POUND_CHAR} to use the software.
+
+import time
+import sys
+import rti.connextdds as dds
+#*--*##if(!${constructMap.modulesName.isEmpty()})
+from ${envMap.idlFileName} import ${constructMap.modulesName[0]}
+#*--*##else
+from ${envMap.idlFileName} import ${constructMap.nativeFQName}
+#*--*##end
+
+class ${constructMap.nativeCFQName}Publisher:
+
+    @staticmethod
+    def run_publisher(domain_id: int, sample_count: int):
+
+        ${envMap.POUND_CHAR} A DomainParticipant allows an application to begin communicating in
+        ${envMap.POUND_CHAR} a DDS domain. Typically there is one DomainParticipant per application.
+        ${envMap.POUND_CHAR} DomainParticipant QoS is configured in USER_QOS_PROFILES.xml
+        participant = dds.DomainParticipant(domain_id)
+
+        ${envMap.POUND_CHAR} A Topic has a name and a datatype.
+        topic = dds.Topic(participant, "${constructMap.topicName}", ${constructMap.nativeFQName})
+
+        ${envMap.POUND_CHAR} This DataWriter will write data on Topic "${constructMap.topicName}"
+        ${envMap.POUND_CHAR} DataWriter QoS is configured in USER_QOS_PROFILES.xml
+        writer = dds.DataWriter(participant.implicit_publisher, topic)
+        sample = ${constructMap.nativeFQName}()        
+
+        for count in range(sample_count):
+            ${envMap.POUND_CHAR} Catch control-C interrupt
+            try:
+                ${envMap.POUND_CHAR} Modify the data to be sent here
+#*--*##foreach($member in $constructMap.memberFieldMapList)
+#*----*##if($member.nativeTypeFQName.contains("int")
+			&& !$member.arrayTotalSize 
+			&& !$member.seqSize
+			&& !$member.explicitDefaultValue
+			&& !$member.resolvedTypeOptional
+			&& !$member.isPointer) 
+                sample.${member.name} = count
+#*----*##end
+#*--*##end
+                
+                print(f"Writing ${constructMap.nativeFQName}, count {count}")
+                writer.write(sample)
+                time.sleep(1)
+            except KeyboardInterrupt:
+                break
+
+        print("preparing to shut down...")
+
+
+if __name__ == "__main__":
+    ${constructMap.nativeCFQName}Publisher.run_publisher(
+            domain_id=0,
+            sample_count=sys.maxsize)

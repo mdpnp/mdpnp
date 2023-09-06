@@ -1,0 +1,91 @@
+Welcome to your first Connext DDS example! 
+
+This example was generated for architecture ${global.architectureName}, using the
+data type ${exampleType} from ${global.idlFileName}.idl.
+This example builds two applications, named ${global.idlFileName}${global.pubSuffix} and
+${global.idlFileName}${global.subSuffix}.
+
+#if($global.language.equals("C++98") || $global.language.equals("C++11"))
+Simple Example
+============
+If you have generated this example using:
+> rtiddsgen -example <arch> <idl>.idl
+This is the simple example. This shows how to create a single DataWriter
+and DataReader to send and receive data over Connext DDS.
+
+Advanced Example
+===============
+If you have generated the advanced example using:
+> rtiddsgen -example <arch> -exampleTemplate advanced <idl>.idl
+The code is similar to the simple example, with a few key differences:
+    - Both examples use WaitSets to block a thread until data is available.
+      This is the safest way to get data, because it does not affect any
+      middleware threads. In addition, the advanced example installs listeners
+      on both the DataReader and DataWriter with callbacks that you can
+      implement to accomplish a desired behavior. These listener callbacks
+      are triggered for various events, such as discovering a matched
+      DataWriter or DataReader. Listener callbacks are called back from
+      a middleware thread, which you should not block.
+    - The simple example sets is_default_qos=true in the XML file, and creates
+      the DDS entities without specifying a profile. However, the advanced
+      example sets is_default_qos=false, and specifies the QoS profile to use
+      from the XML file when creating DDS entities. is_default_qos=false
+      is recommended in a production application.
+
+#end
+To Build this Example:
+======================
+1. Launch Visual Studio in one of two ways:
+        - By typing ${global.idlFileName}-${global.architectureName}.sln in the
+          Command Prompt window.
+        - By opening Visual Studio on your machine and then opening the
+          ${global.idlFileName}-${global.architectureName}.sln file (in the
+          Solution Explorer) via File > Open Project.
+
+    Note: If you are using Visual Studio 2017 or later, you might be prompted
+    to retarget the file. If this happens, in the Retarget Projects window that
+    appears, select an installed version of Windows SDK and click OK.
+
+2. Select Build Solution from the Build menu. (You can also right-click
+   ${global.idlFileName}${global.pubSuffix} or ${global.idlFileName}${global.subSuffix} and
+   choose Build; do for each.) 
+
+    Note: If you get the Windows SDK error, right-click the solution and choose
+    Retarget Solution.
+
+To Modify the Data:
+===================
+
+To modify the data being sent: edit the ${global.idlFileName}${global.pubSuffix}${sourceFileExtension}
+file where it says 
+#if($global.language.equals("C") || $global.language.equals("C++98"))
+/* Modify the instance to be written here */
+#elseif($global.language.equals("C++11"))
+// Modify the data to be written here
+#end
+
+Recompile after making the changes.
+
+To Run this Example:
+====================
+ 
+To run from Visual Studio:
+1. Right-click ${global.idlFileName}${global.pubSuffix} and choose Debug > Start new instance.
+2. Right-click ${global.idlFileName}${global.subSuffix} and choose Debug > Start new instance.
+If Visual Studio will not let you choose Debug > Start new instance, run the
+subscribing application from the command prompt instead.
+ 
+To run from the command prompt: 
+1. Make sure you are in the directory where the USER_QOS_PROFILES.xml file was
+   generated (the same directory this README file is in).
+2. Run ${global.nddsHome}\resource\scripts\rtisetenv_${global.architectureName}.bat
+   to make sure the Connext libraries are in the path, especially if you opened a
+   new command prompt window.
+3. Run the publishing or subscribing application by typing:
+#if($global.language.equals("C++98") || $global.language.equals("C++11"))
+> objs\\${global.architectureName}\\${global.idlFileName}${global.pubSuffix}.exe -d <domain_id> -s <sample_count>
+> objs\\${global.architectureName}\\${global.idlFileName}${global.subSuffix}.exe -d <domain_id> -s <sample_count>
+#else
+> objs\\${global.architectureName}\\${global.idlFileName}${global.pubSuffix}.exe <domain_id> <sample_count>
+> objs\\${global.architectureName}\\${global.idlFileName}${global.subSuffix}.exe <domain_id> <sample_count>
+#end

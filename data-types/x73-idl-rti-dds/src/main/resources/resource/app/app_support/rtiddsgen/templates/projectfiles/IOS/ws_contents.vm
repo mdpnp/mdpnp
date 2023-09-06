@@ -1,0 +1,31 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2015.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+##2.2.3,23sep15,djs created 
+##========================================================================*/*#
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:#buildArchitectureMakefileName().xcworkspace/Settings.bundle">
+   </FileRef>
+#if(${global.idlFileName})
+   <FileRef
+      location = "group:#buildArchitectureMakefileName().xcworkspace/${envMap.idlFileName}${global.pubSuffix}/${envMap.idlFileName}${global.pubSuffix}.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:#buildArchitectureMakefileName().xcworkspace/${envMap.idlFileName}${global.subSuffix}/${envMap.idlFileName}${global.subSuffix}.xcodeproj">
+   </FileRef>
+#else
+   <FileRef
+      location = "group:#buildArchitectureMakefileName().xcworkspace/${global.execNames}/${global.execNames}.xcodeproj">
+   </FileRef>
+#end
+</Workspace>

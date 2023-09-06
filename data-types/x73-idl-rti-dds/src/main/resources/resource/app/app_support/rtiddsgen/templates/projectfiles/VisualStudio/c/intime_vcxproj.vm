@@ -1,0 +1,340 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##========================================================================
+#macro (addSourceFile $sourceFile)
+    <ClCompile Include="${sourceFile}">
+      <Optimization Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">Disabled</Optimization>
+      <AdditionalIncludeDirectories Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">MaxSpeed</Optimization>
+      <AdditionalIncludeDirectories Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+#end
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="${archMap.PROJECT_TOOLSVERSION}" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug RSL|${platform}">
+      <Configuration>Debug RSL</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|${platform}">
+      <Configuration>Debug</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release RSL|${platform}">
+      <Configuration>Release RSL</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|${platform}">
+      <Configuration>Release</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+#if(!$global.noDefaultNddshome)  
+  <PropertyGroup Condition="'$(NDDSHOME)'==''" Label="RTI Connext Home">
+    <NddsHome>${global.nddsHome}</NddsHome>
+  </PropertyGroup>
+#end
+#if(${archMap.TARGET_PLATFORM_VERSION})
+  <PropertyGroup Condition="'$(RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION)'==''" Label="RTI VS SDK">
+    <RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION>${archMap.TARGET_PLATFORM_VERSION}</RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION>
+  </PropertyGroup>  
+#end  
+  <PropertyGroup Label="RTI Connext Path">
+      <LocalDebuggerEnvironment>PATH=#[[$]]#(NDDSHOME)${libDir}</LocalDebuggerEnvironment>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>#buildProjectName()</ProjectName>
+    <RootNamespace>#buildProjectName()</RootNamespace>
+#if(${archMap.TARGET_PLATFORM_VERSION})
+<WindowsTargetPlatformVersion>#[[$]]#(RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION)</WindowsTargetPlatformVersion>
+#end    
+    <ProjectGuid>{${vsProjectId}}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="#[[$]]#(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release RSL|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}   
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug RSL|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}  
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET} 
+  </PropertyGroup>
+  <Import Project="#[[$]]#(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release RSL|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug RSL|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.21006.1</_ProjectFileVersion>
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">${outputDir}\</IntDir>
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug RSL|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug RSL|${platform}'">${outputDir}\</IntDir>
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">${outputDir}\</IntDir>
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release RSL|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release RSL|${platform}'">${outputDir}\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(INtime)rt\include\cpp17;$(INtime)rt\include\network7;$(INtime)rt\include;#foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;RTI_STATIC;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader></PrecompiledHeader>
+      <PrecompiledHeaderOutputFile></PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <OmitFramePointers>false</OmitFramePointers>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ForcedIncludeFiles>windows.h;iwin32.h;winbase.h</ForcedIncludeFiles>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>#foreach($l in ${additionalRtiLibraries})${l}zd.lib;#end#foreach($debugStaticLib in ${debugStaticLibs})${debugStaticLib}.lib;#end#foreach($l in ${additionalLibraries})${l}.lib;#end#[[]]#iwin32.lib;cpplib17d.lib;rt.lib;pcibus.lib;netlib.lib;clib.lib;vshelper.lib</AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().rta</OutputFile>
+      <Version>21076.20053</Version>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>#[[$]]#(NDDSHOME)${libDir};$(INtime)rt\lib;#foreach($p in ${additionalLibraryPaths})${p};#end%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <StackCommitSize>16777216</StackCommitSize>
+      <StackReserveSize>16777216</StackReserveSize>
+      <LinkIncremental>false</LinkIncremental>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug RSL|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(INtime)rt\include\cpp17;$(INtime)rt\include\network7;$(INtime)rt\include;#foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDDS_DLL_VARIABLE;_DEBUG;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader></PrecompiledHeader>
+      <PrecompiledHeaderOutputFile></PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <OmitFramePointers>false</OmitFramePointers>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ForcedIncludeFiles>windows.h;iwin32.h;winbase.h</ForcedIncludeFiles>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>#foreach($l in ${additionalRtiLibraries})${l}d.lib;#end#foreach($debugDynamicLib in${debugDynamicLibs})${debugDynamicLib}.lib;#end#foreach($l in ${additionalLibraries})${l}.lib;#end#[[]]#iwin32.lib;cpplib17d.lib;rt.lib;pcibus.lib;netlib.lib;clib.lib;vshelper.lib</AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().rta</OutputFile>
+      <Version>21076.20053</Version>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>#[[$]]#(NDDSHOME)${libDir};$(INtime)rt\lib;#foreach($p in ${additionalLibraryPaths})${p};#end%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <StackCommitSize>16777216</StackCommitSize>
+      <StackReserveSize>16777216</StackReserveSize>
+      <LinkIncremental>false</LinkIncremental>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+   </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>$(INtime)rt\include\cpp17;$(INtime)rt\include\network7;$(INtime)rt\include;#foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;RTI_STATIC;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader></PrecompiledHeader>
+      <PrecompiledHeaderOutputFile></PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <OmitFramePointers>false</OmitFramePointers>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ForcedIncludeFiles>windows.h;iwin32.h;winbase.h</ForcedIncludeFiles>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>#foreach($l in ${additionalRtiLibraries})${l}z.lib;#end#foreach($releaseStaticLib in ${releaseStaticLibs})${releaseStaticLib}.lib;#end#foreach($l in ${additionalLibraries})${l}.lib;#end iwin32.lib;cpplib17.lib;rt.lib;pcibus.lib;netlib.lib;clib.lib;vshelper.lib</AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().rta</OutputFile>
+      <Version>21076.20053</Version>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>#[[$]]#(NDDSHOME)${libDir};$(INtime)rt\lib;#foreach($p in ${additionalLibraryPaths})${p};#end%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <StackCommitSize>16777216</StackCommitSize>
+      <StackReserveSize>16777216</StackReserveSize>
+      <LinkIncremental>false</LinkIncremental>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release RSL|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>$(INtime)rt\include\cpp17;$(INtime)rt\include\network7;$(INtime)rt\include;#foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDDS_DLL_VARIABLE;NDEBUG;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader></PrecompiledHeader>
+      <PrecompiledHeaderOutputFile></PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <OmitFramePointers>false</OmitFramePointers>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ForcedIncludeFiles>windows.h;iwin32.h;winbase.h</ForcedIncludeFiles>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>#foreach($l in ${additionalRtiLibraries})${l}.lib;#end#foreach($releaseDynamicLib in ${releaseDynamicLibs})${releaseDynamicLib}.lib;#end#foreach($l in ${additionalLibraries})${l}.lib;#end#[[]]#iwin32.lib;cpplib17.lib;rt.lib;pcibus.lib;netlib.lib;clib.lib;vshelper.lib</AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().rta</OutputFile>
+      <Version>21076.20053</Version>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>#[[$]]#(NDDSHOME)${libDir};$(INtime)rt\lib;#foreach($p in ${additionalLibraryPaths})${p};#end%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <StackCommitSize>16777216</StackCommitSize>
+      <StackReserveSize>16777216</StackReserveSize>
+      <LinkIncremental>false</LinkIncremental>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+#foreach($sourceFile in ${sourceFiles})
+#addSourceFile("${sourceDir}${sourceFile}")
+#end
+#if(${global.execNames})
+#addSourceFile("${sourceDir}${global.execNames}${sourceFileExtension}")
+#end
+#foreach($sourceFile in ${additionalSourceFiles})
+#addSourceFile("${sourceDir}${sourceFile}")
+#end     
+   </ItemGroup>
+  <ItemGroup>
+#foreach($headerFile in ${headerFiles})  
+    <ClInclude Include="${headerFile}" />
+#end
+#foreach($headerFile in ${additionalHeaderFiles})  
+    <ClInclude Include="${sourceDir}${headerFile}" />
+#end     
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="USER_QOS_PROFILES.xml" />
+  </ItemGroup>
+  <Import Project="#[[$]]#(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

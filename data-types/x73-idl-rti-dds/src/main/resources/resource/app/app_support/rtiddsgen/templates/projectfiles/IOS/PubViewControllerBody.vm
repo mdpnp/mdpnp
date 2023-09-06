@@ -1,0 +1,97 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2015.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.2.3,23sep15,djs created 
+##========================================================================*/*#
+//
+//  ViewController.m
+//  #buildProjectName()
+//
+//  Copyright (c) 2015 Real-Time Innovations. All rights reserved.
+//
+
+#import "ViewController.h"
+
+@interface ViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *commandLine;
+@property (weak, nonatomic) IBOutlet UITextView *outputWindow;
+
+@end
+
+@implementation ViewController
+- (IBAction)Run:(id)sender {
+    // get the command line parameters
+    NSString *parameterList = self.commandLine.text;
+    if ([parameterList length] == 0)
+        parameterList = @"";
+    const char* command = [parameterList UTF8String];
+    char* next = NULL;
+    int domain;
+
+    if (is_running == false) {
+        domain = strtol(command, &next, 10);
+        if (next != NULL) {
+            next++;
+            count = strtol(next, NULL, 10);
+        } else {
+            count = 0;
+        }
+        // TODO: Disable run button because this simple example is not thread safe
+#VC_Pub_Entity_Setup($envMap.language $envMap.namespace)
+        /* write the first sample, the write function will re-schedule itself */
+        is_running = true;
+        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:4.0 target:self selector:@selector(writeData:) userInfo:nil repeats:NO];
+    }
+}
+
+- (void)setupFiles {
+    /* Xcode will transfer the QoS file (& any other Settings files) to the target resource directory.
+     * We set the default directory to the resources directory so the executing application
+     * will find it.  In your application you may want to copy the QoS file to the documents
+     * directory and set the default directory to the documents directory instead.
+     */
+
+    NSString *resourceBundlePath = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
+    const char* pResPath = [resourceBundlePath UTF8String];
+    chdir(pResPath);
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    sample_count = 0;
+    is_running = false;
+    [self setupFiles];
+}
+
+- (void)writeData:(NSTimer *)timer {
+    self.outputWindow.text = [NSString stringWithFormat: @"writing sample %ld", sample_count];
+
+#VC_Pub_Publish($envMap.language $envMap.namespace)
+
+    if (++sample_count < count || count == 0) {
+        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:4.0 target:self selector:@selector(writeData:) userInfo:nil repeats:NO];
+    } else {
+        // clean up
+        sample_count = 0;
+#VC_Pub_Shutdown($envMap.language $envMap.namespace)
+        // TODO: re-enable Run button or exit the app
+        is_running = false;
+    }
+}
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

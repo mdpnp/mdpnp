@@ -1,0 +1,52 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2015.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+##2.2.3,23sep15,djs created 
+##========================================================================*/*#
+//
+//  #buildProjectName()Tests.m
+//  #buildProjectName()Tests
+//
+//  Copyright (c) 2015 Real-Time Innovations. All rights reserved.
+//
+
+#[[#]]#import <UIKit/UIKit.h>
+#[[#]]#import <XCTest/XCTest.h>
+
+@interface #buildProjectName()Tests : XCTestCase
+
+@end
+
+@implementation #buildProjectName()Tests
+
+- (void)setUp {
+    [super setUp];
+    // Put setup code here. This method is called before the invocation of each test method in the class.
+}
+
+- (void)tearDown {
+    // Put teardown code here. This method is called after the invocation of each test method in the class.
+    [super tearDown];
+}
+
+- (void)testExample {
+    // This is an example of a functional test case.
+    XCTAssert(YES, @"Pass");
+}
+
+- (void)testPerformanceExample {
+    // This is an example of a performance test case.
+    [self measureBlock:^{
+        // Put the code you want to measure the time of here.
+    }];
+}
+
+@end

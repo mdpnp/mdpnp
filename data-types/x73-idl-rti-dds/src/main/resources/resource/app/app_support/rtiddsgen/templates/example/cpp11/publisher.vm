@@ -1,0 +1,387 @@
+/*
+* (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
+* RTI grants Licensee a license to use, modify, compile, and create derivative
+* works of the software solely for use with RTI Connext DDS. Licensee may
+* redistribute copies of the software provided that all such copies are subject
+* to this license. The software is provided "as is", with no warranty of any
+* type, including any warranty for fitness for any purpose. RTI is under no
+* obligation to maintain or support the software. RTI shall not be liable for
+* any incidental or consequential damages arising out of the use or inability
+* to use the software.
+*/
+
+${envMap.POUND_CHAR}include <iostream>
+
+${envMap.POUND_CHAR}include <dds/pub/ddspub.hpp>
+${envMap.POUND_CHAR}include <rti/util/util.hpp>      // for sleep()
+${envMap.POUND_CHAR}include <rti/config/Logger.hpp>  // for logging
+// alternatively, to include all the standard APIs:
+// #include <dds/dds.hpp>
+// or to include both the standard APIs and extensions:
+// #include <rti/rti.hpp>
+//
+// For more information about the headers and namespaces, see:
+//    https://community.rti.com/static/documentation/connext-dds/${envMap.nddsVersion}/doc/api/connext_dds/api_cpp2/group__DDSNamespaceModule.html
+// For information on how to use extensions, see:
+//    https://community.rti.com/static/documentation/connext-dds/${envMap.nddsVersion}/doc/api/connext_dds/api_cpp2/group__DDSCpp2Conventions.html
+
+${envMap.POUND_CHAR}include "application.hpp"  // for command line parsing and ctrl-c
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.hpp"
+
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#end
+#if( ${envMap.android} || ${envMap.universal})
+${envMap.POUND_CHAR}include <android/log.h>
+
+typedef int (*RTIAndroidOnCoutMethod)(const char *text);
+static RTIAndroidOnCoutMethod publisher_onCout = NULL;
+extern "C" void RTIAndroid_registerOnCout(RTIAndroidOnCoutMethod onCout) {
+    publisher_onCout = onCout;
+}
+
+${envMap.POUND_CHAR}define RTI_ANDROID_BUFFER_SIZE 512
+
+class RTIAndroidBuffer : public std::streambuf {
+  public:
+    RTIAndroidBuffer() { 
+        this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1); 
+    }
+
+  private:
+    int overflow(int c) {
+        if (c == traits_type::eof()) {
+            *this->pptr() = traits_type::to_char_type(c);
+            this->sbumpc();
+        }
+        return this->sync()? traits_type::eof(): traits_type::not_eof(c);
+    }
+
+    int sync() {
+        int rc = 0;
+        if (this->pbase() != this->pptr()) {
+            char writebuf[RTI_ANDROID_BUFFER_SIZE + 1];
+            memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
+            writebuf[this->pptr() - this->pbase()] = '\0';
+
+            /* forward message */
+            if (publisher_onCout != NULL) {
+                rc = publisher_onCout(writebuf);
+            } else {
+                rc = __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf) >  0;
+            }
+
+            this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1);
+        }
+        return rc;
+    }
+
+    char buffer[RTI_ANDROID_BUFFER_SIZE];
+};
+#end
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#end
+
+#*--*##if($constructMap.languageBinding.equals("FLAT_DATA")
+        && $constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+void build_data_sample(${constructMap.nativeFQName}Builder& builder, unsigned int samples_written)
+{
+        // Build the ${constructMap.nativeFQName} data sample using the builder
+        //
+        // For example:
+        //
+#*--*##foreach($member in $constructMap.memberFieldMapList)
+#*------*##if(!$member.isPrimitive)
+#*--------*##if($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.seqSize || $member.strSize)
+        // auto ${member.name}_builder = builder.build_${member.name}();
+        // ... build ${member.name}
+        // ${member.name}_builder.finish();
+        //
+#*--------*##else ## non-mutable
+        // auto ${member.name}_offset = builder.add_${member.name}();
+        // ... fill ${member.name}_offset
+        //
+#*--------*##end
+#*------*##else ## primitive
+#*--------*##if($member.isInteger
+                && !$member.explicitDefaultValue
+                && !$member.resolvedTypeOptional
+                && !$member.isPointer)
+        builder.add_${member.name}(#*
+#*----------*##if(!$member.nativeTypeFQName.equals("uint32_t")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*----------*##else
+#*----------*#samples_written);
+#*----------*##end
+#*--------*##else
+        // builder.add_${member.name}(...);
+        //
+#*--------*##end
+#*------*##end ## primitive
+#*--*##end
+}
+#*--*##end
+
+void run_publisher_application(unsigned int domain_id, unsigned int sample_count)
+{
+    // DDS objects behave like shared pointers or value types
+    // (see https://community.rti.com/best-practices/use-modern-c-types-correctly)
+
+    // Start communicating in a domain, usually one participant per application
+    dds::domain::DomainParticipant participant(domain_id);
+
+    // Create a Topic with a name and a datatype
+    dds::topic::Topic< ${constructMap.nativeFQName}> topic(participant, "${constructMap.topicName}");
+
+    // Create a Publisher
+    dds::pub::Publisher publisher(participant);
+
+    // Create a DataWriter with default QoS
+    dds::pub::DataWriter< ${constructMap.nativeFQName}> writer(publisher, topic);
+
+## Regular case
+#*--*##if(!${constructMap.isMetpType} && !$constructMap.languageBinding.equals("FLAT_DATA"))
+#*----*##if(${constructMap.hasArrayMember})
+    std::unique_ptr< ${constructMap.nativeFQName}> data(new ${constructMap.nativeFQName}());
+#*----*##else
+    ${constructMap.nativeFQName} data;
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#*----*##end
+#*----*##if( !${envMap.vxWorks} || ${envMap.rtp} || ${envMap.universal} )
+    // Main loop, write data
+    for (unsigned int samples_written = 0;
+            !application::shutdown_requested && samples_written < sample_count;
+            samples_written++) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}else
+#*----*##end
+#*----*##if( ${envMap.vxWorks} && !${envMap.rtp} || ${envMap.universal} )
+    for (unsigned int samples_written = 0;
+            samples_written < sample_count;
+            samples_written++) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#*----*##end
+        // Modify the data to be written here
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#* We allow union with all case covered and default case. That case is only for 
+   the reader so we do not want to initilize it*# #*
+#*--------*##if($member.isInteger
+                    && !$member.explicitDefaultValue
+                    && !$member.resolvedTypeOptional
+                    && !$member.isPointer
+                    && !($constructMap.constructKind.equals("union")
+                        && $constructMap.hasAllCaseCovered 
+                        && $constructMap.hasADefaultCaseLabel
+                        && $member.labelList.contains("default"))) 
+#*----------*##if(${constructMap.hasArrayMember})
+        data->${member.name}(#*
+#*----------*##else
+        data.${member.name}(#*
+#*----------*##end
+#*----------*##if(!$member.nativeTypeFQName.equals("uint32_t")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*----------*##else
+#*----------*#samples_written);
+#*----------*##end
+#*--------*##elseif($member.isPointer)
+// The member ${member.name} is @external, it has to be initialized before writing
+#*----------*##if(${constructMap.hasArrayMember})
+        data->${member.name}(#*
+#*----------*##else
+        data.${member.name}(#*
+#*----------*##end
+std::shared_ptr< #*
+#*---------*##if($member.seqSize)
+$member.nativeTypeSeqFQName#*
+#*---------*##else
+$member.specTypeName#*
+#*---------*##end> (new #*
+#*---------*##if($member.seqSize)
+${member.nativeTypeSeqFQName}()#*
+#*---------*##else
+$member.specTypeName#*
+#*-----------*##if($member.typeKind.equals("user"))
+()#*
+#*-----------*##end
+#*---------*##end));
+#*--------*##end
+#*------*##end
+        std::cout << "Writing ${constructMap.nativeFQName}, count " << samples_written << std::endl;
+
+        writer.write(#if(${constructMap.hasArrayMember})*#{end}data);
+
+        // Send once every second
+        rti::util::sleep(dds::core::Duration(1));
+    }
+## Plain Zero-Copy or non-mutable Flat-Data (with or without Zero Copy)
+#*--*##elseif(!$constructMap.languageBinding.equals("FLAT_DATA")
+        || !$constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#*----*##end
+#*----*##if( !${envMap.vxWorks} || ${envMap.rtp} || ${envMap.universal} )
+    for (unsigned int samples_written = 0;
+            !application::shutdown_requested && samples_written < sample_count;
+            samples_written++) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}else
+#*----*##end
+#*----*##if( ${envMap.vxWorks} && !${envMap.rtp} || ${envMap.universal} )
+    for (unsigned int samples_written = 0;
+            samples_written < sample_count;
+            samples_written++) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#*----*##end
+    	${constructMap.nativeFQName} *data = writer->get_loan();
+
+        // Modify the data to be written here
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#* We allow union with all case covered and default case. That case is only for 
+the reader so we do not want to initilize it *#
+#*--------*##if($member.isInteger 
+                && !$member.explicitDefaultValue
+                && !($constructMap.constructKind.equals("union")
+                        && $constructMap.hasAllCaseCovered 
+                        && $constructMap.hasADefaultCaseLabel
+                        && $member.labelList.contains("default")))
+#*----------*##if($constructMap.languageBinding.equals("FLAT_DATA"))
+        data->root().${member.name}(#*
+#*------------*##if(!$member.nativeTypeFQName.equals("uint32_t")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*------------*##else
+#*----------*#samples_written);
+#*------------*##end
+#*----------*##else
+        data->${member.name}(#*
+#*------------*##if(!$member.nativeTypeFQName.equals("uint32_t")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*------------*##else
+#*----------*#samples_written);
+#*------------*##end
+#*----------*##end
+#*--------*##end
+#*------*##end
+
+        std::cout << "Writing ${constructMap.nativeFQName}, count " << samples_written << std::endl;
+
+        writer.write(*data);
+
+        // Send once every second
+        rti::util::sleep(dds::core::Duration(1));
+    }
+## Mutable Flat-Data (with or without Zero Copy)
+#*--*##else
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#*----*##end
+#*----*##if( !${envMap.vxWorks} || ${envMap.rtp} || ${envMap.universal} )
+    for (unsigned int samples_written = 0;
+            !application::shutdown_requested && samples_written < sample_count;
+            samples_written++) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}else
+#*----*##end
+#*----*##if( ${envMap.vxWorks} && !${envMap.rtp} || ${envMap.universal} )
+    for (unsigned int samples_written = 0;
+            samples_written < sample_count;
+            samples_written++) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#*----*##end
+    	${constructMap.nativeFQName}Builder builder = rti::flat::build_data(writer);
+
+        // Build the ${constructMap.nativeFQName} data sample using the builder
+        build_data_sample(builder, samples_written);
+
+        // Create the sample
+        ${constructMap.nativeFQName} *data = builder.finish_sample();
+
+        std::cout << "Writing ${constructMap.nativeFQName}, count " << samples_written << std::endl;
+
+        writer.write(*data);
+
+        // Send once every second
+        rti::util::sleep(dds::core::Duration(1));
+    }
+#*--*##end
+}
+
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#end
+#if( !${envMap.vxWorks} || ${envMap.rtp}  || ${envMap.universal} )
+int main(int argc, char *argv[])
+{
+
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#end
+#if( ${envMap.android} || ${envMap.universal})
+    std::cout.rdbuf(new RTIAndroidBuffer);
+    std::cerr.rdbuf(new RTIAndroidBuffer);
+#end
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#end
+    using namespace application;
+
+    // Parse arguments and handle control-C
+    auto arguments = parse_arguments(argc, argv);
+    if (arguments.parse_result == ParseReturn::exit) {
+        return EXIT_SUCCESS;
+    } else if (arguments.parse_result == ParseReturn::failure) {
+        return EXIT_FAILURE;
+    }
+    setup_signal_handlers();
+
+    // Sets Connext verbosity to help debugging
+    rti::config::Logger::instance().verbosity(arguments.verbosity);
+
+    try {
+        run_publisher_application(arguments.domain_id, arguments.sample_count);
+    } catch (const std::exception& ex) {
+        // This will catch DDS exceptions
+        std::cerr << "Exception in run_publisher_application(): " << ex.what()
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Releases the memory used by the participant factory.  Optional at
+    // application exit
+    dds::domain::DomainParticipant::finalize_participant_factory();
+
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#end
+#if( ${envMap.android} || ${envMap.universal})
+    std::cout.rdbuf(0);
+    std::cerr.rdbuf(0);
+#end
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#end
+    return EXIT_SUCCESS;
+}
+#end
+#if(${envMap.universal})
+${envMap.POUND_CHAR}endif
+#end

@@ -1,0 +1,534 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality..  Use architecture name in project
+## 2.3,13may15,gpc Added setting of NDDSHOME if undefined in environment
+## 2.2,9jun14,vmg created
+##========================================================================
+#macro (addSourceFile $sourceFile)
+    <ClCompile Include="${sourceFile}">
+      <Optimization Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">Disabled</Optimization>
+      <AdditionalIncludeDirectories Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">EnableFastChecks</BasicRuntimeChecks>
+      <Optimization Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">MaxSpeed</Optimization>
+      <AdditionalIncludeDirectories Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+#*--*##if(${openSsl1Libraries})
+      <Optimization Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">Disabled</Optimization>
+      <AdditionalIncludeDirectories Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">EnableFastChecks</BasicRuntimeChecks>
+      <Optimization Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'">MaxSpeed</Optimization>
+      <AdditionalIncludeDirectories Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+#*--*##end
+    </ClCompile>
+#end
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="${archMap.PROJECT_TOOLSVERSION}" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug DLL|${platform}">
+      <Configuration>Debug DLL</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|${platform}">
+      <Configuration>Debug</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+#if(${openSsl1Libraries})
+    <ProjectConfiguration Include="Debug OpenSSL 1|${platform}">
+      <Configuration>Debug OpenSSL 1</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release OpenSSL 1|${platform}">
+      <Configuration>Release OpenSSL 1</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+#end
+    <ProjectConfiguration Include="Release DLL|${platform}">
+      <Configuration>Release DLL</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|${platform}">
+      <Configuration>Release</Configuration>
+      <Platform>${platform}</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+#if(!$global.noDefaultNddshome)  
+  <PropertyGroup Condition="'$(NDDSHOME)'==''" Label="RTI Connext Home">
+    <NddsHome>${global.nddsHome}</NddsHome>
+  </PropertyGroup>
+#end
+#if(${archMap.TARGET_PLATFORM_VERSION})
+  <PropertyGroup Condition="'$(RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION)'==''" Label="RTI VS SDK">
+    <RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION>${archMap.TARGET_PLATFORM_VERSION}</RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION>
+  </PropertyGroup>  
+#end  
+  <PropertyGroup Label="RTI Connext Path">
+      <LocalDebuggerEnvironment>PATH=#[[$]]#(NDDSHOME)${libDir}</LocalDebuggerEnvironment>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>#buildProjectName()</ProjectName>
+    <RootNamespace>#buildProjectName()</RootNamespace>
+#if(${archMap.TARGET_PLATFORM_VERSION})
+<WindowsTargetPlatformVersion>#[[$]]#(RTI_VS_WINDOWS_TARGET_PLATFORM_VERSION)</WindowsTargetPlatformVersion>
+#end    
+    <ProjectGuid>{${vsProjectId}}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="#[[$]]#(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release DLL|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}   
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug DLL|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}  
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}
+  </PropertyGroup>
+#if(${openSsl1Libraries})
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET}
+  </PropertyGroup>
+  <PropertyGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    ${archMap.PLATFORM_TOOLSET} 
+  </PropertyGroup>
+#end
+  <Import Project="#[[$]]#(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release DLL|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug DLL|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+#if(${openSsl1Libraries})
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'" Label="PropertySheets">
+    <Import Project="#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props" Condition="exists('#[[$]]#(UserRootDir)\Microsoft.Cpp.#[[$]]#(Platform).user.props')" />
+  </ImportGroup>
+#end
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.21006.1</_ProjectFileVersion>
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">${outputDir}\</IntDir>
+    <LinkIncremental Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'" />
+#if(${openSsl1Libraries})
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">${outputDir}\</IntDir>
+    <LinkIncremental Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'" />
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'">${outputDir}\</IntDir>
+    <LinkIncremental Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'" />
+#end
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug DLL|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug DLL|${platform}'">${outputDir}\</IntDir>
+    <LinkIncremental Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug DLL|${platform}'" />
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">${outputDir}\</IntDir>
+    <LinkIncremental Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'" />
+    <OutDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release DLL|${platform}'">${outputDir}\</OutDir>
+    <IntDir Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release DLL|${platform}'">${outputDir}\</IntDir>
+    <LinkIncremental Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release DLL|${platform}'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>
+        #foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;RTI_STATIC;_CONSOLE;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>${archMap.DEBUG_INFORMATION_FORMAT}</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>
+        #foreach($l in ${additionalRtiLibraries})${l}zd.lib;#end
+        #foreach($debugStaticLib in ${debugStaticLibs})${debugStaticLib}.lib;#end
+        #foreach($l in ${additionalLibraries})${l}.lib;#end
+        #foreach($l in ${openSsl3StaticLibraries})${l};#end
+        #[[]]#netapi32.lib;advapi32.lib;user32.lib;WS2_32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>
+        #[[$]]#(NDDSHOME)${libDir};
+        #foreach($p in ${additionalLibraryPaths})${p};#end
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>libcmtd;libcmt</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+#if(${openSsl1Libraries})
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug OpenSSL 1|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>
+        #foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;RTI_STATIC;_CONSOLE;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>${archMap.DEBUG_INFORMATION_FORMAT}</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>
+        #foreach($l in ${additionalRtiLibraries})${l}zd.lib;#end
+        #foreach($debugStaticLib in ${debugStaticLibs})${debugStaticLib}.lib;#end
+        #foreach($l in ${additionalLibraries})${l}.lib;#end
+        #foreach($l in ${openSsl1Libraries})${l};#end
+        #[[]]#netapi32.lib;advapi32.lib;user32.lib;WS2_32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>
+        #[[$]]#(NDDSHOME)${libDir};
+        #foreach($p in ${additionalLibraryPaths})${p};#end
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>libcmtd;libcmt</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release OpenSSL 1|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>
+        #foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;RTI_STATIC;_CONSOLE;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>
+        #foreach($l in ${additionalRtiLibraries})${l}z.lib;#end
+        #foreach($releaseStaticLib in ${releaseStaticLibs})${releaseStaticLib}.lib;#end
+        #foreach($l in ${additionalLibraries})${l}.lib;#end
+        #foreach($l in ${openSsl1Libraries})${l};#end
+        netapi32.lib;advapi32.lib;user32.lib;WS2_32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>
+        #[[$]]#(NDDSHOME)${libDir};
+        #foreach($p in ${additionalLibraryPaths})${p};#end
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>libcmtd;libcmt</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+#end
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Debug DLL|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>#foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDDS_DLL_VARIABLE;WIN32_LEAN_AND_MEAN;_DEBUG;_CONSOLE;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>${archMap.DEBUG_INFORMATION_FORMAT}</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>
+        #foreach($l in ${additionalRtiLibraries})${l}d.lib;#end
+        #foreach($debugDynamicLib in${debugDynamicLibs})${debugDynamicLib}.lib;#end
+        #foreach($l in ${additionalLibraries})${l}.lib;#end
+        #[[]]#netapi32.lib;advapi32.lib;user32.lib;WS2_32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>
+        #[[$]]#(NDDSHOME)${libDir};
+        #foreach($p in ${additionalLibraryPaths})${p};#end
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+   </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>
+        #foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;RTI_STATIC;_CONSOLE;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>
+        #foreach($l in ${additionalRtiLibraries})${l}z.lib;#end
+        #foreach($releaseStaticLib in ${releaseStaticLibs})${releaseStaticLib}.lib;#end
+        #foreach($l in ${additionalLibraries})${l}.lib;#end
+        #foreach($l in ${openSsl3StaticLibraries})${l};#end
+        netapi32.lib;advapi32.lib;user32.lib;WS2_32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>
+        #[[$]]#(NDDSHOME)${libDir};
+        #foreach($p in ${additionalLibraryPaths})${p};#end
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>libcmtd;libcmt</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'#[[$]]#(Configuration)|#[[$]]#(Platform)'=='Release DLL|${platform}'">
+    <Midl>
+      <TypeLibraryName>${outputDir}\\#buildProjectName().tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>
+        #foreach($headersDirectory in ${headerDirectories})$headersDirectory;#end
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDDS_DLL_VARIABLE;WIN32_LEAN_AND_MEAN;NDEBUG;_CONSOLE;#foreach($preprocessorDefinition in ${defines})$preprocessorDefinition;#end#foreach($preprocessorDefinition in ${additionalDefines})$preprocessorDefinition;#end%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>${outputDir}\</AssemblerListingLocation>
+      <ObjectFileName>${outputDir}\</ObjectFileName>
+      <ProgramDataBaseFileName>${outputDir}\</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>
+        #foreach($l in ${additionalRtiLibraries})${l}.lib;#end
+        #foreach($releaseDynamicLib in ${releaseDynamicLibs})${releaseDynamicLib}.lib;#end
+        #foreach($l in ${additionalLibraries})${l}.lib;#end
+        #[[]]#netapi32.lib;advapi32.lib;user32.lib;WS2_32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <OutputFile>${outputDir}\\#buildProjectName().exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>
+        #[[$]]#(NDDSHOME)${libDir};
+        #foreach($p in ${additionalLibraryPaths})${p};#end
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>${outputDir}\\#buildProjectName().pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>${archMap.TARGET_MACHINE}</TargetMachine>
+    </Link>
+    <BuildLog>
+      <Path>#[[$]]#(ProjectDir)${outputDir}\\#buildProjectName().log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+#foreach($sourceFile in ${sourceFiles})
+#addSourceFile("${sourceDir}${sourceFile}")
+#end
+#if(${global.execNames})
+#addSourceFile("${sourceDir}${global.execNames}${sourceFileExtension}")
+#end
+#foreach($sourceFile in ${additionalSourceFiles})
+#addSourceFile("${sourceDir}${sourceFile}")
+#end     
+   </ItemGroup>
+  <ItemGroup>
+#foreach($headerFile in ${headerFiles})  
+    <ClInclude Include="${headerFile}" />
+#end
+#foreach($headerFile in ${additionalHeaderFiles})  
+    <ClInclude Include="${sourceDir}${headerFile}" />
+#end     
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="USER_QOS_PROFILES.xml" />
+  </ItemGroup>
+  <Import Project="#[[$]]#(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
