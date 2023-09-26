@@ -183,6 +183,7 @@ ext {
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
     specificationVersion = project.version.substring(0, project.version.lastIndexOf('.')) 
     localOsName = System.properties['os.name'].toLowerCase();
+    localOsArch = System.properties['os.arch'].toLowerCase();
     currentPath = System.getenv('PATH');
 }
 
@@ -250,7 +251,11 @@ test {
 
 run {
     if(localOsName.contains("linux")) {
-      environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      if(localOsArch.contains("aarch")) {
+        environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+      } else {
+        environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      }
       environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
       environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
     }
