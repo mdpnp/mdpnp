@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Vasopressor</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+<script src="/openicewis.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.6.2/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
+</head>
+
+<body onload="initPage();">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h3>Patient Information</h3>
+                <div class="row">
+                    <div class="col"><label class="form-label">Name</label><input type="text" id="patient_name"><label class="form-label">Age</label><input type="text" id="patient_age"><label class="form-label">Gender</label><input type="text" id="patient_gender"><label class="form-label">Weight</label><input type="text" id="patient_weight"><label class="form-label">(lb)</label></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-xxl-6" style="border-style: solid;border-color: black;/*margin-right: 5px;*/">
+                <div class="row">
+                    <div class="col">
+                        <h4>Ventilation Monitoring</h4>
+                        <div class="row">
+                            <div class="col">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead style="display: none;">
+                                            <tr>
+                                                <th>Column 1</th>
+                                                <th>Column 2</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Device</td>
+                                                <td id="vent_device"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Ventilation Mode</td>
+                                                <td id="vent_mode_cell"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Settings</td>
+                                                <td id="vent_settings_cell"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col col-md-6">
+                                <div class="row" id="flow_graph_row">
+									<div id="flow_graph_div">
+										<canvas id="flow_graph_canvas" width="400" height="200"></canvas>
+									</div>
+								</div>
+                                <div class="row" id="pressure_graph_row">
+									<div id="pressure_graph_div">
+										<canvas id="pressure_graph_canvas" width="400" height="200"></canvas>
+									</div>
+								</div>
+                            </div>
+                            <div class="col col-md-6">
+                                <div class="table-responsive">
+                                    <table class="table" id="vent_table">
+                                        <thead>
+                                            <tr>
+                                                <th>Measurement</th>
+                                                <th>Value</th>
+                                                <th>Unit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xxl-6" style="border-style: solid;border-color: black;">
+                <h4>Vital Signs Monitoring</h4>
+                <div class="row">
+                    <div class="col"><label class="form-label">Device:</label><input type="text" id="monitor_device" readonly=""></div>
+                </div>
+                <div class="row">
+                    <div class="col col-md-6">
+                        <div class="row" id="hr_graph_row"><div id="hr_graph_div">
+    <canvas id="hr_graph_canvas" width="400" height="200"></canvas>
+</div></div>
+                        <div class="row" id="map_graph_row"><div id="map_graph_div"><canvas id="map_graph_canvas" width="400" height="200"></canvas></div></div>
+                        <div class="row" id="rr_graph_row"><div id="rr_graph_div"><canvas id="rr_graph_canvas" width="400" height="200"></canvas></div></div>
+                    </div>
+                    <div class="col col-md-6">
+                        <div class="table-responsive">
+                            <table class="table" id="vitals_table">
+                                <thead>
+                                    <tr>
+                                        <th>Measurement</th>
+                                        <th>Value</th>
+                                        <th>Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="border-style: solid;border-color: black;">
+        <div class="row">
+            <div class="col">
+                <h4>Infusion Monitoring</h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col"><label class="form-label">Device</label><input type="text" id="pump_device" readonly=""></div>
+        </div>
+        <div class="row">
+            <div class="col col-md-4">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead style="display: none;">
+                            <tr>
+                                <th>Column 1</th>
+                                <th>Column 2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Drug Name</td>
+                                <td id="drug_name">Epenephrine</td>
+                            </tr>
+                            <tr>
+                                <td>Concentration (mcg/L)</td>
+                                <td id="drug_concentration">4</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col col-md-4">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead style="display: none;">
+                            <tr>
+                                <th>Column 1</th>
+                                <th>Column 2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Current Infusion Rate (ml/hr)</td>
+                                <td class="numeric" id="infusion_rate"></td>
+                            </tr>
+                            <tr>
+                                <td>Volume Infused (ml)</td>
+                                <td class="numeric" id="volume_infused"></td>
+                            </tr>
+                            <tr>
+                                <td>Remaining Volume to be Infused (ml)</td>
+                                <td class="numeric" id="volume_remaining"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col col-md-4"><label class="form-label">Target Infusion Rate (ml/hr)</label><input type="number" id="target_infusion_rate">
+                <!--<div class="btn-group" role="group"><button class="btn btn-primary" type="button" onclick="setFlowRate()">Confirm</button><button class="btn btn-primary" onClick="clearFlowRate()" type="button">Cancel</button></div>-->
+				<div><button class="btn btn-primary" type="button" onclick="setFlowRate()">Confirm</button>&nbsp;&nbsp;&nbsp;<button class="btn btn-primary" onClick="clearFlowRate()" type="button">Cancel</button></div>
+            </div>
+        </div>
+		<div class="row">
+            <div class="col col-md-12">
+                <h4>Alarms</h4>
+            </div>
+            <div class="col">
+                <div class="table-responsive">
+                    <table class="table" id="alarms_table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Device</th>
+								<th>Alert</th>
+                                <th>Text</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/vaso.js"></script>
+</body>
+
+</html>

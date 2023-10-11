@@ -1,0 +1,217 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Ventilator Remote Control</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body>
+<div class="container">
+	
+	<div class="row">
+		<div class="col col-md-12">
+			<h4>Infusion Pump Remote Control</h4>
+		</div>
+		<div class="row">
+        	<div class="col"><label class="form-label">Device</label><input type="text" id="pump_device" readonly=""></div>
+       	</div>
+	</div>	<!-- End of row for Infusion Pump Remote Control -->
+	
+	<div class="row">
+		<div class="col-md-3">
+			<span id="weight_span"></span>
+		</div>
+		<div class="col-md-3">
+			<span id="height_span"></span>
+		</div>
+		<div class="col-md-3">
+			<span id="age_span"></span>
+		</div>
+		<div class="col-md-3">
+			<span id="asa_span"></span>
+		</div>
+	</div>
+
+	<!-- Now, a new row, with two columns, one column for each channel -->
+	<div class="row">
+		<div class="col col-md-6">
+			<div class="row">
+				<div class="col col-md-6">
+					Channel 1
+				</div>
+			</div>
+			<div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Current</th>
+                            <th>Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Drug Name</td>
+                            <td id="drug_name_1"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Concentration</td>
+                            <td id="drug_concentration_1"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Infusion Rate (ml/hr)</td>
+                            <td class="numeric" id="infusion_rate_1"></td>
+                            <td><input id="target_infusion_rate_1" type="number"/></td>
+                        </tr>
+                        <tr>
+                            <td>Volume Infused (ml)</td>
+                            <td class="numeric" id="volume_infused_1"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Remaining Volume to be Infused (ml)</td>
+                            <td class="numeric" id="volume_remaining_1"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>VTBI (ml)</td>
+                            <td class="numeric" id="vtbi_1"></td>
+                            <td><input id="target_vtbi_1" type="number"/></td>
+                        </tr>
+                        <tr>
+                            <td>Total Bolus Volume Infused (ml)</td>
+                            <td class="numeric" id="total_bolus_volume_1"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Current Bolus Volume Infused (ml)</td>
+                            <td class="numeric" id="current_bolus_volume_1"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>New Bolus Volume (ml)</td>
+                            <td></td>
+                            <td><input id="target_bolus_volume_1" type="number"/></td>
+                        </tr>
+                        <tr>
+                            <td>New Bolus Rate (ml/h)</td>
+                            <td class="numeric" id="bolus_rate_1"></td>
+                            <td><input id="target_bolus_rate_1" type="number"/></td>
+                        </tr>
+                        <!-- 
+                        <tr>
+                            <td>Bolus Duration (s)</td>
+                            <td class="numeric" id="bolus_duration_1"></td>
+                            <td><input id="target_bolus_duration_1" type="number"/></td>
+                        </tr>
+                         -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="row">
+            	<div class="col col-md-12">
+            		<button type="button" onclick="executePumpProgramNeurowave(1)">Program Channel 1</button>
+           		</div>
+            </div>	<!-- End of row for Program Channel button -->
+		</div>	<!-- End of col-md-6 for channel one -->
+		
+		
+		<div class="col col-md-6">
+			<div class="row">
+				<div class="col col-md-6">
+					Channel 2
+				</div>
+			</div>
+			<div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Current</th>
+                            <th>Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Drug Name</td>
+                            <td id="drug_name_2"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Concentration</td>
+                            <td id="drug_concentration_2"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Infusion Rate (ml/hr)</td>
+                            <td class="numeric" id="infusion_rate_2"></td>
+                            <td><input id="target_infusion_rate_2" type="number"/></td>
+                        </tr>
+                        <tr>
+                            <td>Volume Infused (ml)</td>
+                            <td class="numeric" id="volume_infused_2"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Remaining Volume to be Infused (ml)</td>
+                            <td class="numeric" id="volume_remaining_2"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>VTBI (ml)</td>
+                            <td class="numeric" id="vtbi_2"></td>
+                            <td><input id="target_vtbi_2" type="number"/></td>
+                        </tr>
+                        <tr>
+                            <td>Total Bolus Volume Infused (ml)</td>
+                            <td class="numeric" id="total_bolus_volume_2"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Current Bolus Volume Infused (ml)</td>
+                            <td class="numeric" id="current_bolus_volume_2"></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>New Bolus Volume (ml)</td>
+                            <td></td>
+                            <td><input id="target_bolus_volume_2" type="number"/></td>
+                        </tr>
+                        <tr>
+                            <td>New Bolus Rate (ml/h)</td>
+                            <td class="numeric" id="bolus_rate_2"></td>
+                            <td><input id="target_bolus_rate_2" type="number"/></td>
+                        </tr>
+                        <!-- 
+                        <tr>
+                            <td>New Bolus Duration (s)</td>
+                            <td class="numeric" id="bolus_duration_2"></td>
+                            <td><input id="target_bolus_duration_2" type="number"/></td>
+                        </tr>
+                         -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="row">
+            	<div class="col col-md-12">
+            		<button type="button" onclick="executePumpProgramNeurowave(2)">Program Channel 2</button>
+           		</div>
+            </div>	<!-- End of row for Program Channel button -->
+            
+		</div>	<!-- End of col-md-6 for channel two -->
+	
+	
+	</div>	<!-- End of the row for the two columns, one for each channel -->
+
+
+</div> <!-- End of top level container -->
+
+
+</body>
+
+</html>
+

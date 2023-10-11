@@ -1,0 +1,292 @@
+[
+	{
+		"metric" : "PB_APNEA_VENTILATION",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Apnea ventilation"
+	},
+	{
+		"metric" : "PB_COMPLIANCE_LIMITED_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Compliance limited tidal volume"
+	},
+	{
+		"metric" : "PB_EXHALED_MINUTE_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : " Low exhaled minute volume"
+	},
+	{
+		"metric" : "PB_EXHALED_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low exhaled tidal volume"
+	},
+	{
+		"metric" : "PB_HIGH_CIRCUIT_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High inspiratory pressure "
+	},
+	{
+		"metric" : "PB_HIGH_COMPENSATION_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High compensation limit"
+	},
+	{
+		"metric" : "PB_HIGH_EXHALED_MINUTE_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High exhaled minute volume"
+	},
+	{
+		"metric" : "PB_HIGH_EXHALED_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High exhaled tidal volume"
+	},
+	{
+		"metric" : "PB_HIGH_INSPIRED_MANDATORY_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High inspired mandatory tidal volume"
+	},
+	{
+		"metric" : "PB_HIGH_INSPIRED_SPONTANEOUS_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High inspired spontaneous tidal volume"
+	},
+	{
+		"metric" : "PB_HIGH_OXYGEN_PERCENT",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High O2%"
+	},
+	{
+		"metric" : "PB_HIGH_SPONTANEOUS_INSPIRATION_TIME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High spontaneous inspiratory time"
+	},
+	{
+		"metric" : "PB_HIGH_TOTAL_RESPIRATORY_RATE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High respiratory rate"
+	},
+	{
+		"metric" : "PB_HIGH_VENTILATOR_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High ventilator pressure"
+	},
+	{
+		"metric" : "PB_INSPIRATION_TOO_LONG",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Inspiration too long"
+	},
+	{
+		"metric" : "PB_LOW_CIRCUIT_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low inspiratory pressure"
+	},
+	{
+		"metric" : "PB_LOW_EXHALED_MANDATORY_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low exhaled mandatory tidal volume"
+	},
+	{
+		"metric" : "PB_LOW_EXHALED_MINUTE_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low exhaled minute volume"
+	},
+	{
+		"metric" : "PB_LOW_EXHALED_SPONTANEOUS_TIDAL_VOLUME",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low exhaled spontaneous tidal volume"
+	},
+	{
+		"metric" : "PB_RESPIRATORY_RATE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High respiratory rate"
+	},
+	{
+		"metric" : "PB_SEVERE_OCCLUSION",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Severe occlusion"
+	},
+	{
+		"metric" : "PB_VOLUME_NOT_DELIVERED_VC",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Volume not delivered (VC+)"
+	},
+	{
+		"metric" : "PB_VOLUME_NOT_DELIVERED_VS",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Volume not delivered (VS) "
+	},
+	{
+		"metric" : "PB_AC_POWER_LOSS",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "AC power loss"
+	},
+	{
+		"metric" : "PB_APNEA",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Techinical issue with apnea alarm"
+	},
+	{
+		"metric" : "PB_APNEA_ALARM_STATUS",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Techinical issue with apnea alarm"
+	},
+	{
+		"metric" : "PB_CIRCUIT_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "High circuit pressure"
+	},
+	{
+		"metric" : "PB_COMPRESSOR_INOPERATIVE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Compressor inoperative"
+	},
+	{
+		"metric" : "PB_DISCONNECT",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Disconnection alarm"
+	},
+	{
+		"metric" : "PB_INOPERATIVE_BATTERY",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Inoperative battery"
+	},
+	{
+		"metric" : "PB_LOSS_OF_POWER",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Loss of power"
+	},
+	{
+		"metric" : "PB_LOW_AIR_SUPPLY_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low air supply pressure"
+	},
+	{
+		"metric" : "PB_LOW_BATTERY",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low battery"
+	},
+	{
+		"metric" : "PB_LOW_OXYGEN_PERCENT",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low O2%"
+	},
+	{
+		"metric" : "PB_LOW_OXYGEN_SUPPLY_PRESSURE",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Low O2 supply pressure"
+	},
+	{
+		"metric" : "PB_NO_AIR_SUPPLY",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "No air supply"
+	},
+	{
+		"metric" : "PB_NO_O2_SUPPLY",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "No O2 supply"
+	},
+	{
+		"metric" : "PB_PAV_RC_NOT_ASSESSED",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "PAV R and C not assessed"
+	},
+	{
+		"metric" : "PB_PAV_STARTUP_TOO LONG",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "PAV startup too long"
+	},
+	{
+		"metric" : "PB_PROCEDURE_ERROR",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Procedure error"
+	},
+	{
+		"metric" : "PB_SEVERE_OCCLUSION_DISCONNECT",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Severe Occlusion/Disconnection"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A10",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A10"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A15",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A15"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A20",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A20"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A25",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A25"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A30",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A30"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A35",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A35"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A40",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A40"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A45",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A45"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A50",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A50"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A5",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A5"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A55",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A55"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A60",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A60"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A65",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A65"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A70",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A70"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A75",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A75"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A80",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A80"
+	},
+	{
+		"metric" : "PB_TECH_MALFUNCTION_A85",
+		"filterif" : [ "NORMAL" ],
+		"displaytext" : "Technical malfunction A85"
+	}
+]

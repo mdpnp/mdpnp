@@ -1,0 +1,37 @@
+<html>
+	<body onload="initialiseVent()">
+		<h1>OpenICE Web Integration Service</h1>
+
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.js"></script>
+	<script src="/openice.js"></script>
+
+	<div id="device_identity">
+		<table id="device_id">
+			<tr id="device_manu"><td>Manufacturer</td><td></td></tr>
+			<tr id="device_model"><td>Model</td><td></td></tr>
+			<tr id="device_udi"><td>Unique Device Identifier</td><td></td></tr>
+		</table>
+	</div>
+
+	<div id="numerics_and_waveforms">
+		<div id="devices_root" style="float: left;">
+	
+	
+		</div>
+	
+		<div id="just_charts" style="float: left; margin-left: 50px;">
+	
+			<div id="pressure_div" style="width: 600; height: 450;" >
+				<canvas id="pressure_canvas"></canvas>
+			</div>
+			<div id="flow_div" style="width: 600; height: 450;" >
+				<canvas id="flow_canvas"></canvas>
+			</div>
+		</div>	<!--End of just_charts-->
+	</div>	</!--End of numerics_and_waveforms-->
+
+	</body>
+
+</html>
