@@ -183,6 +183,7 @@ ext {
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
     specificationVersion = project.version.substring(0, project.version.lastIndexOf('.')) 
     localOsName = System.properties['os.name'].toLowerCase();
+    localOsArch = System.properties['os.arch'].toLowerCase();
     currentPath = System.getenv('PATH');
 }
 
@@ -250,7 +251,11 @@ test {
 
 run {
     if(localOsName.contains("linux")) {
-      environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      if(localOsArch.contains("aarch")) {
+        environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+      } else {
+        environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      }
       environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
       environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
     }
@@ -274,6 +279,33 @@ run {
 
 }
 
+task 'makeFlatRuntime'(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'flat'
+}
+
+task 'copyThisJar'(type: Copy) {
+  from layout.buildDirectory.dir('libs')
+  include "*.jar"
+  into 'flat'
+}
+
+task 'copyNativeLibs'(type: Copy) {
+  from 'native/libs/linux'
+  include '*.so'
+  into 'flat'
+}
+
+task 'copyLicenseFile'(type: Copy) {
+  from layout.buildDirectory.dir('resources/main')
+  include 'OpenICE_license.dat'
+  into 'flat'
+}
+
+copyThisJar.configure { dependsOn(jar) }
+copyLicenseFile.configure { dependsOn(processResources) }
+makeFlatRuntime.configure { dependsOn(copyThisJar,copyNativeLibs,copyLicenseFile) }
+
 jar {
     manifest {
         attributes("Main-Class": 'org.mdpnp.apps.testapp.Main', 
@@ -287,7 +319,8 @@ jar {
         "Specification-Version": specificationVersion, 
         "Implementation-Vendor": project.group,
         "Specification-Vendor": project.group, 
-        "Build-Number": project.version)
+        "Build-Number": project.version,
+        "Class-Path" : configurations.runtimeClasspath.files.collect {it.getName()}.join(' '))
     }
     //Ensure that jfxNative gets run immediately after jar, and so before distZip and distTar
 /*
