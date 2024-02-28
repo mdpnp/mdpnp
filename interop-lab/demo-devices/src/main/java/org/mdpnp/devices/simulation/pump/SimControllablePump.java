@@ -32,6 +32,7 @@ import com.rti.dds.topic.Topic;
 
 import ice.ConnectionState;
 import ice.FlowRateObjectiveDataReader;
+import ice.InfusionProgramDataReader;
 import ice.Numeric;
 
 /**
@@ -55,8 +56,9 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
 	private float currentFlowRate=1.0f;
 	
 	private FlowRateObjectiveDataReader flowRateReader;
-	private Topic flowRateTopic;
-	private QueryCondition flowRateQueryCondition;
+	private InfusionProgramDataReader infusionProgramReader;
+	private Topic flowRateTopic, infusionProgramTopic;
+	private QueryCondition flowRateQueryCondition, infusionProgramQueryCondition;
 	
 	private DeviceClock defaultClock;
 	
@@ -108,6 +110,51 @@ public class SimControllablePump extends AbstractSimulatedConnectedDevice {
                         break;
                     } finally {
                         flowRateReader.return_loan(data_seq, info_seq);
+                    }
+                }
+            }
+        });
+
+
+	/**
+		 * Following block of code is for receiving objectives for an infusion program
+		 */
+		ice.InfusionProgramTypeSupport.register_type(getParticipant(), ice.InfusionProgramTypeSupport.get_type_name());
+		infusionProgramTopic = TopicUtil.findOrCreateTopic(getParticipant(), ice.InfusionProgramTopic.VALUE, ice.InfusionProgramTypeSupport.class);
+		infusionProgramReader = (ice.InfusionProgramDataReader) subscriber.create_datareader_with_profile(infusionProgramTopic,
+		QosProfiles.ice_library, QosProfiles.state,  null, StatusKind.STATUS_MASK_NONE);
+		params = new StringSeq();
+		params.add("'" + deviceIdentity.unique_device_identifier + "'");
+		infusionProgramQueryCondition = infusionProgramReader.create_querycondition(SampleStateKind.NOT_READ_SAMPLE_STATE,
+		ViewStateKind.ANY_VIEW_STATE, InstanceStateKind.ALIVE_INSTANCE_STATE, "unique_device_identifier = %0", params);
+		eventLoop.addHandler(infusionProgramQueryCondition, new ConditionHandler() {
+            private ice.InfusionProgramSeq data_seq = new ice.InfusionProgramSeq();
+            private SampleInfoSeq info_seq = new SampleInfoSeq();
+
+            @Override
+            public void conditionChanged(Condition condition) {
+
+                for (;;) {
+                    try {
+                        infusionProgramReader.read_w_condition(data_seq, info_seq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                                (ReadCondition) condition);
+                        for (int i = 0; i < info_seq.size(); i++) {
+                            SampleInfo si = (SampleInfo) info_seq.get(i);
+                            ice.InfusionProgram data = (ice.InfusionProgram) data_seq.get(i);
+			    System.err.println("Infusion Program received");
+                            if (si.valid_data) {
+                                try {
+                                    setSpeed(data.infusionRate);
+                                } catch (IOException ioe) {
+                                    log.error("Failed to set pump speed", ioe);
+                                    ioe.printStackTrace();
+                                }
+                            }
+                        }
+                    } catch (RETCODE_NO_DATA noData) {
+                        break;
+                    } finally {
+                        infusionProgramReader.return_loan(data_seq, info_seq);
                     }
                 }
             }
