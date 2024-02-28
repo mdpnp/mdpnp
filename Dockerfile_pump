@@ -1,0 +1,2 @@
+FROM openice-base:1.0
+CMD java -jar demo-apps-1.5.0-SNAPSHOT.jar -app ICE_Device_Interface -domain 10 -device Controllable_Pump
