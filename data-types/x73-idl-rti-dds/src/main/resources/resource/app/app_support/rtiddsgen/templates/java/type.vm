@@ -58,10 +58,11 @@
 /*
   WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
-  This file was generated from .idl using "rtiddsgen".
-  The rtiddsgen tool is part of the RTI Connext distribution.
+  This file was generated from .idl 
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
   For more information, type 'rtiddsgen -help' at a command shell
-  or consult the RTI Connext manual.
+  or consult the Code Generator User's Manual.
 */
 
 
@@ -100,18 +101,24 @@ import java.math.BigInteger;
 #*----*##foreach($element in $constructMap.directives)
 #*------*#$element.getValue()
 #*----*##end
-
+// Depending on the type represented in the IDL, we may perform some redundant
+// casts, we are suppressing that warning
+@SuppressWarnings("cast")
 public class $constructMap.name #if($constructMap.constructKind=="enum") extends Enum #*
 **##else #if($constructMap.constructKind=="union")extends Union#end 
 #if($constructMap.baseTypeFQName)extends $constructMap.baseTypeFQName#else implements Copyable, Serializable#end#end
 {
 
+    private static final long serialVersionUID = ${constructMap.serialVersionUID}L;
+    
 #*-************************Enum code****************************************-*# 
 #*----*##if ($constructMap.constructKind=="enum")
 #*------*##foreach($member in $constructMap.memberFieldMapList)
 #*---*##if(!$member.directive)
     public static final ${constructMap.name} $member.name = new ${constructMap.name}("$member.name", ${member.ordinal});
     public static final int _${member.name} = ${member.ordinal};
+#*------*##else
+#*---------*##copyDirectiveNoBegin ($member)
 #*------*##end   
 #*------*##end   
     public static ${constructMap.name} valueOf(int ordinal) {
@@ -157,12 +164,12 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 
         return valueOf(#setDefaultEnumValue($constructMap));
     }
-    
+
     /**
      * Print Method
      */     
-    public String toString(String desc, int indent) {
-        StringBuffer strBuffer = new StringBuffer();
+    public java.lang.String toString(java.lang.String desc, int indent) {
+        java.lang.StringBuffer strBuffer = new java.lang.StringBuffer();
 
         CdrHelper.printIndent(strBuffer, indent);
             
@@ -175,11 +182,11 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
         return strBuffer.toString();
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    private java.lang.Object readResolve() throws ObjectStreamException {
         return valueOf(ordinal());
     }
 
-    private ${constructMap.name}(String name, int ordinal) {
+    private ${constructMap.name}(java.lang.String name, int ordinal) {
         super(name, ordinal);
     }
 }
@@ -191,8 +198,13 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 #*--------*##assignMemberVariables($constructMap.unionDiscriminatorMap  $extensibility $constructMap)
 #*--------*##assignMemberVariables($constructMap.typeCodeUnionDiscriminatorMap  $extensibility $constructMap)
 
+#*------*##if($foreach.count==$constructMap.defaultIndex +1
+             || !($constructMap.unionDiscriminatorMap.typeName.equals("boolean") 
+             || $constructMap.unionDiscriminatorMap.typeName.equals("enum"))
+             || !$constructMap.hasAllCaseCovered)
     private static final $constructMap.unionDiscriminatorMap.nativeTypeFQName _default = getDefaultDiscriminator();
-  
+
+#*------*##end
     public $constructMap.unionDiscriminatorMap.nativeTypeFQName _d #*
 --------*##if($constructMap.unionDiscriminatorMap.typeKind=="enum")#*
 --------*# = ${constructMap.unionDiscriminatorMap.nativeTypeFQName}.create()#end;
@@ -220,7 +232,7 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
     }
 
 
-    public static Object create() {
+    public static java.lang.Object create() {
     
          $constructMap.name self;
         self = new  ${constructMap.name}();
@@ -231,6 +243,9 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
         
     }
     
+    #if($constructMap.baseTypeFQName)
+    @Override 
+    #end
     public void clear() {
     
 #if($constructMap.baseTypeFQName)
@@ -239,7 +254,7 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 #*------*##if($constructMap.constructKind=="union")
         _d = getDefaultDiscriminator();
 #*------*##end        
-#*------*##clearMembers($constructMap.memberFieldMapList)
+#*------*##clearMembers($constructMap.memberFieldMapList $constructMap.hasOnlyADefaultCase)
    }
     
 #******************************Start of code just for unions ******************#       
@@ -266,43 +281,51 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 #*----------*##if($member.directive)
 #*-------------*##copyDirectiveNoBegin ($member)
 #*----------*##else
+#* Only adds the verify if there is more than one member or if there is only
+   one and it is not the default label *#
+#*------------*##if(!$constructMap.hasOnlyADefaultCase)
     private void verify${member.name}($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator) {
 
 #*----------This for the members that are not in the default case----------------*#
-#*------------*##if($velocityCount!=$constructMap.defaultIndex +1)
+#*--------------*##if($foreach.count!=$constructMap.defaultIndex +1)
         if (#foreach($element in $member.labelList) discriminator != $element#*
-         *##if($member.labelList.size()>$velocityCount) && 
+         *##if($member.labelList.size()>$foreach.count) && 
          #end#end) {
 
 #*----------This for the members that are with the default case----------------*#           
-#*------------*##else
+#*--------------*##else
         if (!(#foreach($element in $constructMap.unionDiscriminatorMap.labelList)#*
         *##if(!$element.contains("default") && !$member.labelList.contains($element))discriminator != $element#* 
-         *##if($velocityCount <$constructMap.unionDiscriminatorMap.labelList.size() - $member.labelList.size()) &&
+         *##if($foreach.count <$constructMap.unionDiscriminatorMap.labelList.size() - $member.labelList.size()) &&
           #end#end#end)) {
-#*------------*##end
+#*--------------*##end
             throw new RETCODE_ILLEGAL_OPERATION();
         }
     }
+#*------------*##end
 
     public #addUnionMemberInitializationType($member) ${member.name}() {
+#*------------*##if(!$constructMap.hasOnlyADefaultCase)
         verify${member.name}(_d);
+#*------------*##end
         return ${member.name};
     }
 
 #*------------*###if has more than one label or contains the default one
-#*------------*##if($member.labelList.size()>1||($velocityCount==$constructMap.defaultIndex+1))
+#*------------*##if($member.labelList.size()>1||($foreach.count==$constructMap.defaultIndex+1))
     public void ${member.name}($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator,#addUnionMemberInitializationType($member) __value) {
+#*--------------*##if(!$constructMap.hasOnlyADefaultCase)
         verify${member.name}(discriminator);
+#*--------------*##end
         _d = discriminator;
-        ${member.name} = __value;
+        this.${member.name} = __value;
     }
 #*------------*##end ##if
 
 
     public void ${member.name}(#addUnionMemberInitializationType($member) __value) {
 
-#*------------*##if($velocityCount==$constructMap.defaultIndex +1)
+#*------------*##if($foreach.count==$constructMap.defaultIndex +1)
 #*--------------*##if($constructMap.unionDiscriminatorMap.typeName!="boolean")
        if (_default == #getMaxValue($constructMap.unionDiscriminatorMap)) throw new RETCODE_ILLEGAL_OPERATION();
 #*--------------*##end
@@ -310,23 +333,27 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 #*------------*##else        
         _d = $member.labelList.get(0);
 #*------------*##end
-        $member.name = __value;
+        this.$member.name = __value;
     }
 
 #*----------*##end ## if
 #*--------*##end ## for    
-    
+#*--------*##if(!$constructMap.hasOnlyADefaultCase)
+
       private void verifyDefault($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator) {
      if (!(#foreach($element in $constructMap.unionDiscriminatorMap.labelList)#if(!$element.contains("default"))#*
-          *##if($constructMap.defaultIndex!="-1")#set($loopCount=$velocityCount +1)#else#set($loopCount=$velocityCount)#end#*
+          *##if($constructMap.defaultIndex!="-1")#set($loopCount=$foreach.count +1)#else#set($loopCount=$foreach.count)#end#*
           *#discriminator != $element #if($constructMap.unionDiscriminatorMap.labelList.size()>$loopCount) &&
           #end#end#end)) {
             throw new RETCODE_ILLEGAL_OPERATION();
         }
     }
+#*--------*##end
 
     public void __default($constructMap.unionDiscriminatorMap.nativeTypeFQName discriminator) {
+#*--------*##if(!$constructMap.hasOnlyADefaultCase)
         verifyDefault(discriminator);
+#*--------*##end
         _d = discriminator;
     }
 
@@ -347,7 +374,8 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 #*------*##end
 
 #******************************End of code just for unions ******************# 
-    public boolean equals(Object o) {
+    @Override
+    public boolean equals(java.lang.Object o) {
                 
         if (o == null) {
             return false;
@@ -366,19 +394,21 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
         }
         
         $constructMap.name otherObj = ($constructMap.name)o;
-        
-#*------*##equalsMemberField($constructMap.memberFieldMapList)                                                  
+
+#*------*##equalsMemberField($constructMap.memberFieldMapList $constructMap.hasOnlyADefaultCase)
             
         return true;
     }
 
+    @Override
     public int hashCode() {
-        int __result = 0;
+        final int __prime = 31;
+        int __result = 1;
 #*------*##if($constructMap.baseTypeFQName)
 
         __result = super.hashCode();
 #*------*##end
-#*------*##hashCode($constructMap.memberFieldMapList)        
+#*------*##hashCode($constructMap.memberFieldMapList $constructMap.hasOnlyADefaultCase)
         return __result;
     }
 
@@ -398,7 +428,7 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
      * same type as <code>this</code>.
      * @see com.rti.dds.infrastructure.Copyable${envMap.POUND_CHAR}copy_from(java.lang.Object)
      */
-    public Object copy_from(Object #if($constructMap.constructKind=="union")other#else#* *#src#* *##end) {
+    public java.lang.Object copy_from(java.lang.Object #if($constructMap.constructKind=="union")other#else#* *#src#* *##end) {
        
        
         $constructMap.name typedSrc = ($constructMap.name) #if($constructMap.constructKind=="union")other#else#* *#src#* *##end;
@@ -406,21 +436,21 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
 #*------*##if($constructMap.baseTypeFQName)
         super.copy_from(typedSrc);#end
 
-#*------*##copy($constructMap.memberFieldMapList)
+#*------*##copy($constructMap.memberFieldMapList $constructMap.hasOnlyADefaultCase)
 
         return this;
     }
 
-    
-    public String toString(){
+    @Override
+    public java.lang.String toString(){
         return toString("", 0);
     }
-        
-    
-    public String toString(String desc, int indent) {
-        StringBuffer strBuffer = new StringBuffer();        
-                        
-        
+
+
+    public java.lang.String toString(java.lang.String desc, int indent) {
+        java.lang.StringBuffer strBuffer = new java.lang.StringBuffer();
+
+
         if (desc != null) {
             CdrHelper.printIndent(strBuffer, indent);
             strBuffer.append(desc).append(":\n");
@@ -431,7 +461,7 @@ public class $constructMap.name #if($constructMap.constructKind=="enum") extends
         strBuffer.append(super.toString("",indent));
 #*-------*##end
 
-#*------*##toString($constructMap)
+#*------*##toString($constructMap $constructMap.hasOnlyADefaultCase)
             
         return strBuffer.toString();
     }

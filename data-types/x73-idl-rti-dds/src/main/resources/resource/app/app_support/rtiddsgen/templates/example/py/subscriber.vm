@@ -1,0 +1,88 @@
+
+${envMap.POUND_CHAR} (c) Copyright, Real-Time Innovations, 2022.  All rights reserved.
+${envMap.POUND_CHAR} RTI grants Licensee a license to use, modify, compile, and create derivative
+${envMap.POUND_CHAR} works of the software solely for use with RTI Connext DDS. Licensee may
+${envMap.POUND_CHAR} redistribute copies of the software provided that all such copies are subject
+${envMap.POUND_CHAR} to this license. The software is provided "as is", with no warranty of any
+${envMap.POUND_CHAR} type, including any warranty for fitness for any purpose. RTI is under no
+${envMap.POUND_CHAR} obligation to maintain or support the software. RTI shall not be liable for
+${envMap.POUND_CHAR} any incidental or consequential damages arising out of the use or inability
+${envMap.POUND_CHAR} to use the software.
+
+import time
+import sys
+import rti.connextdds as dds
+#*--*##if(!${constructMap.modulesName.isEmpty()})
+from ${envMap.idlFileName} import ${constructMap.modulesName[0]}
+#*--*##else
+from ${envMap.idlFileName} import ${constructMap.nativeFQName}
+#*--*##end
+
+class ${constructMap.nativeCFQName}Subscriber:
+
+    @staticmethod
+    def process_data(reader):
+        ${envMap.POUND_CHAR} take_data() returns copies of all the data samples in the reader
+        ${envMap.POUND_CHAR} and removes them. To also take the SampleInfo meta-data, use take().
+        ${envMap.POUND_CHAR} To not remove the data from the reader, use read_data() or read().
+        samples = reader.take_data()
+        for sample in samples:
+            print(f"Received: {sample}")
+    
+        return len(samples)
+
+    @staticmethod
+    def run_subscriber(domain_id: int, sample_count: int):
+
+        ${envMap.POUND_CHAR} A DomainParticipant allows an application to begin communicating in
+        ${envMap.POUND_CHAR} a DDS domain. Typically there is one DomainParticipant per application.
+        ${envMap.POUND_CHAR} DomainParticipant QoS is configured in USER_QOS_PROFILES.xml
+        participant = dds.DomainParticipant(domain_id)
+
+        ${envMap.POUND_CHAR} A Topic has a name and a datatype.
+        topic = dds.Topic(participant, "${constructMap.topicName}", ${constructMap.nativeFQName})
+
+        ${envMap.POUND_CHAR} This DataReader reads data on Topic "${constructMap.topicName}".
+        ${envMap.POUND_CHAR} DataReader QoS is configured in USER_QOS_PROFILES.xml
+        reader = dds.DataReader(participant.implicit_subscriber, topic)
+
+        ${envMap.POUND_CHAR} Initialize samples_read to zero
+        samples_read = 0
+
+        ${envMap.POUND_CHAR} Associate a handler with the status condition. This will run when the
+        ${envMap.POUND_CHAR} condition is triggered, in the context of the dispatch call (see below)
+        ${envMap.POUND_CHAR} condition argument is not used
+        def condition_handler(_):
+            nonlocal samples_read
+            nonlocal reader
+            samples_read += ${constructMap.nativeCFQName}Subscriber.process_data(reader)
+
+        ${envMap.POUND_CHAR} Obtain the DataReader's Status Condition
+        status_condition = dds.StatusCondition(reader)
+
+        ${envMap.POUND_CHAR} Enable the "data available" status and set the handler.
+        status_condition.enabled_statuses = dds.StatusMask.DATA_AVAILABLE
+        status_condition.set_handler(condition_handler)
+
+        ${envMap.POUND_CHAR} Create a WaitSet and attach the StatusCondition
+        waitset = dds.WaitSet()
+        waitset += status_condition
+
+        while samples_read < sample_count:
+            ${envMap.POUND_CHAR} Catch control-C interrupt
+            try:
+                ${envMap.POUND_CHAR} Dispatch will call the handlers associated to the WaitSet conditions
+                ${envMap.POUND_CHAR} when they activate
+                print("Hello World subscriber sleeping for 1 seconds...")
+
+                waitset.dispatch(dds.Duration(1))  # Wait up to 1s each time
+            except KeyboardInterrupt:
+                break
+
+        print("preparing to shut down...")
+
+
+if __name__ == "__main__":
+    ${constructMap.nativeCFQName}Subscriber.run_subscriber(
+            domain_id=0,
+            sample_count=sys.maxsize)

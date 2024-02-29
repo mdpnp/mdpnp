@@ -1,0 +1,21 @@
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2021.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+${envMap.POUND_CHAR}ifndef ${envMap.inputFileNameMacro}_monitoring_id_h
+${envMap.POUND_CHAR}define ${envMap.inputFileNameMacro}_monitoring_id_h
+
+#*--*##foreach ($resourceId in $monitoringResourceIdList)
+${envMap.POUND_CHAR}define $resourceId.getFullyQualifiedName().replaceAll("::","_").replaceAll("DDS_Monitoring","RTI_MONITORING") \
+        $resourceId.getValueAsString()UL
+#*--*##end
+
+#*--*##foreach ($metricId in $monitoringMetricIdList)
+${envMap.POUND_CHAR}define $metricId.getFullyQualifiedName().replace("::","_").replaceAll("DDS_Monitoring","RTI_MONITORING") \
+        $metricId.getValueAsString()UL
+#*--*##end
+
+${envMap.POUND_CHAR}endif /* ${envMap.inputFileNameMacro}_monitoring_id_h */

@@ -40,10 +40,11 @@
 /*
   WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
-  This file was generated from .idl using "rtiddsgen".
-  The rtiddsgen tool is part of the RTI Connext distribution.
+  This file was generated from .idl 
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
   For more information, type 'rtiddsgen -help' at a command shell
-  or consult the RTI Connext manual.
+  or consult the Code Generator User's Manual.
 */
     
 #if ($constructMap.packageName)  
@@ -67,6 +68,9 @@ $element.getValue()
  * A sequence of $constructMap.name instances.
  */
 public final class $constructMap.typeSeqName extends LoanableSequence implements Copyable {
+    
+    private static final long serialVersionUID = ${constructMap.typeSeqserialVersionUID}L;
+    
     // -----------------------------------------------------------------------
     // Package Fields
     // -----------------------------------------------------------------------
@@ -118,7 +122,8 @@ public final class $constructMap.typeSeqName extends LoanableSequence implements
      * the <code>Sequence</code> is not of the expected type.
      * @see com.rti.dds.infrastructure.Copyable${envMap.POUND_CHAR}copy_from(java.lang.Object)
      */
-    public Object copy_from(Object src) {
+    @Override
+    public java.lang.Object copy_from(java.lang.Object src) {
         Sequence typedSrc = (Sequence) src;
         final int srcSize = typedSrc.size();
         final int origSize = size();

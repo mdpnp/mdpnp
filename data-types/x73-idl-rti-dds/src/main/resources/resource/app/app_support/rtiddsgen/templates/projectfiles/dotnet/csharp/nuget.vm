@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+     This file configures dotnet to load the Rti.ConnextDds package from your
+     RTI Connext installation.
+
+     You can add this package source globally using the dotnet CLI:
+
+         > dotnet nuget add source ${global.nddsHome}/lib/dotnet -n RTI
+
+     Without this NuGet.Config file or the global source, the Rti.ConnextDds
+     package is fetched by default from nuget.org.
+-->
+<configuration>
+    <packageSources>
+        <add key="local" value="${global.nddsHome}/lib/dotnet" />
+    </packageSources>
+</configuration>

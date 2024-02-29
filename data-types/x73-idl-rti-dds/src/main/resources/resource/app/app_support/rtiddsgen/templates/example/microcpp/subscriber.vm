@@ -1,0 +1,311 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+##2.2.3,23sep15,djs CODEGENII-481 Added iOS
+##2.2,03sep14,vmg CODEGENII-82 Added Android
+##2.2,30apr14,vmg CODEGENII-82 Adding smart architecture-based code generation
+##2.2,11jun14,eys PLATFORMS-147: Added Android support
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,28may13,ajm Adding constructMap node for the example type
+##10a,05ene12, ajm Upgrading to lola
+##10a,17oct11,ajm variable name changes acording to the emitters
+##10a,14oct11,jmt created 
+##========================================================================*/*#
+/*
+ * (c) Copyright, Real-Time Innovations, 2012.  All rights reserved.
+ * RTI grants Licensee a license to use, modify, compile, and create derivative
+ * works of the software solely for use with RTI Connext DDS. Licensee may
+ * redistribute copies of the software provided that all such copies are subject
+ * to this license. The software is provided "as is", with no warranty of any
+ * type, including any warranty for fitness for any purpose. RTI is under no
+ * obligation to maintain or support the software. RTI shall not be liable for
+ * any incidental or consequential damages arising out of the use or inability
+ * to use the software.
+ */
+
+${envMap.POUND_CHAR}include <stdio.h>
+${envMap.POUND_CHAR}include <stdlib.h>
+${envMap.POUND_CHAR}include <string.h>
+
+${envMap.POUND_CHAR}ifndef rti_me_cpp_hxx
+${envMap.POUND_CHAR}include "rti_me_cpp.hxx"
+${envMap.POUND_CHAR}endif
+${envMap.POUND_CHAR}include "wh_sm/wh_sm_history.h"
+${envMap.POUND_CHAR}include "rh_sm/rh_sm_history.h"
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Support.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Plugin.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Application.h"
+
+
+class ${constructMap.nativeFQName}ReaderListener : public DDSDataReaderListener
+{
+
+  public:
+
+    virtual void on_data_available(DDSDataReader *reader);
+};
+
+
+template <typename T>
+void take_and_print(typename T::DataReader* reader)
+{
+    DDS_ReturnCode_t retcode;
+    struct DDS_SampleInfo sample_info;
+    T *sample = NULL;
+
+    sample = T::TypeSupport::create_data();
+    if (sample == NULL)
+    {
+        printf("Failed sample initialize\n");
+        return;
+    }
+
+    retcode = reader->take_next_sample(*sample, sample_info);
+    while (retcode == DDS_RETCODE_OK)
+    {
+        if (sample_info.valid_data)
+        {
+            printf("\nValid sample received\n");
+            /* TODO read sample attributes here */
+        }
+        else
+        {
+            printf("\nSample received\n\tINVALID DATA\n");
+        }
+        retcode = reader->take_next_sample(*sample, sample_info);
+    }
+
+    T::TypeSupport::delete_data(sample);
+}
+
+void
+${constructMap.nativeFQName}ReaderListener::on_data_available(DDSDataReader * reader)
+{
+    ${constructMap.nativeFQName}DataReader *hw_reader = ${constructMap.nativeFQName}DataReader::narrow(reader);
+    take_and_print< ${constructMap.nativeFQName}>(hw_reader);
+}
+
+
+int
+subscriber_main_w_args(DDS_Long domain_id, char *udp_intf, char *peer,
+                       DDS_Long sleep_time, DDS_Long count)
+{
+    DDSSubscriber *subscriber = NULL;
+    DDSDataReader *datareader = NULL;
+    ${constructMap.nativeFQName}ReaderListener *listener  = new ${constructMap.nativeFQName}ReaderListener();
+    DDS_DataReaderQos dr_qos;
+    DDS_ReturnCode_t retcode;
+    Application *application = NULL;
+    RT_Registry_T *registry = NULL;
+
+
+    application = new Application();
+    if (application == NULL)
+    {
+        printf("failed Application new\n");
+        goto done;
+    }
+
+    retcode = application->initialize("subscriber", 
+                                      "publisher", 
+                                      domain_id,
+                                      udp_intf, 
+                                      peer, 
+                                      sleep_time, 
+                                      count);
+    if (retcode != DDS_RETCODE_OK)
+    {
+        printf("failed Application initialize\n");
+        goto done;
+    }
+
+    subscriber = application->participant->create_subscriber(
+                        DDS_SUBSCRIBER_QOS_DEFAULT,NULL,
+                        DDS_STATUS_MASK_NONE);
+    if (subscriber == NULL)
+    {
+        printf("subscriber == NULL\n");
+        goto done;
+    }
+
+    retcode = subscriber->get_default_datareader_qos(dr_qos);
+    if (retcode != DDS_RETCODE_OK)
+    {
+        printf("failed get_default_datareader_qos\n");
+        goto done;
+    }
+
+    dr_qos.resource_limits.max_samples = 32;
+    dr_qos.resource_limits.max_instances = 1;
+    dr_qos.resource_limits.max_samples_per_instance = 32;
+    /* if there are more remote writers, you need to increase these limits */
+    dr_qos.reader_resource_limits.max_remote_writers = 10;
+    dr_qos.reader_resource_limits.max_remote_writers_per_instance = 10;
+    dr_qos.history.depth = 32;
+
+    /* Reliability QoS */
+${envMap.POUND_CHAR}ifdef USE_RELIABLE_QOS
+    dr_qos.reliability.kind = DDS_RELIABLE_RELIABILITY_QOS;
+${envMap.POUND_CHAR}else
+    dr_qos.reliability.kind = DDS_BEST_EFFORT_RELIABILITY_QOS;
+${envMap.POUND_CHAR}endif
+
+    /* Only DDS_DATA_AVAILABLE_STATUS supported currently */
+    datareader = subscriber->create_datareader(
+                           application->topic,
+                           dr_qos,
+                           listener,
+                           DDS_DATA_AVAILABLE_STATUS);
+
+    if (datareader == NULL)
+    {
+        printf("datareader == NULL\n");
+        goto done;
+    }
+
+    retcode = application->enable();
+    if (retcode != DDS_RETCODE_OK)
+    {
+        printf("failed to enable application\n");
+        goto done;
+    }
+
+    if (application->count != 0)
+    {
+        printf("Running for %d seconds, press Ctrl-C to exit\n",
+               application->count);
+        OSAPI_Thread_sleep(application->count * 1000);
+    }
+    else
+    {
+        int sleep_loop_count =  (24 * 60 * 60) / 2000;
+        int sleep_loop_left = (24 * 60 * 60) % 2000;
+
+        printf("Running for 24 hours, press Ctrl-C to exit\n");
+
+        while (sleep_loop_count)
+        {
+            OSAPI_Thread_sleep(2000  * 1000); /* sleep is in ms */
+            --sleep_loop_count;
+        }
+
+        OSAPI_Thread_sleep(sleep_loop_left * 1000);
+    }
+
+    done:
+
+    if (application != NULL)
+    {
+        delete application;
+    }
+   
+    if (listener != NULL)
+    {
+        delete listener;
+    }
+
+    //DataReaderQos is automatically disposed by destructor
+
+    return 0;
+}
+
+${envMap.POUND_CHAR}if !(defined(RTI_VXWORKS) && !defined(__RTP__))
+int
+main(int argc, char **argv)
+{
+    DDS_Long i = 0;
+    DDS_Long domain_id = 0;
+    char *peer = NULL;
+    char *udp_intf = NULL;
+    DDS_Long sleep_time = 1000;
+    DDS_Long count = 0;
+
+    for (i = 1; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "-domain"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-domain <domain_id>\n");
+                return -1;
+            }
+            domain_id = strtol(argv[i], NULL, 0);
+        }
+        else if (!strcmp(argv[i], "-udp_intf"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-udp_intf <interface>\n");
+                return -1;
+            }
+            udp_intf = argv[i];
+        }
+        else if (!strcmp(argv[i], "-peer"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-peer <address>\n");
+                return -1;
+            }
+            peer = argv[i];
+        }
+        else if (!strcmp(argv[i], "-sleep"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-sleep_time <sleep_time>\n");
+                return -1;
+            }
+            sleep_time = strtol(argv[i], NULL, 0);
+        }
+        else if (!strcmp(argv[i], "-count"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-count <count>\n");
+                return -1;
+            }
+            count = strtol(argv[i], NULL, 0);
+        }
+        else if (!strcmp(argv[i], "-h"))
+        {
+            Application::help(argv[0]);
+            return 0;
+        }
+        else
+        {
+            printf("unknown option: %s\n", argv[i]);
+            return -1;
+        }
+    }
+
+    return subscriber_main_w_args(domain_id, udp_intf, peer, sleep_time, count);
+}
+${envMap.POUND_CHAR}elif defined(RTI_VXWORKS)
+int
+subscriber_main(void)
+{
+    /* Explicitly configure args below */
+    DDS_Long domain_id = 44;
+    char *peer = "10.10.65.103";
+    char *udp_intf = NULL;
+    DDS_Long sleep_time = 1000;
+    DDS_Long count = 0;
+
+    return subscriber_main_w_args(domain_id, udp_intf, peer, sleep_time, count);
+}
+${envMap.POUND_CHAR}endif

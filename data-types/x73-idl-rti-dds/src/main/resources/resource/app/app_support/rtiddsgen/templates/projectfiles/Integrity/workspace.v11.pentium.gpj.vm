@@ -1,0 +1,56 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.2,9jun14,vmg created
+##========================================================================
+#!gbuild
+macro __BSP_DIR=$__OS_DIR/${archMap.BSP}
+macro __BUILD_DIR=%expand_path(.)
+macro __OS_DIR= #[[#]]# place here the path to your integrity distribution
+#if(${nddshome})
+macro NDDSHOME= $nddshome
+#else
+macro NDDSHOME= #[[#]]# place here the path to your rti distribution
+#end
+primaryTarget=${archMap.primaryTarget}
+customization=$__OS_DIR/target/integrity.bod
+[Project]
+	-bsp ${archMap.BSP}
+	-G
+	:sourceDir=.
+	-os_dir $__OS_DIR
+	:outputDir=objs
+	-object_dir=objs
+	--discretionary_errors
+	-nounknownpragmawarn
+	--std
+	-nowantprototype
+#if($global.language.equals("C++11"))
+	--link_once_templates 
+	-tused
+#else   
+	-tnone
+#end    
+	-directive_dir=src
+	-DRTI_INTY
+	-integrate
+	-dynamic
+	-Isrc
+	:sourceDir=src
+#foreach($headersDirectory in ${headerDirectories})   
+	-I$headersDirectory
+	:sourceDir=$headersDirectory
+#end 
+    -L$(NDDSHOME)/lib/${global.architectureName}
+#foreach($projectName in ${projectNames})
+#buildProjectName()dd.gpj		[INTEGRITY Application]
+#end
+posix_shm_manager.gpj		[INTEGRITY Application]

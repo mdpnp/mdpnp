@@ -63,7 +63,13 @@
 
 int[] ordinals = ${constructMap.name}.getOrdinals();
 for (i=0;i<$constructMap.memberCount;i++) {
-        em[i]=new EnumMember(${constructMap.name}.valueOf(ordinals[i]).toString(),ordinals[i]);
+        ${constructMap.name} ordinal = ${constructMap.name}.valueOf(ordinals[i]);
+        if (ordinal != null) {
+             em[i]=new EnumMember(ordinal.toString(),ordinals[i]);
+        } else {
+             throw new IllegalStateException(
+                     "Unexpected null ordinal creating the typecode");
+        }
 }
 #end
 
@@ -119,7 +125,7 @@ for (i=0;i<$constructMap.memberCount;i++) {
 #*--*##if($constructMap.constructKind.equals("union"))
 new int[] {#foreach($element in $member.labelList)#*
 ------*##if($element.contains("default"))0x40000001#*
-------*##else #isUnionAux($element)#if($member.labelList.size()>$velocityCount),#end#end#end}#*
+------*##else #isUnionAux($element)#if($member.labelList.size()>$foreach.count),#end#end#end}#*
 ----*##else
 (short)-1#end#end##macro
 
@@ -129,7 +135,7 @@ new int[] {#foreach($element in $member.labelList)#*
 #if($constructMap.unionDiscriminatorMap.typeKind=="enum")#*
 *##set($enumName=$element.replace(".VALUE",""))${enumName}.ordinal()#*
 *##elseif($constructMap.unionDiscriminatorMap.typeName=="boolean")((${element})==true)?1:0#*
-*##else(int)($element)#end#end
+*##else($element)#end#end
 
 ##------------------------------------------------------------------
 
@@ -166,7 +172,7 @@ new int[] {#foreach($element in $member.labelList)#*
 ##------------------------------------------------------------------
 
 #macro(typeCodeArray $member)new TypeCode(new #*
-*#int[] {#foreach($element in $member.dimensionList)${element}#commaIfNeeded($velocityCount $member)#end},#end
+*#int[] {#foreach($element in $member.dimensionList)${element}#commaIfNeeded($foreach.count ${member.size()})#end},#end
 
 ##------------------------------------------------------------------
 
@@ -204,7 +210,7 @@ tc = TypeCodeFactory.TheTypeCodeFactory.create_#getconstructKind($constructMap)_
 
 #macro (getLastTypeCode $constructMap)
 #*--*##if($constructMap.constructKind.equals("valueType") || $constructMap.baseTypeFQName)VM_NONE.VALUE,#*
-------*##if($constructMap.baseTypeFQName)${constructMap.baseTypeFQName}TypeCode.VALUE,#else#* *#TypeCode.TC_NULL,#end#*
+------*##if($constructMap.baseTypeFQName)${constructMap.typeCodeBaseTypeFQName}TypeCode.VALUE,#else#* *#TypeCode.TC_NULL,#end#*
 ----*##elseif($constructMap.constructKind.equals("alias"))#typeCodeMember($constructMap.typeCodeFirstMember),#*
 ----*##elseif($constructMap.constructKind.equals("union"))#*
 ------*##if($constructMap.typeCodeUnionDiscriminatorMap.typeKind!="builtin")${constructMap.typeCodeUnionDiscriminatorMap.nativeTypeFQName}TypeCode.VALUE#*
@@ -271,9 +277,9 @@ AnnotationParameterValue.$member.defaultAnnotationParameterValue#*
 #*--*##elseif($member.typeKindResolved=="unsigned long long")
 new AnnotationParameterValue(new BigInteger("${member.defaultValue}"))#*
 #*--*##elseif($member.typeKindResolved=="boolean" || $member.typeKindResolved=="float" || $member.typeKindResolved=="double")
-new AnnotationParameterValue((${member.annotationCast})${member.defaultValue})#*
+new AnnotationParameterValue((${member.annotationCast}) (${member.defaultValue}))#*
 #*--*##else
-new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast})${member.defaultValue})#*
+new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${member.defaultValue}))#*
 #*--*##end
 #end
 ##-----------------------------------------------------------------------------
@@ -285,9 +291,9 @@ AnnotationParameterValue.$member.minAnnotationParameterValue#*
 #*--*##elseif($member.typeKindResolved=="unsigned long long")
 new AnnotationParameterValue(new BigInteger("${member.explicitMinValue}"))#*
 #*--*##elseif($member.typeKindResolved=="boolean" || $member.typeKindResolved=="float" || $member.typeKindResolved=="double")
-new AnnotationParameterValue((${member.annotationCast})${member.explicitMinValue})#*
+new AnnotationParameterValue((${member.annotationCast}) (${member.explicitMinValue}))#*
 #*--*##else
-new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast})${member.explicitMinValue})#*
+new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${member.explicitMinValue}))#*
 #*--*##end
 #end
 ##-----------------------------------------------------------------------------
@@ -299,9 +305,9 @@ AnnotationParameterValue.$member.maxAnnotationParameterValue#*
 #*--*##elseif($member.typeKindResolved=="unsigned long long")
 new AnnotationParameterValue(new BigInteger("${member.explicitMaxValue}"))#*
 #*--*##elseif($member.typeKindResolved=="boolean" || $member.typeKindResolved=="float" || $member.typeKindResolved=="double")
-new AnnotationParameterValue((${member.annotationCast})${member.explicitMaxValue})#*
+new AnnotationParameterValue((${member.annotationCast}) (${member.explicitMaxValue}))#*
 #*--*##else
-new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast})${member.explicitMaxValue})#*
+new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${member.explicitMaxValue}))#*
 #*--*##end
 #end
 ##-----------------------------------------------------------------------------

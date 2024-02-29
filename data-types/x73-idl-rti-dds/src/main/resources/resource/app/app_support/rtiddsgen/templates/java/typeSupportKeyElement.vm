@@ -36,9 +36,9 @@
 
     /* Fill in the key fields of the given instance sample based on the key.
      */
-    public void key_to_instance(Object endpoint_data,
-                                Object instance,
-                                Object key) {
+    public void key_to_instance(java.lang.Object endpoint_data,
+                                java.lang.Object instance,
+                                java.lang.Object key) {
         ${constructMap.name} typedDst
             = (${constructMap.name}) instance;
         ${constructMap.name} typedSrc
@@ -53,9 +53,9 @@
     /* Fill in the given key based on the key fields of the given instance
      * sample.
      */
-    public void instance_to_key(Object endpoint_data,
-                                Object key,
-                                Object instance) {
+    public void instance_to_key(java.lang.Object endpoint_data,
+                                java.lang.Object key,
+                                java.lang.Object instance) {
         ${constructMap.name} typedDst
             = (${constructMap.name})key;
         ${constructMap.name} typedSrc
@@ -69,11 +69,11 @@
 
 @Override 
 public void serialized_sample_to_keyhash(
-        Object endpoint_data,
+        java.lang.Object endpoint_data,
         CdrInputStream src,
         KeyHash_t keyhash,
         boolean include_encapsulation,
-        Object endpoint_plugin_qos)
+        java.lang.Object endpoint_plugin_qos)
     {
         int position = 0;
         CdrBuffer buffer = null;
@@ -89,7 +89,7 @@ public void serialized_sample_to_keyhash(
 #*--*##end  
 
         DefaultEndpointData endpointData = (DefaultEndpointData) endpoint_data;
-        Object sample = null;
+        java.lang.Object sample = null;
 
         sample = endpointData.get_sample();
 
@@ -104,9 +104,11 @@ public void serialized_sample_to_keyhash(
 
             position = src.resetAlignment();
         }
+
+        short encapsulation_id = src.getEncapsulationKind();
+        boolean xcdr1 = (encapsulation_id <= CdrEncapsulation.CDR_ENCAPSULATION_ID_PL_CDR_LE)? true: false;
+
 #if(!$constructMap.extensibility.equals("FINAL_EXTENSIBILITY") || $constructMap.hasOptionalMember)        
-short encapsulation_id = src.getEncapsulationKind();
-boolean xcdr1 = (encapsulation_id <= CdrEncapsulation.CDR_ENCAPSULATION_ID_PL_CDR_LE)? true: false;
 #*--*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY") || $constructMap.hasOptionalMember)  
             buffer = src.getBuffer();
 #*--*##elseif($constructMap.extensibility.equals("EXTENSIBLE_EXTENSIBILITY") && ($constructMap.constructKind != "enum")

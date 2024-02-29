@@ -340,22 +340,24 @@ public abstract class AbstractDevice {
         return holder;
     }
 
+    @SuppressWarnings("cast")
     protected void numericSample(InstanceHolder<Numeric> holder, float newValue, DeviceClock.Reading time) {
         holder.data.value = newValue;
         if(time.hasDeviceTime()) {
             Time_t t = DomainClock.toDDSTime(time.getDeviceTime());
-            holder.data.device_time.sec = t.sec;
-            holder.data.device_time.nanosec = t.nanosec;
+            holder.data.device_time.sec = (int)(t.sec);
+            holder.data.device_time.nanosec = (int)t.nanosec;
         } else {
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
         
         Time_t t = DomainClock.toDDSTime(time.getTime());
-        holder.data.presentation_time.sec = t.sec;
-        holder.data.presentation_time.nanosec = t.nanosec;
+        holder.data.presentation_time.sec = (int)(t.sec);
+        holder.data.presentation_time.nanosec = (int)(t.nanosec);
         
         numericDataWriter.write(holder.data, holder.handle);
+/*
         if(numericStatement!=null) {
 	        try {
 				numericStatement.setInt(1, t.sec);
@@ -370,6 +372,7 @@ public abstract class AbstractDevice {
 				log.warn("Failed to execute numeric statement - "+e.getMessage());
 			}
         }
+*/
         if(averagesByNumeric.containsKey(holder.data.metric_id)) {
         	averagesByNumeric.get(holder.data.metric_id).add(newValue);
         } else {
@@ -637,8 +640,8 @@ public abstract class AbstractDevice {
 
         if (deviceTimestamp.hasDeviceTime()) {
             Time_t t = DomainClock.toDDSTime(deviceTimestamp.getDeviceTime());
-            holder.data.device_time.sec = t.sec;
-            holder.data.device_time.nanosec = t.nanosec;
+            holder.data.device_time.sec = (int)(t.sec);
+            holder.data.device_time.nanosec = (int)(t.nanosec);
         } else {
 
             holder.data.device_time.sec = 0;

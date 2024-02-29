@@ -1,0 +1,29 @@
+Welcome to your first Connext DDS example! 
+
+This example was generated for architecture ${global.architectureName}, using the
+data type ${exampleType} from ${global.idlFileName}.idl.
+This example builds two applications, named 
+${global.idlFileName}_idl_file-${exampleType}${global.pubSuffix} and
+${global.idlFileName}_idl_file-${exampleType}${global.subSuffix}.
+
+Ensure that gnat is in your path.  If not, add it:
+ 
+> export PATH=<path to gnat>/gnat-18.2/bin:$PATH
+ 
+You must also set environment variables NDDSHOME and ADA_PROJECT_PATH:
+ 
+> export NDDSHOME=${global.nddsHome}
+> export ADA_PROJECT_PATH=$NDDSHOME/lib/gnat
+ 
+From your command shell, type:
+> make -f make/makefile_${exampleType}_${global.architectureName}
+This command will build a release executable.
+ 
+To build a debug version instead:
+> make -f make/makefile_${exampleType}_${global.architectureName} DEBUG=1
+
+To Run This Example:
+====================
+You can run the publishing or subscribing application by running:
+> samples/bin/${global.idlFileName}_idl_file-${exampleType}${global.pubSuffix} <domain_id> <sample_count>
+> samples/bin/${global.idlFileName}_idl_file-${exampleType}${global.subSuffix} <domain_id> <sample_count>

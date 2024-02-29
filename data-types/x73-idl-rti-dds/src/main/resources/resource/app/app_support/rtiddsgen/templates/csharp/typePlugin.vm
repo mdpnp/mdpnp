@@ -1,0 +1,252 @@
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+using System;
+using System.Runtime.InteropServices;
+using Omg.Types;
+using Omg.Types.Dynamic;
+using Rti.Types;
+using Rti.Dds.Core;
+using Rti.Types.Dynamic;
+using Rti.Dds.NativeInterface.TypePlugin;
+
+
+#foreach($node in $constructMapList)
+#*--*##if($node.constructKind.equals("directive"))
+#*----*##handleCopyDirective($node.directiveKind $node.value false)
+#*--*##end
+#*--*##if($node.constructKind.equals("module"))
+namespace $node.name
+{
+#*--*##elseif($node.constructKind.equals("moduleClose"))
+} // namespace $node.name
+#*--*##elseif($node.constructKind.equals("struct") || $node.constructKind.equals("valueType") || $node.constructKind.equals("alias"))
+namespace Implementation
+{
+#*---------------------------Unmamaged struct---------------------------*#
+public struct ${node.name}Unmanaged : Rti.Dds.NativeInterface.TypePlugin.INativeTopicType<${node.nativeFQName}>
+    {
+#*----*##setAliasMemberName($node)
+#*----*##if($node.baseTypeFQName)
+        private $node.baseNativeTypeFQNameUnmanaged parent;
+#*----*##end
+
+        #declareUnmanagedMembers($node)
+
+        #generateDestroy($node)
+
+        public void FromNative(${node.nativeFQName} sample, bool keysOnly = false)
+        {
+
+#*----*##set($keyGenerated = 0)
+#*----*##set($noKeyGenerated = 0)
+#*----*##foreach ($number in [1..2])
+#*------*##foreach($member in $node.memberFieldMapList)
+#*--------*##if(${member.directive} 
+                && ((${member.associatedIsKey} && $number == 1)
+                || (!${member.associatedIsKey} && $number == 2)))
+#*----------*##handleCopyDirective($member.directive $member.value false)
+#*--------*##elseif(!${member.directive})
+#*----------*##if($member.isKey && $number == 1)
+#*------------*##set($keyGenerated = 1)
+#*----------*##elseif(!$member.isKey && $number == 1)
+#*------------*##set($noKeyGenerated = 1)
+#*----------*##end
+#*----------*##if(($member.isKey && $number == 1) || (!$member.isKey && $number == 2))
+#*------------*##memberFromNative($member)
+#*----------*##end
+#*--------*##end
+#*------*##end
+#*------*##if($number == 1)
+#*--------*##if($node.hasKeyBaseType)
+            parent.FromNative(sample, keysOnly);
+#*--------*##end
+#*--------*##if(($keyGenerated == 1 || ($node.baseTypeFQName && $node.hasKeyBaseType))
+                                 && ($noKeyGenerated ==1 || ($node.baseTypeFQName && !$node.hasKeyBaseType)))
+if (keysOnly)
+{
+        return;
+}
+#*--------*##end
+#*--------*##if($node.baseTypeFQName && !$node.hasKeyBaseType)
+            parent.FromNative(sample, keysOnly);
+#*--------*##end
+#*------*##end
+#*----*##end
+        }
+
+        public void Initialize(bool allocatePointers = true, bool allocateMemory = true)
+        {
+#*----*##if($node.baseTypeFQName)
+            parent.Initialize(allocatePointers, allocateMemory);
+#*----*##end
+#*----*##generateInitialize($node)
+        }
+
+        public void ToNative(${node.nativeFQName} sample, bool keysOnly = false)
+        {
+#*----*##set($keyGenerated = 0)
+#*----*##set($noKeyGenerated = 0)
+#*----*##foreach ($number in [1..2])
+#*------*##foreach($member in $node.memberFieldMapList)
+#*--------*##if($member.directive 
+                && ((${member.associatedIsKey} && $number == 1)
+                || (!${member.associatedIsKey} && $number == 2)))
+#*----------*##handleCopyDirective($member.directive $member.value false)
+#*--------*##elseif(!${member.directive})
+#*----------*##if($member.isKey && $number == 1)
+#*------------*##set($keyGenerated = 1)
+#*----------*##elseif(!$member.isKey && $number == 1)
+#*------------*##set($noKeyGenerated = 1)
+#*----------*##end
+#*----------*##if(($member.isKey && $number == 1) || (!$member.isKey && $number == 2))
+#*------------*##memberToNative($member)
+#*----------*##end
+#*--------*##end
+#*------*##end
+#*------*##if($number == 1)
+#*--------*##if($node.hasKeyBaseType)
+            parent.ToNative(sample, keysOnly);
+#*--------*##end
+#*--------*##if(($keyGenerated == 1 || ($node.baseTypeFQName && $node.hasKeyBaseType))
+                                 && ($noKeyGenerated ==1 || ($node.baseTypeFQName && !$node.hasKeyBaseType)))
+                if (keysOnly)
+                {
+                        return;
+                }
+#*--------*##end
+#*--------*##if($node.baseTypeFQName && !$node.hasKeyBaseType)
+            parent.ToNative(sample, keysOnly);
+#*--------*##end
+#*------*##end
+#*----*##end
+        }
+    }
+
+#*---------------------------Type Plugin and type support----------------------*#
+#*----*##generateTypePlugin($node false)
+}##Close Namespace
+
+#*----*##generateTypeSupport($node)
+
+#*--*##elseif($node.constructKind.equals("enum"))
+namespace Implementation
+{
+internal class ${node.name}Plugin : Rti.Dds.NativeInterface.TypePlugin.EnumTypePlugin
+{
+        public ${node.name}Plugin() : base(CreateDynamicType(isPublic: false))
+        {
+        }
+
+        internal static DynamicType CreateDynamicType(bool isPublic = true)
+        {
+            var dtf = ServiceEnvironment.Instance.Internal.GetTypeFactory(isPublic);
+            return dtf.BuildEnum()
+                .WithName("${node.typeCodeFQName}")
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value false)
+#*------*##else
+        .AddMember(new EnumMember("${member.typecodeName}", $member.ordinal))
+#*------*##end
+#*----*##end
+        .WithExtensibility(#getExtensibilityEnum($node))
+        .Create();
+        }
+}
+}
+
+#generateTypeSupport($node)
+
+#*--*##elseif($node.constructKind.equals("union"))
+namespace Implementation
+{
+#*---------------------------Unmamaged struct---------------------------*#
+    public struct ${node.name}Unmanaged : Rti.Dds.NativeInterface.TypePlugin.INativeTopicType<${node.nativeFQName}>
+    {
+#*----*##assignMemberVariables($node $node.unionDiscriminatorMap)
+
+        private $node.unionDiscriminatorMap.nativeTypeFQNameUnmanaged $node.unionDiscriminatorMap.name;
+
+        #declareUnmanagedMembers($node)
+
+        #generateDestroy ($node)
+
+        public void FromNative(${node.nativeFQName} sample, bool keysOnly = false)
+        {
+            switch ($node.unionDiscriminatorMap.discriminatorFromNative)
+            {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##initCases($node $member)
+#*------*##if($member.typeKind.equals("user") 
+                || $member.seqSize 
+                || $member.arrayTotalSize)
+                if(#*
+#*--------*##foreach($label in $member.labelList)
+sample.Discriminator != $node.unionDiscriminatorMap.discriminatorFromNative#if($foreach.hasNext) && #else)#end
+#*--------*##end
+
+{
+#*--------*##if($member.labelList.size() > 1 || $member.labelList.contains("default"))
+#*----------*##if($member.arrayTotalSize)
+                        var _temporary${member.name} = #initializeMember($member, false);
+                        sample.Set${member.name}(_temporary${member.name}, $node.unionDiscriminatorMap.discriminatorFromNative);
+#*----------*##else
+                        sample.Set${member.name}(#initializeMember($member, false), $node.unionDiscriminatorMap.discriminatorFromNative);
+#*----------*##end
+#*--------*##else
+                        sample.$member.name = #initializeMember($member, false);
+#*--------*##end
+                }
+#*--------*##memberFromNative($member)
+#*------*##elseif(!$member.directive)
+#*--------*##if($member.labelList.size() > 1)
+                    sample.Set${member.name}($member.name, $node.unionDiscriminatorMap.discriminatorFromNative);
+#*--------*##else
+#*----------*##memberFromNative($member)
+#*--------*##end
+#*------*##end
+                    break;
+#*----*##end
+            }
+        }
+
+        public void Initialize(bool allocatePointers = true, bool allocateMemory = true)
+        {
+            $node.unionDiscriminatorMap.name = $node.unionDiscriminatorMap.initializeDiscriminator;
+#*----*##generateInitialize($node)
+        }
+
+        public void ToNative(${node.nativeFQName} sample, bool keysOnly = false)
+        {
+            $node.unionDiscriminatorMap.name = $node.unionDiscriminatorMap.discriminatorToNative;
+            switch ($node.unionDiscriminatorMap.fromNative)
+            {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##initCases($node $member)
+#*------*##if(!$member.directive)
+#*------*##memberToNative($member)
+                    break;
+#*------*##end
+#*----*##end
+            }
+        }
+    }
+
+#*---------------------------Type Plugin and type support----------------------*#
+#*----*##generateTypePlugin($node true)
+}##Close Namespace
+
+#*----*##generateTypeSupport($node)
+
+#*--*##end
+
+#end
+

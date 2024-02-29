@@ -1,0 +1,1125 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+##2.0,19sep14,ajm Fixed CODEGENII-378 Derived valueType without members 
+##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##2.0,12sep13,ajm CODEGENII-92: Support for optional members
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,02Apr13,ajm Adding support for XTypes in .Net
+##10a,26mar13,ajm Adding support for unions in .Net
+##10a,19mar13,ajm Adding support for typedefs and const in .Net
+##10a,18mar13,ajm created 
+##
+##******************************************************************************
+## Macros to define Typecodes
+##******************************************************************************
+##------------------------------------------------------------------------------
+## Macros to define the typeCode
+##------------------------------------------------------------------------------
+
+#macro(typeCodeDeclaration $node $language)
+#*--*##if($language.equals("cpp11stl"))
+static DDS_TypeCode * get()
+{
+    using namespace ::rti::topic::interpreter;
+    
+#*--*##else
+DDS_TypeCode * ${node.nativeFQNameInModule}_get_typecode(void)
+{
+#*--*##end
+    static RTIBool is_initialized = RTI_FALSE;
+#*--*##if($node.constructKind=="union")   
+#*----*##unionTypeCodeLabels($node)
+#*--*##end
+#typeCodeArraydimensionLists($node.typeCodeMemberFieldMapList)
+
+#declareCollectionTypeCodes($node.typeCodeMemberFieldMapList)
+
+#*--*##if(!$language.equals("cpp11stl"))
+#*----*##declareWStringVariablesForAnnotations($node)
+#*--*##end
+
+#*--*##if($node.constructKind!="alias" && $node.memberCount>0)
+    static DDS_TypeCode_Member ${node.nativeFQNameInModule}_g_tc_members[$node.memberCount]=
+    {
+
+#*----*##typeCodeMembers($node.typeCodeMemberFieldMapList $node $envMap.language)
+    };
+#*--*##end
+
+#*--*##typeCode ($node)
+
+    if (is_initialized) {
+        return &${node.nativeFQNameInModule}_g_tc;
+    }
+
+    is_initialized = RTI_TRUE;
+
+#*--*##assignCollectionTypeCodes($node.typeCodeMemberFieldMapList)
+
+#*--*##initAnnotationsForType($node)
+
+#*--*# #if($node.constructKind!="enum")
+#*----*##initArrayAndSeqElementTypeCodes($node)
+#*----*##initMemberTypeCode($node)
+
+/* Initialize the values for member annotations. */
+#*----*##initAnnotationsForMember($node $language)
+#*--*##else
+#*----*##initAnnotationsForEnum($node)
+#*--*##end
+
+#*--*##if($node.constructKind=="valueType" || ($node.constructKind=="struct" && $node.baseTypeFQName))
+    ${node.nativeFQNameInModule}_g_tc._data._typeCode = (RTICdrTypeCode *)#*
+#*----*##if($node.baseTypeFQName)#*
+#*------*##if($language.equals("cpp11stl"))#*
+#*--------*##if($node.hasAliasBaseType)#*
+#*--*#&::rti::topic::dynamic_type< ${node.typeCodeBaseTypeFQName}${aliasTag} >::get().native();#*
+#*--------*##else#*
+#*--*#&::rti::topic::dynamic_type< ${node.typeCodeBaseTypeFQName} >::get().native();#*
+#*--------*##end#*
+#*------*##else#*
+#*--*#${node.typeCodeBaseTypeFQName}_get_typecode();#*
+#*------*##end#*
+#*----*##else#*
+#*--*# &DDS_g_tc_null; #*
+#*----*##end /* Base class */
+#*--*##end 
+
+#*------*##if($node.constructKind=="union")
+    /* Discriminator type code */
+    ${node.nativeFQNameInModule}_g_tc._data._typeCode = #getTypeCodeReference(${node.typeCodeUnionDiscriminatorMap})
+#*------*##end  
+
+#*---*##if ($node.interpreted=="true" 
+    && !($node.languageBinding.equals("FLAT_DATA") 
+            && ($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || ($node.constructKind=="alias"))))
+#*----*##if($language.equals("cpp11stl"))
+    ${node.nativeFQNameInModule}_g_tc._data._sampleAccessInfo = sample_access_info();
+    ${node.nativeFQNameInModule}_g_tc._data._typePlugin = type_plugin_info();    
+#*----*##elseif($language.equals("CppCli"))
+    ${node.nativeFQNameInModule}_g_tc._data._sampleAccessInfo = NULL;
+#*----*##else
+    ${node.nativeFQNameInModule}_g_tc._data._sampleAccessInfo =
+        ${node.nativeFQNameInModule}_get_sample_access_info();
+    ${node.nativeFQNameInModule}_g_tc._data._typePlugin =
+        ${node.nativeFQNameInModule}_get_type_plugin_info();    
+#*----*##end
+#*---*##else
+    ${node.nativeFQNameInModule}_g_tc._data._sampleAccessInfo = NULL;
+    ${node.nativeFQNameInModule}_g_tc._data._typePlugin = NULL;
+#*---*##end
+
+    return &${node.nativeFQNameInModule}_g_tc;
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macros to define the annotations in members and unions
+##------------------------------------------------------------------------------
+
+#macro(declareWStringVariablesForAnnotations $node)
+#*--*##if($node.memberCount > 0)
+#*----*##foreach($member in $node.typeCodeMemberFieldMapList)
+#*------*##if(!$member.directive)
+#*--------*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING" && !${member.resolvedTypePointer} && !${member.resolvedTypeOptional})
+#*----------*#static const DDS_Wchar ${member.nativeFQNameInModule}#*
+                *#_default_wstring_value[] = ${member.defaultValue};
+#*--------*##end
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+#macro(initAnnotationsForType $node)
+${node.nativeFQNameInModule}_g_tc._data._annotations._allowedDataRepresentationMask = $node.dataRepresentationMask;
+#*--*##if ($node.isResource)
+${node.nativeFQNameInModule}_g_tc._data._annotations._resource.isSet = RTI_XCDR_TRUE;
+${node.nativeFQNameInModule}_g_tc._data._annotations._resource.className = (char *) "${node.resourceName}";
+#*--*##end
+#*--*##if ($node.isRootResource)
+${node.nativeFQNameInModule}_g_tc._data._annotations._resource.isRoot = RTI_XCDR_TRUE;
+#*--*##end
+#*--*##if ($node.resourceOwner)
+${node.nativeFQNameInModule}_g_tc._data._annotations._resource.owner = (char *) "${node.resourceOwner}";
+#*--*##end
+#*--*##if($node.isObservable)
+${node.nativeFQNameInModule}_g_tc._data._annotations._observable.isSet = RTI_XCDR_TRUE;
+${node.nativeFQNameInModule}_g_tc._data._annotations._observable.distributionKind = #getObservableDistributionKind($node)
+#*--*##end
+#end
+
+#macro(getObservableDistributionKind $node)
+#*--*##if($node.distributionKind.equals("ON_CHANGE"))
+RTI_XCDR_OBSERVABLE_ON_CHANGE_DISTRIBUTION_KIND;
+#*--*##else
+#*----*##if($node.distributionKind.equals("PERIODIC"))
+RTI_XCDR_OBSERVABLE_PERIODIC_DISTRIBUTION_KIND;
+#*----*##else
+#* Unknown becomes unspecified *#
+RTI_XCDR_OBSERVABLE_UNSPECIFIED_DISTRIBUTION_KIND;
+#*----*##end
+#*--*##end
+#end
+
+#macro(initAnnotationsForMember $struct $language)
+#*--*##set($count=0)
+#*--*##foreach($member in $struct.typeCodeMemberFieldMapList)
+#*----*##if(!$member.directive)
+#*------*##if($struct.constructKind == "alias")
+#*--------*##set($elementName = "${member.parentNativeFQNameInModule}_g_tc._data")
+#*------*##else
+#*--------*##set($elementName = "${member.parentNativeFQNameInModule}_g_tc_members[${count}]")
+#*------*##end
+#*------*##if($member.tcKind != "RTI_XCDR_TK_NULL")
+#*--------*##if(!$member.resolvedTypePointer && !$member.resolvedTypeOptional)
+#*----------*#${elementName}._annotations._defaultValue._d = ${member.tcKind};
+#*----------*#${elementName}._annotations._defaultValue._u.${member.annotationsUname} = #*
+#*----------*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING")#*
+#*------------*##if($language.equals("cpp11stl"))#*
+#*--------------*#(DDS_Wchar *) ${member.defaultValue};#*
+#*------------*##else#*
+#*--------------*#(DDS_Wchar *) ${member.nativeFQNameInModule}_default_wstring_value;#*
+#*------------*##end#*
+#*----------*##elseif(${member.tcKind} == "RTI_XCDR_TK_STRING")#*
+#*------------*#(DDS_Char *) ${member.defaultValue};
+#*----------*##else#*
+#*------------*#${member.defaultValue};
+#*----------*##end
+#*--------*##end
+#*--------*##if($member.minValue)
+#*----------*#${elementName}._annotations._minValue._d = ${member.tcKind};
+#*----------*#${elementName}._annotations._minValue._u.${member.annotationsUname} = #*
+#*----------*#${member.minValue};
+#*--------*##end
+#*--------*##if($member.maxValue)
+#*----------*#${elementName}._annotations._maxValue._d = ${member.tcKind};
+#*----------*#${elementName}._annotations._maxValue._u.${member.annotationsUname} = #*
+#*----------*#${member.maxValue};
+#*--------*##end
+#*------*##end
+#*------*##if($member.isObservable)
+#*--------*#${elementName}._annotations._observable.isSet = RTI_XCDR_TRUE;
+#*--------*#${elementName}._annotations._observable.distributionKind = #getObservableDistributionKind($member)
+#*------*##end
+#*------*##if($member.nonSerialized)
+#*--------*#${elementName}._annotations._isSerializable = RTI_XCDR_FALSE;
+#*------*##end
+#*------*##set($count = $count +1)
+#*----*##end
+#*--*##end
+#end
+
+#macro(initAnnotationsForEnum $node)
+#*--*##if(${node.explicitDefaultValue} && !$member.resolvedTypePointer && !$member.resolvedTypeOptional)
+#*----*#/* Initialize the values for annotations. */
+#*----*#${node.nativeFQNameInModule}_g_tc._data._annotations.#*
+        *#_defaultValue._d = RTI_XCDR_TK_ENUM;
+#*----*#${node.nativeFQNameInModule}_g_tc._data._annotations.#*
+        *#_defaultValue._u.long_value = ${node.explicitDefaultValue};
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macros to define the array dimensionLists
+##------------------------------------------------------------------------------
+
+#macro(typeCodeArraydimensionLists $typeCodeMemberFieldMapList)
+#*--*##foreach($member in $typeCodeMemberFieldMapList)
+#*----*##if(($member.dimensionList)&&($member.dimensionList.size()> 1))
+static DDS_UnsignedLong $member.typeCodeDimension [$member.dimensionList.size()]#*
+*# = {#arraydimensionListWithCommaIfNeeded($member.dimensionList)} ;
+#*----*##end
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macros to define Type Code
+##------------------------------------------------------------------------------
+
+#macro(declareCollectionTypeCodes $typeCodeMemberFieldMapList)
+#*--*##foreach($member in $typeCodeMemberFieldMapList)
+#*---*##if($member.directive)
+#*---*##copyDirectiveNoDeclaration($member)
+#*---*##else
+#*------*##declareStringTypeCode($member)
+#*------*##declareSequenceTypeCode($member)
+#*------*##declareArrayTypeCode($member )
+#*----*##end
+#*--*##end
+#end
+
+## -- In modern C++ we need to assign the TypeCode after the declaration
+## -- to work around a limitation in Visual Studio 2010 and 2012 that
+## -- restricts the number of static variables it can initialize in a function
+## -- to 31 (see https://msdn.microsoft.com/en-us/library/93c02kfe(v=vs.100).aspx)
+## -- Initializations via an initializer (TC for arrays) do not count toward 
+## -- this limit.
+#macro(assignCollectionTypeCodes $typeCodeMemberFieldMapList)
+#*--*##if($language.equals("cpp11stl"))
+#*----*##foreach($member in $typeCodeMemberFieldMapList)
+#*------*##if(!$member.directive)
+#*--------*##assignStringTypeCode($member)
+#*--------*##assignSequenceTypeCode($member)
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macros to define String Type Code
+##------------------------------------------------------------------------------
+#macro(declareStringTypeCode $member)
+#*--*##if($member.typeName.equals("string"))
+#*----*##if($language.equals("cpp11stl"))
+static DDS_TypeCode $member.typeCode;
+#*----*##else
+#*------*##if(($language.equals("Cpp") || $language.equals("C")) && $envMap.stringIsObject)
+#setStringObjectTypeCode($member)
+#*------*##else
+static DDS_TypeCode $member.typeCode = DDS_INITIALIZE_STRING_TYPECODE(#getStrSize($member, "typeCode"));
+#*------*##end
+#*----*##end
+#*--*##elseif($member.typeName.equals("wstring"))
+#*----*##if($language.equals("cpp11stl"))
+static DDS_TypeCode $member.typeCode;
+#*----*##else
+static DDS_TypeCode $member.typeCode = DDS_INITIALIZE_WSTRING_TYPECODE(#getStrSize($member, "typeCode"));
+#*----*##end
+#*--*##end
+#end
+
+#macro(assignStringTypeCode $member)
+#*--*##if($member.typeName.equals("string"))
+$member.typeCode = initialize_string_typecode(#getStrSize($member, "typeCode"));
+#*--*##elseif($member.typeName.equals("wstring"))
+$member.typeCode = initialize_wstring_typecode(#getStrSize($member, "typeCode"));
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macros to define Array Type Code
+##------------------------------------------------------------------------------
+#macro(declareArrayTypeCode $member)
+#*--*##if($member.dimensionList)
+static DDS_TypeCode $member.typeCodeArray =#*
+*#DDS_INITIALIZE_ARRAY_TYPECODE($member.dimensionList.size(),$member.dimensionList.get(0),#*
+*##if($member.dimensionList.size()> 1)$member.typeCodeDimension#else NULL#end,NULL);
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macros to define Sequence Type Code
+##------------------------------------------------------------------------------
+#macro(declareSequenceTypeCode $member)
+#*--*##if($member.seqSize)
+#*----*##if($language.equals("cpp11stl") && !$node.languageBinding.equals("FLAT_DATA"))
+## Initialization happens in assignSequenceTypeCode
+static DDS_TypeCode $member.typeCodeSeq;
+#*----*##else
+static DDS_TypeCode $member.typeCodeSeq = DDS_INITIALIZE_SEQUENCE_TYPECODE(#getSeqSize($member,"typeCode"),NULL);
+#*----*##end
+#*--*##end
+#end
+
+#macro(assignSequenceTypeCode $member)
+#*--*##if($member.seqSize)
+#*----*##if(!$node.languageBinding.equals("FLAT_DATA"))
+$member.typeCodeSeq = initialize_sequence_typecode< $member.nativeTypeSeqFQName >(#getSeqSize($member,"typeCode"));
+#*--*##end
+#*----*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to define the labels of a union
+##------------------------------------------------------------------------------
+
+#macro(unionTypeCodeLabels $node)
+#*--*##foreach($member in $node.typeCodeMemberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyDirectiveNoDeclaration($member)
+#*----*##elseif($member.labelList.size()>1)
+static DDS_Long ${node.nativeFQNameInModule}_g_tc_${member.name}_labels[$member.labelList.size()] #*
+*#= {#foreach($l in $member.labelList)#*
+*##if($l=="(default)" || $l=="default")RTI_CDR_TYPE_CODE_UNION_DEFAULT_LABEL#else(DDS_Long)$l#end#commaIfNeeded($foreach.count ${member.labelList.size()})#end};
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to intialize the arrays and sequences 
+##------------------------------------------------------------------------------
+
+#macro(initArrayAndSeqElementTypeCodes $struct)
+#*--*##foreach($member in $struct.typeCodeMemberFieldMapList)
+#*----*##if($member.seqSize) 
+${member.typeCodeSeq}._data._typeCode = #getTypeCodeBasicReference ($member)
+#*-----*##if ($node.interpreted=="true" && 
+              !($node.languageBinding.equals("FLAT_DATA") 
+                  && ($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || ($node.constructKind=="alias"))))
+#*--------*##if(!$language.equals("cpp11stl"))
+#*----------*##if($language.equals("Cpp") && $envMap.allocateWithNew)
+#*------------*##if($member.typeKind=="user")
+${member.typeCodeSeq}._data._sampleAccessInfo = ${member.seqSampleAccessInfo};
+#*------------*##else
+${member.typeCodeSeq}._data._sampleAccessInfo = &${member.seqSampleAccessInfo};
+#*------------*##end
+#*----------*##else
+${member.typeCodeSeq}._data._sampleAccessInfo = &DDS_g_sai_seq;
+#*----------*##end
+#*--------*##end
+#*------*##end
+#*----*##end
+#*----*##if($member.dimensionList && $member.seqSize)
+${member.typeCodeArray}._data._typeCode =(RTICdrTypeCode *)& $member.typeCodeSeq;
+#elseif($member.dimensionList)
+${member.typeCodeArray}._data._typeCode =#getTypeCodeBasicReference ($member)
+#*----*##end
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to intialize the type code of all variables 
+##------------------------------------------------------------------------------
+
+#macro(initMemberTypeCode $struct)
+#set ($count=0)
+#*--*##foreach($member in $struct.typeCodeMemberFieldMapList)
+#*---*##if($member.directive)
+#*---*##copyDirectiveNoDeclaration($member)
+#*---*##else
+#*------*##if($struct.constructKind=="alias")#*
+--------*#    ${struct.nativeFQNameInModule}_g_tc._data#*
+--------*#._typeCode =  #getTypeCodeReference($member)#*
+--------*##else#*
+----------*#    ${struct.nativeFQNameInModule}_g_tc_#*
+--------*#members[${count}]._representation._typeCode = #getTypeCodeReference($member)#*
+---------*##set($count = $count +1)#*
+------*##end
+#*---*##end
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to intialize the TypeCode
+##------------------------------------------------------------------------------
+
+#macro(getTypeCodeReference $member)
+#*--*##if($member.dimensionList)
+(RTICdrTypeCode *)& $member.typeCodeArray;
+#*--*##elseif($member.seqSize)
+(RTICdrTypeCode *)& $member.typeCodeSeq;
+#*--*##else
+#getTypeCodeBasicReference($member)
+#*--*##end
+#end
+
+#macro (getTypeCodeBasicReference $member)
+#*----*##if($member.typeKind=="user")
+(RTICdrTypeCode *)$member.typeCode;#*
+----*##else
+(RTICdrTypeCode *)&$member.typeCode;#*
+#*----*##end
+
+#end
+
+##------------------------------------------------------------------------------
+## Macro to define the Variables
+##------------------------------------------------------------------------------
+
+#macro(typeCodeMembers $typeCodeMemberFieldMapList $node $language)
+#*--*##set($numMember=0) #* Used for counting member position for XTypes*#
+#*--*##foreach($member in $typeCodeMemberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##set($numMember = $numMember +1)
+        {
+            (char *)"$member.typecodeName",/* Member name */
+            {
+                #if($member.id)$member.id,/* Representation ID */#*
+--------------*##else 0, /* Ignored */#end
+
+                #if($member.isPointer)DDS_BOOLEAN_TRUE#*
+--------------*##else DDS_BOOLEAN_FALSE#end,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+#*------*##if($node.constructKind=="enum")       
+#*--------*##if($language.equals("CppCli"))#*
+*#             (RTICdrLong)$member.nativeFQName#*
+#*--------*##elseif ($language.equals("cpp11stl"))#* 
+*#             static_cast<int>($member.nativeFQName)#*
+#*--------*##else#*
+*#             $member.nativeFQNameInModule#*
+----------*##end, 
+#*------*##else            
+            0, /* Ignored */
+#*------*##end 
+#*------*##if($node.constructKind=="union")
+            $member.labelList.size(), /* Number of labels */
+#*------*##else            
+            0, /* Ignored */
+#*------*##end            
+#*------*##if ($node.constructKind=="union")
+#*--------*##if ($member.labelList.get(0) == "(default)" 
+                    || ($language.equals("cpp11stl") && $member.labelList.get(0) =="default"))
+            RTI_CDR_TYPE_CODE_UNION_DEFAULT_LABEL, /* First label */
+#*--------*##else
+             #if($language.equals("CppCli"))#*
+            *# static_cast<RTICdrLong>($member.labelList.get(0))#else #if($language.equals("cpp11stl"))static_cast<int>#end($member.labelList.get(0))#end,
+#*--------*##end                        
+#*------*##else           
+            0, /* Ignored */
+#*------*##end 
+#*------*##if($node.constructKind=="union")
+#*--------*##if($member.labelList.size() > 1)
+            /* Labels (it is NULL when there is only one label)*/
+            ${node.nativeFQNameInModule}_g_tc_${member.name}_labels, 
+#*--------*##else           
+            NULL, /* Labels (it is NULL when there is only one label)*/
+#*--------*##end 
+#*------*##else            
+            NULL, /* Ignored */
+#*------*##end            
+           #if($member.isKey)RTI_CDR_KEY_MEMBER#*
+           *# #elseif($member.isOptional || $node.constructKind.equals("union"))#*
+           *# RTI_CDR_NONKEY_MEMBER#else RTI_CDR_REQUIRED_MEMBER#end, /* Is a key? */
+#*------*##if(($node.constructKind=="struct" && $node.baseTypeFQName) || $member.isPublic)
+            DDS_PUBLIC_MEMBER,/* Member visibility */
+#*------*##else
+            DDS_PRIVATE_MEMBER,/* Member visibility */ 
+            
+#*------*##end
+            1,
+            NULL, /* Ignored */
+            RTICdrTypeCodeAnnotations_INITIALIZER
+        }#commaIfNeeded($foreach.count ${node.typeCodeMemberFieldMapList.size()})
+
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to initialize Type
+##------------------------------------------------------------------------------
+
+#macro(typeCode $node)
+#*--*##if($node.constructKind!="alias")
+    static DDS_TypeCode ${node.nativeFQNameInModule}_g_tc =
+    {{
+#*----*##if($node.constructKind=="valueType" || $node.baseTypeFQName)
+        DDS_TK_VALUE#*
+------*##elseif($node.constructKind=="struct")
+        DDS_TK_STRUCT#*
+------*##elseif($node.constructKind=="enum")
+        DDS_TK_ENUM#*
+------*##else
+        DDS_TK_UNION#*
+------*##end
+#*----*##if($node.extensibility=="FINAL_EXTENSIBILITY")#*
+------*#| DDS_TK_FINAL_EXTENSIBILITY#*
+------*##elseif($node.extensibility=="MUTABLE_EXTENSIBILITY")#*
+------*#| DDS_TK_MUTABLE_EXTENSIBILITY#end
+#*----*##if($node.languageBinding.equals("FLAT_DATA"))#*
+------*#| DDS_TK_FLAT_DATA_LANGUAGE_BINDING#end
+#*----*##if($node.isMetpType)#*
+------*#| DDS_TK_SHMEM_REF_TRANSFER_MODE#end, /* Kind */
+        DDS_BOOLEAN_FALSE, /* Ignored */
+        #if($node.defaultIndex)$node.defaultIndex#else -1#end, /*Ignored*/
+        (char *)"${node.FQName}", /* Name */
+        NULL, #if($node.constructKind=="struct")/* Ignored */ #else#*
+-------*#    /* Base class type code is assigned later */ #end
+     
+        0, /* Ignored */
+        0, /* Ignored */
+        NULL, /* Ignored */
+        $node.memberCount, /* Number of members */
+        #if($node.memberCount>0) ${node.nativeFQNameInModule}_g_tc_members, /* Members */#else NULL,#end
+
+        DDS_VM_NONE#*
+        --*##if($node.constructKind=="struct"), /* Ignored */
+            #else, /* Type Modifier */
+            #end
+#*----*#RTICdrTypeCodeAnnotations_INITIALIZER,
+        DDS_BOOLEAN_TRUE, /* _isCopyable */
+        NULL, /* _sampleAccessInfo: assigned later */
+        NULL /* _typePlugin: assigned later */
+    }}; /* Type code for ${node.nativeFQNameInModule}*/
+    
+#elseif($node.constructKind=="alias")
+ static DDS_TypeCode ${node.nativeFQNameInModule}_g_tc =
+    {{
+        DDS_TK_ALIAS, /* Kind*/
+        #if($node.typeCodeFirstMember.isPointer)DDS_BOOLEAN_TRUE#*
+------*##else DDS_BOOLEAN_FALSE#end,/* Is a pointer? */
+        -1, /* Ignored */
+        (char *)"${node.FQName}", /* Name */
+        NULL, /* Content type code is assigned later */
+        0, /* Ignored */
+        0, /* Ignored */
+        NULL, /* Ignored */
+        0, /* Ignored */
+        NULL, /* Ignored */
+        DDS_VM_NONE, /* Ignored */
+        RTICdrTypeCodeAnnotations_INITIALIZER,
+        DDS_BOOLEAN_TRUE, /* _isCopyable */
+        NULL, /* _sampleAccessInfo: assigned later */
+        NULL /* _typePlugin: assigned later */
+    }}; /* Type code for  ${node.nativeFQNameInModule} */
+
+#end
+#end
+
+#macro(arraydimensionListWithCommaIfNeeded$dimensionList)
+#foreach ($d in $dimensionList)
+$d#if( $foreach.count <$dimensionList.size()),#end
+#end
+#end
+
+##------------------------------------------------------------------------------
+## Sample Access Info and Type Plugin Info
+##------------------------------------------------------------------------------
+
+#macro (getLanguageBinding $node $language)
+#*--*##if($node.languageBinding.equals("FLAT_DATA"))
+#*----*##if($language.equals("C")) RTI_XCDR_TYPE_BINDING_FLAT_DATA_C #*--*##else
+#*----*##if($language.equals("Cpp")) RTI_XCDR_TYPE_BINDING_FLAT_DATA_CPP #*--*##else
+#*----*# RTI_XCDR_TYPE_BINDING_FLAT_DATA_CPP_03_STL #*--*##end
+#*----*##end
+#*--*##else
+#*----*##if($language.equals("C")) RTI_XCDR_TYPE_BINDING_C #*--*##end
+#*----*##if($language.equals("Cpp"))  RTI_XCDR_TYPE_BINDING_CPP #*--*##end
+#*----*##if($language.equals("cpp11stl")) RTI_XCDR_TYPE_BINDING_CPP_11_STL #*--*##end
+#*--*##end
+#end
+
+#macro (serializeFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_serialize#*
+*##*--*##else
+PRESTypePlugin_interpretedSerialize#*
+*##*--*##end
+#end
+
+#macro (serializeKeyFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_serialize_key#*
+*##*--*##else
+PRESTypePlugin_interpretedSerializeKey#*
+*##*--*##end
+#end
+
+#macro (serializeKeyForKeyhashFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_serialize_key_for_keyhash#*
+*##*--*##else
+PRESTypePlugin_interpretedSerializeKeyForKeyhash#*
+*##*--*##end
+#end
+
+#macro (deserializeSampleFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_deserialize_sample#*
+*##*--*##else
+PRESTypePlugin_interpretedDeserialize#*
+*##*--*##end
+#end
+
+#macro (deserializeFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_deserialize#*
+*##*--*##else
+PRESTypePlugin_interpretedDeserializeWithAlloc#*
+*##*--*##end
+#end
+
+#macro (deserializeKeySampleFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_deserialize_key_sample#*
+*##*--*##else
+PRESTypePlugin_interpretedDeserializeKey#*
+*##*--*##end
+#end
+
+#macro (getSerializedSampleMaxSizeExFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_get_serialized_sample_max_size_ex#*
+*##*--*##else
+PRESTypePlugin_interpretedGetSerializedSampleMaxSize#*
+*##*--*##end
+#end
+
+#macro (getSerializedKeyMaxSizeExForKeyhashFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_get_serialized_key_max_size_for_keyhash_ex#*
+*##*--*##else
+PRESTypePlugin_interpretedGetSerializedKeyMaxSizeForKeyhash#*
+*##*--*##end
+#end
+
+#macro (getSerializedKeyMaxSizeExFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_get_serialized_key_max_size_ex#*
+*##*--*##else
+PRESTypePlugin_interpretedGetSerializedKeyMaxSize#*
+*##*--*##end
+#end
+
+#macro (getSerializedSampleMinSizeFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_get_serialized_sample_min_size#*
+*##*--*##else
+PRESTypePlugin_interpretedGetSerializedSampleMinSize#*
+*##*--*##end
+#end
+
+#macro (getSerializedSampleSizeFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_get_serialized_sample_size#*
+*##*--*##else
+PRESTypePlugin_interpretedGetSerializedSampleSize#*
+*##*--*##end
+#end
+
+#macro (serializeSampleToKeyFncName $type) 
+#*--*##if (!$type.skipTypePluginCodeGen)
+${type.nativeFQName}Plugin_serialized_sample_to_key#*
+#*--*##else
+PRESTypePlugin_interpretedSerializedSampleToKey#*
+*##*--*##end
+#end
+
+#macro (instanceToKeyHashFncName $type)
+#*--*##if (!$type.skipTypePluginCodeGen || !$node.interpreted)
+${type.nativeFQName}Plugin_instance_to_keyhash#*
+*##*--*##else
+PRESTypePlugin_interpretedInstanceToKeyHash#*
+*##*--*##end
+#end
+
+#macro(typePluginInfoDeclaration $node $language)
+#*--*##if($language.equals("cpp11stl"))
+static RTIXCdrTypePlugin * type_plugin_info()
+#*--*##else
+RTIXCdrTypePlugin *${node.nativeFQNameInModule}_get_type_plugin_info()
+#*--*##end
+{
+#*--*##if ($node.optimizationLevel != 2)
+    static RTIXCdrTypePlugin ${node.nativeFQNameInModule}_g_typePlugin = 
+    {
+		(RTIXCdrTypePluginSerializeFunction) 
+		    ${node.nativeFQName}Plugin_serialize, 
+		(RTIXCdrTypePluginSerializeKeyFunction) 
+			${node.nativeFQName}Plugin_serialize_key, 
+		(RTIXCdrTypePluginDeserializeFunction) 
+		    ${node.nativeFQName}Plugin_deserialize_sample, 
+		(RTIXCdrTypePluginDeserializeKeyFunction) 
+			${node.nativeFQName}Plugin_deserialize_key_sample, 
+		(RTIXCdrTypePluginSkipFunction) 
+		    ${node.nativeFQName}Plugin_skip,
+		(RTIXCdrTypePluginGetSerializedSampleSizeFunction) 
+			${node.nativeFQName}Plugin_get_serialized_sample_size, 
+		(RTIXCdrTypePluginGetSerializedSampleMaxSizeFunction) 
+			${node.nativeFQName}Plugin_get_serialized_sample_max_size_ex, 
+		(RTIXCdrTypePluginGetSerializedKeyMaxSizeFunction) 
+			${node.nativeFQName}Plugin_get_serialized_key_max_size_ex, 
+		(RTIXCdrTypePluginGetSerializedSampleMinSizeFunction) 
+			${node.nativeFQName}Plugin_get_serialized_sample_min_size, 
+		(RTIXCdrTypePluginSerializedSampleToKeyFunction) 
+			${node.nativeFQName}Plugin_serialized_sample_to_key,
+#*----*##if($language.equals("cpp11stl") || $node.languageBinding.equals("FLAT_DATA"))
+        NULL,
+        NULL,
+        NULL,
+#*----*##else
+		(RTIXCdrTypePluginInitializeSampleFunction) 
+			${node.nativeFQName}_initialize_ex,
+		NULL,
+		(RTIXCdrTypePluginFinalizeSampleFunction) 
+		        ${node.nativeFQName}_finalize_w_return,
+#*----*##end
+        NULL,
+        NULL
+    };
+#*--*##else
+    static RTIXCdrTypePlugin ${node.nativeFQNameInModule}_g_typePlugin = 
+    {
+		NULL, /* serialize */
+		NULL, /* serialize_key */
+		NULL, /* deserialize_sample */
+		NULL, /* deserialize_key_sample */
+		NULL, /* skip */
+		NULL, /* get_serialized_sample_size */
+		NULL, /* get_serialized_sample_max_size_ex */
+		NULL, /* get_serialized_key_max_size_ex */
+	    NULL, /* get_serialized_sample_min_size */
+		NULL, /* serialized_sample_to_key */
+#*----*##if($language.equals("cpp11stl") || $node.languageBinding.equals("FLAT_DATA"))
+        NULL,
+        NULL,
+        NULL,
+#*----*##else
+		(RTIXCdrTypePluginInitializeSampleFunction) 
+			${node.nativeFQName}_initialize_ex,
+		NULL,
+		(RTIXCdrTypePluginFinalizeSampleFunction)
+		        ${node.nativeFQName}_finalize_w_return,
+#*----*##end
+        NULL,
+        NULL
+    };
+#*--*##end
+    
+    return &${node.nativeFQNameInModule}_g_typePlugin;
+}
+#end
+
+#macro(sampleAccessInfoDeclaration $node $language)
+#*--*##if ($language.equals("Cpp") && $envMap.allocateWithNew && 
+     !$node.languageBinding.equals("FLAT_DATA"))
+
+#*----*##if ($node.isAliasOfArray)
+${envMap.POUND_CHAR}define ALIAS_OF_ARRAY
+#*----*##end
+#*----*##if ($envMap.generateCppConstructor)
+${envMap.POUND_CHAR}define CONSTRUCTOR
+#*----*##end
+
+${envMap.POUND_CHAR}define TSeq ${node.nativeSeqFQNameInModule}
+${envMap.POUND_CHAR}define T ${node.nativeFQNameInModule}
+${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_data_TInterpreterSupport.gen"
+${envMap.POUND_CHAR}undef T
+${envMap.POUND_CHAR}undef TSeq
+
+#*----*##if ($node.isAliasOfArray)
+${envMap.POUND_CHAR}undef ALIAS_OF_ARRAY
+#*----*##end
+#*----*##if ($envMap.generateCppConstructor)
+${envMap.POUND_CHAR}undef CONSTRUCTOR
+#*----*##end
+
+RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_seq_access_info()
+{
+    static RTIXCdrSampleAccessInfo ${node.nativeFQNameInModule}_g_seqSampleAccessInfo = {
+        RTI_XCDR_TYPE_BINDING_CPP, \
+        {sizeof(${node.nativeSeqFQNameInModule}),0,0,0}, \
+        RTI_XCDR_FALSE, \
+        DDS_Sequence_get_member_value_pointer, \
+        ${node.nativeSeqFQNameInModule}_set_member_element_count, \
+        NULL, \
+        NULL, \
+        NULL \
+    };
+    
+    return &${node.nativeFQNameInModule}_g_seqSampleAccessInfo;
+}
+
+#*--*##end
+
+#*--*##if($language.equals("cpp11stl"))
+static RTIXCdrSampleAccessInfo * sample_access_info()
+#*--*##else
+RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_access_info()
+#*--*##end
+{
+    static RTIBool is_initialized = RTI_FALSE;
+
+#*--*##set($memberCount=$node.typeCodeMemberFieldMapList.size()) 
+#*--*##if($node.constructKind.equals("union"))
+#*----*##set($memberCount=$memberCount+1) 
+#*--*##end
+
+#set($heapSampleAlloc = false)
+
+#*--*##if ($memberCount > 0)
+#*----*##if ($node.isAggregationType 
+                && !$node.languageBinding.equals("FLAT_DATA") 
+                && !$language.equals("C"))
+#*------*##set($heapSampleAlloc = true)
+    ${node.nativeFQName} *sample;
+#*----*##end  
+#*--*##end
+
+#*--*##if ($node.isAggregationType)
+#*----*##if ($memberCount > 0)
+    static RTIXCdrMemberAccessInfo ${node.nativeFQNameInModule}_g_memberAccessInfos[$memberCount] =
+        {RTIXCdrMemberAccessInfo_INITIALIZER};
+#*----*##end   
+#*--*##else
+    static RTIXCdrMemberAccessInfo ${node.nativeFQNameInModule}_g_memberAccessInfos[1] =
+        {RTIXCdrMemberAccessInfo_INITIALIZER};
+#*--*##end
+
+    static RTIXCdrSampleAccessInfo ${node.nativeFQNameInModule}_g_sampleAccessInfo = 
+        RTIXCdrSampleAccessInfo_INITIALIZER;
+    
+    if (is_initialized) {
+        return (RTIXCdrSampleAccessInfo*) &${node.nativeFQNameInModule}_g_sampleAccessInfo;
+    }
+    
+#*--*##if ($heapSampleAlloc == true)
+    RTIXCdrHeap_allocateStruct(
+            &sample, 
+            ${node.nativeFQName});
+    if (sample == NULL) {
+        return NULL;
+    }
+#*--*##end
+
+#*--*##set($numMember=0)
+
+#*--*##if($node.constructKind.equals("union"))
+#*-------*##if($language.equals("C"))
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
+            (RTIXCdrUnsignedLong) RTIXCdrUtility_pointerToULongLong(&((${node.nativeFQNameInModule} *)NULL)->_d);
+#*-------*##elseif($language.equals("cpp11stl"))
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] =
+            (RTIXCdrUnsignedLong) ((char *)&sample->_d() - (char *)sample);
+#*-------*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
+            (RTIXCdrUnsignedLong) ((char *)&sample->_d - (char *)sample);
+#*-------*##end
+#*----*##set($numMember=1) 
+#*--*##end
+
+#*--*##if ($node.isAggregationType)
+
+#*--*##foreach ($member in $node.typeCodeMemberFieldMapList)
+#*----*##if(!$member.directive)
+
+#*-----*##if($node.languageBinding.equals("FLAT_DATA"))
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
+            (RTIXCdrUnsignedLong) $member.cdrOffset[0];
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[1] = 
+            (RTIXCdrUnsignedLong) $member.cdrOffset[1];
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[2] = 
+            (RTIXCdrUnsignedLong) $member.cdrOffset[2];
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[3] = 
+            (RTIXCdrUnsignedLong) $member.cdrOffset[3];
+
+#*-----*##elseif($language.equals("cpp11stl"))
+#*-------*##if($node.constructKind.equals("union"))
+#*---------*##if(!$member.labelList[0].equals("default"))
+	sample->_d() = ${member.labelList[0]};
+#*---------*##else
+#*-----------*##if($node.hasAllCaseCovered && $node.hasADefaultCaseLabel)
+    sample->_d() = static_cast< ${node.unionDiscriminatorMap.specTypeName} >(${node.unusedDiscriminatorValue});
+#*-----------*##else
+    sample->_d() = ${node.nativeFQName}::default_discriminator();
+#*-----------*##end
+#*---------*##end
+#*-------*##end
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
+        (RTIXCdrUnsignedLong) ((char *)&sample->${member.name}() - (char *)sample);
+
+#*-----*##elseif($language.equals("C"))
+#*--------*##if($node.constructKind!="union")
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
+            (RTIXCdrUnsignedLong) RTIXCdrUtility_pointerToULongLong(&((${node.nativeFQNameInModule} *)NULL)->$member.name);
+#*--------*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
+            (RTIXCdrUnsignedLong) RTIXCdrUtility_pointerToULongLong(&((${node.nativeFQNameInModule} *)NULL)->_u.$member.name);
+#*--------*##end
+
+#*------*##else
+#*--------*##if($node.constructKind!="union")
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
+           (RTIXCdrUnsignedLong) ((char *)&sample->$member.name - (char *)sample);
+#*--------*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
+            (RTIXCdrUnsignedLong) ((char *)&sample->_u.$member.name - (char *)sample);
+#*--------*##end
+#*------*##end
+
+#*------*##set($numMember = $numMember +1)
+#*--*##end
+
+#*--*##end
+
+#*--*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 0;
+#*--*##end 
+
+#*----*##if ($memberCount > 0)
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.memberAccessInfos = 
+        ${node.nativeFQNameInModule}_g_memberAccessInfos;
+#*----*##end
+
+#*--*##if($node.languageBinding.equals("FLAT_DATA"))
+#*----*##if(($node.extensibility!="MUTABLE_EXTENSIBILITY") && ($node.constructKind!="alias") && ($language.equals("Cpp") || $language.equals("cpp11stl")))
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.typeSize[0] = (RTIXCdrUnsignedLong) 
+    	${node.nativeFQName}Offset::serialized_size(0);
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.typeSize[1] = (RTIXCdrUnsignedLong) 
+    	${node.nativeFQName}Offset::serialized_size(1);
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.typeSize[2] = (RTIXCdrUnsignedLong) 
+    	${node.nativeFQName}Offset::serialized_size(2);
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.typeSize[3] = (RTIXCdrUnsignedLong) 
+    	${node.nativeFQName}Offset::serialized_size(3);   
+#*----*##end 
+#*--*##else
+    {
+        size_t candidateTypeSize = sizeof(##
+#*----*##if($language.equals("cpp11stl"))
+#*----*#${node.nativeFQName}##
+#*----*##else
+#*----*#${node.nativeFQNameInModule}##
+#*----*##end);
+
+        if (candidateTypeSize > RTIXCdrLong_MAX) {
+            ${node.nativeFQNameInModule}_g_sampleAccessInfo.typeSize[0] =
+                RTIXCdrLong_MAX;
+        } else {
+            ${node.nativeFQNameInModule}_g_sampleAccessInfo.typeSize[0] =
+                (RTIXCdrUnsignedLong) candidateTypeSize;
+        }
+    }
+#*--*##end
+
+#*--*##if ((($language.equals("Cpp") && $envMap.allocateWithNew) 
+            || ($language.equals("cpp11stl")))
+            && !$node.languageBinding.equals("FLAT_DATA"))
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.useGetMemberValueOnlyWithRef =
+        RTI_XCDR_TRUE;
+        
+#*----*##if ($language.equals("Cpp"))
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.getMemberValuePointerFcn = 
+        ${node.nativeFQNameInModule}_get_member_value_pointer;
+#*----*##else
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.getMemberValuePointerFcn = 
+        interpreter::get_aggregation_value_pointer< ${node.nativeFQName} >;
+#*----*##end
+
+#*--*##end
+    
+    ${node.nativeFQNameInModule}_g_sampleAccessInfo.languageBinding = 
+            #getLanguageBinding($node $language);
+
+#*--*##if ($heapSampleAlloc == true)
+    RTIXCdrHeap_freeStruct(sample);
+#*--*##end
+    is_initialized = RTI_TRUE;
+    return (RTIXCdrSampleAccessInfo*) &${node.nativeFQNameInModule}_g_sampleAccessInfo;
+}
+#end
+
+#macro(assignTypeCodeMemberAnnotationsVariables $member)
+#*--*##if(!$member.typeKindResolved
+            || $member.typeKindResolved == "long double"
+            || $member.typeKindResolved == "non basic")
+#*----*##set($member.annotationsUname="boolean_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_NULL")
+#*----*##set($member.defaultValue="0")
+#*--*##elseif($member.typeKindResolved=="char")
+#*----*##set($member.annotationsUname="char_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_CHAR")
+#*----*##set($member.defaultValue="0")
+#*--*##elseif($member.typeKindResolved=="wchar")
+#*----*##set($member.annotationsUname="wchar_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_WCHAR")
+#*----*##set($member.defaultValue="0")
+#*--*##elseif($member.typeKindResolved=="boolean")
+#*----*##set($member.annotationsUname="boolean_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_BOOLEAN")
+#*----*##set($member.defaultValue="0")
+#*--*##elseif($member.typeKindResolved=="octet" || $member.typeKindResolved=="int8" || $member.typeKindResolved=="uint8")
+#*----*##set($member.annotationsUname="octet_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_OCTET")
+#*----*##set($member.defaultValue="0")
+#*----*##set($member.minValue="RTIXCdrOctet_MIN")
+#*----*##set($member.maxValue="RTIXCdrOctet_MAX")
+#*----*##set($member.isInteger=true)
+#*--*##elseif($member.typeKindResolved=="short")
+#*----*##set($member.annotationsUname="short_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_SHORT")
+#*----*##set($member.defaultValue="0")
+#*----*##set($member.minValue="RTIXCdrShort_MIN")
+#*----*##set($member.maxValue="RTIXCdrShort_MAX")
+#*----*##set($member.isInteger=true)
+#*--*##elseif($member.typeKindResolved=="unsigned short")
+#*----*##set($member.annotationsUname="ushort_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_USHORT")
+#*----*##set($member.defaultValue="0")
+#*----*##set($member.minValue="RTIXCdrUnsignedShort_MIN")
+#*----*##set($member.maxValue="RTIXCdrUnsignedShort_MAX")
+#*----*##set($member.isInteger=true)
+#*--*##elseif($member.typeKindResolved=="long")
+#*----*##set($member.defaultValue="0")
+#*----*##set($member.isInteger=true)
+#*----*##if(!${member.resolvedTypeEnum})
+#*------*##set($member.tcKind="RTI_XCDR_TK_LONG")
+#*------*##set($member.annotationsUname="long_value")
+#*------*##set($member.minValue="RTIXCdrLong_MIN")
+#*------*##set($member.maxValue="RTIXCdrLong_MAX")
+#*----*##else
+#*------*##set($member.tcKind="RTI_XCDR_TK_ENUM")
+#*------*##set($member.annotationsUname="enumerated_value")
+#*----*##end
+#*--*##elseif($member.typeKindResolved=="unsigned long")
+#*----*##set($member.annotationsUname="ulong_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_ULONG")
+#*----*##set($member.defaultValue="0u")
+#*----*##set($member.minValue="RTIXCdrUnsignedLong_MIN")
+#*----*##set($member.maxValue="RTIXCdrUnsignedLong_MAX")
+#*----*##set($member.isInteger=true)
+#*--*##elseif($member.typeKindResolved=="float")
+#*----*##set($member.annotationsUname="float_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_FLOAT")
+#*----*##set($member.defaultValue="0.0f")
+#*----*##set($member.minValue="RTIXCdrFloat_MIN")
+#*----*##set($member.maxValue="RTIXCdrFloat_MAX")
+#*--*##elseif($member.typeKindResolved=="long long")
+#*----*##set($member.annotationsUname="long_long_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_LONGLONG")
+#*----*##set($member.defaultValue="0ll")
+#*----*##set($member.minValue="RTIXCdrLongLong_MIN")
+#*----*##set($member.maxValue="RTIXCdrLongLong_MAX")
+#*----*##set($member.isInteger=true)
+#*--*##elseif($member.typeKindResolved=="unsigned long long")
+#*----*##set($member.annotationsUname="ulong_long_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_ULONGLONG")
+#*----*##set($member.defaultValue="0ull")
+#*----*##set($member.minValue="RTIXCdrUnsignedLongLong_MIN")
+#*----*##set($member.maxValue="RTIXCdrUnsignedLongLong_MAX")
+#*----*##set($member.isInteger=true)
+#*--*##elseif($member.typeKindResolved=="double")
+#*----*##set($member.annotationsUname="double_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_DOUBLE")
+#*----*##set($member.defaultValue="0.0")
+#*----*##set($member.minValue="RTIXCdrDouble_MIN")
+#*----*##set($member.maxValue="RTIXCdrDouble_MAX")
+#*--*##elseif($member.typeKindResolved=="string")
+#*----*##set($member.annotationsUname="string_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_STRING")
+#*----*##set($member.defaultValue="""""")
+#*----*##set($member.allocMethod="DDS_String_alloc")
+#*--*##elseif($member.typeKindResolved=="wstring")
+#*----*##set($member.annotationsUname="wstring_value")
+#*----*##set($member.tcKind="RTI_XCDR_TK_WSTRING")
+#*----*##set($member.defaultValue="{0}")
+#*----*##set($member.allocMethod="DDS_Wstring_alloc")
+#*--*##end
+#*--*##if($member.explicitDefaultValue)
+#*----*##if($member.typeKindResolved=="wstring")
+#*------*##set($member.defaultValue=$member.wStringAsciiValue)
+#*----*##else
+#*------*##set($member.defaultValue=$member.explicitDefaultValue)
+#*----*##end
+#*--*##end
+#*--*##if($member.explicitMinValue)
+#*----*##set($member.minValue=$member.explicitMinValue)
+#*--*##end
+#*--*##if($member.explicitMaxValue)
+#*----*##set($member.maxValue=$member.explicitMaxValue)
+#*--*##end
+#end

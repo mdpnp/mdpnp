@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+(c) Copyright, Real-Time Innovations, Inc. 2003-2010.  All rights reserved.
+-->
+
+<xsd:schema targetNamespace="http://www.omg.org/dds"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <xsd:simpleType name="char">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="wchar">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="wstring">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="int8">
+    <xsd:restriction base="xsd:byte"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="uint8">
+    <xsd:restriction base="xsd:unsignedByte"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="longDouble">
+    <xsd:restriction base="xsd:double"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="forwardDclValueType">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="forwardDclStruct">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="forwardDclUnion">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+</xsd:schema>

@@ -1,0 +1,12 @@
+Welcome to your first Connext DDS example! 
+
+This example was generated for architecture ${global.architectureName}, using the
+data type ${exampleType} from ${global.idlFileName}.idl.
+This example builds two applications, named ${global.idlFileName}${global.pubSuffix} and
+${global.idlFileName}${global.subSuffix}.
+
+To build and run this example for ${global.architectureName}, please see the
+document RTI_ConnextDDS_CoreLibraries_GettingStarted_iOSSystemsAddendum.pdf, located
+in your Connext DDS installation directory, under:
+
+${global.nddsHome}/doc/manuals/connext_dds_professional/getting_started_platforms/ios_systems_addendum

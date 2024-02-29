@@ -41,7 +41,7 @@ configurations {
 
 def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/main/java').getPath()
 def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getPath()
-def IDL_DIR = "-I"+new File(project.projectDir, '../x73-idl/src/main/idl').getPath()
+def IDL_DIR = new File(project.projectDir, '../x73-idl/src/main/idl').getPath()
 
 // add generated source code to the main java sourceset
 sourceSets {
@@ -62,6 +62,7 @@ jar.doFirst {
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
   implementation files(rtiNddsJava)
+  implementation files(rtiDdsGen2)
   //This next slf4j entry appears to have been a missing dependency somehow?
   //Rather than a migration from mdpnp artifactory...
   implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
@@ -72,14 +73,33 @@ dependencies {
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
   //For DDS 6.X, rtiddsgen program is a shell script that configures its own classpath, so the rtidds* files are redundant
+/*
+  classpath for ddsgen in 7 comes from META-INF/MANIFEST.MF as follows
+antlr-3.5.2.jar log4j-core-2.17.1.jar log4j-1.2-api-2.17.1
+ .jar log4j-api-2.17.1.jar velocity-engine-core-2.3.jar commons-lang-2
+ .6.jar slf4j-simple-1.7.35.jar ST4-4.0.8.jar antlr-runtime-3.5.2.jar 
+ commons-lang3-3.11.jar slf4j-api-1.7.35.jar
+*/
+
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
-  rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
   rtiddsgen group: 'org.aspectj', name: 'aspectjrt', version: '1.7.2'
 
   iceddsgen group: 'ant-contrib', name: 'ant-contrib', version: '1.0b3'
-  iceddsgen group: 'org.antlr', name: 'antlr-runtime', version: '3.4'
-  iceddsgen group: 'log4j', name: 'log4j', version: '1.2.16'
-  iceddsgen group: 'org.apache.velocity', name: 'velocity', version: '1.7'
+
+  //iceddsgen group: 'log4j', name: 'log4j', version: '1.2.16'
+  iceddsgen group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.19.0'
+  iceddsgen group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.19.0'
+  iceddsgen group: 'org.apache.velocity', name: 'velocity-engine-core', version: '2.3'
+  iceddsgen group: 'org.antlr', name: 'antlr', version: '3.5.2'
+  iceddsgen group: 'org.antlr', name: 'antlr-runtime', version: '3.5.2'
+  iceddsgen group: 'commons-lang', name: 'commons-lang', version: '2.6'
+  iceddsgen group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
+  iceddsgen group: 'org.antlr', name: 'ST4', version: '4.0.8'
+  iceddsgen group: 'org.slf4j', name: 'slf4j-api', version: '1.7.35'
+  iceddsgen group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.35'
+
+
+
   iceddsgen files(rtiDdsGen2)
 
 }
@@ -110,27 +130,30 @@ What we want to emulate is...
 
 /home/simon/rti_connext_dds-6.0.1/bin/../resource/app/jre/x64Linux/bin/java -classpath /home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/ant-contrib-1.0b3.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/antlr-3.4-complete.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/log4j-1.2.16.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/velocity-1.7-dep.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/rtiddsgen2.jar -DNDDS_RESOURCE_DIR=/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/app_support/rtiddsgen -DNDDSHOME=/home/simon/rti_connext_dds-6.0.1 -jar /home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/rtiddsgen2.jar -language Java -d /openice/dds6libs/mdpnp/data-types/x73-idl-rti-dds/build/generated/src/main/java -ppOption -I/openice/dds6libs/mdpnp/data-types/x73-idl-rti-dds/../x73-idl/src/main/idl -replace -inputIdl /openice/dds6libs/mdpnp/data-types/x73-idl/src/main/idl/himss/himss2015.idl
 */
+
+/* For DDS 7, we want to emulate
+
+/home/simon/rti_connext_dds-7.1.0/bin/../resource/app/jre/x64Linux/bin/java -DNDDS_RESOURCE_DIR=/home/simon/rti_connext_dds-7.1.0/bin/../resource/app/app_support/rtiddsgen -DNDDSHOME=/home/simon/rti_connext_dds-7.1.0 -DCONNEXT_VERSION=7.1.0 -DCONNEXT_PLATFORM=x64Linux3gcc4.8.2 -DCONNEXT_WORKSPACE=/home/simon/rti_workspace/7.1.0 -jar /home/simon/rti_connext_dds-7.1.0/bin/../resource/app/lib/java/rtiddsgen2.jar -I ../x73-idl/src/main/idl -inputIdl ../x73-idl/src/main/idl/ice/ice.idl -language Java
+
+*/
+
 task iceddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
   FileTree idlFiles = project(':data-types:x73-idl').buildZip.source
   idlFiles.each { f ->
     doLast {
-      //def dbgPath=f.getPath()
-      //println "idlFiles99 is $dbgPath"
-      //String[] genArgs = [ '-language' , 'Java', '-d', GENERATED_JAVA_SOURCES, '-ppOption', IDL_DIR, '-replace', '-inputIdl', f ]
       javaexec {
         classpath = configurations.iceddsgen
         main = 'com.rti.ndds.nddsgen.Main'
-        //args = genArgs;
         args( '-language' )
         args( 'Java' );
         args( '-d')
         args( GENERATED_JAVA_SOURCES)
-        args( '-ppOption')
+	args( '-I' )
         args( IDL_DIR)
         args( '-replace')
         args( '-inputIdl')
         args( f.getPath() )
-        jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen")
+        jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen" , "-DCONNEXT_VERSION=7.1.0", "-DCONNEXT_PLATFORM=x64Linux3gcc4.8.2")
       }
 
 

@@ -1,0 +1,50 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,9jun14,vmg created
+##========================================================================
+Microsoft Visual Studio Solution File, Format Version ${archMap.SOL_FORMAT_VERSION}
+# Visual Studio ${vsNumber}
+#set($prjNum = 0)
+#foreach($project in $projects)
+Project("{${project.id1}}") = "${project.name}", "${project.file}", "{${project.id2}}"
+#if(($foreach.count == 2) && ($prjNum > 0)) 
+	ProjectSection(ProjectDependencies) = postProject
+		{$projects[0].id2} = {$projects[0].id2}
+	EndProjectSection
+#end
+EndProject
+#set ($prjNum = $prjNum + 1)
+#end
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+#foreach($mode in $modes)
+		${mode}|${platform} = ${mode}|${platform}
+#end
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+#foreach($project in $projects)
+#*--*##if($project.type.equals("type"))
+		{${project.id2}}.Debug|${platform}.ActiveCfg = Debug|${platform}
+		{${project.id2}}.Debug|${platform}.Build.0 = Debug|${platform}
+		{${project.id2}}.Release|${platform}.ActiveCfg = Release|${platform}
+		{${project.id2}}.Release|${platform}.Build.0 = Release|${platform}
+#*--*##else
+#*----*##foreach($mode in $modes)
+		{${project.id2}}.${mode}|${platform}.ActiveCfg = ${mode}|${platform}
+		{${project.id2}}.${mode}|${platform}.Build.0 = ${mode}|${platform}
+#*----*##end
+#*--*##end
+#end
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

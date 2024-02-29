@@ -1,0 +1,236 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,2sep14,vmg created
+##========================================================================
+#[[#]]#include <stdio.h>
+#[[#]]#include <stdlib.h>
+#[[#]]#include <stdarg.h>
+#[[#]]#include <string.h>
+#[[#]]#include <unistd.h>
+
+#[[#]]#include <jni.h>
+
+#[[#]]#define SCRATCH_MAX_SIZE 512
+#[[#]]#define ARGV_MAX_SIZE 32
+#[[#]]#define JNI_VERSION     JNI_VERSION_1_2
+
+/* the following must be implemented in native code */
+extern "C" int main(int argc, char *argv[]);
+
+/* define the following if output redirection is supported in native code */
+#[[#]]#define REDIRECT_OUTPUT
+
+#[[#]]#ifdef REDIRECT_OUTPUT
+typedef int (*RTIAndroidOnCoutMethod)(const char *message);
+extern "C" void RTIAndroid_registerOnCout(RTIAndroidOnCoutMethod onCout);
+#[[#]]#endif
+
+/* global variables */
+static JavaVM* _javaVm = NULL;
+static jmethodID _onMessageMethodId = NULL;
+static jobject _javaMessageListener = NULL;
+
+static int RTIAndroid_tokenizeStrIntoArgv(
+	char *scratch, int scratchSize, char **argv, int argvCnt,
+	const char *name, const char *paramStr) {
+
+    int argc;
+    int paramLen;
+    char *currentParam;
+    char *nextParam;
+    char separatorChar = ' '; /* space is the parameter separater */
+
+    if ( paramStr == NULL ) {
+	return -1;
+    }
+
+    /* Make sure the command-line fits */
+    paramLen = strlen(paramStr) + strlen(name) + 1; /* The 1 is for the blank space */
+    if ( paramLen > scratchSize ) {
+	return -1;
+    }
+
+    /* paramStr is non NULL and fits into scratch. Copy it */
+    strcpy(scratch, name);
+    strcat(scratch, " ");    
+    strcat(scratch, paramStr);
+
+    for (argc = 0, nextParam = scratch, currentParam = scratch;
+	 *currentParam != '\0';
+	 currentParam = nextParam, ++argc ) {
+	
+	while ( (*nextParam != separatorChar) && (*nextParam != '\0') ) {
+	    ++nextParam;
+	}
+
+	/* If we are not at the end of the string, insert a terminator
+	 * replacing the blank and then advance until you eat all the branks
+	 * leaving next param pointing to somethign non-brank (which
+	 * could be the NUL charanter that termiinates the string)
+	 */
+	if ( *nextParam != '\0' ) {
+	    *nextParam = '\0';
+	    do { ++nextParam; } while ( *nextParam == separatorChar);
+	}
+
+	/* set the argv pointer to point to the curent paramater */
+	argv[argc] = currentParam;
+	/* Check we are not exceeding the maximum arguments */
+	if (  (argc == argvCnt-1) && (*nextParam != '\0') ) {
+	    return -1;
+	}
+    }
+
+    return argc;
+}
+
+
+static int RTIAndroid_forwardOnMessage(const char* msg) {
+
+    jstring javaString = NULL;
+    JNIEnv* env = NULL;
+    jint getEnvResult;
+    jint attachResult;
+    int isNewlyAttached = 0;
+    int retValue = -1;
+    static const JavaVMAttachArgs ATTACH_ARGS = {
+	JNI_VERSION, /*version*/
+        NULL, /*thread name*/
+        NULL  /*thread group*/
+    };
+
+    if (msg == NULL) {
+        retValue = 0;
+        return retValue;
+    }
+
+    getEnvResult = _javaVm->GetEnv((void **)&env, JNI_VERSION);
+    if (getEnvResult == JNI_OK) {
+	/* nothing to do */
+    } else if (getEnvResult == JNI_EDETACHED) {
+		/* current thread is not attached */
+		attachResult = _javaVm->AttachCurrentThread(
+		    &env, (void*)&ATTACH_ARGS);
+		if (attachResult != JNI_OK) {
+		    printf("Error in attaching thread\n");
+		    return retValue;
+		}
+		isNewlyAttached = 1;
+	    } else {
+		    printf("Error in getting java environment\n");
+		    return retValue;
+	    }
+	
+	    javaString = env->NewStringUTF(msg);
+	    if (javaString != NULL) {
+		env->CallVoidMethod(_javaMessageListener, _onMessageMethodId,
+				    javaString);
+		/* check exception */
+		if (env->ExceptionCheck()) {
+		    env->ExceptionDescribe();
+		    env->ExceptionClear();
+		} else {
+		    retValue = 0;
+		}
+                env->DeleteLocalRef(javaString);
+
+    }
+
+    if (isNewlyAttached) {
+		/* detach thread */
+		if (_javaVm->DetachCurrentThread() != JNI_OK) {
+		    printf("Error detaching thread\n");
+		}
+    }
+    return retValue;
+}
+
+extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
+    _javaVm = jvm;
+    return JNI_VERSION;
+}
+
+extern "C" JNIEXPORT void JNICALL JNI_OnUnLoad(JavaVM* jvm, void* reserved) {
+
+    _javaVm = NULL;
+}
+
+extern "C" JNIEXPORT jint JNICALL ${androidJniCall}_nativeRedirectOutput
+(JNIEnv *env, jclass self_class, jobject javaListener)
+{
+    int returnVal = -1;
+
+#[[#]]#ifdef REDIRECT_OUTPUT
+    jclass javaListenerClass = NULL;
+
+    if (javaListener != NULL) {
+	javaListenerClass = env->GetObjectClass(javaListener);
+	if (javaListenerClass == NULL) {
+	    return returnVal;
+	}
+	_onMessageMethodId = env->GetMethodID(javaListenerClass,
+					      "onMessage", 
+					      "(Ljava/lang/String;)V");
+	if (_onMessageMethodId == NULL) {
+	    return returnVal;
+	}
+	_javaMessageListener = env->NewGlobalRef(javaListener);
+	if (_javaMessageListener == NULL) {
+	    return returnVal;
+	}
+    }
+
+    /* redirect output */
+    if ((_onMessageMethodId != NULL) && (_javaMessageListener != NULL)) {
+	RTIAndroid_registerOnCout(RTIAndroid_forwardOnMessage);
+    }
+
+#[[#]]#endif
+
+    returnVal = 0;
+
+    return returnVal;
+}
+
+extern "C" JNIEXPORT jint JNICALL ${androidJniCall}_nativeCallMain
+(JNIEnv *env, jclass self_class, jstring javaParamString) {
+    int returnVal = -1;
+    const char* nativeParamString = NULL;
+    char scratch[SCRATCH_MAX_SIZE + 1];
+    int argc = 0;
+    char *argv[ARGV_MAX_SIZE];
+
+    /* prepare string */
+    if (javaParamString != NULL) {
+	nativeParamString = (char *) env->GetStringUTFChars(
+	    javaParamString, NULL);
+	if (nativeParamString == NULL) {
+	    return returnVal;
+	}
+    }
+
+    /* parse into parameters */
+    argc = RTIAndroid_tokenizeStrIntoArgv(
+	scratch, SCRATCH_MAX_SIZE, argv, ARGV_MAX_SIZE,
+	"${exampleType}_${projectName}", nativeParamString);
+    if (argc == -1) {
+	return returnVal;
+    }
+
+    returnVal = main(argc, argv);
+
+    /* cleanup string */
+    if (nativeParamString != NULL) {
+	env->ReleaseStringUTFChars(javaParamString, nativeParamString);
+    }
+
+    return returnVal;
+}

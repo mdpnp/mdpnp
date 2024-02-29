@@ -1,0 +1,178 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##========================================================================*/*#
+/*
+ * (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
+ * RTI grants Licensee a license to use, modify, compile, and create derivative
+ * works of the software solely for use with RTI Connext DDS. Licensee may
+ * redistribute copies of the software provided that all such copies are subject
+ * to this license. The software is provided "as is", with no warranty of any
+ * type, including any warranty for fitness for any purpose. RTI is under no
+ * obligation to maintain or support the software. RTI shall not be liable for
+ * any incidental or consequential damages arising out of the use or inability
+ * to use the software.
+ */
+
+/* ${envMap.idlFileName}_service.cxx
+
+*/
+
+#macro(printServiceSkeleton $service)
+#*----*##set($hasAttributes = false)
+#if (${envMap.rpcTest})Package#end class ${service.name}Example : public ${service.FQName} {
+    public:
+#*----*##foreach($member in $service.memberFieldMapList)
+## Iterate only through the list of operations
+#*--------*##if ($member.memberCount)
+        $member.specTypeName ${member.name}(#foreach($arg in $member.memberFieldMapList)
+#*------------*##if(($arg.typeKind.equals("user") || $arg.typeName.equals("string")) && $arg.parameterType.equals("in"))const #end#*
+*##*----------*#$arg.specTypeName #*
+*##if(!$arg.parameterType.equals("in") || $arg.typeKind.equals("user") || $arg.typeName.equals("string"))&#end#*
+*##if (!${envMap.rpcTest} || $member.attributeName)${arg.name}#end#*
+*##commaIfNeeded($foreach.count ${member.memberFieldMapList.size()})#end) override {
+## Add a return variable if the function is not void, it wasn't generated from
+## an attribute and the return type is an array or a sequence
+#*------------*##if (!$member.typeName.equals("void") && !$member.attributeName && ($member.hasArray || $member.isSeqAlias))
+        ${member.specTypeName} ${member.name}_result;
+#*------------*##end
+#*------------*##if (!${envMap.rpcTest})
+        std::cout << "calling ${member.name}" << std::endl;
+#*------------*##end
+
+## Print the exceptions
+#*------------*##if ($member.exceptionCount && $member.exceptionCount > 0)
+#*----------------*##foreach($excp in $member.exceptionList)
+        // To throw ${excp.FQName} uncomment the following line
+        #if (!${envMap.rpcTest})//#end throw ${excp.FQName}();
+#*----------------*##end
+#*------------*##end
+
+#*------------*##if ($member.attributeName)
+#*----------------*##set($hasAttributes = true)
+        // Automatic implementation of attribute ${member.attributeName}#if(!$member.typeName.equals("void")) getter#else setter#end:
+        // modify if additional logic is needed
+#*----------------*##if (!$member.typeName.equals("void"))
+        return ${member.attributeName}_;
+#*----------------*##else
+        ${member.attributeName}_ = $member.attributeName;
+#*----------------*##end
+#*------------*##else
+        // Implement ${member.name} function here
+## If rpcTest is enabled do not return if the function thrown an exception
+#*----------------*##if (!$member.typeName.equals("void") && !($member.exceptionCount && $member.exceptionCount > 0 && ${envMap.rpcTest}))
+#*--------------------*##if ($member.hasArray || $member.isSeqAlias)
+            return ${member.name}_result;
+#*--------------------*##elseif ($member.isEnum)
+            return $member.defaultEnumMemberName;
+#*--------------------*##elseif ($member.isAggregationType)
+            return ${member.specTypeName}();
+#*--------------------*##else
+            return $member.defaultValue;
+#*--------------------*##end
+#*----------------*##end
+#*------------*##end
+        }
+
+#*--------*##end
+#*----*##end
+
+#*----*##if ($hasAttributes)
+    private:
+#*--------*##foreach($member in $service.memberFieldMapList)
+## Iterate only through the list of attributes
+#*------------*##if (!$member.memberCount && $member.isAttribute)
+        $member.specTypeName ${member.name}_;
+
+#*------------*##end
+#*--------*##end
+#*----*##end
+};
+#end
+
+#if (${envMap.rpcTest})
+${envMap.POUND_CHAR}pragma begin_Package
+#end
+${envMap.POUND_CHAR}include <iostream>
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.hpp"
+#if (${envMap.rpcTest})
+${envMap.POUND_CHAR}pragma end_Package
+#end
+
+#if (${envMap.rpcTest})
+## Add the guard if the rpcTest flag is enabled, this is to avoid a compilation
+## error while building the xmq_cpp.2.0 module
+${envMap.POUND_CHAR}pragma begin_Package
+${envMap.POUND_CHAR}if !defined(RTI_NO_CXX11_RPC_SUPPORT)
+${envMap.POUND_CHAR}pragma end_Package
+#end
+
+#foreach($node in $constructMapList)
+#*--*##if($node.constructKind.equals("interface"))
+// The following class implements the server-side functions of the @DDSService
+#*------*##printServiceSkeleton($node)
+
+#*--*##end
+#end
+
+
+int#if (!${envMap.rpcTest}) main#else service_${constructMap.name}#end(int argc, char *argv[])
+{
+    int domain_id = 0;
+
+    if (argc >= 2) {
+        domain_id = atoi(argv[1]);
+    }
+
+    // To turn on additional logging, include <rti/config/Logger.hpp> and
+    // uncomment the following line:
+    // rti::config::Logger::instance().verbosity(rti::config::Verbosity::STATUS_ALL);
+
+    // Create a DomainParticipant with default Qos. The Service will communicate
+    // only with Clients that join the same domain_id
+    dds::domain::DomainParticipant participant(domain_id);
+
+    // Create an instance of the service interface
+    auto service_impl = std::make_shared< ${constructMap.name}Example>();
+
+    // A server provides the execution environment (a thread pool) for one or
+    // more services
+    dds::rpc::ServerParams server_params;
+
+    // Use a thread_pool_size > 1 to dispatch incoming function calls in
+    // parallel
+    server_params.extensions().thread_pool_size(4);
+
+    // Create the server with the server_params configuration
+    dds::rpc::Server server(server_params);
+
+    // Create a service with an instance of the service interface, and attach
+    // it to a server. The service will wait for remote calls, call the
+    // service interface to compute the results, and send them back.
+    dds::rpc::ServiceParams params(participant);
+    params.service_name("Example ${constructMap.name} Service");
+    ${constructMap.nativeFQName}Service service(service_impl, server, params);
+
+    std::cout << "${constructMap.name}Service running... " << std::endl;
+    server.run();
+
+    // RTI Connext provides a finalize_participant_factory() method
+    // if you want to release memory used by the participant factory singleton.
+    // Uncomment the following line to release the singleton:
+    //
+    // dds::domain::DomainParticipant::finalize_participant_factory();
+
+    return 0;
+}
+
+#if (${envMap.rpcTest})
+## Add the guard if the rpcTest flag is enabled, this is to avoid a compilation
+## error while building the xmq_cpp.2.0 module
+${envMap.POUND_CHAR}pragma begin_Package
+${envMap.POUND_CHAR}endif // !defined(RTI_NO_CXX11_RPC_SUPPORT)
+${envMap.POUND_CHAR}pragma end_Package
+#end

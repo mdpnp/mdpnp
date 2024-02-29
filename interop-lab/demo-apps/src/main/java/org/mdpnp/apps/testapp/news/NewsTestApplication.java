@@ -249,7 +249,7 @@ public class NewsTestApplication implements Initializable, NewsTestApplicationFa
             data.assessments.userData.add(ae);
 
             Time_t t = DomainClock.toDDSTime(date.getTime());
-            data.date_and_time.seconds = t.sec;
+            data.date_and_time.seconds = (int)t.sec;
             data.date_and_time.nanoseconds = t.nanosec;
 
             log.info("Create new PatientAssessment: " + data);

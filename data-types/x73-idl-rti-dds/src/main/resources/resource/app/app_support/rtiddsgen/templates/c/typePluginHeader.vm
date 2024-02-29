@@ -1,0 +1,624 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.0,18sep14,ajm CODEGENII-492 Fixing non exported methods for dlls
+##2.0,18sep14,ajm CODEGENII-364 and CODEGENII-365 Unbounded sequence and string in C/C++
+##2.2.0,08sep14,ajm CODEGENII-359 Add APIs to serialize a sample to a CDR buffer and to 
+## deserialize from a CDR buffer
+##2.2,01sep14,ajm CODEGENII-112 Adding option -dllExportMacroSuffix
+##2.2,11feb14,ajm CODEGENII-181 Change the generated code to avoid the #ifdef __cplusplus
+##10a, 02oct13 ajm CODEGENII-143 and CODEGEN-349 and CODGEN-499 Filenames with periods or hypthens
+##2.0,12sep13,ajm CODEGENII-92: Support for optional members
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,25mar13,ajm Adding support for enums and inheritance in .Net. We do check now
+## it we are working with namespaces because we introduce always the module in the list of nodes
+##10a,01mar13, ajm CODEGENII-59: Updating to generate XTypes Mutable as in IN-Branch
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,21dec12, ajm Removing LAST_MEMBER_ID until we suport mutable types
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,04ene11, ajm Upgrading to Lola (code in C)
+##10a,07nov11, ajm Refactoring code
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,10oct11,ajm Adding union support
+##10a,29sep11,ajm adding forward declaration and namespace support 
+##10a,26sep11,ajm adding enum support 
+##10a,22sep11,ajm adding valuetypes support
+##10a,2sep11,ajm Refactoring using a unique list for all elements(typedefs, structs and const)
+##10a,01se11,jmt Adding typedef support for primitive types and typedef arrays
+##10a,19ag11,ajm Refactorizing and cleaning the templates code.
+##10a,17ag11,ajm Adding //@key
+##10a,11ag11,ajm Refactorizing the templates code.
+##           ajm Adding variable $nativeFQNameInModule
+##10a,09ag11,jmt Fixing tabulations and length of the lines
+##10a,09ag11,ajm Fixing the bug for a struct without a module 
+##10a,04ag11,ajm adding modification history header
+##10a,03ag11,ajm created 
+##----------------------------------------------------------------
+##-----------------------------------------------------------------
+##               
+##             Template for the TypePluginBody header file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+${envMap.POUND_CHAR}ifndef ${envMap.inputFileNameMacro}Plugin_${envMap.executionID}_h
+${envMap.POUND_CHAR}define ${envMap.inputFileNameMacro}Plugin_${envMap.executionID}_h
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.h"
+
+
+
+
+struct RTICdrStream;
+
+${envMap.POUND_CHAR}ifndef pres_typePlugin_h
+${envMap.POUND_CHAR}include "pres/pres_typePlugin.h"
+${envMap.POUND_CHAR}endif
+
+#*-—*##if($envMap.metp)
+${envMap.POUND_CHAR}ifndef metp_type_plugin_h
+${envMap.POUND_CHAR}include "metp/metp_type_plugin.h"
+${envMap.POUND_CHAR}endif
+#*-—*##end
+
+#*CODEGENII-492*#
+#*--*##foreach($node in $constructMapList)
+#*----*##if($node.constructKind=="include")
+${envMap.POUND_CHAR}include "${node.file}Plugin.h"
+#*----*##end
+#*--*##end
+
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+/* If the code is building on Windows, start exporting symbols.
+*/
+${envMap.POUND_CHAR}undef NDDSUSERDllExport
+${envMap.POUND_CHAR}define NDDSUSERDllExport __declspec(dllexport)
+${envMap.POUND_CHAR}endif
+
+#if($envMap.language.equals("C"))
+${envMap.POUND_CHAR}ifdef __cplusplus
+extern "C" {
+${envMap.POUND_CHAR}endif
+#end
+
+#if(!${envMap.namespace} && $envMap.language.equals("Cpp"))
+extern "C"{
+#end
+
+#*--*##foreach($node in $constructMapList)
+##if it is a directive we print its value
+#*----*##if($node.constructKind=="directive") 
+##we avoid to copy the declaration directives
+#*------*##if($node.directiveKind=="copy-c"||$node.directiveKind=="copy") 
+$node.value
+#*------*##end
+#*----*##elseif($node.constructKind=="module" && ${envMap.namespace}) 
+namespace $node.name {
+#*----*##elseif($node.constructKind=="moduleClose" && ${envMap.namespace}) 
+} /* namespace $node.name  */
+#*----*##elseif($node.isAggregationType || ($node.constructKind=="alias" && !$node.languageBinding.equals("FLAT_DATA")))
+
+#*------*##if($node.hasKey || $node.hasKeyBaseType) 
+/* The type used to store keys for instances of type struct
+ * AnotherSimple.
+ *
+ * By default, this type is struct $node.name
+ * itself. However, if for some reason this choice is not practical for your
+ * system (e.g. if sizeof(struct $node.name)
+ * is very large), you may redefine this typedef in terms of another type of
+ * your choosing. HOWEVER, if you define the KeyHolder type to be something
+ * other than struct AnotherSimple, the
+ * following restriction applies: the key of struct
+ * $node.name must consist of a
+ * single field of your redefined KeyHolder type and that field must be the
+ * first field in struct $node.name.
+*/
+#*--------*##if($envMap.language=="C")
+typedef  struct ${node.nativeFQNameInModule} ${node.nativeFQNameInModule}KeyHolder;
+#*--------*##else
+typedef  class ${node.nativeFQNameInModule} ${node.nativeFQNameInModule}KeyHolder;
+#*--------*##end
+#*------*##end ##if struct.hasKey
+
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_get_sample PRESTypePluginDefaultEndpointData_getSample 
+
+#*------*##if(!($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp")))
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_get_buffer PRESTypePluginDefaultEndpointData_getBuffer 
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_return_buffer PRESTypePluginDefaultEndpointData_returnBuffer
+#*------*##else
+RTIBool ${node.nativeFQNameInModule}Plugin_get_buffer_w_params(
+    PRESTypePluginEndpointData endpointData,
+    struct REDABuffer *buffer,
+    const void *user_data,
+    const struct NDDS_WriterHistory_AllocatorParams *allocatorParams);
+
+void ${node.nativeFQNameInModule}Plugin_return_buffer_w_params(
+   PRESTypePluginEndpointData endpointData,
+   struct REDABuffer *buffer,
+   const struct NDDS_WriterHistory_AllocatorParams *allocatorParams);
+#*------*##end
+
+#*------*##if($node.hasKey || $node.hasKeyBaseType)## This code is only generated if the struct has a key
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_get_key PRESTypePluginDefaultEndpointData_getKey 
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_return_key PRESTypePluginDefaultEndpointData_returnKey
+#*------*##end ##if struct.hasKey
+
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_create_sample PRESTypePluginDefaultEndpointData_createSample 
+${envMap.POUND_CHAR}define ${node.nativeFQNameInModule}Plugin_destroy_sample PRESTypePluginDefaultEndpointData_deleteSample 
+
+#*------*##if(($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp"))
+                  && (!$node.isMetpType))
+${envMap.POUND_CHAR}define  ${node.nativeFQNameInModule}Plugin_get_writer_loaned_sample \
+    PRESTypePluginDefaultEndpointData_getWriterLoanedSample
+${envMap.POUND_CHAR}define  ${node.nativeFQNameInModule}Plugin_return_writer_loaned_sample \
+    PRESTypePluginDefaultEndpointData_returnWriterLoanedSample
+${envMap.POUND_CHAR}define  ${node.nativeFQNameInModule}Plugin_return_writer_loaned_sample_from_cookie \
+    PRESTypePluginDefaultEndpointData_returnWriterLoanedSampleFromCookie
+${envMap.POUND_CHAR}define  ${node.nativeFQNameInModule}Plugin_validate_writer_loaned_sample \
+    PRESTypePluginDefaultEndpointData_validateWriterLoanedSample
+${envMap.POUND_CHAR}define  ${node.nativeFQNameInModule}Plugin_set_writer_loaned_sample_serialized_state \
+    PRESTypePluginDefaultEndpointData_setWriterLoanedSampleSerializedState
+#*------*##end
+/* --------------------------------------------------------------------------------------
+    Support functions:
+ * -------------------------------------------------------------------------------------- */
+ 
+NDDSUSERDllExport extern ${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}PluginSupport_create_data_w_params(
+    const struct DDS_TypeAllocationParams_t * alloc_params);
+
+NDDSUSERDllExport extern ${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}PluginSupport_create_data_ex(RTIBool allocate_pointers);
+
+NDDSUSERDllExport extern ${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}PluginSupport_create_data(void);
+
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}PluginSupport_copy_data(
+    ${node.nativeFQNameInModule} *out,
+    const ${node.nativeFQNameInModule} *in);
+
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}PluginSupport_destroy_data_w_params(
+    ${node.nativeFQNameInModule} *sample,
+    const struct DDS_TypeDeallocationParams_t * dealloc_params);
+
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}PluginSupport_destroy_data_ex(
+    ${node.nativeFQNameInModule} *sample,RTIBool deallocate_pointers);
+
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}PluginSupport_destroy_data(
+    ${node.nativeFQNameInModule} *sample);
+
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}PluginSupport_print_data(
+    const ${node.nativeFQNameInModule} *sample,
+    const char *desc,
+    unsigned int indent);
+
+##----------------------------------------------------
+## This code is only generated if the struct has a key
+##----------------------------------------------------
+#*------*##if($node.hasKey || $node.hasKeyBaseType)
+NDDSUSERDllExport extern ${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}PluginSupport_create_key_ex(RTIBool allocate_pointers);
+
+NDDSUSERDllExport extern ${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}PluginSupport_create_key(void);
+
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}PluginSupport_destroy_key_ex(
+    ${node.nativeFQNameInModule}KeyHolder *key,RTIBool deallocate_pointers);
+
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}PluginSupport_destroy_key(
+    ${node.nativeFQNameInModule}KeyHolder *key);
+ 
+#*------*##end ##if struct.hasKey 
+/* ----------------------------------------------------------------------------
+    Callback functions:
+ * ---------------------------------------------------------------------------- */
+ 
+#*------*##if ((($node.constructKind=="valueType") 
+               ||($node.constructKind=="struct")
+               ||($node.constructKind=="union"))
+               && $node.topLevel=="true")  
+#*--------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern PRESTypePluginParticipantData 
+${node.nativeFQNameInModule}Plugin_on_participant_attached(
+    void *registration_data, 
+    const struct PRESTypePluginParticipantInfo *participant_info,
+    RTIBool top_level_registration, 
+    void *container_plugin_context,
+    RTICdrTypeCode *typeCode);
+#*--------*##end
+
+#*--------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}Plugin_on_participant_detached(
+    PRESTypePluginParticipantData participant_data);
+#*--------*##end
+    
+#*--------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern PRESTypePluginEndpointData 
+${node.nativeFQNameInModule}Plugin_on_endpoint_attached(
+    PRESTypePluginParticipantData participant_data,
+    const struct PRESTypePluginEndpointInfo *endpoint_info,
+    RTIBool top_level_registration, 
+    void *container_plugin_context);
+#*--------*##end
+
+#*--------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern void 
+${node.nativeFQNameInModule}Plugin_on_endpoint_detached(
+    PRESTypePluginEndpointData endpoint_data);
+#*--------*##end
+
+NDDSUSERDllExport extern void    
+${node.nativeFQNameInModule}Plugin_return_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample,
+    void *handle);    
+
+#*------*##end
+
+
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_copy_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *out,
+    const ${node.nativeFQNameInModule} *in);
+
+#*----*##end
+#*----*##if(($node.constructKind=="struct") 
+             ||($node.constructKind=="valueType") 
+             ||($node.constructKind=="enum") 
+             || ($node.constructKind=="alias" && !$node.languageBinding.equals("FLAT_DATA")) 
+             || ($node.constructKind=="union"))
+
+/* ----------------------------------------------------------------------------
+    (De)Serialize functions:
+ * ------------------------------------------------------------------------- */
+
+#*----*##if (!$node.skipTypePluginCodeGen)
+#*------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_serialize(
+    PRESTypePluginEndpointData endpoint_data,
+    const ${node.nativeFQNameInModule} *sample,
+    struct RTICdrStream *stream, 
+    RTIBool serialize_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    RTIBool serialize_sample, 
+    void *endpoint_plugin_qos);
+#*------*##end
+#*----*##end
+
+#*----*##if ($userVarList.testSupport
+              && $node.isAggregationType
+              && !$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern RTIBool
+${node.nativeFQNameInModule}Plugin_serialize_test_only(
+        const ${node.nativeFQNameInModule} *sample,
+        struct RTICdrStream *stream,
+        RTIBool serialize_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        RTIBool serialize_sample,
+        void *endpoint_plugin_qos);
+#*----*##end
+
+#*----*##if (!$node.skipTypePluginCodeGen)
+#*------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_deserialize_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample, 
+    struct RTICdrStream *stream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_sample, 
+    void *endpoint_plugin_qos);
+#*------*##end
+#*----*##end
+
+##Enums and alias doesn't have deserialize and cdr functions
+#*----*##if($node.constructKind!="enum" &&$node.constructKind!="alias") 
+#*------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern RTIBool
+${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer(
+    char * buffer,
+    unsigned int * length,
+    const ${node.nativeFQNameInModule} *sample); 
+#*------*##end
+
+#*------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern RTIBool
+${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer_ex(
+    char *buffer,
+    unsigned int *length,
+    const ${node.nativeFQNameInModule} *sample,
+    DDS_DataRepresentationId_t representation);
+#*------*##end
+
+#*------*##if (!$node.skipTypePluginCodeGen)
+#*--------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_deserialize(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} **sample, 
+    RTIBool * drop_sample,
+    struct RTICdrStream *stream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_sample, 
+    void *endpoint_plugin_qos);
+#*--------*##end
+#*------*##end
+
+#*------*##if(!$userVarList.noEndpointBuild)
+NDDSUSERDllExport extern RTIBool
+${node.nativeFQNameInModule}Plugin_deserialize_from_cdr_buffer(
+    ${node.nativeFQNameInModule} *sample,
+    const char * buffer,
+    unsigned int length);    
+${envMap.POUND_CHAR}if !defined (NDDS_STANDALONE_TYPE)
+NDDSUSERDllExport extern DDS_ReturnCode_t
+${node.nativeFQNameInModule}Plugin_data_to_string(
+    const ${node.nativeFQNameInModule} *sample,
+    char *str,
+    DDS_UnsignedLong *str_size, 
+    const struct DDS_PrintFormatProperty *property);    
+${envMap.POUND_CHAR}endif
+#*------*##end
+#*----*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern RTIBool
+${node.nativeFQNameInModule}Plugin_skip(
+    PRESTypePluginEndpointData endpoint_data,
+    struct RTICdrStream *stream, 
+    RTIBool skip_encapsulation,  
+    RTIBool skip_sample, 
+    void *endpoint_plugin_qos);
+#*--*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size_ex(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool * overflow,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);    
+#*--*##end
+
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);
+
+#*--*##if ($userVarList.testSupport && $node.isAggregationType)
+NDDSUSERDllExport extern unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size_test_only(
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment);
+#*--*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_min_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);
+#*--*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen
+              && $userVarList.testSupport
+              && $node.isAggregationType)
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_min_size_test_only(
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment);
+#*--*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment,
+    const ${node.nativeFQNameInModule} * sample);
+#*--*##end
+
+/* --------------------------------------------------------------------------------------
+    Key Management functions:
+ * -------------------------------------------------------------------------------------- */
+#*------*##if($node.constructKind!="enum") 
+NDDSUSERDllExport extern PRESTypePluginKeyKind 
+${node.nativeFQNameInModule}Plugin_get_key_kind(void);
+#*------*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_ex(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool * overflow,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);
+#*--*##end
+
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);
+
+NDDSUSERDllExport extern unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_for_keyhash(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_serialize_key(
+    PRESTypePluginEndpointData endpoint_data,
+    const ${node.nativeFQNameInModule} *sample,
+    struct RTICdrStream *stream,
+    RTIBool serialize_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    RTIBool serialize_key,
+    void *endpoint_plugin_qos);
+#*--*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} * sample,
+    struct RTICdrStream *stream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_key,
+    void *endpoint_plugin_qos);
+#*--*##end
+
+##Enums doesn't have deserialize key function
+#*------*##if($node.constructKind!="enum"&&$node.constructKind!="alias")  
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_deserialize_key(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} ** sample,
+    RTIBool * drop_sample,
+    struct RTICdrStream *stream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_key,
+    void *endpoint_plugin_qos);
+#*------*##end    
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern RTIBool
+${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample,
+    struct RTICdrStream *stream, 
+    RTIBool deserialize_encapsulation,  
+    RTIBool deserialize_key, 
+    void *endpoint_plugin_qos);
+#*--*##end
+
+##----------------------------------------------------
+## This code is only generated if the struct has a key
+##----------------------------------------------------
+#*------*##if($node.hasKey || $node.hasKeyBaseType)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_instance_to_key(
+    PRESTypePluginEndpointData endpoint_data,
+   ${node.nativeFQNameInModule}KeyHolder *key, 
+    const ${node.nativeFQNameInModule} *instance);
+
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_key_to_instance(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *instance, 
+    const ${node.nativeFQNameInModule}KeyHolder *key);
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_instance_to_keyhash(
+    PRESTypePluginEndpointData endpoint_data,
+    DDS_KeyHash_t *keyhash,
+    const ${node.nativeFQNameInModule} *instance,
+    RTIEncapsulationId encapsulationId);
+#*--*##end
+
+NDDSUSERDllExport extern RTIBool 
+${node.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
+    PRESTypePluginEndpointData endpoint_data,
+    struct RTICdrStream *stream, 
+    DDS_KeyHash_t *keyhash,
+    RTIBool deserialize_encapsulation,
+    void *endpoint_plugin_qos); 
+#*------*##end ##if struct.hasKey     
+ 
+
+#*------*##if($node.constructKind=="enum" )
+/* ----------------------------------------------------------------------------
+    Support functions:
+ * ---------------------------------------------------------------------------- */
+
+NDDSUSERDllExport extern void
+${node.nativeFQNameInModule}PluginSupport_print_data(
+    const ${node.nativeFQNameInModule} *sample,
+    const char *desc,
+    unsigned int indent_level);
+
+#*------*##else
+
+#*------*##if ($node.isAggregationType && $node.interpreted=="true")
+NDDSUSERDllExport extern
+struct RTIXCdrInterpreterPrograms * ${node.nativeFQNameInModule}Plugin_get_programs(void);
+#*------*##end ## interpreted
+
+#*--------*##if ((($node.constructKind=="valueType") 
+                 ||($node.constructKind=="struct")
+                 ||($node.constructKind=="union")
+                 )&& $node.topLevel=="true") 
+/* Plugin Functions */
+NDDSUSERDllExport extern struct PRESTypePlugin*
+${node.nativeFQNameInModule}Plugin_new(void);
+
+NDDSUSERDllExport extern void
+${node.nativeFQNameInModule}Plugin_delete(struct PRESTypePlugin *);
+#*--------*##end 
+
+#*------*##end
+#*----*##end
+#*--*##end ##for
+
+#*--*##if(!${envMap.namespace} && $envMap.language.equals("Cpp"))
+}
+#*--*##end        
+
+#if($envMap.language.equals("C"))
+${envMap.POUND_CHAR}ifdef __cplusplus
+}
+${envMap.POUND_CHAR}endif
+#end
+
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+/* If the code is building on Windows, stop exporting symbols.
+*/
+${envMap.POUND_CHAR}undef NDDSUSERDllExport
+${envMap.POUND_CHAR}define NDDSUSERDllExport
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}endif /* ${envMap.inputFileNameMacro}Plugin_${envMap.executionID}_h */
+
+

@@ -1,0 +1,2683 @@
+<!--
+ (c) Copyright, Real-Time Innovations, 2008-2016.
+ All rights reserved.
+ No duplications, whole or partial, manual or electronic, may be made
+ without express written permission.  Any such copies, or
+ revisions thereof, must display this notice unaltered.
+ This code contains trade secrets of Real-Time Innovations, Inc.
+
+Description
+DDS QoS Profiles DTD
+-->
+
+<!-- dds -->
+<!ELEMENT dds (configuration_variables|qos_library|types|type_library|domain_library|participant_library|domain_participant_library|application|transformation_library|adapter_library|plugin_library|routing_service)+>
+<!ATTLIST dds xmlns:xsi CDATA #IMPLIED>
+<!ATTLIST dds xsi:noNamespaceSchemaLocation CDATA #IMPLIED>
+<!ATTLIST dds version CDATA "7.1.0">
+
+<!-- domain_library -->
+<!ELEMENT domain_library (domain)+>
+<!ATTLIST domain_library name CDATA #REQUIRED>
+
+<!-- domain -->
+<!ELEMENT domain (register_type| 
+				  topic| 
+				  domain_id| 
+				  participant_qos| 
+				  deserialize_mode| 
+				  type_config)*>
+<!ATTLIST domain name CDATA #REQUIRED>
+<!ATTLIST domain base_name CDATA #IMPLIED>
+<!ATTLIST domain domain_id CDATA #IMPLIED>
+
+<!-- participant_library -->
+<!ELEMENT participant_library (domain_participant)+>
+<!ATTLIST participant_library name CDATA #REQUIRED>
+
+<!-- domain_participant_library -->
+<!ELEMENT domain_participant_library (domain_participant)+>
+<!ATTLIST domain_participant_library name CDATA #REQUIRED>
+
+<!-- application -->
+<!ELEMENT application (domain_participant)+>
+<!ATTLIST application name CDATA #REQUIRED>
+
+<!-- domain_participant -->
+<!ELEMENT domain_participant (
+                        memory_management?,
+                        (register_type* | 
+                        topic*), 
+                        (publisher* | 
+                        subscriber* | 
+                        data_writer* | 
+                        data_reader* | 
+                        (participant_qos | domain_participant_qos)?))>
+<!ATTLIST domain_participant name CDATA #REQUIRED>
+<!ATTLIST domain_participant base_name CDATA #IMPLIED>
+<!ATTLIST domain_participant domain_ref CDATA #IMPLIED>
+<!ATTLIST domain_participant domain_id CDATA #IMPLIED>
+
+<!-- publisher -->
+<!ELEMENT publisher (data_writer* | publisher_qos?)>
+<!ATTLIST publisher name CDATA #REQUIRED>
+<!ATTLIST publisher multiplicity CDATA #IMPLIED>
+
+<!-- data_writer -->
+<!ELEMENT data_writer (datawriter_qos)?>
+<!ATTLIST data_writer name CDATA #REQUIRED>
+<!ATTLIST data_writer multiplicity CDATA #IMPLIED>
+<!ATTLIST data_writer topic_ref CDATA #REQUIRED>
+
+<!-- subscriber -->
+<!ELEMENT subscriber (data_reader* | subscriber_qos?)>
+<!ATTLIST subscriber name CDATA #REQUIRED>
+<!ATTLIST subscriber multiplicity CDATA #IMPLIED>
+
+<!-- data_reader -->
+<!ELEMENT data_reader (filter? | content_filter? | datareader_qos?)>
+<!ATTLIST data_reader name CDATA #REQUIRED>
+<!ATTLIST data_reader multiplicity CDATA #IMPLIED>
+<!ATTLIST data_reader topic_ref CDATA #REQUIRED>
+
+<!-- Filter -->
+<!ELEMENT filter (#PCDATA|expression|parameter_list|expression_parameters)*>
+<!ATTLIST filter name CDATA #IMPLIED>
+<!ATTLIST filter kind (builtin.sql|builtin.stringMatch) #IMPLIED>
+
+<!-- Content Filter -->
+<!ELEMENT content_filter (#PCDATA|expression|parameter|expression_parameters)*>
+<!ATTLIST content_filter name CDATA #IMPLIED>
+<!ATTLIST content_filter kind (builtin.sql|builtin.stringMatch) #IMPLIED>
+
+<!-- expression-->
+<!ELEMENT expression (#PCDATA)>
+
+<!-- parameters-->
+<!ELEMENT parameter_list (param+ | element+)>
+<!ELEMENT param (#PCDATA)>
+
+<!-- parameter-->
+<!ELEMENT parameter (#PCDATA)>
+
+<!-- expression parameters-->
+<!ELEMENT expression_parameters (element+)>
+
+<!-- register_type -->
+<!ELEMENT register_type (registered_name)?>
+<!ATTLIST register_type name CDATA #REQUIRED>
+<!ATTLIST register_type kind (builtin.string| 
+                                builtin.keyedString| 
+                                builtin.octets| 
+                                builtin.keyedOctets| 
+                                dynamicData| 
+                                userGenerated) #IMPLIED>
+<!ATTLIST register_type type_ref CDATA #IMPLIED>
+
+<!-- Topic -->
+<!ELEMENT topic (registered_name? | topic_qos?)>
+<!ATTLIST topic name CDATA #REQUIRED>
+<!ATTLIST topic register_type_ref CDATA #REQUIRED>
+
+<!-- registered_name-->
+<!ELEMENT registered_name (#PCDATA)>
+
+<!ELEMENT memory_management (sample_buffer_min_size?|
+                             sample_buffer_trim_to_size? |
+                             pool_sample_buffer_max_size?|
+                             persistent_sample_buffer_max_size?)*>
+<!ELEMENT sample_buffer_min_size (#PCDATA)>
+<!ELEMENT sample_buffer_trim_to_size (#PCDATA)>
+
+
+
+<!-- transformation library -->
+<!ELEMENT transformation_library
+        (adapter_plugin |
+        java_adapter_plugin |
+        transformation_plugin |
+        processor_plugin)*>
+<!ATTLIST transformation_library name CDATA #REQUIRED>
+
+<!-- adapter library -->
+<!ELEMENT adapter_library
+        (adapter_plugin |
+        java_adapter_plugin |
+        transformation_plugin |
+        processor_plugin)*>
+<!ATTLIST adapter_library name CDATA #REQUIRED>
+
+<!-- plugin library -->
+<!ELEMENT plugin_library
+        (adapter_plugin |
+        java_adapter_plugin |
+        transformation_plugin |
+        processor_plugin)*>
+<!ATTLIST plugin_library name CDATA #REQUIRED>
+
+<!-- adapter plugin -->
+<!ELEMENT adapter_plugin (dll | create_function | property)?>
+<!ATTLIST adapter_plugin name CDATA #REQUIRED>
+
+<!-- java adapter plugin -->
+<!ELEMENT java_adapter_plugin (class_name | property)?>
+<!ATTLIST java_adapter_plugin name CDATA #REQUIRED>
+
+<!-- transformation plugin -->
+<!ELEMENT transformation_plugin (dll | create_function | property)?>
+<!ATTLIST transformation_plugin name CDATA #REQUIRED>
+
+<!-- processor plugin -->
+<!ELEMENT processor_plugin (dll | create_function | property)?>
+<!ATTLIST processor_plugin name CDATA #REQUIRED>
+
+<!-- routing plugin -->
+<!ELEMENT routing_service
+        (annotation?,
+        administration?,
+        monitoring?,
+        entity_monitoring?,
+        jvm?,
+        domain_route*)>
+<!ATTLIST routing_service name CDATA #REQUIRED>
+<!ATTLIST routing_service group_name CDATA #IMPLIED>
+<!ATTLIST routing_service enabled CDATA "true">
+
+<!-- annotation -->
+<!ELEMENT annotation (documentation)?>
+
+<!-- administration -->
+<!ELEMENT administration
+        (enabled |
+        domain_id |
+        distributed_logger |
+        domain_participant_qos |
+        participant_qos |
+        publisher_qos |
+        subscriber_qos |
+        datareader_qos |
+        datawriter_qos |
+        memory_management |
+        save_path |
+        save_on_update |
+        reuse_monitoring_participant)*>
+
+<!-- entity_monitoring -->
+<!ELEMENT entity_monitoring
+        (enabled |
+        status_publication_period |
+        statistics_sampling_period)?>
+
+<!-- jvm -->
+<!ELEMENT jvm (class_path | options)?>
+
+<!-- domain_route -->
+<!ELEMENT domain_route
+        (entity_monitoring? |
+        participant* |
+        connection* |
+        session*)>
+<!ATTLIST domain_route name CDATA #IMPLIED>
+<!ATTLIST domain_route enabled CDATA "true">
+
+<!-- participant -->
+<!ELEMENT participant
+        (domain_id |
+        domain_participant_qos |
+        participant_qos |
+        memory_management |
+        register_type |
+        registered_type)*>
+<!ATTLIST participant name CDATA #REQUIRED>
+
+<!-- connection -->
+<!ELEMENT connection
+        (property? |
+        register_type? |
+        registered_type*)>
+<!ATTLIST connection name CDATA #REQUIRED>
+<!ATTLIST connection plugin_name CDATA #REQUIRED>
+
+<!-- session -->
+<!ELEMENT session
+        (entity_monitoring? |
+        thread_pool? |
+        periodic_action? |
+        property? |
+        publisher_qos? |
+        subscriber_qos? |
+        auto_topic_route* |
+        topic_route* |
+        route* |
+        auto_route*)>
+<!ATTLIST session name CDATA #IMPLIED>
+<!ATTLIST session enabled CDATA "true">
+
+<!-- thread pool -->
+<!ELEMENT thread_pool
+        (stack_size |
+        priority |
+        size |
+        mask |
+        cpu_list |
+        cpu_rotation)?>
+
+<!-- auto topic route -->
+<!ELEMENT auto_topic_route
+        (entity_monitoring |
+        publish_with_original_info |
+        publish_with_original_timestamp |
+        propagate_dispose |
+        propagate_unregister |
+        topic_query_proxy |
+        filter_propagation |
+        periodic_action |
+        enable_data_on_inputs |
+        processor |
+        input |
+        output)?>
+<!ATTLIST auto_topic_route name CDATA #IMPLIED>
+<!ATTLIST auto_topic_route enabled CDATA "true">
+
+<!-- filter propagation -->
+<!ELEMENT filter_propagation
+        (enabled |
+        max_event_count |
+        max_event_delay)?>
+
+<!-- processor -->
+<!ELEMENT processor (property)?>
+<!ATTLIST processor plugin_name CDATA #IMPLIED>
+
+<!-- input -->
+<!ELEMENT input
+        (entity_monitoring |
+        allow_topic_name_filter |
+        allow_registered_type_name_filter |
+        deny_topic_name_filter |
+        deny_registered_type_name_filter |
+        creation_mode |
+        datareader_qos |
+        content_filter |
+        topic_name |
+        registered_type_name |
+        propagate_dispose |
+        propagate_unregister |
+        transformation |
+        stream_name |
+        property |
+        allow_stream_name_filter |
+        deny_stream_name_filter)?>
+<!ATTLIST input name CDATA #IMPLIED>
+<!ATTLIST input participant CDATA #IMPLIED>
+<!ATTLIST input connection CDATA #IMPLIED>
+
+<!-- output -->
+<!ELEMENT output
+        (entity_monitoring |
+        allow_topic_name_filter |
+        allow_registered_type_name_filter |
+        deny_topic_name_filter |
+        deny_registered_type_name_filter |
+        creation_mode |
+        on_delete_wait_for_ack_timeout |
+        datawriter_qos |
+        topic_name |
+        registered_type_name |
+        transformation |
+        stream_name |
+        property |
+        allow_stream_name_filter |
+        deny_stream_name_filter)?>
+<!ATTLIST output name CDATA #IMPLIED>
+<!ATTLIST output participant CDATA #IMPLIED>
+<!ATTLIST output connection CDATA #IMPLIED>
+
+<!-- topic route -->
+<!ELEMENT topic_route
+        (entity_monitoring? |
+        route_types? |
+        publish_with_original_info? |
+        publish_with_original_timestamp? |
+        propagate_dispose? |
+        propagate_unregister? |
+        topic_query_proxy? |
+        filter_propagation? |
+        periodic_action? |
+        enable_data_on_inputs? |
+        processor? |
+        input* |
+        output* )>
+<!ATTLIST topic_route name CDATA #IMPLIED>
+<!ATTLIST topic_route enabled CDATA "true">
+
+<!-- route -->
+<!ELEMENT route
+        (entity_monitoring? |
+        route_types? |
+        publish_with_original_timestamp? |
+        periodic_action? |
+        enable_data_on_inputs? |
+        processor? |
+        dds_input* |
+        input* |
+        dds_output* |
+        output* )>
+<!ATTLIST route name CDATA #IMPLIED>
+<!ATTLIST route enabled CDATA "true">
+
+<!-- dds input -->
+<!ELEMENT dds_input
+        (entity_monitoring |
+        topic_name |
+        registered_type_name |
+        creation_mode |
+        propagate_dispose |
+        propagate_unregister |
+        datareader_qos |
+        content_filter |
+        transformation |
+        allow_topic_name_filter |
+        allow_registered_type_name_filter |
+        deny_topic_name_filter |
+        deny_registered_type_name_filter)?>
+<!ATTLIST dds_input name CDATA #IMPLIED>
+<!ATTLIST dds_input participant CDATA #REQUIRED>
+
+<!-- dds output -->
+<!ELEMENT dds_output
+        (entity_monitoring |
+        topic_name |
+        registered_type_name |
+        creation_mode |
+        on_delete_wait_for_ack_timeout |
+        datawriter_qos |
+        transformation |
+        allow_topic_name_filter |
+        allow_registered_type_name_filter |
+        deny_topic_name_filter |
+        deny_registered_type_name_filter)?>
+<!ATTLIST dds_output name CDATA #IMPLIED>
+<!ATTLIST dds_output participant CDATA #IMPLIED>
+
+<!-- transformation -->
+<!ELEMENT transformation
+        (output_type_name |
+        output_connection_name |
+        input_type_name |
+        input_connection_name |
+        property)?>
+<!ATTLIST transformation plugin_name CDATA #IMPLIED>
+
+<!-- auto route -->
+<!ELEMENT auto_route
+        (entity_monitoring |
+        publish_with_original_timestamp |
+        periodic_action |
+        enable_data_on_inputs |
+        processor|
+        dds_input|
+        input|
+        dds_output|
+        output)?>
+<!ATTLIST auto_route name CDATA #IMPLIED>
+<!ATTLIST auto_route enabled CDATA "true">
+
+<!-- registered type -->
+<!ELEMENT registered_type EMPTY>
+<!ATTLIST registered_type name CDATA #REQUIRED>
+<!ATTLIST registered_type type_name CDATA #REQUIRED>
+
+<!-- create function -->
+<!ELEMENT create_function (#PCDATA)>
+
+<!-- class name -->
+<!ELEMENT class_name (#PCDATA)>
+
+<!-- documentation -->
+<!ELEMENT documentation (#PCDATA)>
+
+<!-- enabled -->
+<!ELEMENT enabled (#PCDATA)>
+
+<!-- save path -->
+<!ELEMENT save_path (#PCDATA)>
+
+<!-- save on update -->
+<!ELEMENT save_on_update (#PCDATA)>
+
+<!-- reuse monitoring participant -->
+<!ELEMENT reuse_monitoring_participant (#PCDATA)>
+
+<!-- ignore initialization failure -->
+<!ELEMENT ignore_initialization_failure (#PCDATA)>
+
+<!-- status publication period -->
+<!ELEMENT status_publication_period (sec|nanosec)?>
+
+<!-- statistics sampling period -->
+<!ELEMENT statistics_sampling_period (sec|nanosec)?>
+
+<!-- class path -->
+<!ELEMENT class_path (element)*>
+
+<!-- options -->
+<!ELEMENT options (element)*>
+
+<!-- publish with original info -->
+<!ELEMENT publish_with_original_info (#PCDATA)>
+
+<!-- publish with original timestamp -->
+<!ELEMENT publish_with_original_timestamp (#PCDATA)>
+
+<!-- propagate dispose -->
+<!ELEMENT propagate_dispose (#PCDATA)>
+
+<!-- propagate unregister -->
+<!ELEMENT propagate_unregister (#PCDATA)>
+
+<!-- topic query proxy -->
+<!ELEMENT topic_query_proxy (enabled | mode)?>
+
+<!-- mode -->
+<!ELEMENT mode (#PCDATA)>
+
+<!-- max event count -->
+<!ELEMENT max_event_count (#PCDATA)>
+
+<!-- max event delay -->
+<!ELEMENT max_event_delay (sec|nanosec)?>
+
+<!-- periodic action -->
+<!ELEMENT periodic_action (sec|nanosec)?>
+
+<!-- enable data on inputs -->
+<!ELEMENT enable_data_on_inputs (#PCDATA)>
+
+<!-- allow topic name filter -->
+<!ELEMENT allow_topic_name_filter (#PCDATA)>
+
+<!-- allow registered type name filter -->
+<!ELEMENT allow_registered_type_name_filter (#PCDATA)>
+
+<!-- deny topic name filter -->
+<!ELEMENT deny_topic_name_filter (#PCDATA)>
+
+<!-- deny registered type name filter -->
+<!ELEMENT deny_registered_type_name_filter (#PCDATA)>
+
+<!-- creation mode -->
+<!ELEMENT creation_mode (#PCDATA)>
+
+<!-- creation mode -->
+<!ELEMENT on_delete_wait_for_ack_timeout (sec|nanosec)?>
+
+<!-- route types -->
+<!ELEMENT route_types (#PCDATA)>
+
+<!-- registered type name -->
+<!ELEMENT registered_type_name (#PCDATA)>
+
+<!-- output type name -->
+<!ELEMENT output_type_name (#PCDATA)>
+
+<!-- output connection name -->
+<!ELEMENT output_connection_name (#PCDATA)>
+
+<!-- input type name -->
+<!ELEMENT input_type_name (#PCDATA)>
+
+<!-- input connection name -->
+<!ELEMENT input_connection_name (#PCDATA)>
+
+<!-- allow stream name filter -->
+<!ELEMENT allow_stream_name_filter (#PCDATA)>
+
+<!-- deny stream name filter -->
+<!ELEMENT deny_stream_name_filter (#PCDATA)>
+
+<!-- size -->
+<!ELEMENT size (#PCDATA)>
+
+<!-- stream name -->
+<!ELEMENT stream_name (#PCDATA)>
+
+
+<!-- 
+ (c) Copyright, Real-Time Innovations, 2012-2016.
+ All rights reserved.
+ Permission to modify and use for internal purposes granted.
+ This software is provided "as is", without warranty, express or implied.
+-->
+
+<!-- distributed_logger -->
+<!ELEMENT distributed_logger (filter_level?,enabled,thread?,queue_size?,echo_to_stdout?,log_infrastructure_messages?)>
+
+<!-- filter_level -->
+<!ELEMENT filter_level (#PCDATA)> 
+
+<!-- queue_size -->
+<!ELEMENT queue_size (#PCDATA)> 
+
+<!-- echo_to_stdout -->
+<!ELEMENT echo_to_stdout (#PCDATA)> 
+
+<!-- log_infrastructure_messages -->
+<!ELEMENT log_infrastructure_messages (#PCDATA)> 
+
+
+
+<!-- qos_library -->
+<!ELEMENT qos_library (participant_qos|
+                       domain_participant_qos|
+                       participant_factory_qos|
+                       topic_qos|
+                       publisher_qos|
+                       subscriber_qos|
+                       writer_qos|
+                       reader_qos|
+                       datawriter_qos|
+                       datareader_qos|
+                       qos_profile)*>
+<!ATTLIST qos_library name CDATA #REQUIRED>
+
+<!-- qos_profile -->
+<!ELEMENT qos_profile (base_name|
+                       participant_qos|
+                       domain_participant_qos|
+                       participant_factory_qos|
+                       topic_qos|
+                       publisher_qos|
+                       subscriber_qos|
+                       writer_qos| datawriter_qos|
+                       reader_qos| datareader_qos)*>
+<!ATTLIST qos_profile name CDATA #REQUIRED>
+<!ATTLIST qos_profile base_name CDATA #IMPLIED>
+<!ATTLIST qos_profile is_default_qos CDATA #IMPLIED>
+<!ATTLIST qos_profile is_default_participant_factory_profile CDATA #IMPLIED>
+
+<!ELEMENT base_name (element)+>
+
+<!-- configuration_variables -->
+<!ELEMENT configuration_variables (value?|element*)>
+
+<!-- participant_qos -->
+<!ELEMENT participant_qos (base_name|
+                   user_data|
+                   entity_factory|
+                   wire_protocol|
+                   transport_builtin|
+                   default_unicast|
+                   multicast_mapping|
+                   discovery|
+                   resource_limits|
+                   event|
+                   receiver_pool|
+                   database|
+                   discovery_config|
+                   property|
+                   participant_name|
+                   partition|
+                   type_support)*>
+<!ATTLIST participant_qos name CDATA #IMPLIED>
+<!ATTLIST participant_qos base_name CDATA #IMPLIED>
+<!ATTLIST participant_qos base_qos_name CDATA #IMPLIED>
+
+<!ELEMENT domain_participant_qos (base_name|
+                   user_data|
+                   entity_factory|
+                   wire_protocol|
+                   transport_builtin|
+                   default_unicast|
+                   multicast_mapping|
+                   discovery|
+                   resource_limits|
+                   event|
+                   receiver_pool|
+                   database|
+                   discovery_config|
+                   property|
+                   participant_name|
+                   partition|
+                   type_support)*>
+<!ATTLIST domain_participant_qos name CDATA #IMPLIED>
+<!ATTLIST domain_participant_qos base_name CDATA #IMPLIED>
+<!ATTLIST domain_participant_qos base_qos_name CDATA #IMPLIED>
+
+<!-- participant_factory_qos -->
+<!ELEMENT participant_factory_qos (base_name|
+                                logging|
+                                entity_factory|
+                                resource_limits|
+                                monitoring)*>
+<!ATTLIST participant_factory_qos name CDATA #IMPLIED>
+<!ATTLIST participant_factory_qos base_name CDATA #IMPLIED>
+<!ATTLIST participant_factory_qos base_qos_name CDATA #IMPLIED>
+
+<!-- topic_qos -->
+<!ELEMENT topic_qos (base_name|
+					 topic_data|
+                     durability|
+                     durability_service|
+                     deadline|
+                     latency_budget|
+                     liveliness|
+                     reliability|
+                     destination_order|
+                     history|
+                     resource_limits|
+                     transport_priority|
+                     lifespan|
+                     ownership|
+                     representation)*>
+<!ATTLIST topic_qos name CDATA #IMPLIED>
+<!ATTLIST topic_qos base_name CDATA #IMPLIED>
+<!ATTLIST topic_qos base_qos_name CDATA #IMPLIED>
+<!ATTLIST topic_qos topic_filter CDATA #IMPLIED>
+
+<!-- publisher_qos -->
+<!ELEMENT publisher_qos (base_name|
+						presentation|
+                        partition|
+                        group_data|
+                        entity_factory|
+                        asynchronous_publisher|
+                        exclusive_area|
+                        publisher_name)*>
+<!ATTLIST publisher_qos name CDATA #IMPLIED>
+<!ATTLIST publisher_qos base_name CDATA #IMPLIED>
+<!ATTLIST publisher_qos base_qos_name CDATA #IMPLIED>
+
+<!-- subscriber_qos -->
+<!ELEMENT subscriber_qos (base_name|
+						  presentation|
+                          partition|
+                          group_data|
+                          entity_factory|
+                          exclusive_area|
+                          subscriber_name)*>
+<!ATTLIST subscriber_qos name CDATA #IMPLIED>
+<!ATTLIST subscriber_qos base_name CDATA #IMPLIED>
+<!ATTLIST subscriber_qos base_qos_name CDATA #IMPLIED>
+
+<!-- writer_qos -->
+<!ELEMENT writer_qos (base_name|
+				  durability|
+      		      durability_service|
+      		      deadline|
+      		      latency_budget|
+      		      liveliness|
+      		      reliability|
+      		      destination_order|
+      		      history|
+      		      resource_limits|
+      		      transport_priority|
+      		      lifespan|
+      		      user_data|
+      		      ownership|
+      		      ownership_strength|
+      		      writer_data_lifecycle|
+      		      writer_resource_limits|
+      		      protocol|
+      		      transport_selection|
+      		      unicast|
+      		      type_support|
+      		      publish_mode|
+      		      property|
+                  data_tags|
+                  batch|
+                  multi_channel|
+                  availability|
+                  publication_name|
+                  encapsulation|
+                  service|
+                  topic_query_dispatch|
+                  representation|
+                  transfer_mode)*>
+<!ATTLIST writer_qos name CDATA #IMPLIED>
+<!ATTLIST writer_qos base_name CDATA #IMPLIED>
+<!ATTLIST writer_qos base_qos_name CDATA #IMPLIED>
+<!ATTLIST writer_qos topic_filter CDATA #IMPLIED>
+
+<!-- datawriter_qos -->
+<!ELEMENT datawriter_qos (base_name|
+				  durability|
+      		      durability_service|
+      		      deadline|
+      		      latency_budget|
+      		      liveliness|
+      		      reliability|
+      		      destination_order|
+      		      history|
+      		      resource_limits|
+      		      transport_priority|
+      		      lifespan|
+      		      user_data|
+      		      ownership|
+      		      ownership_strength|
+      		      writer_data_lifecycle|
+      		      writer_resource_limits|
+      		      protocol|
+      		      transport_selection|
+      		      unicast|
+      		      type_support|
+      		      publish_mode|
+      		      property|
+                  data_tags|
+                  batch|
+                  multi_channel|
+                  availability|
+                  publication_name|
+                  encapsulation|
+                  service|
+                  topic_query_dispatch|
+                  representation|
+                  transfer_mode)*>
+<!ATTLIST datawriter_qos name CDATA #IMPLIED>
+<!ATTLIST datawriter_qos base_name CDATA #IMPLIED>
+<!ATTLIST datawriter_qos base_qos_name CDATA #IMPLIED>
+<!ATTLIST datawriter_qos topic_filter CDATA #IMPLIED>
+
+<!-- reader_qos -->
+<!ELEMENT reader_qos (base_name|
+				  durability|
+      		      deadline|
+      		      latency_budget|
+      		      liveliness|
+      		      reliability|
+      		      destination_order|
+      		      history|
+      		      resource_limits|
+      		      user_data|
+      		      ownership|
+      		      time_based_filter|
+      		      reader_data_lifecycle|
+      		      reader_resource_limits|
+      		      protocol|
+      		      transport_selection|
+      		      unicast|
+      		      multicast|
+      		      type_support|
+      		      property|
+                  data_tags|
+                  availability|
+                  subscription_name|
+                  encapsulation|
+                  type_consistency|
+                  transport_priority|
+                  service|
+                  representation)*>
+<!ATTLIST reader_qos name CDATA #IMPLIED>
+<!ATTLIST reader_qos base_name CDATA #IMPLIED>
+<!ATTLIST reader_qos base_qos_name CDATA #IMPLIED>
+<!ATTLIST reader_qos topic_filter CDATA #IMPLIED>
+
+<!-- datareader_qos -->
+<!ELEMENT datareader_qos (base_name|
+				  durability|
+      		      deadline|
+      		      latency_budget|
+      		      liveliness|
+      		      reliability|
+      		      destination_order|
+      		      history|
+      		      resource_limits|
+      		      user_data|
+      		      ownership|
+      		      time_based_filter|
+      		      reader_data_lifecycle|
+      		      reader_resource_limits|
+      		      protocol|
+      		      transport_selection|
+      		      unicast|
+      		      multicast|
+      		      type_support|
+      		      property|
+                  data_tags|
+                  availability|
+                  subscription_name|
+                  encapsulation|
+                  type_consistency|
+                  transport_priority|
+                  service|
+                  representation)*>
+<!ATTLIST datareader_qos name CDATA #IMPLIED>
+<!ATTLIST datareader_qos base_name CDATA #IMPLIED>
+<!ATTLIST datareader_qos base_qos_name CDATA #IMPLIED>
+<!ATTLIST datareader_qos topic_filter CDATA #IMPLIED>
+
+<!-- !!!!!Qos Policies!!!!! -->
+
+<!-- user_data -->
+<!ELEMENT user_data (value)>
+
+<!-- entity_factory -->
+<!ELEMENT entity_factory (autoenable_created_entities)>
+
+<!-- wire_protocol -->
+<!ELEMENT wire_protocol (
+        participant_id|
+        rtps_auto_id_kind|
+        rtps_host_id|
+        rtps_app_id|
+        rtps_instance_id|
+        rtps_well_known_ports|
+        compute_crc|
+        check_crc|
+        rtps_reserved_port_mask|
+        require_crc|
+        computed_crc_kind|
+        allowed_crc_mask)*>
+
+<!-- transport_builtin -->
+<!ELEMENT transport_builtin (mask|shmem|udpv4|udpv4_wan|udpv6)>
+
+<!-- default_unicast -->
+<!ELEMENT default_unicast (value)>
+
+<!-- multicast_mapping -->
+<!ELEMENT multicast_mapping (value)>
+
+<!-- discovery -->
+<!ELEMENT discovery (enabled_transports|initial_peers|
+                     multicast_receive_addresses|metatraffic_transport_priority|accept_unknown_peers|enable_endpoint_discovery)*>
+
+<!-- logging: Participant Factory QoS -->
+<!ELEMENT logging (verbosity|
+        category|
+        print_format|
+        output_file|
+        output_file_suffix|
+        max_bytes_per_file|
+        max_files)*>
+
+<!-- monitoring: DDS Monitoring and RS Monitoring -->
+<!ELEMENT monitoring (enable|
+        application_name|
+        distribution_settings|
+        data|
+        enabled|
+        domain_id|
+        ignore_initialization_failure|
+        status_publication_period|
+        statistics_sampling_period|
+        domain_participant_qos|
+        participant_qos|
+        publisher_qos|
+        datawriter_qos)*>
+
+<!ELEMENT application_name (#PCDATA)>
+
+<!-- resource_limits -->
+<!ELEMENT resource_limits (
+        local_writer_allocation|
+        local_reader_allocation|
+        local_publisher_allocation|
+        local_subscriber_allocation|
+        local_topic_allocation|
+        local_type_allocation|
+        remote_writer_allocation|
+        remote_reader_allocation|
+        remote_participant_allocation|
+        matching_writer_reader_pair_allocation|
+        matching_reader_writer_pair_allocation|
+        ignored_entity_allocation|
+        content_filtered_topic_allocation|
+        content_filter_allocation|
+        read_condition_allocation|
+        query_condition_allocation|
+        outstanding_asynchronous_sample_allocation|
+        flow_controller_allocation|
+        local_writer_hash_buckets|
+        local_reader_hash_buckets|
+        local_publisher_hash_buckets|
+        local_subscriber_hash_buckets|
+        local_topic_hash_buckets|
+        remote_writer_hash_buckets|
+        remote_reader_hash_buckets|
+        remote_participant_hash_buckets|
+        matching_writer_reader_pair_hash_buckets|
+        matching_reader_writer_pair_hash_buckets|
+        ignored_entity_hash_buckets|
+        content_filtered_topic_hash_buckets|
+        content_filter_hash_buckets|
+        flow_controller_hash_buckets|
+        max_gather_destinations|
+        participant_user_data_max_length|
+        topic_data_max_length|
+        publisher_group_data_max_length|
+        subscriber_group_data_max_length|
+        writer_user_data_max_length|
+        reader_user_data_max_length|
+        max_partitions|
+        max_partition_cumulative_characters|
+        max_endpoint_groups|
+        type_code_max_serialized_length|
+        type_object_max_serialized_length|
+        serialized_type_object_dynamic_allocation_threshold|
+        type_object_max_deserialized_length|
+        deserialized_type_object_dynamic_allocation_threshold|
+        contentfilter_property_max_length|
+        participant_property_list_max_length|
+        participant_property_string_max_length|
+        writer_property_list_max_length|
+        writer_property_string_max_length|
+        reader_property_list_max_length|
+        reader_property_string_max_length|
+        max_samples|
+        max_instances|
+        max_samples_per_instance|
+        initial_samples|
+        max_endpoint_group_cumulative_characters|
+        initial_instances|
+        instance_hash_buckets|
+        ignored_entity_replacement_kind|
+        channel_seq_max_length|
+        channel_filter_expression_max_length|
+        type_signature_list_max_length|
+        type_signature_string_max_length|
+        transport_info_list_max_length|
+        remote_topic_query_allocation|
+        remote_topic_query_hash_buckets|
+        writer_data_tag_list_max_length|
+        writer_data_tag_string_max_length|
+        reader_data_tag_list_max_length|
+        reader_data_tag_string_max_length|
+        shmem_ref_transfer_mode_max_segments|
+        max_receive_ports|
+        max_destination_ports|
+        max_participants|
+        max_components)*>
+
+
+<!-- event: Participant QoS and DDS Monitoring -->
+<!ELEMENT event (thread|
+        initial_count|
+        max_count)*>
+
+<!-- receiver_pool -->
+<!ELEMENT receiver_pool (thread|buffer_size|buffer_alignment)*>
+
+<!-- database -->
+<!ELEMENT database (thread|shutdown_timeout|cleanup_period|
+                    shutdown_cleanup_period|initial_records|max_skiplist_level|
+		            max_weak_references|initial_weak_references)*>
+
+<!-- discovery_config -->
+<!ELEMENT discovery_config (participant_liveliness_lease_duration|
+                            participant_liveliness_assert_period|
+                            participant_announcement_period|
+                            remote_participant_purge_kind|
+                            max_liveliness_loss_detection_period|
+                            initial_participant_announcements|
+                            new_remote_participant_announcements|
+                            min_initial_participant_announcement_period|
+                            max_initial_participant_announcement_period|
+                            participant_reader_resource_limits|
+                            publication_reader|
+                            publication_reader_resource_limits|
+                            subscription_reader|
+                            subscription_reader_resource_limits|
+                            publication_writer|
+                            publication_writer_data_lifecycle|
+                            subscription_writer|
+                            subscription_writer_data_lifecycle|
+                            builtin_discovery_plugins|
+                            asynchronous_publisher|
+                            enabled_builtin_channels|
+                            default_domain_announcement_period|
+                            ignore_default_domain_announcements|
+                            participant_message_reader_reliability_kind|
+                            participant_message_reader|
+                            participant_message_writer|
+                            participant_proxy_reader|
+                            participant_state_writer|
+                            publication_writer_publish_mode|
+                            subscription_writer_publish_mode|
+                            service_request_reader|
+                            service_request_writer|
+                            service_request_writer_data_lifecycle|
+                            service_request_writer_publish_mode|
+                            locator_reachability_assert_period|
+                            locator_reachability_lease_duration|
+                            locator_reachability_change_detection_period|
+                            secure_volatile_reader|
+                            secure_volatile_writer|
+                            secure_volatile_writer_publish_mode|
+                            endpoint_type_object_lb_serialization_threshold|
+                            max_participant_locators|
+                            max_locators_per_discovered_participant|
+                            cache_serialized_samples|
+                            dns_tracker_polling_period|
+                            participant_configuration_writer_publish_mode|
+                            participant_configuration_writer|
+                            participant_configuration_writer_data_lifecycle|
+                            participant_configuration_reader|
+                            participant_configuration_reader_resource_limits)*>
+
+<!ELEMENT default_domain_announcement_period (sec|nanosec)?>
+<!ELEMENT ignore_default_domain_announcements (#PCDATA)*>
+
+<!ELEMENT locator_reachability_assert_period (sec|nanosec)?>
+<!ELEMENT locator_reachability_lease_duration (sec|nanosec)?>
+<!ELEMENT locator_reachability_change_detection_period (sec|nanosec)?>
+
+<!-- property -->
+<!ELEMENT property (value)*>
+<!ATTLIST property inherit CDATA #IMPLIED>
+
+<!-- data tags -->
+<!ELEMENT data_tags (tags)*>
+<!ATTLIST data_tags inherit CDATA #IMPLIED>
+
+<!-- participant_name -->
+<!ELEMENT participant_name (name|role_name)>
+
+<!-- publisher_name -->
+<!ELEMENT publisher_name (name|role_name)>
+
+<!-- subscriber_name -->
+<!ELEMENT subscriber_name (name|role_name)>
+
+<!-- publication_name -->
+<!ELEMENT publication_name (name|role_name)>
+
+<!-- subscription_name -->
+<!ELEMENT subscription_name (name|role_name)>
+
+<!-- topic_data -->
+<!ELEMENT topic_data (value)>
+
+<!-- durability -->
+<!ELEMENT durability (kind|direct_communication|writer_depth)*>
+
+<!-- durability_service -->
+<!ELEMENT durability_service (service_cleanup_delay|history_kind|history_depth|
+                              max_samples|max_instances|max_samples_per_instance|
+                              writer_depth)*>
+
+<!-- deadline -->
+<!ELEMENT deadline (period)>
+
+<!-- latency_budget -->
+<!ELEMENT latency_budget (duration)>
+
+<!-- liveliness -->
+<!ELEMENT liveliness (kind|lease_duration|assertions_per_lease_duration)*>
+
+<!-- reliability -->
+<!ELEMENT reliability (kind|max_blocking_time|acknowledgment_kind|instance_state_recovery_kind)*>
+
+<!-- destination_order -->
+<!ELEMENT destination_order (kind|scope|source_timestamp_tolerance)*>
+
+<!-- history -->
+<!ELEMENT history (kind|depth)*>
+
+<!-- transport_priority -->
+<!ELEMENT transport_priority (value)>
+
+<!-- lifespan -->
+<!ELEMENT lifespan (duration)>
+
+<!-- ownership -->
+<!ELEMENT ownership (kind)>
+
+<!-- representation -->
+<!ELEMENT representation (value | compression_settings)>
+
+<!-- presentation -->
+<!ELEMENT presentation (access_scope|coherent_access|ordered_access|
+                        drop_incomplete_coherent_set)*>
+
+<!-- partition -->
+<!ELEMENT partition (name)>
+
+<!-- group_data -->
+<!ELEMENT group_data (value)>
+
+<!-- asynchronous_publisher -->
+
+<!ELEMENT asynchronous_publisher (disable_asynchronous_write|disable_asynchronous_batch|thread|
+				 asynchronous_batch_thread|asynchronous_batch_blocking_kind|
+				 disable_topic_query_publication|topic_query_publication_thread)*>
+
+<!-- exclusive_area -->
+<!ELEMENT exclusive_area (use_shared_exclusive_area)>
+
+<!-- ownership_strength -->
+<!ELEMENT ownership_strength (value)>
+
+<!-- writer_data_lifecycle -->
+<!ELEMENT writer_data_lifecycle (autodispose_unregistered_instances|
+                                 autopurge_unregistered_instances_delay|
+                                 autopurge_disposed_instances_delay)>
+
+<!-- writer_resource_limits -->
+<!ELEMENT writer_resource_limits (
+		initial_concurrent_blocking_threads|
+		max_concurrent_blocking_threads|
+		max_remote_reader_filters|
+		initial_batches|
+		max_batches|
+		instance_replacement|
+		replace_empty_instances|
+		autoregister_instances|
+		initial_virtual_writers|
+		max_virtual_writers|
+		max_remote_readers|
+		max_app_ack_remote_readers|
+		max_routes_per_reader|
+		initial_active_topic_queries|
+		max_active_topic_queries|
+		writer_loaned_sample_allocation|
+		initialize_writer_loaned_sample)*>
+
+<!ELEMENT shmem_ref_settings (enable_data_consistency_check)>
+
+<!ELEMENT enable_data_consistency_check (#PCDATA)>
+
+<!-- transfer_mode -->
+<!ELEMENT transfer_mode (shmem_ref_settings)>
+
+<!-- protocol -->
+<!ELEMENT protocol (
+        virtual_guid|
+        rtps_object_id|
+        push_on_write|
+        rtps_reliable_writer|
+        rtps_reliable_reader|
+        disable_positive_acks|
+        disable_inline_keyhash|
+        expects_inline_qos|
+        initial_virtual_sequence_number|
+        propagate_dispose_of_unregistered_instances|
+        serialize_key_with_dispose|
+        propagate_unregister_of_disposed_instances|
+        propagate_app_ack_with_no_response)*>
+
+<!-- transport_selection -->
+<!ELEMENT transport_selection (enabled_transports)>
+
+<!-- unicast -->
+<!ELEMENT unicast (value)>
+
+<!-- type_support -->
+<!ELEMENT type_support (plugin_data|cdr_padding_kind)*>
+
+<!-- publish_mode -->
+<!ELEMENT publish_mode (kind|flow_controller_name|priority)*>
+
+<!-- publication_writer_publish_mode -->
+<!ELEMENT publication_writer_publish_mode (kind|flow_controller_name|priority)*>
+
+<!-- subscription_writer_publish_mode -->
+<!ELEMENT subscription_writer_publish_mode (kind|flow_controller_name|priority)*>
+
+<!-- service_request_writer_publish_mode -->
+<!ELEMENT service_request_writer_publish_mode (kind|flow_controller_name|priority)*>
+
+<!-- secure_volatile_writer_publish_mode -->
+<!ELEMENT secure_volatile_writer_publish_mode (kind|flow_controller_name|priority)*>
+
+<!-- participant configuration channel QoS -->
+<!ELEMENT participant_configuration_writer_publish_mode (
+        kind|
+        flow_controller_name|
+        priority)*>
+
+<!ELEMENT participant_configuration_reader (
+        min_heartbeat_response_delay|
+        max_heartbeat_response_delay|
+        heartbeat_suppression_duration|
+        nack_period|
+        receive_window_size|
+        round_trip_time|
+        app_ack_period|
+        min_app_ack_response_keep_duration|
+        samples_per_app_ack)*>
+
+<!ELEMENT participant_configuration_reader_resource_limits (
+        initial_samples|
+        max_samples|
+        initial_infos|
+        max_infos|
+        initial_outstanding_reads|
+        max_outstanding_reads|
+        max_samples_per_read|
+        disable_fragmentation_support|
+        max_fragmented_samples|
+        initial_fragmented_samples|
+        max_fragmented_samples_per_remote_writer|
+        max_fragments_per_sample|
+        dynamically_allocate_fragmented_samples|
+        max_samples_per_remote_writer)*>
+
+<!ELEMENT participant_configuration_writer (
+        low_watermark|
+        high_watermark|
+        heartbeat_period|
+        fast_heartbeat_period|
+        late_joiner_heartbeat_period|
+        virtual_heartbeat_period|
+        samples_per_virtual_heartbeat|
+        max_heartbeat_retries|
+        inactivate_nonprogressing_readers|
+        heartbeats_per_max_samples|
+        min_nack_response_delay|
+        max_nack_response_delay|
+        disable_positive_acks_min_sample_keep_duration|
+        disable_positive_acks_max_sample_keep_duration|
+        disable_positive_acks_sample_min_separation|
+        disable_positive_acks_decrease_sample_keep_duration_factor|
+        disable_positive_acks_increase_sample_keep_duration_factor|
+        disable_positive_acks_enable_adaptive_sample_keep_duration|
+        disable_positive_acks_enable_spin_wait|
+        nack_suppression_duration|
+        max_bytes_per_nack_response|
+        min_send_window_size|
+        max_send_window_size|
+        send_window_update_period|
+        send_window_increase_factor|
+        send_window_decrease_factor|
+        enable_multicast_periodic_heartbeat|
+        multicast_resend_threshold|
+        disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT participant_configuration_writer_data_lifecycle (
+        autodispose_unregistered_instances|
+        autopurge_unregistered_instances_delay|
+        autopurge_disposed_instances_delay)*>
+
+<!ELEMENT endpoint_type_object_lb_serialization_threshold (#PCDATA)>
+
+<!ELEMENT dns_tracker_polling_period (sec|nanosec)?>
+
+<!-- time_based_filter -->
+<!ELEMENT time_based_filter (minimum_separation)>
+
+<!-- reader_data_lifecycle -->
+<!ELEMENT reader_data_lifecycle (autopurge_nowriter_samples_delay|autopurge_disposed_samples_delay|autopurge_disposed_instances_delay|autopurge_nowriter_instances_delay)*>
+
+<!-- reader_resource_limits -->
+<!ELEMENT reader_resource_limits (
+        max_remote_writers|
+        max_remote_writers_per_instance|
+        max_samples_per_remote_writer|
+        max_infos|
+        max_routes_per_writer|
+        initial_remote_writers|
+        initial_remote_writers_per_instance|
+        initial_infos|
+        initial_outstanding_reads|
+        max_outstanding_reads|
+        max_samples_per_read|
+        disable_fragmentation_support|
+        max_fragmented_samples|
+        initial_fragmented_samples|
+        max_fragmented_samples_per_remote_writer|
+        max_fragments_per_sample|
+        dynamically_allocate_fragmented_samples|
+        max_total_instances|
+        max_remote_virtual_writers_per_instance|
+        initial_remote_virtual_writers_per_instance|
+        initial_remote_virtual_writers|
+        max_remote_virtual_writers|
+        max_remote_writers_per_sample|
+        max_query_condition_filters|
+        max_app_ack_response_length|
+        keep_minimum_state_for_instances|
+        initial_topic_queries|
+        max_topic_queries|
+        shmem_ref_transfer_mode_attached_segment_allocation|
+        instance_replacement)*>
+
+<!-- multicast -->
+<!ELEMENT multicast (value|kind)>
+
+<!-- batch -->
+<!ELEMENT batch (enable|max_data_bytes|max_meta_data_bytes|max_samples|
+                 max_flush_delay|source_timestamp_resolution|thread_safe_write)*>
+
+<!-- multi_channel -->
+<!ELEMENT multi_channel (channels|filter_name)*>
+
+<!-- encapsulation -->
+<!ELEMENT encapsulation (value)>
+
+<!-- encapsulation -->
+<!ELEMENT availability (enable_required_subscriptions|
+                        max_data_availability_waiting_time|
+                        max_endpoint_availability_waiting_time|
+                        required_matched_endpoint_groups)*>
+
+<!-- topic_query_dispatch -->
+<!ELEMENT topic_query_dispatch (enable|publication_period|samples_per_period)*>
+
+<!ELEMENT enable_required_subscriptions (#PCDATA)>
+
+<!-- SHMEM -->
+<!ELEMENT shmem (received_message_count_max|
+        receive_buffer_size|
+        message_size_max|
+        recv_thread|
+        properties_bitmap|
+        gather_send_buffer_count_max|
+        host_id|
+        use_530_from_uuid_locator|
+        enable_udp_debugging|
+        udp_debugging_address|
+        udp_debugging_port|
+        thread_name_prefix)>
+
+<!-- UDPV4 -->
+<!ELEMENT udpv4 (message_size_max|
+        allow_interfaces_list|
+        deny_interfaces_list|
+        max_interface_count|
+        send_socket_buffer_size|
+        recv_socket_buffer_size|
+        multicast_ttl|
+        interface_table|
+        multicast_interface|
+        is_default_interface|
+        disable_auto_interface_config|
+        recv_thread|
+        properties_bitmap|
+        gather_send_buffer_count_max|
+        allow_multicast_interfaces_list|
+        deny_multicast_interfaces_list|
+        unicast_enabled|
+        multicast_enabled|
+        multicast_loopback_disabled|
+        ignore_loopback_interface|
+        use_zero_copy|
+        send_blocking|
+        transport_priority_mask|
+        transport_priority_mapping_low|
+        transport_priority_mapping_high|
+        interface_poll_period|
+        reuse_multicast_receive_resource|
+        protocol_overhead_max|
+        disable_interface_tracking|
+        public_address|
+        use_checksum|
+        ignore_nonrunning_interfaces|
+        send_ping|
+        thread_name_prefix|
+        force_interface_poll_detection|
+        join_multicast_group_timeout)>
+
+<!-- UDPV4 WAN -->
+<!ELEMENT udpv4_wan (message_size_max|
+        allow_interfaces_list|
+        deny_interfaces_list|
+        max_interface_count|
+        send_socket_buffer_size|
+        recv_socket_buffer_size|
+        is_default_interface|
+        recv_thread|
+        properties_bitmap|
+        gather_send_buffer_count_max|
+        ignore_loopback_interface|
+        use_zero_copy|
+        send_blocking|
+        transport_priority_mask|
+        transport_priority_mapping_low|
+        transport_priority_mapping_high|
+        interface_poll_period|
+        protocol_overhead_max|
+        disable_interface_tracking|
+        public_address|
+        use_checksum|
+        ignore_nonrunning_interfaces|
+        send_ping|
+        thread_name_prefix|
+        force_interface_poll_detection|
+        comm_ports|
+        port_offset|
+        binding_ping_period)>
+
+<!-- UDPV6 -->
+<!ELEMENT udpv6 (
+        properties_bitmap|
+        gather_send_buffer_count_max|
+        message_size_max|
+        allow_interfaces_list|
+        deny_interfaces_list|
+        max_interface_count|
+        allow_multicast_interfaces_list|
+        deny_multicast_interfaces_list|
+        send_socket_buffer_size|
+        recv_socket_buffer_size|
+        unicast_enabled|
+        multicast_enabled|
+        multicast_ttl|
+        multicast_loopback_disabled|
+        ignore_loopback_interface|
+        use_zero_copy|
+        send_blocking|
+        enable_v4mapped|
+        transport_priority_mask|
+        transport_priority_mapping_low|
+        transport_priority_mapping_high|
+        send_ping|
+        interface_poll_period|
+        reuse_multicast_receive_resource|
+        protocol_overhead_max|
+        disable_interface_tracking|
+        public_address|
+        ignore_nonrunning_interfaces|
+        thread_name_prefix|
+        force_interface_poll_detection|
+        join_multicast_group_timeout)>
+
+<!-- !!!!!Qos Policies Values!!!!! -->
+
+<!ELEMENT value (#PCDATA|element)*>
+
+<!ELEMENT tags (#PCDATA|element)*>
+
+<!ELEMENT autoenable_created_entities (#PCDATA)>
+
+<!ELEMENT participant_id (#PCDATA)>
+
+<!ELEMENT rtps_auto_id_kind (#PCDATA)>
+
+<!ELEMENT rtps_host_id (#PCDATA)>
+
+<!ELEMENT rtps_app_id (#PCDATA)>
+
+<!ELEMENT rtps_instance_id (#PCDATA)>
+
+<!ELEMENT rtps_well_known_ports (port_base|
+                                 domain_id_gain|
+      				 participant_id_gain|
+      				 builtin_multicast_port_offset|
+      				 builtin_unicast_port_offset|
+      				 user_multicast_port_offset|
+      				 user_unicast_port_offset)*>
+
+<!ELEMENT compute_crc (#PCDATA)>
+
+<!ELEMENT check_crc (#PCDATA)>
+
+<!ELEMENT port_base (#PCDATA)>
+
+<!ELEMENT domain_id_gain (#PCDATA)>
+
+<!ELEMENT participant_id_gain (#PCDATA)>
+
+<!ELEMENT builtin_multicast_port_offset (#PCDATA)>
+
+<!ELEMENT builtin_unicast_port_offset (#PCDATA)>
+
+<!ELEMENT user_multicast_port_offset (#PCDATA)>
+
+<!ELEMENT user_unicast_port_offset (#PCDATA)>
+
+<!ELEMENT rtps_reserved_port_mask (#PCDATA)>
+
+<!ELEMENT require_crc (#PCDATA)>
+
+<!ELEMENT computed_crc_kind (#PCDATA)>
+
+<!ELEMENT allowed_crc_mask (#PCDATA)>
+
+<!ELEMENT mask (#PCDATA)>
+
+<!ELEMENT verbosity (#PCDATA)>
+
+<!ELEMENT category (#PCDATA)>
+
+<!ELEMENT print_format (#PCDATA)>
+
+<!ELEMENT output_file (#PCDATA)>
+
+<!ELEMENT output_file_suffix (#PCDATA)>
+
+<!ELEMENT max_bytes_per_file (#PCDATA)>
+
+<!ELEMENT max_files (#PCDATA)>
+
+<!ELEMENT element (#PCDATA|addresses|topic_expression|mapping_function|receive_port|transports|name|value|propagate|receive_address|
+                   domain_filter|type_config|path|file_name|type|register_top_level|max_string|
+                   max_sequence|type_name|registered_type_name|topics|priority|
+                   filter_expression|kind|port|address|multicast_settings|encapsulations|
+                   role_name|topic_name|quorum_count|property|
+                   flags|net_mask|interface_name|host|rtps|public|
+                   resource_selector|facility|forwarding_verbosity)*>
+
+<!ELEMENT receive_port (#PCDATA)>
+
+<!ELEMENT transports (element)*>
+
+<!ELEMENT allow_interfaces_list (element)*>
+
+<!ELEMENT deny_interfaces_list (element)*>
+
+<!ELEMENT max_interface_count (#PCDATA)*>
+
+<!ELEMENT allow_multicast_interfaces_list (element)*>
+
+<!ELEMENT deny_multicast_interfaces_list (element)*>
+
+<!ELEMENT interface_table (element)*>
+
+<!ELEMENT addresses (#PCDATA)*>
+
+<!ELEMENT topic_expression (#PCDATA)*>
+
+<!ELEMENT mapping_function (dll|function_name)*>
+
+<!ELEMENT dll (#PCDATA)*>
+
+<!ELEMENT function_name (#PCDATA)*>
+
+<!ELEMENT encapsulations (element)*>
+
+<!ELEMENT enabled_transports (element)*>
+
+<!ELEMENT initial_peers (#PCDATA|element)*>
+
+<!ELEMENT multicast_receive_addresses (element)*>
+
+<!ELEMENT metatraffic_transport_priority (#PCDATA)>
+
+<!ELEMENT accept_unknown_peers (#PCDATA)>
+
+<!ELEMENT enable_endpoint_discovery (#PCDATA)>
+
+<!ELEMENT local_writer_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT initial_count (#PCDATA)>
+
+<!ELEMENT max_count (#PCDATA)>
+
+<!ELEMENT incremental_count (#PCDATA)>
+
+<!ELEMENT local_reader_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT local_publisher_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT local_subscriber_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT local_topic_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT local_type_allocation (max_count)*>
+
+<!ELEMENT remote_writer_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT remote_reader_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT remote_topic_query_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT remote_participant_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT matching_writer_reader_pair_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT matching_reader_writer_pair_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT ignored_entity_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT ignored_entity_replacement_kind (#PCDATA)>
+
+<!ELEMENT content_filtered_topic_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT content_filter_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT read_condition_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT query_condition_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT outstanding_asynchronous_sample_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT flow_controller_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT local_writer_hash_buckets (#PCDATA)>
+
+<!ELEMENT local_reader_hash_buckets (#PCDATA)>
+
+<!ELEMENT local_publisher_hash_buckets (#PCDATA)>
+
+<!ELEMENT local_subscriber_hash_buckets (#PCDATA)>
+
+<!ELEMENT local_topic_hash_buckets (#PCDATA)>
+
+<!ELEMENT remote_writer_hash_buckets (#PCDATA)>
+
+<!ELEMENT remote_reader_hash_buckets (#PCDATA)>
+
+<!ELEMENT remote_topic_query_hash_buckets (#PCDATA)>
+
+<!ELEMENT remote_participant_hash_buckets (#PCDATA)>
+
+<!ELEMENT matching_writer_reader_pair_hash_buckets (#PCDATA)>
+
+<!ELEMENT matching_reader_writer_pair_hash_buckets (#PCDATA)>
+
+<!ELEMENT ignored_entity_hash_buckets (#PCDATA)>
+
+<!ELEMENT content_filtered_topic_hash_buckets (#PCDATA)>
+
+<!ELEMENT content_filter_hash_buckets (#PCDATA)>
+
+<!ELEMENT flow_controller_hash_buckets (#PCDATA)>
+
+<!ELEMENT max_gather_destinations (#PCDATA)>
+
+<!ELEMENT participant_user_data_max_length (#PCDATA)>
+
+<!ELEMENT topic_data_max_length (#PCDATA)>
+
+<!ELEMENT publisher_group_data_max_length (#PCDATA)>
+
+<!ELEMENT subscriber_group_data_max_length (#PCDATA)>
+
+<!ELEMENT writer_user_data_max_length (#PCDATA)>
+
+<!ELEMENT reader_user_data_max_length (#PCDATA)>
+
+<!ELEMENT max_partitions (#PCDATA)>
+
+<!ELEMENT max_partition_cumulative_characters (#PCDATA)>
+
+<!ELEMENT type_code_max_serialized_length (#PCDATA)>
+
+<!ELEMENT type_object_max_serialized_length (#PCDATA)>
+
+<!ELEMENT serialized_type_object_dynamic_allocation_threshold (#PCDATA)>
+
+<!ELEMENT type_object_max_deserialized_length (#PCDATA)>
+
+<!ELEMENT deserialized_type_object_dynamic_allocation_threshold (#PCDATA)>
+
+<!ELEMENT contentfilter_property_max_length (#PCDATA)>
+
+<!ELEMENT participant_property_list_max_length (#PCDATA)>
+
+<!ELEMENT participant_property_string_max_length (#PCDATA)>
+
+<!ELEMENT writer_property_list_max_length (#PCDATA)>
+
+<!ELEMENT writer_property_string_max_length (#PCDATA)>
+
+<!ELEMENT reader_property_list_max_length (#PCDATA)>
+
+<!ELEMENT reader_property_string_max_length (#PCDATA)>
+
+<!ELEMENT writer_data_tag_list_max_length (#PCDATA)>
+
+<!ELEMENT writer_data_tag_string_max_length (#PCDATA)>
+
+<!ELEMENT reader_data_tag_list_max_length (#PCDATA)>
+
+<!ELEMENT reader_data_tag_string_max_length (#PCDATA)>
+
+<!ELEMENT shmem_ref_transfer_mode_max_segments (#PCDATA)>
+
+<!ELEMENT max_receive_ports (#PCDATA)>
+
+<!ELEMENT max_destination_ports (#PCDATA)>
+
+<!ELEMENT max_participants (#PCDATA)>
+
+<!ELEMENT max_components (#PCDATA)>
+
+<!ELEMENT type_signature_list_max_length (#PCDATA)>
+
+<!ELEMENT type_signature_string_max_length (#PCDATA)>
+
+<!ELEMENT asynchronous_batch_thread (mask|priority|stack_size|cpu_list|cpu_rotation)*>
+
+<!ELEMENT thread (mask|priority|stack_size|cpu_list|cpu_rotation)*>
+
+<!ELEMENT recv_thread (mask|priority|stack_size|cpu_list|cpu_rotation)*>
+
+<!ELEMENT topic_query_publication_thread (mask|priority|stack_size|cpu_list|cpu_rotation)*>
+
+<!ELEMENT priority (#PCDATA)>
+
+<!ELEMENT stack_size (#PCDATA)>
+
+<!ELEMENT cpu_list (element)*>
+
+<!ELEMENT cpu_rotation (#PCDATA)>
+
+<!ELEMENT buffer_size (#PCDATA)>
+
+<!ELEMENT buffer_alignment (#PCDATA)>
+
+<!ELEMENT shutdown_timeout (sec|nanosec)?>
+
+<!ELEMENT sec (#PCDATA)>
+
+<!ELEMENT nanosec (#PCDATA)>
+
+<!ELEMENT cleanup_period (sec|nanosec)?>
+
+<!ELEMENT shutdown_cleanup_period (sec|nanosec)?>
+
+<!ELEMENT initial_records (#PCDATA)>
+
+<!ELEMENT max_skiplist_level (#PCDATA)>
+
+<!ELEMENT max_weak_references (#PCDATA)>
+
+<!ELEMENT initial_weak_references (#PCDATA)>
+
+<!ELEMENT participant_liveliness_lease_duration (sec|nanosec)?>
+
+<!ELEMENT participant_liveliness_assert_period (sec|nanosec)?>
+
+<!ELEMENT participant_announcement_period (sec|nanosec)?>
+
+<!ELEMENT remote_participant_purge_kind (#PCDATA)>
+
+<!ELEMENT max_liveliness_loss_detection_period (sec|nanosec)?>
+
+<!ELEMENT initial_participant_announcements (#PCDATA)>
+
+<!ELEMENT new_remote_participant_announcements (#PCDATA)>
+
+<!ELEMENT min_initial_participant_announcement_period (sec|nanosec)?>
+
+<!ELEMENT max_initial_participant_announcement_period (sec|nanosec)?>
+
+<!ELEMENT participant_reader_resource_limits (initial_samples|max_samples|
+                                         initial_infos|max_infos|
+                                         initial_outstanding_reads|max_outstanding_reads|
+                                         max_samples_per_read|disable_fragmentation_support|max_fragmented_samples|
+                                         initial_fragmented_samples|max_fragmented_samples_per_remote_writer|
+                                         max_fragments_per_sample|dynamically_allocate_fragmented_samples|
+                                         max_samples_per_remote_writer)*>
+
+<!ELEMENT initial_samples (#PCDATA)>
+
+<!ELEMENT max_samples (#PCDATA)>
+
+<!ELEMENT initial_infos (#PCDATA)>
+
+<!ELEMENT max_infos (#PCDATA)>
+
+<!ELEMENT initial_outstanding_reads (#PCDATA)>
+
+<!ELEMENT max_outstanding_reads (#PCDATA)>
+
+<!ELEMENT max_samples_per_read (#PCDATA)>
+
+<!ELEMENT receive_window_size (#PCDATA)>
+
+<!ELEMENT round_trip_time (sec|nanosec)?>
+
+<!ELEMENT publication_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+			      heartbeat_suppression_duration|nack_period|receive_window_size|round_trip_time|
+                               app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)*>
+
+<!ELEMENT min_heartbeat_response_delay (sec|nanosec)?>
+
+<!ELEMENT max_heartbeat_response_delay (sec|nanosec)?>
+
+<!ELEMENT heartbeat_suppression_duration (sec|nanosec)?>
+
+<!ELEMENT nack_period (sec|nanosec)?>
+
+<!ELEMENT app_ack_period (sec|nanosec)?>
+
+<!ELEMENT min_app_ack_response_keep_duration (sec|nanosec)?>
+
+<!ELEMENT samples_per_app_ack (#PCDATA)>
+
+<!ELEMENT publication_reader_resource_limits (initial_samples|max_samples|
+                                              initial_infos|max_infos|
+                                              initial_outstanding_reads|max_outstanding_reads|
+                                              max_samples_per_read|disable_fragmentation_support|max_fragmented_samples|
+                                              initial_fragmented_samples|max_fragmented_samples_per_remote_writer|
+                                              max_fragments_per_sample|dynamically_allocate_fragmented_samples|
+                                              max_samples_per_remote_writer)*>
+
+<!ELEMENT subscription_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+                               heartbeat_suppression_duration|nack_period|
+                               receive_window_size|round_trip_time|
+                               app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)*>
+
+<!ELEMENT subscription_reader_resource_limits (initial_samples|max_samples|
+                                               initial_infos|max_infos|
+                                               initial_outstanding_reads|max_outstanding_reads|
+                                               max_samples_per_read|disable_fragmentation_support|max_fragmented_samples|
+                                               initial_fragmented_samples|max_fragmented_samples_per_remote_writer|
+                                               max_fragments_per_sample|dynamically_allocate_fragmented_samples|
+                                               max_samples_per_remote_writer)*>
+
+<!ELEMENT participant_message_reader_reliability_kind (#PCDATA)>
+
+<!ELEMENT participant_message_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+                               heartbeat_suppression_duration|nack_period|
+                               receive_window_size|round_trip_time|
+                               app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)*>
+
+<!ELEMENT participant_proxy_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+                              heartbeat_suppression_duration|nack_period|
+                              receive_window_size|round_trip_time|
+                              app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)*>
+
+<!ELEMENT publication_writer (low_watermark|high_watermark|heartbeat_period|
+                              fast_heartbeat_period|late_joiner_heartbeat_period|
+                              virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                              max_heartbeat_retries|inactivate_nonprogressing_readers|
+                              heartbeats_per_max_samples|
+                              min_nack_response_delay|max_nack_response_delay|
+                              disable_positive_acks_min_sample_keep_duration|
+                              disable_positive_acks_max_sample_keep_duration|
+                              disable_positive_acks_sample_min_separation|
+                              disable_positive_acks_decrease_sample_keep_duration_factor|
+                              disable_positive_acks_increase_sample_keep_duration_factor|
+                              disable_positive_acks_enable_adaptive_sample_keep_duration|
+                              disable_positive_acks_enable_spin_wait|
+                              nack_suppression_duration|max_bytes_per_nack_response|
+                              min_send_window_size|max_send_window_size|
+                              send_window_update_period|send_window_increase_factor|
+                              send_window_decrease_factor|
+                              enable_multicast_periodic_heartbeat|
+                              multicast_resend_threshold|
+                              disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT publication_writer_data_lifecycle (autodispose_unregistered_instances|
+                                             autopurge_unregistered_instances_delay|
+                                             autopurge_disposed_instances_delay)*>
+
+<!ELEMENT low_watermark (#PCDATA)>
+
+<!ELEMENT high_watermark (#PCDATA)>
+
+<!ELEMENT heartbeat_period (sec|nanosec)?>
+
+<!ELEMENT fast_heartbeat_period (sec|nanosec)?>
+
+<!ELEMENT virtual_heartbeat_period (sec|nanosec)?>
+
+<!ELEMENT samples_per_virtual_heartbeat (#PCDATA)>
+
+<!ELEMENT late_joiner_heartbeat_period (sec|nanosec)?>
+
+<!ELEMENT max_heartbeat_retries (#PCDATA)>
+
+<!ELEMENT inactivate_nonprogressing_readers (#PCDATA)>
+
+<!ELEMENT heartbeats_per_max_samples (#PCDATA)>
+
+<!ELEMENT disable_positive_acks_decrease_sample_keep_duration_factor (#PCDATA)>
+
+<!ELEMENT disable_positive_acks_increase_sample_keep_duration_factor (#PCDATA)>
+
+<!ELEMENT disable_positive_acks_enable_adaptive_sample_keep_duration (#PCDATA)>
+
+<!ELEMENT disable_positive_acks_enable_spin_wait (#PCDATA)>
+
+<!ELEMENT min_nack_response_delay (sec|nanosec)?>
+
+<!ELEMENT max_nack_response_delay (sec|nanosec)?>
+
+<!ELEMENT disable_positive_acks_min_sample_keep_duration (sec|nanosec)?>
+
+<!ELEMENT disable_positive_acks_max_sample_keep_duration (sec|nanosec)?>
+
+<!ELEMENT disable_positive_acks_sample_min_separation (sec|nanosec)?>
+
+<!ELEMENT nack_suppression_duration (sec|nanosec)?>
+
+<!ELEMENT max_bytes_per_nack_response (#PCDATA)>
+
+<!ELEMENT send_window_update_period (sec|nanosec)?>
+
+<!ELEMENT min_send_window_size (#PCDATA)>
+
+<!ELEMENT max_send_window_size (#PCDATA)>
+
+<!ELEMENT send_window_increase_factor (#PCDATA)>
+
+<!ELEMENT send_window_decrease_factor (#PCDATA)>
+
+<!ELEMENT enable_multicast_periodic_heartbeat (#PCDATA)>
+
+<!ELEMENT multicast_resend_threshold (#PCDATA)>
+
+<!ELEMENT disable_repair_piggyback_heartbeat (#PCDATA)>
+
+<!ELEMENT subscription_writer (low_watermark|high_watermark|heartbeat_period|
+                              fast_heartbeat_period|late_joiner_heartbeat_period|
+                              virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                              max_heartbeat_retries|inactivate_nonprogressing_readers|
+                              heartbeats_per_max_samples|
+                              min_nack_response_delay|max_nack_response_delay|
+                              disable_positive_acks_min_sample_keep_duration|
+                              disable_positive_acks_max_sample_keep_duration|
+                              disable_positive_acks_sample_min_separation|
+                              disable_positive_acks_decrease_sample_keep_duration_factor|
+                              disable_positive_acks_increase_sample_keep_duration_factor|
+                              disable_positive_acks_enable_adaptive_sample_keep_duration|
+                              disable_positive_acks_enable_spin_wait|
+                              nack_suppression_duration|max_bytes_per_nack_response|
+                              min_send_window_size|max_send_window_size|
+                              send_window_update_period|send_window_increase_factor|
+                              send_window_decrease_factor|
+                              enable_multicast_periodic_heartbeat|
+                              multicast_resend_threshold|
+                              disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT subscription_writer_data_lifecycle (autodispose_unregistered_instances|
+                                             autopurge_unregistered_instances_delay|
+                                             autopurge_disposed_instances_delay)*>
+
+<!ELEMENT participant_message_writer (low_watermark|high_watermark|heartbeat_period|
+                              fast_heartbeat_period|late_joiner_heartbeat_period|
+                              virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                              max_heartbeat_retries|inactivate_nonprogressing_readers|
+                              heartbeats_per_max_samples|
+                              min_nack_response_delay|max_nack_response_delay|
+                              disable_positive_acks_min_sample_keep_duration|
+                              disable_positive_acks_max_sample_keep_duration|
+                              disable_positive_acks_sample_min_separation|
+                              disable_positive_acks_decrease_sample_keep_duration_factor|
+                              disable_positive_acks_increase_sample_keep_duration_factor|
+                              disable_positive_acks_enable_adaptive_sample_keep_duration|
+                              disable_positive_acks_enable_spin_wait|
+                              nack_suppression_duration|max_bytes_per_nack_response|
+                              min_send_window_size|max_send_window_size|
+                              send_window_update_period|send_window_increase_factor|
+                              send_window_decrease_factor|
+                              enable_multicast_periodic_heartbeat|
+                              multicast_resend_threshold|
+                              disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT participant_state_writer (low_watermark|high_watermark|heartbeat_period|
+                             fast_heartbeat_period|late_joiner_heartbeat_period|
+                             virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                             max_heartbeat_retries|inactivate_nonprogressing_readers|
+                             heartbeats_per_max_samples|
+                             min_nack_response_delay|max_nack_response_delay|
+                             disable_positive_acks_min_sample_keep_duration|
+                             disable_positive_acks_max_sample_keep_duration|
+                             disable_positive_acks_sample_min_separation|
+                             disable_positive_acks_enable_adaptive_sample_keep_duration|
+                             disable_positive_acks_enable_spin_wait|
+                             disable_positive_acks_decrease_sample_keep_duration_factor|
+                             disable_positive_acks_increase_sample_keep_duration_factor|
+                             nack_suppression_duration|max_bytes_per_nack_response|
+                             min_send_window_size|max_send_window_size|
+                             send_window_update_period|send_window_increase_factor|
+                             send_window_decrease_factor|
+                             enable_multicast_periodic_heartbeat|
+                             multicast_resend_threshold|
+                             disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT max_participant_locators (#PCDATA)>
+
+<!ELEMENT max_locators_per_discovered_participant (#PCDATA)>
+
+<!ELEMENT cache_serialized_samples (#PCDATA)>
+
+<!ELEMENT builtin_discovery_plugins (#PCDATA)>
+
+<!ELEMENT enabled_builtin_channels (#PCDATA)>
+
+<!ELEMENT name (#PCDATA|element)*>
+<!ATTLIST name xsi:nil CDATA #IMPLIED>
+
+<!ELEMENT propagate (#PCDATA)>
+
+<!ELEMENT kind (#PCDATA)>
+
+<!ELEMENT direct_communication (#PCDATA)>
+
+<!ELEMENT writer_depth (#PCDATA)>
+
+<!ELEMENT service_cleanup_delay (sec|nanosec)?>
+
+<!ELEMENT history_kind (#PCDATA)>
+
+<!ELEMENT history_depth (#PCDATA)>
+
+<!ELEMENT max_instances (#PCDATA)>
+
+<!ELEMENT max_samples_per_instance (#PCDATA)>
+
+<!ELEMENT initial_instances (#PCDATA)>
+
+<!ELEMENT instance_hash_buckets (#PCDATA)>
+
+<!ELEMENT period (sec|nanosec)?>
+
+<!ELEMENT duration (sec|nanosec)?>
+
+<!ELEMENT lease_duration (sec|nanosec)?>
+
+<!ELEMENT assertions_per_lease_duration (#PCDATA)>
+
+<!ELEMENT max_blocking_time (sec|nanosec)?>
+
+<!ELEMENT acknowledgment_kind (#PCDATA)>
+
+<!ELEMENT instance_state_recovery_kind (#PCDATA)>
+
+<!ELEMENT source_timestamp_tolerance (sec|nanosec)?>
+
+<!ELEMENT scope (#PCDATA)>
+
+<!ELEMENT depth (#PCDATA)>
+
+<!ELEMENT access_scope (#PCDATA)>
+
+<!ELEMENT coherent_access (#PCDATA)>
+
+<!ELEMENT ordered_access (#PCDATA)>
+
+<!ELEMENT drop_incomplete_coherent_set (#PCDATA)>
+
+<!ELEMENT disable_asynchronous_write (#PCDATA)>
+
+<!ELEMENT disable_asynchronous_batch (#PCDATA)>
+
+<!ELEMENT disable_topic_query_publication (#PCDATA)>
+
+<!ELEMENT asynchronous_batch_blocking_kind (#PCDATA)>
+
+<!ELEMENT use_shared_exclusive_area (#PCDATA)>
+
+<!ELEMENT initial_concurrent_blocking_threads (#PCDATA)>
+
+<!ELEMENT max_concurrent_blocking_threads (#PCDATA)>
+
+<!ELEMENT max_remote_reader_filters (#PCDATA)>
+
+<!ELEMENT initial_batches (#PCDATA)>
+
+<!ELEMENT max_batches (#PCDATA)>
+
+<!ELEMENT autoregister_instances (#PCDATA)>
+
+<!ELEMENT initial_virtual_writers (#PCDATA)>
+
+<!ELEMENT max_virtual_writers (#PCDATA)>
+
+<!ELEMENT max_remote_readers (#PCDATA)>
+
+<!ELEMENT max_app_ack_remote_readers (#PCDATA)>
+
+<!ELEMENT max_routes_per_reader (#PCDATA)>
+
+<!ELEMENT instance_replacement (#PCDATA|alive_instance_removal|disposed_instance_removal|no_writers_instance_removal)*> 
+
+<!ELEMENT alive_instance_removal (#PCDATA)>
+
+<!ELEMENT disposed_instance_removal (#PCDATA)>
+
+<!ELEMENT no_writers_instance_removal (#PCDATA)> 
+
+<!ELEMENT replace_empty_instances (#PCDATA)>
+
+<!ELEMENT virtual_guid (value)>
+
+<!ELEMENT rtps_object_id (#PCDATA)>
+
+<!ELEMENT push_on_write (#PCDATA)>
+
+<!ELEMENT rtps_reliable_writer (low_watermark|high_watermark|heartbeat_period|
+                                fast_heartbeat_period|late_joiner_heartbeat_period|
+                                virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                                max_heartbeat_retries|inactivate_nonprogressing_readers|
+                                heartbeats_per_max_samples|
+                                min_nack_response_delay|max_nack_response_delay|
+                                disable_positive_acks_min_sample_keep_duration|
+                                disable_positive_acks_max_sample_keep_duration|
+                                disable_positive_acks_sample_min_separation|
+                                disable_positive_acks_decrease_sample_keep_duration_factor|
+                                disable_positive_acks_increase_sample_keep_duration_factor|
+                                disable_positive_acks_enable_adaptive_sample_keep_duration|
+                                disable_positive_acks_enable_spin_wait|
+                                nack_suppression_duration|max_bytes_per_nack_response|
+                                min_send_window_size|max_send_window_size|
+                                send_window_update_period|send_window_increase_factor|
+                                send_window_decrease_factor|
+                                enable_multicast_periodic_heartbeat|
+                                multicast_resend_threshold|
+                                disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT plugin_data (#PCDATA)>
+
+<!ELEMENT cdr_padding_kind (#PCDATA)>
+
+<!ELEMENT autodispose_unregistered_instances (#PCDATA)>
+
+<!ELEMENT autopurge_unregistered_instances_delay (sec|nanosec)?>
+
+<!ELEMENT flow_controller_name (#PCDATA)>
+
+<!ELEMENT minimum_separation (sec|nanosec)?>
+
+<!ELEMENT autopurge_nowriter_samples_delay (sec|nanosec)?>
+
+<!ELEMENT autopurge_disposed_samples_delay (sec|nanosec)?>
+
+<!ELEMENT autopurge_disposed_instances_delay (sec|nanosec)?>
+
+<!ELEMENT autopurge_nowriter_instances_delay (sec|nanosec)?>
+
+<!ELEMENT max_remote_writers (#PCDATA)>
+
+<!ELEMENT max_remote_writers_per_instance (#PCDATA)>
+
+<!ELEMENT max_samples_per_remote_writer (#PCDATA)>
+
+<!ELEMENT max_routes_per_writer (#PCDATA)>
+
+<!ELEMENT initial_remote_writers (#PCDATA)>
+
+<!ELEMENT initial_remote_writers_per_instance (#PCDATA)>
+
+<!ELEMENT disable_fragmentation_support (#PCDATA)>
+
+<!ELEMENT max_fragmented_samples (#PCDATA)>
+
+<!ELEMENT initial_fragmented_samples (#PCDATA)>
+
+<!ELEMENT max_fragmented_samples_per_remote_writer (#PCDATA)>
+
+<!ELEMENT max_fragments_per_sample (#PCDATA)>
+
+<!ELEMENT dynamically_allocate_fragmented_samples (#PCDATA)>
+
+<!ELEMENT max_total_instances (#PCDATA)>
+
+<!ELEMENT rtps_reliable_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+                                heartbeat_suppression_duration|nack_period|
+                                receive_window_size|round_trip_time|
+                                app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)>
+
+<!ELEMENT receive_address (#PCDATA)>
+
+<!ELEMENT disable_positive_acks (#PCDATA)>
+
+<!ELEMENT disable_inline_keyhash (#PCDATA)>
+
+<!ELEMENT serialize_key_with_dispose (#PCDATA)>
+
+<!ELEMENT expects_inline_qos (#PCDATA)>
+
+<!ELEMENT initial_virtual_sequence_number (high|low|value)>
+
+<!ELEMENT high (#PCDATA)>
+
+<!ELEMENT low (#PCDATA)>
+
+<!ELEMENT propagate_dispose_of_unregistered_instances (#PCDATA)>
+
+<!ELEMENT propagate_unregister_of_disposed_instances (#PCDATA)>
+
+<!ELEMENT propagate_app_ack_with_no_response (#PCDATA)>
+
+<!ELEMENT enable (#PCDATA)>
+
+<!ELEMENT max_data_bytes (#PCDATA)>
+
+<!ELEMENT max_meta_data_bytes (#PCDATA)>
+
+<!ELEMENT max_flush_delay (sec|nanosec)?>
+
+<!ELEMENT source_timestamp_resolution (sec|nanosec)?>
+
+<!ELEMENT thread_safe_write (#PCDATA)>
+
+<!ELEMENT channels (element)*>
+
+<!ELEMENT filter_name (#PCDATA)>
+
+<!ELEMENT filter_expression (#PCDATA)>
+
+<!ELEMENT multicast_settings (element)*>
+
+<!ELEMENT port (#PCDATA)>
+
+<!ELEMENT address (#PCDATA)>
+
+<!ELEMENT channel_seq_max_length (#PCDATA)>
+
+<!ELEMENT channel_filter_expression_max_length (#PCDATA)>
+
+<!ELEMENT max_remote_virtual_writers (#PCDATA)>
+
+<!ELEMENT initial_remote_virtual_writers (#PCDATA)>
+
+<!ELEMENT max_remote_virtual_writers_per_instance (#PCDATA)>
+
+<!ELEMENT initial_remote_virtual_writers_per_instance (#PCDATA)>
+
+<!ELEMENT max_remote_writers_per_sample (#PCDATA)>
+
+<!ELEMENT max_query_condition_filters (#PCDATA)>
+
+<!ELEMENT max_app_ack_response_length (#PCDATA)>
+
+<!ELEMENT max_data_availability_waiting_time (sec|nanosec)?>
+
+<!ELEMENT max_endpoint_availability_waiting_time (sec|nanosec)?>
+
+<!ELEMENT required_matched_endpoint_groups (element)*>
+
+<!ELEMENT role_name (#PCDATA)>
+<!ATTLIST role_name xsi:nil CDATA #IMPLIED>
+
+<!ELEMENT topic_name (#PCDATA)>
+
+<!ELEMENT quorum_count (#PCDATA)>
+
+<!ELEMENT max_endpoint_groups (#PCDATA)>
+
+<!ELEMENT max_endpoint_group_cumulative_characters (#PCDATA)>
+
+<!ELEMENT transport_info_list_max_length (#PCDATA)>
+
+<!ELEMENT ignore_sequence_bounds (#PCDATA)>
+<!ELEMENT ignore_string_bounds (#PCDATA)>
+<!ELEMENT ignore_member_names (#PCDATA)>
+<!ELEMENT prevent_type_widening (#PCDATA)>
+<!ELEMENT force_type_validation (#PCDATA)>
+<!ELEMENT ignore_enum_literal_names (#PCDATA)>
+
+<!ELEMENT type_consistency (
+    kind
+    | ignore_sequence_bounds
+    | ignore_string_bounds
+    | ignore_member_names
+    | prevent_type_widening
+    | force_type_validation
+    | ignore_enum_literal_names
+)>
+
+<!ELEMENT service (kind)>
+
+<!ELEMENT keep_minimum_state_for_instances (#PCDATA)>
+
+<!ELEMENT initial_topic_queries (#PCDATA)>
+
+<!ELEMENT max_topic_queries (#PCDATA)>
+
+<!ELEMENT shmem_ref_transfer_mode_attached_segment_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT initial_active_topic_queries (#PCDATA)>
+
+<!ELEMENT max_active_topic_queries (#PCDATA)>
+
+<!ELEMENT writer_loaned_sample_allocation (initial_count|max_count|incremental_count)*>
+
+<!ELEMENT initialize_writer_loaned_sample (#PCDATA)>
+
+<!ELEMENT samples_per_period (#PCDATA)>
+
+<!ELEMENT publication_period (sec|nanosec)?>
+
+<!ELEMENT service_request_writer (low_watermark|high_watermark|heartbeat_period|
+                              fast_heartbeat_period|late_joiner_heartbeat_period|
+                              virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                              max_heartbeat_retries|inactivate_nonprogressing_readers|
+                              heartbeats_per_max_samples|
+                              min_nack_response_delay|max_nack_response_delay|
+                              disable_positive_acks_min_sample_keep_duration|
+                              disable_positive_acks_max_sample_keep_duration|
+                              disable_positive_acks_sample_min_separation|
+                              disable_positive_acks_decrease_sample_keep_duration_factor|
+                              disable_positive_acks_increase_sample_keep_duration_factor|
+                              disable_positive_acks_enable_adaptive_sample_keep_duration|
+                              disable_positive_acks_enable_spin_wait|
+                              nack_suppression_duration|max_bytes_per_nack_response|
+                              min_send_window_size|max_send_window_size|
+                              send_window_update_period|send_window_increase_factor|
+                              send_window_decrease_factor|
+                              enable_multicast_periodic_heartbeat|
+                              multicast_resend_threshold|
+                              disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT service_request_writer_data_lifecycle (autodispose_unregistered_instances|
+                                                 autopurge_unregistered_instances_delay|
+                                                 autopurge_disposed_instances_delay)*>
+
+<!ELEMENT service_request_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+			           heartbeat_suppression_duration|nack_period|receive_window_size|round_trip_time|
+                                  app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)*>
+
+<!ELEMENT secure_volatile_writer (low_watermark|high_watermark|heartbeat_period|
+                              fast_heartbeat_period|late_joiner_heartbeat_period|
+                              virtual_heartbeat_period|samples_per_virtual_heartbeat|
+                              max_heartbeat_retries|inactivate_nonprogressing_readers|
+                              heartbeats_per_max_samples|
+                              min_nack_response_delay|max_nack_response_delay|
+                              disable_positive_acks_min_sample_keep_duration|
+                              disable_positive_acks_max_sample_keep_duration|
+                              disable_positive_acks_sample_min_separation|
+                              disable_positive_acks_decrease_sample_keep_duration_factor|
+                              disable_positive_acks_increase_sample_keep_duration_factor|
+                              disable_positive_acks_enable_adaptive_sample_keep_duration|
+                              disable_positive_acks_enable_spin_wait|
+                              nack_suppression_duration|max_bytes_per_nack_response|
+                              min_send_window_size|max_send_window_size|
+                              send_window_update_period|send_window_increase_factor|
+                              send_window_decrease_factor|
+                              enable_multicast_periodic_heartbeat|
+                              multicast_resend_threshold|
+                              disable_repair_piggyback_heartbeat)*>
+
+<!ELEMENT secure_volatile_reader (min_heartbeat_response_delay|max_heartbeat_response_delay|
+			           heartbeat_suppression_duration|nack_period|receive_window_size|round_trip_time|
+                                  app_ack_period|min_app_ack_response_keep_duration|samples_per_app_ack)*>
+
+<!ELEMENT received_message_count_max (#PCDATA)>
+
+<!ELEMENT receive_buffer_size (#PCDATA)>
+
+<!ELEMENT message_size_max (#PCDATA)>
+
+<!ELEMENT properties_bitmap (#PCDATA)>
+
+<!ELEMENT gather_send_buffer_count_max (#PCDATA)>
+
+<!ELEMENT host_id (#PCDATA)>
+
+<!ELEMENT use_530_from_uuid_locator (#PCDATA)>
+
+<!ELEMENT enable_udp_debugging (#PCDATA)>
+
+<!ELEMENT udp_debugging_address (#PCDATA)>
+
+<!ELEMENT udp_debugging_port (#PCDATA)>
+
+<!ELEMENT send_socket_buffer_size (#PCDATA)>
+
+<!ELEMENT recv_socket_buffer_size (#PCDATA)>
+
+<!ELEMENT multicast_ttl (#PCDATA)>
+
+<!ELEMENT multicast_interface (#PCDATA)>
+
+<!ELEMENT is_default_interface (#PCDATA)>
+
+<!ELEMENT disable_auto_interface_config (#PCDATA)>
+
+<!ELEMENT unicast_enabled (#PCDATA)>
+
+<!ELEMENT multicast_enabled (#PCDATA)>
+
+<!ELEMENT multicast_loopback_disabled (#PCDATA)>
+
+<!ELEMENT ignore_loopback_interface (#PCDATA)>
+
+<!ELEMENT use_zero_copy (#PCDATA)>
+
+<!ELEMENT send_blocking (#PCDATA)>
+
+<!ELEMENT transport_priority_mask (#PCDATA)>
+
+<!ELEMENT transport_priority_mapping_low (#PCDATA)>
+
+<!ELEMENT transport_priority_mapping_high (#PCDATA)>
+
+<!ELEMENT interface_poll_period (#PCDATA)>
+
+<!ELEMENT reuse_multicast_receive_resource (#PCDATA)>
+
+<!ELEMENT protocol_overhead_max (#PCDATA)>
+
+<!ELEMENT disable_interface_tracking (#PCDATA)>
+
+<!ELEMENT public_address (#PCDATA)>
+
+<!ELEMENT comm_ports (default|mappings)*>
+
+<!ELEMENT default (host|public)*>
+
+<!ELEMENT host (#PCDATA)>
+
+<!ELEMENT public (#PCDATA)>
+
+<!ELEMENT mappings (element)*>
+
+<!ELEMENT rtps (#PCDATA)>
+
+<!ELEMENT use_checksum (#PCDATA)>
+
+<!ELEMENT ignore_nonrunning_interfaces (#PCDATA)>
+
+<!ELEMENT flags (#PCDATA)>
+
+<!ELEMENT net_mask (#PCDATA)>
+
+<!ELEMENT interface_name (#PCDATA)>
+
+<!ELEMENT enable_v4mapped (#PCDATA)>
+
+<!ELEMENT send_ping (#PCDATA)>
+
+<!ELEMENT thread_name_prefix (#PCDATA)>
+
+<!ELEMENT port_offset (#PCDATA)>
+
+<!ELEMENT binding_ping_period (#PCDATA)>
+
+<!ELEMENT force_interface_poll_detection (#PCDATA)>
+
+<!ELEMENT join_multicast_group_timeout (#PCDATA)>
+
+<!ELEMENT compression_settings (compression_ids | writer_compression_level |
+                       writer_compression_threshold)>
+
+<!ELEMENT compression_ids (#PCDATA)>
+<!ELEMENT writer_compression_level (#PCDATA)>
+<!ELEMENT writer_compression_threshold (#PCDATA)>
+
+<!ELEMENT distribution_settings (dedicated_participant|
+        publisher_qos_profile_name|
+        periodic_settings|
+        event_settings|
+        logging_settings)*>
+
+<!ELEMENT event_settings (thread|
+        concurrency_level|
+        datawriter_qos_profile_name|
+        publication_period)*>
+
+<!ELEMENT logging_settings (concurrency_level|
+        max_historical_logs|
+        datawriter_qos_profile_name|
+        thread|
+        publication_period)*>
+
+<!ELEMENT publisher_qos_profile_name (#PCDATA)>
+
+<!ELEMENT dedicated_participant (enable|domain_id|participant_qos_profile_name)*>
+
+<!ELEMENT domain_id (#PCDATA)>
+
+<!ELEMENT participant_qos_profile_name (#PCDATA)>
+
+<!ELEMENT periodic_settings (datawriter_qos_profile_name|thread|polling_period)*>
+
+<!ELEMENT datawriter_qos_profile_name (#PCDATA)>
+
+<!ELEMENT polling_period (sec|nanosec)*>
+
+<!ELEMENT concurrency_level (#PCDATA)>
+
+<!ELEMENT max_historical_logs (#PCDATA)>
+
+<!ELEMENT data (metric_groups|logs)*>
+
+<!ELEMENT metric_groups (element)*>
+
+<!ELEMENT resource_selector (#PCDATA)>
+
+<!ELEMENT metric_selector (element)*>
+
+<!ELEMENT logs (element)*>
+
+<!ELEMENT facility (#PCDATA)>
+
+<!ELEMENT forwarding_verbosity (#PCDATA)>
+
+<!ELEMENT types (include|const|directive|struct|valuetype|
+		sparse_valuetype|union|typedef|module|enum|bitset|forward_dcl)+>
+<!ATTLIST types xmlns:xsi CDATA #IMPLIED>
+<!ATTLIST types xsi:noNamespaceSchemaLocation CDATA #IMPLIED>
+<!ATTLIST types name CDATA #IMPLIED>
+
+<!ELEMENT type_library (include|const|directive|struct|valuetype|
+                        sparse_valuetype|union|typedef|module|enum|bitset|forward_dcl)+>
+<!ATTLIST type_library xmlns:xsi CDATA #IMPLIED>
+<!ATTLIST type_library xsi:noNamespaceSchemaLocation CDATA #IMPLIED>
+<!ATTLIST type_library name CDATA #IMPLIED>
+
+<!ELEMENT module (include|const|directive|struct|union|
+      		typedef|module|enum|valuetype|sparse_valuetype|bitset|forward_dcl)+>
+<!ATTLIST module name NMTOKEN #REQUIRED>
+<!ATTLIST module autoid (hash|sequential) #IMPLIED>
+<!ATTLIST module data_representation CDATA #IMPLIED>
+<!ATTLIST module allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST module languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST module transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT valuetype (const?|member|directive?)+>
+<!ATTLIST valuetype name NMTOKEN #REQUIRED>
+<!ATTLIST valuetype extensibility CDATA #IMPLIED>
+<!ATTLIST valuetype baseClass CDATA #IMPLIED>
+<!ATTLIST valuetype typeModifier (custom|none|truncatable|abstract) #IMPLIED>
+<!ATTLIST valuetype topLevel (true|false|1|0) "true">
+<!ATTLIST valuetype nested (true|false|1|0) "false">
+<!ATTLIST valuetype resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST valuetype autoid (hash|sequential) #IMPLIED>
+<!ATTLIST valuetype data_representation CDATA #IMPLIED>
+<!ATTLIST valuetype allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST valuetype languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST valuetype transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT sparse_valuetype (const?|member|directive?)+>
+<!ATTLIST sparse_valuetype name NMTOKEN #REQUIRED>
+<!ATTLIST sparse_valuetype baseClass CDATA #IMPLIED>
+<!ATTLIST sparse_valuetype typeModifier (custom|none|truncatable|abstract) #IMPLIED>
+<!ATTLIST sparse_valuetype topLevel (true|false|1|0) "true">
+<!ATTLIST sparse_valuetype nested (true|false|1|0) "false">
+
+<!ELEMENT include EMPTY>
+<!ATTLIST include file CDATA #REQUIRED >
+
+<!ELEMENT struct (member|directive)+>
+<!ATTLIST struct name NMTOKEN #REQUIRED>
+<!ATTLIST struct baseType CDATA #IMPLIED>
+<!ATTLIST struct extensibility CDATA #IMPLIED>
+<!ATTLIST struct topLevel (true|false|1|0) "true">
+<!ATTLIST struct nested (true|false|1|0) "false">
+<!ATTLIST struct resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST struct autoid (hash|sequential) #IMPLIED>
+<!ATTLIST struct data_representation CDATA #IMPLIED>
+<!ATTLIST struct allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST struct languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST struct transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT union (discriminator,(case|directive)+)>
+<!ATTLIST union name NMTOKEN #REQUIRED>
+<!ATTLIST union extensibility CDATA #IMPLIED>
+<!ATTLIST union data_representation CDATA #IMPLIED>
+<!ATTLIST union allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST union topLevel (true|false|1|0) "true">
+<!ATTLIST union nested (true|false|1|0) "false">
+<!ATTLIST union resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST union autoid (hash|sequential) #IMPLIED>
+<!ATTLIST union transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT const EMPTY>
+<!ATTLIST const name NMTOKEN #REQUIRED>
+<!ATTLIST const value CDATA #REQUIRED>
+<!ATTLIST const type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST const nonBasicTypeName CDATA #IMPLIED>
+<!ATTLIST const resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST const stringMaxLength CDATA #IMPLIED>
+
+<!ELEMENT discriminator EMPTY>
+<!ATTLIST discriminator type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST discriminator nonBasicTypeName CDATA #IMPLIED>
+
+<!ELEMENT case ((caseDiscriminator)+,member)>
+
+<!ELEMENT caseDiscriminator EMPTY>
+<!ATTLIST caseDiscriminator value CDATA #REQUIRED>
+
+<!ELEMENT member EMPTY>
+<!ATTLIST member name NMTOKEN #IMPLIED>
+<!ATTLIST member visibility (public|private) #IMPLIED>
+<!ATTLIST member pointer (true|false|1|0) #IMPLIED>
+<!ATTLIST member external (true|false|1|0) #IMPLIED>
+<!ATTLIST member type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST member nonBasicTypeName CDATA #IMPLIED>
+<!ATTLIST member bitField CDATA #IMPLIED>
+<!ATTLIST member stringMaxLength CDATA #IMPLIED>
+<!ATTLIST member sequenceMaxLength CDATA #IMPLIED>
+<!ATTLIST member key (true|false|1|0) "false">
+<!ATTLIST member resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST member arrayDimensions CDATA #IMPLIED>
+<!ATTLIST member id CDATA #IMPLIED>
+<!ATTLIST member hashid CDATA #IMPLIED>
+<!ATTLIST member optional (true|false|1|0) #IMPLIED>
+<!ATTLIST member required (true|false|1|0) #IMPLIED>
+<!ATTLIST member max CDATA #IMPLIED>
+<!ATTLIST member min CDATA #IMPLIED>
+<!ATTLIST member range CDATA #IMPLIED>
+<!ATTLIST member unit CDATA #IMPLIED>
+<!ATTLIST member mustUnderstand (true|false|1|0) #IMPLIED>
+<!ATTLIST member default CDATA #IMPLIED>
+<!ATTLIST member oneway (true|false|1|0) #IMPLIED>
+<!ATTLIST member useVector (true|false|1|0) #IMPLIED>
+
+<!ELEMENT typedef EMPTY>
+<!ATTLIST typedef name NMTOKEN #REQUIRED>
+<!ATTLIST typedef type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST typedef nonBasicTypeName CDATA #IMPLIED>
+<!ATTLIST typedef stringMaxLength CDATA #IMPLIED>
+<!ATTLIST typedef sequenceMaxLength CDATA #IMPLIED>
+<!ATTLIST typedef pointer (true|false|1|0) #IMPLIED>
+<!ATTLIST typedef resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST typedef arrayDimensions CDATA #IMPLIED>
+<!ATTLIST typedef topLevel (true|false|1|0) "true">
+<!ATTLIST typedef nested (true|false|1|0) "false">
+<!ATTLIST typedef default CDATA #IMPLIED>
+<!ATTLIST typedef max CDATA #IMPLIED>
+<!ATTLIST typedef min CDATA #IMPLIED>
+
+<!ELEMENT enum (enumerator)+>
+<!ATTLIST enum name NMTOKEN #REQUIRED>
+<!ATTLIST enum data_representation CDATA #IMPLIED>
+<!ATTLIST enum allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST enum extensibility CDATA #IMPLIED>
+<!ATTLIST enum bitBound CDATA "32">
+
+<!ELEMENT enumerator EMPTY>
+<!ATTLIST enumerator name NMTOKEN #REQUIRED>
+<!ATTLIST enumerator value CDATA #IMPLIED>
+<!ATTLIST enumerator defaultLiteral CDATA #IMPLIED>
+
+<!ELEMENT forward_dcl EMPTY>
+<!ATTLIST forward_dcl name NMTOKEN #REQUIRED>
+<!ATTLIST forward_dcl kind NMTOKEN #REQUIRED>
+
+<!ELEMENT directive (#PCDATA) >
+<!ATTLIST directive kind (copy|copyC|copyJava|copyJavaBegin|
+                        copyDeclaration|copyCDeclaration|copyJavaDeclaration|
+                        copyJavaDeclarationBegin|copyCppcli|copyCppcliDeclaration|
+                        copyAda|copyAdaDeclaration|copyAdaDeclarationBegin)
+                        #REQUIRED>
+
+<!ELEMENT bitset (flag)+>
+<!ATTLIST bitset name NMTOKEN #REQUIRED>
+<!ATTLIST bitset bitBound CDATA "32">
+
+<!ELEMENT flag EMPTY>
+<!ATTLIST flag name NMTOKEN #REQUIRED>
+<!ATTLIST flag value CDATA #REQUIRED>
+
+

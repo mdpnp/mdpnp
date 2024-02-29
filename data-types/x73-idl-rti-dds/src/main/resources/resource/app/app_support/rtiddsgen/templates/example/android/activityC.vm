@@ -1,0 +1,131 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,2sep14,vmg created
+##========================================================================
+package ${activityPackage};
+
+import android.app.Activity;
+import android.os.Bundle;
+
+import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.ScrollView;
+import android.widget.Button;
+
+public class ${activityName} extends Activity
+{
+    TextView _textView = null;
+    ScrollView _scrollView = null;
+    Button _runButton = null;
+    Button _clearButton = null;
+    EditText _editText = null;
+    MessageListener _listener = null;
+    Thread _commandThread = null;
+    String _app_name = null;
+    boolean _outputRedirected = false;
+    
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.main);
+
+	_textView = (TextView) findViewById(R.id.display_output);
+	_scrollView = (ScrollView) findViewById(R.id.vertical_scroll);
+	_runButton = (Button) findViewById(R.id.run_button);
+	_clearButton = (Button) findViewById(R.id.clear_button);
+	_editText = (EditText) findViewById(R.id.edit_parameters);
+	_listener = new MessageListener();
+	_app_name = getString(R.string.app_name);
+    }
+
+    /* called when user clicks the run button */
+    public void runCommand(View view) {
+	final String parameters = _editText.getText().toString().trim();
+
+	/* disable run button until execution is done */
+	_runButton.setEnabled(false);
+
+	/* execute command in another thread */
+	_textView.append("Running " + _app_name + " " + parameters + " ...\n");
+	_scrollView.fullScroll(View.FOCUS_DOWN);
+
+	_commandThread = new Thread(new Runnable() {
+		public void run() {
+
+		    /* redirect output if needed */
+		    if (!_outputRedirected) {
+			nativeRedirectOutput(_listener);
+                    }
+
+	   	    /* call main() */
+                    nativeCallMain(parameters);
+
+		    _commandThread = null;
+		    
+		    /* enable run button after execution */
+		    runOnUiThread(new Runnable() {
+			    public void run() {
+				_runButton.setEnabled(true);
+				_textView.append("Finished running " + _app_name + ".\n\n");
+				_scrollView.fullScroll(View.FOCUS_DOWN);
+			    }
+			});
+		    
+		}
+	    });
+
+	if (_commandThread != null) {
+	    _commandThread.start();
+	} else {
+	    /* enable run button since nothing is executed */
+	    _runButton.setEnabled(true);
+	}
+    }
+
+    /* called when user clicks the clear button */
+    public void clearCommand(View view) {
+	_textView.setText("");
+    }
+ 
+    public class MessageListener {
+
+	public void onMessage(String message) {
+	    final String displayMessage = message;
+
+	    /* this method may not be called from the UI thread */
+	    runOnUiThread(new Runnable() {
+		    public void run() {
+		    
+			/* display message */
+			_textView.append(displayMessage);
+			
+			/* scroll to bottom of the display */
+			_scrollView.fullScroll(View.FOCUS_DOWN);
+		    }
+		});
+	}
+    }
+
+    public static native int nativeRedirectOutput(
+	MessageListener listener);
+
+    public static native int nativeCallMain(
+	String parameters);
+
+    static {
+	System.loadLibrary("${exampleType}_${projectName}");
+	System.loadLibrary("${exampleType}_${projectName}_jni");
+    }
+}

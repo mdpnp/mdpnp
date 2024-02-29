@@ -1,0 +1,1638 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##----------------------------------------------------------------
+##-----------------------------------------------------------------
+##               
+##             Macros for the TypePluginBody in Modern C++
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Structure:
+##
+## 
+## To use this template, the structure provided from the main program
+## to the context of the Velocity template must be as indicated here:
+##
+## The context will be feed by a list of the structs ($structList) defined in the 
+## IDL file. Each of the structs will have the following mandatory fields:
+##
+## $packageName (the path of all the modules separated by a .)
+## $structName (the name of the struct)
+## $memberFieldMapList (will be a list of all the members inside the struct)
+## $memberFieldMapList must contain the followin fields:
+##   name (the name of the field)
+##   nativeTypeFQName (the IDL type of the variable)
+##   basic (boolean, it indicates if it is a basic or non basic type)
+##---------------------------------------------------------------------
+##---------------------------------------------------------------------
+
+##******************************************************************************
+## Macro to print data
+##******************************************************************************
+
+#macro(print $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*-----*##if($member.directive)
+#*-----*##copyDirectiveNoDeclaration($member)
+#*-----*##else
+#*------*##if($node.constructKind=="union")
+#*------*##initCases($member)
+#*------*##end
+#*------*##printMember($member)
+#*------*##if($node.constructKind=="union")
+#*------*#        } #if($member.labelList.get(0)!="default")break #end;
+#*------*##end
+#*--*##end
+#*--*##end
+#end
+
+#macro(printMember $member)
+#*----*##if($member.dimensionList && $member.seqSize) ##array of sequences
+#*------*##printArrayOfSeq($member)
+#*----*##elseif($member.dimensionList )
+#*------*##printArray($member)
+#*----*##elseif($member.seqSize)
+#*------*##printSeq($member "1")
+#*----*##elseif($member.typeKind=="user")
+#*------*##printUser($member)
+#*----*##else
+#*------*##printBuiltin($member)
+#*----*##end     
+
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to print arrray of sequences
+##-----------------------------------------------------------------------------
+#macro(printArrayOfSeq $member)
+{
+    RTICdrType_printIndent(indent_level+1);
+    RTILogParamString_printPlain("$member.printName:\n");
+    for (int i = 0; i < (int) ($member.arrayTotalSize); i++) {
+#*--*##printSeq($member "2")
+    }
+}
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to print sequences
+##-----------------------------------------------------------------------------
+#macro(printSeq $member $indent)
+#if(${member.isOptional})
+if (${member.sampleRef}#if($member.dimensionList)[i]#end == NULL) {
+    RTICdrType_printIndent(indent_level+ $indent);
+#*--*##if($member.dimensionList)
+    RTILogParamString_printPlain("%s[%d]: NULL\n","$member.printName",i);
+#*--*##else
+     RTILogParamString_printPlain("$member.printName: NULL\n");
+#*--*##end            
+} else {
+#end            
+#*--*##if($member.typeKind=="user")
+    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
+----*#${member.sampleRef}#if($member.dimensionList)[i]#end) != NULL) {
+        RTICdrType_printArray(
+            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end), 
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            sizeof(${member.nativeTypeFQName}),
+            (RTICdrTypePrintFunction)${member.nativeTypeFQName}PluginSupport_print_data,
+            #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
+    } else {
+        RTICdrType_printPointerArray(
+            ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end), 
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            (RTICdrTypePrintFunction)${member.nativeTypeFQName}PluginSupport_print_data,
+            #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
+    }
+    
+
+#*--*##elseif($member.strSize)
+    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end) != NULL) {
+        RTICdrType_printStringArray(
+            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($member.sampleRef#if($member.dimensionList)[i]#end),
+            #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent,
+            $member.typeEnum);
+    } else {
+        RTICdrType_printStringPointerArray(
+            ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent,
+            $member.typeEnum);
+    }
+        
+#*--*##else    
+    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end) != NULL) {
+        RTICdrType_printArray(
+            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($member.sampleRef#if($member.dimensionList)[i]#end),
+            $member.elementSize,
+            (RTICdrTypePrintFunction)$member.elementPrintMethod,
+            #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
+    } else {
+            RTICdrType_printPointerArray(
+                ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
+--------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+                (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
+--------------*#$member.sampleRef #if($member.dimensionList)[i]#end),
+                (RTICdrTypePrintFunction)$member.elementPrintMethod,
+                #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
+    }
+    
+
+#*--*##end
+#if(${member.isOptional})
+}
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to print arrays
+##-----------------------------------------------------------------------------
+#macro(printArray $member)
+#*--*##if($member.typeKind=="user")
+#*----*##if($member.isPointer)
+RTICdrType_printPointerArray(${member.sampleRef}, $member.arrayTotalSize,
+#*----*##else 
+RTICdrType_printArray(
+    ${member.sample}, $member.arrayTotalSize, sizeof($member.nativeTypeFQName),
+#*----*##end
+    (RTICdrTypePrintFunction)${member.nativeTypeFQName}PluginSupport_print_data,
+    "$member.printName", indent_level + 1);
+#*--*##elseif($member.strSize)
+#*----*##if($member.isPointer)
+RTICdrType_printStringPointerArray(
+    ${member.sampleRef}, 
+#*----*##else 
+RTICdrType_printStringArray (
+    ${member.sample}, 
+#*----*##end
+    $member.arrayTotalSize,       
+    "$member.printName", indent_level + 1,
+    $member.typeEnum);        
+#*--*##else
+#*----*##if($member.isPointer)
+RTICdrType_printPointerArray(
+    ${member.sampleRef}, $member.arrayTotalSize, 
+#*----*##else 
+RTICdrType_printArray(
+    ${member.sample}, $member.arrayTotalSize, $member.elementSize,
+#*----*##end
+    (RTICdrTypePrintFunction)$member.elementPrintMethod, 
+    "$member.printName", indent_level + 1);        
+#*--*##end      
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to print builtins
+##-----------------------------------------------------------------------------
+
+#macro(printBuiltin $member)
+#*--*##if($member.strSize)
+if (${member.sampleRef}==NULL) {
+    ${member.elementPrintMethod}(
+    NULL,"$member.printName", indent_level + 1);
+} else {
+    ${member.elementPrintMethod}(
+    #if($member.isPointer)*#end${member.sampleRef},"$member.printName", indent_level + 1);    
+}
+#*--*##else
+    ${member.elementPrintMethod}(
+        ${member.sampleRef}, "$member.printName", indent_level + 1);    
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to print TypeDef
+##-----------------------------------------------------------------------------
+
+#macro(printUser $member)
+    ${member.nativeTypeFQName}PluginSupport_print_data(
+        ${member.sampleRef}, "$member.printName", indent_level + 1);
+#end
+
+##******************************************************************************
+## Macros to Serialize 
+##******************************************************************************
+
+#macro(serialize $memberFieldMapList $method)
+#*--*##if($method=="serialize_key")
+#*----*##set($serializeSuffix="_key")
+#*--*##else
+#*----*##set($serializeSuffix="")
+#*--*##end
+#*--*##foreach($member in $memberFieldMapList)
+#*-----*##if($member.directive)
+#*-----*##copyDirectiveNoDeclaration($member)
+#*-----*##else
+#*-------*##if($node.constructKind=="union")
+#*-------*##initCases($member)
+#*-------*##end
+#if($member.isPointer &&!$member.dimensionList)
+   if ($member.sampleRef == NULL) {
+        return RTI_FALSE;
+    }
+        
+#end
+#*----*##serializeMember( $member $serializeSuffix)
+#*----*##if($node.constructKind=="union")
+#*----*#        } #if($member.labelList.get(0)!="default")break #end;
+#*----*##end
+#*----*##end
+#*--*##end
+#end
+
+
+
+##------------------------------------------------------------------------------
+##Macro to Serialization/Deserialize a member of a struct
+##------------------------------------------------------------------------------
+
+#macro(serializeMember $member $serializeSuffix)
+
+#*--*##if($member.isOptional && $node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+if ($member.sampleRef != NULL) {
+#*--*##end
+#*--*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $member.name!="_d") 
+|| (!$node.extensibilility.equals("MUTABLE_EXTENSIBILITY") && $member.isOptional))
+memberId = $member.id;
+#*----------*##if($member.needExtendedId=="yes" )       
+extended = RTI_TRUE;
+#*----------*##elseif($member.needExtendedId=="no")
+extended = RTI_FALSE;
+#*----------*##else
+extended = stream->_xTypesState.useExtendedId;
+#*----------*##end  
+memberLengthPosition = RTICdrStream_serializeParameterHeader(
+                                   stream, &state, extended, memberId, RTI_FALSE);
+if (memberLengthPosition == NULL) {
+    return RTI_FALSE;
+}                            
+#*--*##end
+#*--*##if($member.isOptional && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+if ($member.sampleRef != NULL) {
+#*--*##end
+#*--*##if($member.dimensionList && $member.seqSize) 
+#*----*##serializeArrayOfSeq($member $serializeSuffix)
+#*--*##elseif($member.dimensionList)
+#*----*##serializeArray($member $serializeSuffix)
+#*--*##elseif($member.seqSize)
+#*----*##serializeSeq($member $serializeSuffix)
+#*--*##elseif($member.typeKind=="user")
+#*----*##serializeUser($member $serializeSuffix)
+#*--*##else
+#*----*##serializeBuiltin($member $serializeSuffix)
+#*--*##end
+#*--*##if($member.isOptional&& !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+}
+#*--*##end
+#*--*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $member.name!="_d") 
+|| (!$node.extensibilility.equals("MUTABLE_EXTENSIBILITY") && $member.isOptional))
+if (!RTICdrStream_serializeParameterLength(
+        stream, &state, extended, memberLengthPosition)) {
+    return RTI_FALSE;
+}
+#*--*##end
+#*--*##if($member.isOptional && $node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+}
+#*--*##end
+
+
+#end
+
+##------------------------------------------------------------------------------
+##Macro to Serialize an array of sequences
+##------------------------------------------------------------------------------
+#macro(serializeArrayOfSeq $member $serializeSuffix)
+{ 
+    for (int i = 0; i<  (int) ($member.arrayTotalSize); ++i ) {
+ 
+#*--*##serializeSeq ($member $serializeSuffix)
+    }
+}
+#end
+
+
+
+
+##------------------------------------------------------------------------------
+##Macro to serialize sequences
+##------------------------------------------------------------------------------
+#macro(serializeSeq $member $serializeSuffix )
+#*--*##if($member.typeKind=="user")
+if (!::rti::topic::cdr::serialize_vector(
+	    stream,
+	    ${member.sample}#if($member.dimensionList)[i]#end,
+	    #getSeqSize($member "serialize"),
+	    (RTICdrStreamSerializeFunction)${member.nativeTypeFQName}Plugin_serialize${serializeSuffix},
+	    RTI_FALSE, 
+	    encapsulation_id,
+	    RTI_TRUE,
+	    endpoint_data,
+	    endpoint_plugin_qos)) {
+    return RTI_FALSE;
+} 
+#*--*##elseif($member.strSize)
+if (!::rti::topic::cdr::serialize(
+        stream,
+#*----*##if($member.dimensionList)
+        ${member.sample}[i],
+        #getSeqSize($member "serialize"),
+#*----*##else
+        ${member.sample},
+        #getSeqSize($member "serialize"),
+#*----*##end        
+        #getStrSize($member "serialize") +1)) {
+    return RTI_FALSE;
+}
+#*--*##else
+if (!::rti::topic::cdr::serialize_vector(stream, ${member.sample}#if($member.dimensionList)[i]#end, #getSeqSize($member "serialize"))) {
+    return RTI_FALSE;
+}
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+##Macro to serialize/desearialize arrays
+##-----------------------------------------------------------------------------
+#macro(serializeArray  $member $serializeSuffix)
+#*--*##if($member.typeKind=="user")
+#*----*##if ($member.isPointer) 
+if (!::rti::topic::cdr::serialize_pointer_array( 
+        stream,  
+        ${member.sample},
+        (RTICdrStreamSerializeFunction)${member.nativeTypeFQName}Plugin_serialize$serializeSuffix,
+        RTI_FALSE,
+        encapsulation_id, 
+        RTI_TRUE,
+        endpoint_data,
+        endpoint_plugin_qos)) {
+#*----*##else    
+if (!RTICdrStream_serializeNonPrimitiveArray(
+        stream,  
+        (void *) ${member.sample}.data(),
+        $member.arrayTotalSize, 
+        sizeof($member.nativeTypeFQName),
+        (RTICdrStreamSerializeFunction)${member.nativeTypeFQName}Plugin_serialize$serializeSuffix,
+        RTI_FALSE,
+        encapsulation_id, 
+        RTI_TRUE,
+        endpoint_data,endpoint_plugin_qos)) {
+#*----*##end        
+#*--*##elseif($member.strSize)
+if (!::rti::topic::cdr::serialize(
+        stream,
+        ${member.sample},
+        #getStrSize($member "serialize") + 1)) {
+#*--*##else
+#*----*##if ($member.isPointer)
+if (!::rti::topic::cdr::serialize_pointer_array(
+        stream, 
+        ${member.sample}))  {
+#*----*##else 
+if (!::rti::topic::cdr::serialize(
+        stream, 
+        ${member.sample})) {
+#*----*##end
+#*--*##end
+return RTI_FALSE;
+}
+
+#end
+
+
+##------------------------------------------------------------------------------
+##Macro to Serialization/Deserialize user
+##-----------------------------------------------------------------------------
+#macro(serializeUser  $member $serializeSuffix)
+if(!${member.nativeTypeFQName}Plugin_serialize${serializeSuffix}(
+            endpoint_data,
+            ${member.sampleRef},
+            stream,
+            RTI_FALSE, encapsulation_id,
+            RTI_TRUE,
+            endpoint_plugin_qos)) {
+return RTI_FALSE;
+}
+#end
+
+
+##------------------------------------------------------------------------------
+##Macro to serialize/desearialize primitives
+##-----------------------------------------------------------------------------
+
+#macro(serializeBuiltin  $member $serializeSuffix)
+#*--*##if ($envMap.ignoreAlignment)
+#*----*##if($member.strSize)
+if (!${member.elementSerializeMethod}Fast(
+        stream, 
+        (${member.sample}).c_str(), 
+        #getStrSize($member "serialize") + 1)) {
+        return RTI_FALSE;
+}
+#*----*##else
+${member.elementSerializeMethod}Fast(
+    stream, ${member.sampleRef}) ;
+#*----*##end
+#*--*##else
+#*----*##if($member.strSize)
+if (!${member.elementSerializeMethod}(
+        stream, 
+        (${member.sample}).c_str(), 
+        #getStrSize($member "serialize") + 1)) {
+#*----*##else
+if (!${member.elementSerializeMethod}(
+    stream, ${member.sampleRef})) {
+#*----*##end
+    return RTI_FALSE;
+}
+#end
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to serialize_encapsulation code
+##-----------------------------------------------------------------------------
+#macro (serializeEncapsulation $node)
+
+if(serialize_encapsulation) {
+#if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || $node.hasOptionalMember)
+     &&$node.constructKind!="enum")
+    if (encapsulation_id == RTI_CDR_ENCAPSULATION_ID_CDR_BE) {
+        encapsulation_id = RTI_CDR_ENCAPSULATION_ID_PL_CDR_BE;
+    } else if (encapsulation_id == RTI_CDR_ENCAPSULATION_ID_CDR_LE) {
+        encapsulation_id = RTI_CDR_ENCAPSULATION_ID_PL_CDR_LE;
+    } else if (encapsulation_id == RTI_CDR_ENCAPSULATION_ID_CDR2_BE) {
+        encapsulation_id = RTI_CDR_ENCAPSULATION_ID_PL_CDR2_BE;
+    } else if (encapsulation_id == RTI_CDR_ENCAPSULATION_ID_CDR2_LE) {
+        encapsulation_id = RTI_CDR_ENCAPSULATION_ID_PL_CDR2_LE;
+    }
+  
+#end
+#*--*##if($node.isMetpType)
+    if (!METypePlugin_serializeAndSetCdrEncapsulation(
+            endpoint_data,stream,encapsulation_id,&metp)) {
+        return RTI_FALSE;
+    }
+#*--*##else  
+    if (!RTICdrStream_serializeAndSetCdrEncapsulation(stream , encapsulation_id)) {
+        return RTI_FALSE;
+    }
+#*--*##end
+    rti_position = RTICdrStream_resetAlignment(stream);
+}
+#end
+
+
+#macro (serializeEndMutable)
+if (!ignoreListEndId) {
+#if($envMap.disableMustUnderstandOnSentinel)
+/*Not default. Explicity set for backward compatibility*/
+RTIBool mustUnderstand = RTI_FALSE; 
+#else
+RTIBool mustUnderstand = RTI_TRUE; 
+#end
+
+    if (!RTICdrStream_serializeParameterHeader(
+          stream,
+          NULL,
+          RTI_FALSE,
+          RTI_CDR_PID_LIST_END,
+          mustUnderstand)) {
+              return RTI_FALSE;
+    }
+}
+stream->_xTypesState.skipListEndId = ignoreListEndId;
+#end
+
+##******************************************************************************
+## Macros to Deserialize 
+##******************************************************************************
+
+#macro(pointerAlloc $member)
+#*--*##if($member.isPointer)
+#*---*##if(!$member.dimensionList)
+if (!${member.sampleRef}) {
+#*----*##if(!$member.seqSize)
+#*------*##if (${member.name}=="") ##this is an alias
+    ::dds::core::detail::make_locked(*sample);
+#*------*##else
+    ::dds::core::detail::make_locked(sample->${member.name}());
+#*------*##end
+#*----*##else ##this is a sequence
+#*------*##if (${member.name}=="") ##this  is an alias
+    ::dds::core::detail::make_locked(*sample);
+#*------*##else
+    ::dds::core::detail::make_locked(sample->${member.name}());
+#*------*##end
+#*----*##end
+}
+#*---*##else ##this is an array
+#*-----*##if($member.seqSize) ##array of sequences
+::rti::topic::cdr::allocate_pointers(${member.sampleRef});
+#*-----*##else
+::rti::topic::cdr::allocate_pointers(${member.sample});
+#*-----*##end
+#*---*##end
+#*--*##end
+#end
+
+#macro(deserialize $memberFieldMapList $method)
+#*--*##if($method=="deserialize_key")
+#*----*##set($deserializeSuffix="_key")
+#*--*##elseif($method=="deserialize_sample")
+#*----*##set($deserializeSuffix="deserialize_sample")
+#*--*##else
+#*----*##set($deserializeSuffix="")
+#*--*##end
+#*--*##foreach($member in $memberFieldMapList)
+#*-----*##if($member.directive)
+#*-----*##copyDirectiveNoDeclaration($member)
+#*-----*##else
+#*-------*##if($node.constructKind=="union")
+#*-------*##initCases($member)
+#*-------*##end
+#*----*##pointerAlloc($member)
+#*----*##deserializeMember($member $deserializeSuffix)
+#*----*##if($node.constructKind=="union")
+    } #if($member.labelList.get(0)!="default")break #end;
+#*----*##end
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+##Macro to Serialization/Deserialize a member of a struct
+##------------------------------------------------------------------------------
+
+#macro(deserializeMember $member $deserializeSuffix)
+#if($member.isOptional && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#preDeserializeOptionalMember($member $deserializeSuffix)
+#end
+#if($member.isOptional && !$node.constructKind.equals("union"))
+${member.sampleOptional}.set(
+    ${member.completeSpecTypeName}::value_type());
+#end
+#*--*##if($member.dimensionList && $member.seqSize) 
+#*----*##deserializeArrayOfSeq( $member $deserializeSuffix)
+#*--*##elseif($member.dimensionList)
+#*----*##deserializeArray( $member $deserializeSuffix)
+#*--*##elseif($member.seqSize)
+{
+#*----*##deserializeSeq( $member $deserializeSuffix)
+}
+#*--*##elseif($member.typeKind=="user")
+#*----*##deserializeUser( $member $deserializeSuffix)
+#*--*##else
+#*----*##deserializeBuiltin( $member $serializeSuffix)
+#*--*##end
+#if($member.isOptional && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY") )
+}
+#postDeserializeOptionalMember()
+#end
+#end
+
+
+
+#macro(deserializeArrayOfSeq  $member $serializeSuffix)
+{ 
+    for (int i = 0; i<  (int) ($member.arrayTotalSize);  i++ ) { 
+
+#*--*##deserializeSeq ($member $serializeSuffix)
+    }
+}
+#end
+
+##------------------------------------------------------------------------------
+##Auxiliar macro to generate goto fin or return RTI_FALSE;
+##------------------------------------------------------------------------------
+#macro (continueDeserialization $member $serializeSuffix )
+#*--*# #if(($node.constructKind=="struct" || $node.constructKind=="valueType" ) 
+            && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY"))  
+            && (!$serializeSuffix.contains("key")))                
+goto fin; 
+#*--*##else 
+return RTI_FALSE;
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+##Macro to deserialice sequences
+##-----------------------------------------------------------------------------
+#macro(deserializeSeq $member $serializeSuffix)
+#*--*##if($member.typeKind=="user")
+if (!::rti::topic::cdr::deserialize_vector(
+	    stream,
+	    ${member.sample}#if($member.dimensionList)[i]#end,
+	    #getSeqSize($member "deserialize"),
+	    (RTICdrStreamDeserializeFunction)${member.nativeTypeFQName}Plugin_${serializeSuffix},
+	    RTI_FALSE,
+	    RTI_TRUE,
+	    endpoint_data,
+	    endpoint_plugin_qos)) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+}
+#*--*##elseif($member.strSize)
+if (!::rti::topic::cdr::deserialize(
+	    stream,
+	    ${member.sample}#if($member.dimensionList)[i]#end,
+	    #getSeqSize($member "deserialize"),
+	    #getStrSize($member "deserialize") +1)) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+}
+#*--*##else
+if (!::rti::topic::cdr::deserialize_vector(
+        stream, 
+        ${member.sample}#if($member.dimensionList)[i]#end, 
+        #getSeqSize($member "deserialize"))) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+}
+#*--*##end            
+           
+#end
+
+##------------------------------------------------------------------------------
+##Macro to Serialization/Deserialization user
+##-----------------------------------------------------------------------------
+#macro(deserializeUser  $member $serializeSuffix)
+if(!${member.nativeTypeFQName}Plugin_${serializeSuffix}(
+            endpoint_data,
+            ${member.sampleRef},
+            stream,
+            RTI_FALSE, RTI_TRUE,
+            endpoint_plugin_qos)) {
+#*--*##continueDeserialization ($member $serializeSuffix)
+}
+#end
+
+
+#macro(deserializeArray $member $serializeSuffix)
+#*--*##if($member.typeKind=="user")
+#*----*##if ($member.isPointer) 
+if (!::rti::topic::cdr::deserialize_pointer_array( 
+    stream, 
+    ${member.sample},
+#*----*##else    
+if (!RTICdrStream_deserializeNonPrimitiveArray(
+    stream, 
+    (void *) ${member.sample}.data(),
+    $member.arrayTotalSize, 
+    sizeof($member.nativeTypeFQName),
+#*----*##end        
+    (RTICdrStreamDeserializeFunction)${member.nativeTypeFQName}Plugin_${serializeSuffix},
+    RTI_FALSE,
+    #if($serializeSuffix=="serialize") encapsulation_id,#end 
+    RTI_TRUE,
+    endpoint_data,
+    endpoint_plugin_qos)) {
+#*--*##elseif($member.strSize)
+if (!::rti::topic::cdr::deserialize(
+    stream, 
+    ${member.sample},
+    #getStrSize($member "deserialize") + 1)) {
+#*--*##else
+#*----*##if ($member.isPointer)
+if (!::rti::topic::cdr::deserialize_pointer_array(
+    stream, 
+    ${member.sample}))  {
+#*----*##else 
+if (!::rti::topic::cdr::deserialize(
+    stream, 
+    ${member.sample}))  {
+#*----*##end
+#*--*##end
+#*----*##continueDeserialization ($member $serializeSuffix)
+}
+#end
+
+
+#macro(deserializeBuiltin  $member $serializeSuffix)
+#*--*##if ($envMap.ignoreAlignment && !$member.strSize)
+${member.elementDeserializeMethod}Fast(
+        stream, ${member.sampleRef});
+#*--*##else
+#*--*##if($member.strSize)
+if (!::rti::topic::cdr::deserialize(
+        stream, 
+        ${member.sample}, 
+        #getStrSize($member "deserialize") + 1)) {
+#*--*##else
+if (!${member.elementDeserializeMethod}(
+    stream, 
+    ${member.sampleRef})) {
+#*--*##end
+#*------*##continueDeserialization ($member $serializeSuffix)
+}
+#end
+#end
+
+#macro (deserializeEncapsulation $node) 
+    if (deserialize_encapsulation) {
+#*--*##if($node.isMetpType)
+      if (!METypePlugin_deserializeAndSetCdrEncapsulation(
+        	endpoint_data, stream, &metp)) {
+#*--*##else
+      if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
+#*--*##end
+        return RTI_FALSE;
+      }
+
+    rti_position = RTICdrStream_resetAlignment(stream);
+  }
+#*--*##if($node.isMetpType)
+    else {
+        if (RTICdrEncapsulation_validShmemRefEncapsulationId(
+            RTICdrStream_getEncapsulationKind(stream))) {
+            metp = RTI_TRUE;
+        }
+    }
+#*--*##end
+#end
+
+#macro (deserializeMutableType $node $method)
+#*--*##if($method=="deserialize_key")
+#*----*##set($deserializeSuffix="_key")
+#*--*##elseif($method=="deserialize_sample")
+#*----*##set($deserializeSuffix="deserialize_sample")
+#*--*##else
+#*----*##set($deserializeSuffix="")
+#*--*##end
+switch (memberId) {
+#*--*##if($node.constructKind=="union")
+    case 0:
+#*----*##deserializeMember( $node.unionDiscriminatorMap $deserializeSuffix)
+    break;
+#*--*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*-----*##if($member.directive)
+#*-----*##copyDirectiveNoDeclaration($member)
+#*-----*##else
+    case $member.id:
+#*----*##deserializeMember($member $deserializeSuffix)
+    break;
+#*----*##end
+#*--*##end
+    default:
+#if(!$node.constructKind.equals("union"))  
+        if (mustUnderstand) {
+            return RTI_FALSE;
+        } break; 
+#else
+        {
+            struct PRESTypePluginDefaultEndpointData * epd =
+                    (struct PRESTypePluginDefaultEndpointData *) endpoint_data;
+            const PRESTypePluginSampleAssignabilityProperty * ap =
+                    PRESTypePluginDefaultEndpointData_getAssignabilityProperty(epd);
+            
+                
+            if (ap->acceptUnknownUnionDiscriminator) {
+                ::rti::topic::reset_sample(*sample);
+            } else {
+                return RTI_FALSE;
+            } 
+        } break;
+#end
+}
+RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+#end
+
+
+#macro (preDeserializeOptionalMember $member $serializeSuffix)
+
+if (!RTICdrStream_deserializeParameterHeader(
+                     stream,
+                     &state,
+                     &memberId,
+                     &length,
+                     &extended,
+                     &mustUnderstand)) {
+                       #continueDeserialization($member $serializeSuffix)              
+                     }
+if (length > 0) {
+
+
+#end
+
+#macro (postDeserializeOptionalMember)
+RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+#end
+##******************************************************************************
+## Macro to Skip
+##******************************************************************************
+
+#macro(skip  $memberFieldMapList)
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if($node.constructKind=="union")
+#*------*##initCases($member)
+#*------*##end
+#*----*##skipMember($member)
+#*----*##if($node.constructKind=="union")
+#*----*#        } #if($member.labelList.get(0)!="default")break #end;
+#*----*##end
+#*----*##end
+#*--*##end
+#end
+
+#macro(skipMember $member)
+#if($member.isOptional && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#*----*##preDeserializeOptionalMember($member "")
+#*--*##end
+#*----*##if($member.dimensionList && $member.seqSize)
+#*------*##skipArrayOfSeq($member)
+#*----*##elseif($member.seqSize)
+{
+     RTICdrUnsignedLong sequence_length;
+#*------*##skipSeq($member)
+}
+#*----*##elseif($member.dimensionList)
+#*------*##skipArray($member)
+#*----*##elseif($member.typeKind=="user")
+#*------*##skipUser($member)
+#*----*##else
+#*------*##skipPrimitive($member)
+#*----*##end
+#if($member.isOptional && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+}
+#postDeserializeOptionalMember()
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+##Auxiliar macro to generate goto fin or return RTI_FALSE;
+##------------------------------------------------------------------------------
+#macro (continueSkip  $member)
+#*--*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType")
+ && $node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY"))                
+goto fin; 
+#*--*##else 
+return RTI_FALSE;
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to SkipArrayOfSeq
+##------------------------------------------------------------------------------
+#macro(skipArrayOfSeq $member)
+{
+    RTICdrUnsignedLong sequence_length;
+    for (int i = 0; i < (int) ($member.arrayTotalSize); ++i) {
+#*--*##skipSeq($member)
+    }
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro to SkipUser
+##------------------------------------------------------------------------------
+#macro(skipUser $member)
+if (!${member.nativeTypeFQName}Plugin_skip(
+    endpoint_data,
+    stream, 
+    RTI_FALSE, RTI_TRUE, 
+    endpoint_plugin_qos)) {
+#*--*##continueSkip  ($member) 
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro to SkipSeq
+##------------------------------------------------------------------------------
+#macro(skipSeq $member)
+#*--*##if($member.typeKind=="user")
+if (!RTICdrStream_skipNonPrimitiveSequence(
+    stream,
+    &sequence_length,
+    (RTICdrStreamSkipFunction)${member.nativeTypeFQName}Plugin_skip,
+    RTI_FALSE,RTI_TRUE,
+    endpoint_data,endpoint_plugin_qos)) {
+#*--*##else
+if (!${member.sequenceSkipMethod}(
+    stream,
+    &sequence_length,
+    #if($member.strSize)#getStrSize($member "skip") + 1, #end           
+    $member.typeEnum)){
+#*----*##end 
+#*----*##continueSkip  ($member)    
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro to SkipArray
+##------------------------------------------------------------------------------
+#macro(skipArray $member)
+#*--*##if($member.typeKind=="user")
+if (!RTICdrStream_skipNonPrimitiveArray(
+        stream,$member.arrayTotalSize,
+        (RTICdrStreamSkipFunction)${member.nativeTypeFQName}Plugin_skip, 
+        RTI_FALSE,RTI_TRUE,
+        endpoint_data,endpoint_plugin_qos)){
+#*--*##elseif($member.strSize)
+if (!${member.arraySkipMethod}(
+        stream, $member.arrayTotalSize, #getStrSize($member "skip") + 1,
+        $member.typeEnum)){
+#*--*##else
+#*----*##if($member.isPointer)
+if (!RTICdrStream_skipPrimitivePointerArray( 
+#*----*##else
+if (!${member.arraySkipMethod}(
+#*----*##end
+         stream, $member.arrayTotalSize, $member.typeEnum)) {
+#*--*##end
+#*--*##continueSkip  ($member) 
+}      
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to SkipPrimitive
+##------------------------------------------------------------------------------
+#macro(skipPrimitive $member)
+if (!$member.elementSkipMethod (stream#if(${member.strSize}), #getStrSize($member "skip")+1#end)) {
+#*--*##continueSkip  ($member)      
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro to skipMutable
+##------------------------------------------------------------------------------
+#macro(skipMutable $memberFieldMapList)
+switch (memberId) {
+#*--*##if($node.constructKind=="union")
+    case 0:
+#*----*##if(($node.unionDiscriminatorMap.typeKind=="user")
+                    ||($node.unionDiscriminatorMap.typeKind=="enum"))   
+        if (!${node.unionDiscriminatorMap.nativeTypeFQName}Plugin_deserialize_sample(
+            endpoint_data,
+            &disc,
+            stream, 
+            RTI_FALSE, RTI_TRUE, 
+            endpoint_plugin_qos)) {
+                return RTI_FALSE;
+        }
+#*----*##else
+        if (!${node.unionDiscriminatorMap.elementDeserializeMethod}(
+            stream, &disc)) {
+                return RTI_FALSE;
+        }
+#*-----*##end
+    break;
+#*---*##end
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+    case $member.id:
+#*----*##skipMember($member)
+    break;
+#*----*##end
+#*--*##end
+    default:
+#if(!$node.constructKind.equals("union"))  
+       if (mustUnderstand) {
+#end
+            return RTI_FALSE;
+#if(!$node.constructKind.equals("union")) 
+        } break;
+#end
+}
+RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+#end
+
+##******************************************************************************
+## Macro to AlignmentMaxSize
+##******************************************************************************
+
+#macro(alignmentMaxSizeEx $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+||($member.isOptional))
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#*------*##end
+#*------*##createAlignmentMaxSizeExMember($member "sample")
+#*------*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $member.isOptional)
+#*----CODEGEN-762----*#
+current_alignment += RTICdrType_getPadSize(current_alignment,RTI_CDR_PARAMETER_HEADER_ALIGNMENT);
+#*------*##end 
+#*--*##end 
+
+#*--*##end ##We need an intro before to separate each member
+#end
+
+#macro (createAlignmentMaxSizeExMember $member $serializeSuffix)
+#set($currentAlignment=$member.currentAlignment)
+#*--*##if($member.dimensionList && $member.seqSize)
+#*----*##alignmentMaxSizeExArrayOfSeq($member $serializeSuffix $currentAlignment)
+#*--*##else
+#*----*#current_alignment +=#alignmentMaxSizeExMember($member  $serializeSuffix);
+#*--*##end
+#end
+
+#macro (alignmentMaxSizeExMember $member $serializeSuffix)
+#set($currentAlignment=$member.currentAlignment)
+#*------*##if($member.dimensionList && $member.seqSize)
+#*--------*##alignmentMaxSizeExArrayOfSeq($member $serializeSuffix $currentAlignment);
+#*----*##elseif($member.seqSize)#*
+-*##alignmentMaxSizeExSeq($member $serializeSuffix $currentAlignment)#*
+------*##elseif($member.dimensionList)#*
+-*##alignmentMaxSizeExArray($member $serializeSuffix  $currentAlignment)#*
+------*##elseif($member.typeKind=="user")#*
+-*##alignmentMaxSizeExUser($member $serializeSuffix $currentAlignment)#*
+------*##elseif($member.strSize)#*
+-*#${member.elementSizeMethod}(
+$currentAlignment#if(${member.strSize}), (RTICdrUnsignedLong) (#getStrSize($member "alignmentMax") + 1)#end)#*
+------*##else#*
+-*#${member.elementSizeMethod}(
+$currentAlignment)#*
+----*##end#*
+*##end
+
+
+
+
+##------------------------------------------------------------------------------
+## Macro to getMaxSize of a sequence
+##------------------------------------------------------------------------------
+
+#macro(alignmentMaxSizeExSeq $member $serializeSuffix $var)
+#*--*##if($member.typeKind=="user")
+${member.sequenceDefaultSizeMethod}(
+    overflow,
+    $var, #getSeqSize($member "alignmentMax"),
+    ${member.nativeTypeFQName}Plugin_get_serialized_${serializeSuffix}_max_size_ex,
+    RTI_FALSE,encapsulation_id,endpoint_data)#*
+#*--*##else
+${member.sequenceSizeMethod}(
+    $var,
+    (RTICdrUnsignedLong) #getSeqSize($member "alignmentMax"),
+#*----*##if($member.strSize)
+    (RTICdrUnsignedLong) (#getStrSize($member "alignmentMax") + 1),
+#*----*##end
+    $member.typeEnum)#*
+#*--*##end
+#end
+
+
+
+##------------------------------------------------------------------------------
+## Macro to getMaxSize of a array
+##------------------------------------------------------------------------------
+#macro(alignmentMaxSizeExArray $member $serializeSuffix  $currentAlignment)
+#*--*##if($member.typeKind=="user")
+${member.arrayDefaultSizeMethod}(
+     overflow,
+     $currentAlignment,
+     (RTICdrUnsignedLong) $member.arrayTotalSize,
+    ${member.nativeTypeFQName}Plugin_get_serialized_${serializeSuffix}_max_size_ex,
+    RTI_FALSE,encapsulation_id,endpoint_data)#*
+#*--*##else
+${member.arraySizeMethod}(
+     $currentAlignment,
+     (RTICdrUnsignedLong) $member.arrayTotalSize,
+#*----*##if($member.strSize)
+     (RTICdrUnsignedLong) (#getStrSize($member "serialize") + 1),
+#*----*##end
+     $member.typeEnum)#*
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to alignmentMaxSizeExUser of a user type
+##------------------------------------------------------------------------------
+
+#macro(alignmentMaxSizeExUser $member $serializeSuffix $currentAlignment)
+${member.nativeTypeFQName}Plugin_get_serialized_${serializeSuffix}_max_size_ex(
+    endpoint_data, overflow, RTI_FALSE,encapsulation_id,$currentAlignment)#*
+*##end
+
+
+##------------------------------------------------------------------------------
+## Macro to getMaxSize of an array of sequences
+##------------------------------------------------------------------------------
+
+#macro(alignmentMaxSizeExArrayOfSeq $member $serializeSuffix $currentAlignment )
+{
+    unsigned int maxSize = $currentAlignment;
+
+    for (int i = 0; i <(int) ($member.arrayTotalSize); i++) {
+        maxSize +=#alignmentMaxSizeExSeq($member $serializeSuffix "maxSize");
+    }
+    current_alignment +=  (maxSize - $currentAlignment) ;
+}
+#end    
+
+##------------------------------------------------------------------------------
+## Macro to alignmentMaxSizeExUnion of an  Union
+##------------------------------------------------------------------------------
+#macro (alignmentMaxSizeExUnion $node)
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#end
+#*--*##createAlignmentMaxSizeExMember($node.unionDiscriminatorMap "sample")
+
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#end
+
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if($member.dimensionList && $member.seqSize)
+{    
+    unsigned int maxSize = $member.currentAlignment;
+
+    for (int i = 0; i <(int) ($member.arrayTotalSize); i++) {
+        maxSize +=#alignmentMaxSizeExSeq($member "sample" "maxSize");
+    }
+    union_max_size_serialized = RTIOsapiUtility_max( (maxSize - $member.currentAlignment) , 
+                                   union_max_size_serialized);
+}                                   
+#*------*##else
+    union_max_size_serialized = RTIOsapiUtility_max( 
+        (unsigned int) #alignmentMaxSizeExMember($member "sample"),#*
+*#      union_max_size_serialized);
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+##******************************************************************************
+## Macro to alignmentMinSize
+##******************************************************************************
+
+#macro(alignmentMinSize $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if((($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && !$member.isOptional))
+             ||(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY")&& $member.isOptional))
+#*--------*##if($member.needExtendedId=="no")
+current_alignment += RTICdrStream_getParameterHeaderMaxSizeSerialized(current_alignment);
+#*--------*##else
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#*----*##end
+#*------*##end
+#*------*##if (!$member.isOptional)
+#*----*##createAlignmentMinSizeMember($member)
+#*------*##elseif(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#*----CODEGEN-762----*#
+current_alignment += RTICdrType_getPadSize(current_alignment,RTI_CDR_PARAMETER_HEADER_ALIGNMENT);
+#*------*##end
+#*----*##end
+#*--*##end
+
+#end
+
+#macro (createAlignmentMinSizeMember $member)
+#set($currentAlignment=$member.currentAlignment)
+#*----*##if($member.dimensionList && $member.seqSize)
+#*-*##alignmentMinSizeArrayOfSeq($member $currentAlignment)#*
+*##else
+current_alignment +=#alignmentMinSizeMember( $member);
+#end
+#end
+
+#macro(alignmentMinSizeMember $member)
+#set($currentAlignment=$member.currentAlignment)
+#*--*##if($member.seqSize)
+#alignmentMinSizeSeq($member $currentAlignment)#*
+--*##elseif($member.dimensionList)#*
+*##alignmentMinSizeArrays($member $currentAlignment)#*
+--*##elseif($member.typeKind=="user")#*
+*##alignmentMinSizeUser($member $currentAlignment)#*
+--*##else#*
+*#${member.elementSizeMethod}(
+$currentAlignment#if($member.strSize), 1#end)#*
+--*##end#*
+*##end
+
+
+#macro(alignmentMinSizeArrays $member $currentAlignment)
+#*--*##if($member.typeKind=="user")
+${member.arrayMinSizeMethod}(
+    $currentAlignment,
+    (RTICdrUnsignedLong) $member.arrayTotalSize,
+    ${member.nativeTypeFQName}Plugin_get_serialized_sample_min_size,
+    RTI_FALSE,encapsulation_id,endpoint_data)#*
+--*##elseif($member.strSize)
+${member.arraySizeMethod}(
+    $currentAlignment,
+    (RTICdrUnsignedLong) $member.arrayTotalSize,
+    1, $member.typeEnum)#*
+---*##else
+${member.arraySizeMethod}(
+    $currentAlignment,
+    (RTICdrUnsignedLong) $member.arrayTotalSize,
+    $member.typeEnum)#*
+--*##end
+#end
+##------------------------------------------------------------------------------
+## Macro to getMinSize of a array of sequences
+##------------------------------------------------------------------------------
+#macro(alignmentMinSizeArrayOfSeq $member $currentAlignment)
+{
+    unsigned int minSize = $currentAlignment;
+
+    for (int i = 0; i <(int) ($member.arrayTotalSize); i++) {
+        minSize+= #alignmentMinSizeSeq($member "minSize");
+  
+    }
+
+    current_alignment +=  (minSize - $currentAlignment) ;
+}
+#end    
+
+##------------------------------------------------------------------------------
+## Macro to getMinSize of a sequences
+##------------------------------------------------------------------------------
+
+#macro (alignmentMinSizeSeq $member $var)
+#*--*##if($member.typeKind=="user")        
+${member.sequenceMinSizeMethod}(
+    $var, 0,
+    ${member.nativeTypeFQName}Plugin_get_serialized_sample_min_size,
+    RTI_FALSE,encapsulation_id,endpoint_data)#*
+----*##else
+    ${member.sequenceSizeMethod}(
+    $var,0,#if($member.strSize)1,#end $member.typeEnum)#*
+----*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to getMinSize of a alias(typedef)
+##------------------------------------------------------------------------------
+
+#macro(alignmentMinSizeUser $member $currentAlignment)
+${member.nativeTypeFQName}Plugin_get_serialized_sample_min_size(
+    endpoint_data,RTI_FALSE,encapsulation_id,$currentAlignment)#*
+*##end
+
+
+
+##------------------------------------------------------------------------------
+## Macro to create the Min Alignment of an  Union
+##------------------------------------------------------------------------------
+#macro (alignmentMinSizeUnion $node)
+#*--*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#*----*##if($node.unionDiscriminatorMap.needExtendedId=="no")
+current_alignment += RTICdrStream_getParameterHeaderMaxSizeSerialized(current_alignment);
+#*----*##else
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#*----*##end
+#*--*##end
+#*--*##createAlignmentMinSizeMember($node.unionDiscriminatorMap $node.unionDiscriminatorMap.currentAlignment)
+#*--*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#*--*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if($member.dimensionList && $member.seqSize)
+{
+    unsigned int minSize = $member.currentAlignment;
+
+    for (int i = 0; i < (int) ($member.arrayTotalSize); i++) {
+        minSize += #alignmentMinSizeSeq($member "minSize");
+    }
+
+    union_min_size_serialized = RTIOsapiUtility_min( (minSize - $member.currentAlignment) , union_min_size_serialized);
+}
+#*------*##else
+    union_min_size_serialized = RTIOsapiUtility_min( 
+        (unsigned int) #alignmentMinSizeMember($member), 
+        union_min_size_serialized);
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+##******************************************************************************
+## Macro to Aligment
+##******************************************************************************
+
+#macro(alignmentSample $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+#if($member.isOptional && $node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+if ($member.sampleRef != NULL) {
+#end
+#*------*##if((($node.extensibility.equals("MUTABLE_EXTENSIBILITY")||$member.isOptional ) && $node.constructKind!="union"))
+#*--------*##if($member.needExtendedId=="no")
+current_alignment += RTICdrStream_getParameterHeaderMaxSizeSerialized(
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, current_alignment));
+#*--------*##else
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, current_alignment));
+#*----*##end
+PRESTypePluginDefaultEndpointData_setBaseAlignment(endpoint_data, current_alignment);
+#*--*##end
+#if($member.isOptional && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+if ($member.sampleRef != NULL) {
+#end
+#*----*##alignmentSampleMember($member $node.currentAlignment)
+#*------*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $member.isOptional)
+#*----CODEGEN-762----*#
+current_alignment += RTICdrType_getPadSize(
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, current_alignment),
+    RTI_CDR_PARAMETER_HEADER_ALIGNMENT);
+#*------*##end 
+#*----*##end
+#if($member.isOptional)
+}
+#end
+#*--*##end
+#end
+
+#macro (alignmentSampleMember $member $currentAlignment)
+#set($currentAlignment="current_alignment") #*--CODEGENII-479--*#
+#*----*##if($member.dimensionList && $member.seqSize)
+#*------*##alignmentSampleArrayOfSeq($member  $currentAlignment)
+#*----*##elseif($member.seqSize)
+#*------*##alignmentSampleSeq($member  $currentAlignment)
+#*----*##elseif($member.dimensionList)
+#*------*##alignmentSampleArray($member  $currentAlignment)
+#*----*##elseif($member.typeKind=="user")
+#*------*##alignmentSampleUser($member  $currentAlignment)
+#*----*##elseif($member.strSize)
+current_alignment += ::rti::topic::cdr::calculate_serialized_size(
+        ${member.sample},
+        PRESTypePluginDefaultEndpointData_getAlignment(
+            endpoint_data, 
+            $currentAlignment));
+#*----*##else
+current_alignment += ${member.elementSizeMethod}(
+PRESTypePluginDefaultEndpointData_getAlignment(
+        endpoint_data, $currentAlignment));
+#*----*##end
+#end
+
+
+#macro (alignmentSampleArray $member  $currentAlignment)
+#*------*##if($member.typeKind=="user")
+#*--------*##if($member.isPointer)
+current_alignment += RTICdrStream_getNonPrimitivePointerArraySerializedSize(
+#*--------*##else
+current_alignment += ${member.arraySizeMethod}(
+#*--------*##end        
+         $currentAlignment,
+         (RTICdrUnsignedLong) $member.arrayTotalSize,
+         sizeof(${member.nativeTypeFQName}),
+         (RTICdrTypeGetSerializedSampleSizeFunction)${member.nativeTypeFQName}Plugin_get_serialized_sample_size,
+         RTI_FALSE,encapsulation_id,
+#*--------*##if($member.isPointer)#*
+         *#(const void **) ${member.sample}.data()#*
+#*--------*##else
+         (const void *) ${member.sample}.data()
+#*--------*##end,
+         endpoint_data);
+#*------*##elseif($member.strSize)
+current_alignment += ::rti::topic::cdr::calculate_serialized_size(
+        ${member.sample},
+#if($member.strSize)
+        PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, $currentAlignment));
+#else
+        $currentAlignment);
+#end        
+#*------*##else
+current_alignment += ${member.arraySizeMethod}(
+      PRESTypePluginDefaultEndpointData_getAlignment(
+                         endpoint_data, $currentAlignment), 
+                         (RTICdrUnsignedLong) $member.arrayTotalSize, $member.typeEnum);
+#*------*##end
+#end
+
+
+##-----------------------------------------------------------------------------
+## Macro to Alignment of an union
+##-----------------------------------------------------------------------------
+
+#macro (alignmentSampleUnion $memberFieldMapList)
+#*--*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+#*----*##if($node.unionDiscriminatorMap.needExtendedId=="no")
+current_alignment += RTICdrStream_getParameterHeaderMaxSizeSerialized(
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, current_alignment));
+#*----*##else
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, current_alignment));
+#*----*##end
+PRESTypePluginDefaultEndpointData_setBaseAlignment(endpoint_data, current_alignment);
+#*--*##end
+#*--*##alignmentSampleMember($node.unionDiscriminatorMap ) 
+#*--*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+
+current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, current_alignment));
+PRESTypePluginDefaultEndpointData_setBaseAlignment(endpoint_data, current_alignment);
+
+#*--*##end   
+switch(::rti::topic::cdr::integer_case(sample->_d())) {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*###copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##initCases($member)
+#*------*##alignmentSampleMember($member)   
+}#if($member.labelList.get(0)!="default")break #end;
+#*----*##end
+#*----*##end
+#*------*##if($node.needsDefaultCase.equals("true"))
+#*--------*##generateDefaultCase($node)
+#*------*##end  
+}
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to Alignment array of sequences
+##-----------------------------------------------------------------------------
+
+
+#macro(alignmentSampleArrayOfSeq $member  $currentAlignment)
+{
+    for (int i = 0; i< (int) ($member.arrayTotalSize); ++i) {
+#*--*##alignmentSampleSeq($member  $currentAlignment)
+    }
+}
+
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to Alignment array of sequences
+##-----------------------------------------------------------------------------
+
+
+#macro(alignmentSampleUser $member $currentAlignment)
+    current_alignment += ${member.nativeTypeFQName}Plugin_get_serialized_sample_size(
+        endpoint_data,RTI_FALSE, encapsulation_id,
+         $currentAlignment, ${member.sampleRef});
+#end
+##-----------------------------------------------------------------------------
+## Macro to Alignment sequences
+##-----------------------------------------------------------------------------
+
+#macro(alignmentSampleSeq $member  $currentAlignment)
+#*--*##if($member.typeKind=="user")
+current_alignment += ::rti::topic::cdr::calculate_serialized_size(
+    ${member.sample}#if($member.dimensionList)[i]#end,
+#if ($member.strSize)
+    PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, $currentAlignment),
+#else        
+    $currentAlignment,
+#end     
+    (RTICdrTypeGetSerializedSampleSizeFunction)${member.nativeTypeFQName}Plugin_get_serialized_sample_size,
+    RTI_FALSE,
+    encapsulation_id,
+    endpoint_data);
+#*--*##else
+current_alignment += ::rti::topic::cdr::calculate_serialized_size(
+     ${member.sample}#if($member.dimensionList)[i]#end,
+     PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, $currentAlignment));
+#*--*##end
+#end
+
+
+
+
+
+
+##-----------------------------------------------------------------------------
+## Macro to get_encapsulation code
+##-----------------------------------------------------------------------------
+#macro(getEncapsulation $node $setBaseAlignment)
+  
+if (include_encapsulation) {
+#*——*##if($node.isMetpType)
+    if (!METypePlugin_validEncapsulationId(encapsulation_id) && 
+            !RTICdrEncapsulation_validEncapsulationId(encapsulation_id)) {
+        return 1;
+    }
+#*——*##else
+    if (!RTICdrEncapsulation_validEncapsulationId(encapsulation_id)) {
+        return 1;
+    }
+#*——*##end    
+    RTICdrStream_getEncapsulationSize(encapsulation_size);
+    encapsulation_size -= current_alignment;
+    current_alignment = 0;
+    initial_alignment = 0;
+#*----*##if($setBaseAlignment.equals("true"))
+    PRESTypePluginDefaultEndpointData_setBaseAlignment(
+            endpoint_data,
+            current_alignment);
+#*----*##end                 
+}
+
+#end   
+
+##-----------------------------------------------------------------------------
+## Macro to get_encapsulation code
+##-----------------------------------------------------------------------------
+#macro (mutableDeserializeHeader)
+if (!RTICdrStream_deserializeParameterHeader(
+         stream,
+         &state,
+         &memberId,
+         &length,
+         &extended,
+         &mustUnderstand)) {
+    return RTI_FALSE;
+}
+            
+if (!extended) {
+    if (memberId == RTI_CDR_PID_LIST_END) {
+        end = RTI_TRUE;
+        RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+        continue;
+    }else if (memberId == RTI_CDR_PID_IGNORE) {
+        RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+        continue;
+    }
+}
+#end
+
+#macro (getTypeCode $node)
+#*--*##if($node.constructKind=="alias")
+(RTIXCdrTypeCode *)&::rti::topic::dynamic_type< ${node.nativeFQNameInModule}${aliasTag} >::get().native()
+#*--*##else
+(RTIXCdrTypeCode *)&::rti::topic::dynamic_type< ${node.nativeFQNameInModule} >::get().native()
+#*--*##end    
+#end
+
+#macro (initializeProgramProperties $node)
+#*--*##set($node.allowXcdr=false)
+#*--*##set($node.allowXcdr2=false)
+#*--*##if($node.dataRepresentationMask == 5)
+#*----*##set($node.allowXcdr=true)
+#*----*##set($node.allowXcdr2=true)
+programProperty.generateV1Encapsulation = RTI_XCDR_TRUE;
+programProperty.generateV2Encapsulation = RTI_XCDR_TRUE;
+#*--*##elseif ($node.dataRepresentationMask == 1)
+#*----*##set($node.allowXcdr=true)
+programProperty.generateV1Encapsulation = RTI_XCDR_TRUE;
+programProperty.generateV2Encapsulation = RTI_XCDR_FALSE;
+#*--*##elseif ($node.dataRepresentationMask == 4)
+#*----*##set($node.allowXcdr2=true)
+programProperty.generateV1Encapsulation = RTI_XCDR_FALSE;
+programProperty.generateV2Encapsulation = RTI_XCDR_TRUE;
+#*--*##end
+#*--*##if($envMap.serializeSentinelOnBase)
+programProperty.serializeSentinelOnBase = RTI_XCDR_TRUE;
+#*--*##end
+#*--*##if($envMap.disableMustUnderstandOnSentinel)
+programProperty.disableMustUnderstandOnSentinel = RTI_XCDR_TRUE;
+#*--*##end
+#*--*##if($node.languageBinding.equals("FLAT_DATA"))
+programProperty.resolveAlias = RTI_XCDR_TRUE;
+programProperty.inlineStruct = RTI_XCDR_TRUE;
+programProperty.optimizeEnum = RTI_XCDR_TRUE;
+#*--*##else 
+#*----*##if ($node.optimizationLevel == 0)
+programProperty.resolveAlias = RTI_XCDR_FALSE;
+programProperty.inlineStruct = RTI_XCDR_FALSE;
+programProperty.optimizeEnum = RTI_XCDR_FALSE;
+#*----*##else
+#*------*##if ($node.optimizationLevel == 1)
+programProperty.resolveAlias = RTI_XCDR_TRUE;
+programProperty.inlineStruct = RTI_XCDR_FALSE;
+programProperty.optimizeEnum = RTI_XCDR_FALSE;
+#*------*##else
+programProperty.resolveAlias = RTI_XCDR_TRUE;
+programProperty.inlineStruct = RTI_XCDR_TRUE;
+programProperty.optimizeEnum = RTI_XCDR_TRUE;
+#*------*##end
+#*----*##end  
+#*--*# #end  
+#*--*##if ($userVarList.tcUnboundedSize)
+programProperty.unboundedSize = $userVarList.tcUnboundedSize;
+#*--*##else
+programProperty.unboundedSize = RTIXCdrLong_MAX;
+#*--*##end
+#end

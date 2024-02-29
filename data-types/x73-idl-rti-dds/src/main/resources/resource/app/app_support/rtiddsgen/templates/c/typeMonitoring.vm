@@ -1,0 +1,203 @@
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2021.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+#macro(declareGetMetricGroupInfo $node)
+NDDSUSERDllExport const struct RTI_Monitoring_MetricGroupInfo * 
+        ${node.nativeFQNameInModule}_get_metric_group_info(void);
+#end
+
+#macro(defineGetMetricGroupInfo $node)
+const struct RTI_Monitoring_MetricGroupInfo * 
+        ${node.nativeFQNameInModule}_get_metric_group_info(void)
+{
+    static RTIBool isInitialized = RTI_FALSE;
+    static struct RTI_Monitoring_MetricGroupInfo metricGroupInfo[${node.metricGroupMapList.size()}] =
+    {
+#*--*##set ($lastMetricGroupIndex = $node.metricGroupMapList.size())
+#*--*##set ($lastMetricGroupIndex= $lastMetricGroupIndex - 1)
+#*--*##set ($count=0)
+#*--*##foreach ($metricGroup in $node.metricGroupMapList)
+        {
+            ${metricGroup.idNativeFQName},
+            ${node.nativeFQNameInModule}_${metricGroup.name}_map_to_dist,
+            ${node.nativeFQNameInModule}_${metricGroup.name}_set_dist_into_sample,
+            ${node.nativeFQNameInModule}_${metricGroup.name}_delete_dist
+        }#*
+------*##if ($count != $lastMetricGroupIndex),
+#*----*##else
+
+#*----*##end
+#*----*##set ($count = $count +1)
+#*--*##end
+    };
+
+    if (isInitialized) {
+        return metricGroupInfo;
+    }
+
+    isInitialized = RTI_TRUE;
+    
+    return metricGroupInfo;
+}
+#end
+
+#macro(declareGetResourceInfo $node__)
+NDDSUSERDllExport const struct RTI_Monitoring_ResourceInfo * 
+        ${node__.nativeFQNameInModule}_get_resource_info(void);
+#end
+
+#macro(defineGetResourceInfo $node__)
+const struct RTI_Monitoring_ResourceInfo * 
+        ${node__.nativeFQNameInModule}_get_resource_info(void)
+{
+    static RTIBool isInitialized = RTI_FALSE;
+    static struct RTI_Monitoring_ResourceInfo resourceInfo =
+    {
+        ${node__.resourcePeriodicCountConstantFQName},
+        ${node__.resourceEventCountConstantFQName},
+    };
+
+    if (isInitialized) {
+        return &resourceInfo;
+    }
+
+    isInitialized = RTI_TRUE;
+    
+    return &resourceInfo;
+}
+#end
+
+#macro(defineAppMetricGroupToDistMetricGroup $node)
+#*--*##foreach ($metricGroup in $node.metricGroupMapList)
+static 
+void * ${node.nativeFQNameInModule}_${metricGroup.name}_map_to_dist(
+      const void *appMetricGroup,
+      struct REDAInlineMemory **memoryManager)
+{
+    REDAInlineMemoryBuffer *buffer = NULL;
+
+#*----*##if (!$metricGroup.typeNativeFQName.equals("DDS_Char *")
+        && !$metricGroup.typeNativeFQName.equals("DDS_Wchar *"))
+    buffer = REDAInlineMemory_reserveBuffer(
+            memoryManager, 
+            (REDAInlineMemorySize) sizeof(${metricGroup.typeNativeFQName}));
+    
+    if (buffer == NULL) {
+        return buffer;
+    }
+#*----*##end
+
+#*----*##if($metricGroup.typeKind.equals("user"))
+    if (!${metricGroup.typeNativeFQName}_initialize_w_memory_manager(
+            (${metricGroup.typeNativeFQName} *) buffer,
+            memoryManager)) {
+        return NULL;
+    }
+
+    if (!${metricGroup.typeNativeFQName}_copy_w_memory_manager(
+            (${metricGroup.typeNativeFQName} *) buffer,
+            memoryManager,
+            (const ${metricGroup.typeNativeFQName} *) appMetricGroup)) {
+        return NULL;
+    }
+#*----*##elseif($metricGroup.typeNativeFQName.equals("DDS_Char *"))
+    if (!RTICdrType_copyStringExWMemoryManager(
+            (DDS_Char **) &buffer,
+            memoryManager,
+            (const DDS_Char *) appMetricGroup,
+            RTI_UINT32_MAX-1,
+            RTI_TRUE)) {
+        return NULL;
+    }
+#*----*##elseif($metricGroup.typeNativeFQName.equals("DDS_Wchar *"))
+    if (!RTICdrType_copyWstringExWMemoryManager(
+            (DDS_Wchar **) &buffer,
+            memoryManager,
+            (const DDS_Wchar *) appMetricGroup,
+            RTI_UINT32_MAX-1,
+            RTI_TRUE)) {
+        return NULL;
+    }
+#*----*##else
+    *((${metricGroup.typeNativeFQName} *) buffer) =
+            *((${metricGroup.typeNativeFQName} *) appMetricGroup);
+#*----*##end
+
+    return buffer;
+}
+#*--*##end
+#end
+
+#macro(defineDeleteDistrMetricGroup $node__)
+#*--*##foreach ($metricGroup in $node.metricGroupMapList)
+static 
+void ${node__.nativeFQNameInModule}_${metricGroup.name}_delete_dist(
+      void *distMetricGroup)
+{
+#*----*##if($metricGroup.typeKind.equals("user"))
+    ${metricGroup.typeNativeFQName}_finalize_w_memory_manager(
+            (${metricGroup.typeNativeFQName} *) distMetricGroup);
+#*----*##end
+    RTIOsapiUtility_unusedReturnValue(
+            REDAInlineMemBuffer_release(distMetricGroup),
+            RTIBool);
+}
+#*--*##end
+#end
+
+#macro(defineSetDistributionMetricGroupIntoSample $node)
+#*--*##foreach ($metricGroup in $node.metricGroupMapList)
+static 
+void ${node.nativeFQNameInModule}_${metricGroup.name}_set_dist_into_sample(
+      void *sampleParam,
+      void *distMetricGroup)
+{
+    ${metricGroup.topLevelTypeFQName} *sample = sampleParam;
+
+    sample->value._d = ${metricGroup.resourceClassId};
+
+#*----*##if($metricGroup.typeNativeFQName.equals("DDS_Char *"))
+    sample->${metricGroup.metricFQName} = (DDS_Char *)
+            distMetricGroup;
+#*----*##elseif($metricGroup.typeNativeFQName.equals("DDS_Wchar *"))
+    sample->${metricGroup.metricFQName} = (DDS_Wchar *)
+            distMetricGroup;
+#*----*##else
+    sample->${metricGroup.metricFQName} = (${metricGroup.typeNativeFQName} *)
+            distMetricGroup;
+#*----*##end
+
+}
+#*--*##end
+#end
+
+#macro(defineResourceClassIdSnippet $macroSuffix__ $functionSuffix__)
+#*--*##set( $resourceCount = 0 )
+#*--*##foreach($node in $constructMapList)
+#*----*##if($node.isResource)
+#*------*##set( $resourceCount = $resourceCount + 1 )
+#*----*##end
+#*--*##end
+
+#*--*##if($resourceCount > 0)
+${envMap.POUND_CHAR}define ${envMap.idlFileName}_${macroSuffix__}() \
+#*--*##set( $resourceIndex = 0 )
+#*----*##foreach($node in $constructMapList)
+#*------*##if($node.isResource)
+    case ${node.resourceClassIdConstantFQName}: \
+#*--------*##if($resourceIndex == ($resourceCount - 1))
+        return ${node.nativeFQNameInModule}_${functionSuffix__}();
+#*--------*##else
+        return ${node.nativeFQNameInModule}_${functionSuffix__}(); \
+#*--------*##end
+#*--------*##set( $resourceIndex = $resourceIndex + 1 )
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+

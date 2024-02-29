@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+    
+    <xs:include schemaLocation="rti_dds_qos_profiles_definitions.xsd"/>
+    <xs:include schemaLocation="rti_dds_topic_types_definitions.xsd"/>
+
+    <xs:simpleType name="filterKind">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                Specifies whether to use one of the pre-registered RTI built-in
+                filters or a custom one implemented by the user
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="builtin.sql">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        It stands for the pre-registered builtin RTI SQL filter
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="builtin.stringMatch">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        It stands for the pre-registered builtin RTI STRINGMATCH
+                        filter
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="filter">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                This element enables content filtering by means of a
+                ContentFilteredTopic to be used by this DataReader, that makes it
+                possible to subscribe to topics and a the same time specify that
+                you are only interested in a subset of the topic's data.
+                (See User's manual section 5.4)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="expression"
+                        type="xs:string"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        A logical expression on the contents of the Topic. If the
+                        expression evaluates to TRUE, a sample is received;
+                        otherwise it is discarded. The possible values of this
+                        element depends on the filter plugin implementation
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:choice>
+                <xs:element name="parameter_list"
+                            type="parameterList"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            A string sequence of filter expression parameters.
+                            Each parameter corresponds to a positional argument
+                            in the filter expression: element 0 corresponds to
+                            positional argument 0, element 1 to positional
+                            argument 1, and so forth
+                            This element is deprecated in XML,
+                            use expression_parameters instead.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="expression_parameters"
+                            type="parameterList"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            A string sequence of filter expression parameters.
+                            Each parameter corresponds to a positional argument
+                            in the filter expression: element 0 corresponds to
+                            positional argument 0, element 1 to positional
+                            argument 1, and so forth
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
+
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    Description name of the filter. It is concatenated to the 
+                    data reader configuration name to form the name of the 
+                    ContentFilteredTopic in the form topic_name::filter_name 
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="kind" 
+                      type="filterKind" 
+                      use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    This attribute allows to select the content filter to be
+                    used
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="parameterList">
+        <xs:choice>
+            <xs:element name="param"
+                        type="xs:string"
+                        minOccurs="0"
+                        maxOccurs="100">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        This element is deprecated in XML use element instead
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="element"
+                        type="xs:string"
+                        minOccurs="0"
+                        maxOccurs="100"/>
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:complexType name="registerType">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                To use a data type the latter must be defined in a way the
+                middleware understands and then register the type with the
+                middleware. These steps allow RTI Data Distribution Service to
+                serialize, deserialize, and otherwise operate on specific types.
+                (See User's manual section 3.1)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="registered_name" minOccurs="0" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        Name the data type is registered with. The same data
+                        type may be registered with different names
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+
+        <xs:attribute name="name" type="entityName" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[
+                    Name that the data type is registered with if no
+                    registered_name  is specified. The same data type may be
+                    registered with different names
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="type_ref" type="elementReference" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[
+                    Definition of this data type. It must refer to one of the
+                    defined types in the "types" section by specifying the fully
+                    qualified name. Needed when kind=dynamicData
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="builtinTypeRegisteredName">
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="collapse"/>
+            <xs:enumeration value="DDS::String"/>
+            <xs:enumeration value="DDS::KeyedString"/>
+            <xs:enumeration value="DDS::Octets"/>
+            <xs:enumeration value="DDS::KeyedOctets"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="topicRegisterTypeRef">
+        <xs:union memberTypes="elementReference builtinTypeRegisteredName"/>
+    </xs:simpleType>
+
+    <xs:complexType name="topic">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                The applications must also share a way to identify which data is
+                to be shared. Data (of any data type) is uniquely distinguished
+                by using a name called a Topic. By definition, a Topic corresponds
+                to a single data type. However, several Topics may refer to the
+                same data type. Note that this element is a one-to-one correspondence
+                with a Topic instance, that is, only one Topic instance will be
+                created from this topic definition for a given DomainParticipant.
+                (See User's manual Chapter 5)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="registered_name"
+                        minOccurs="0"
+                        type="xs:string">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        Topic name. It identifies uniquely a Topic within a Domain.
+                        Hence topics with same name are not allowed
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="topic_qos"
+                        type="topicQosProfileChild"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                        <![CDATA[
+                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+
+        <xs:attribute name="name" type="entityName" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[
+                    Topic name if registered_name is not specified
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="register_type_ref"
+                      type="topicRegisterTypeRef"
+                      use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    Data type that this topic corresponds to. This attribute must
+                    refer to the name of one the types registered in this domain
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="domainLibrary">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                The Domain Library provides a way to group a set of domains under
+                a namespace
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="domain"
+                        type="domain"/>
+        </xs:choice>
+
+        <xs:attributeGroup ref="entityNameAttrGroup"/>
+    </xs:complexType>
+
+    <xs:attributeGroup name="entityAttrGroup">
+        <xs:attributeGroup ref="entityNameAttrGroup"/>
+        <xs:attribute name="multiplicity" type="xs:positiveInteger">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    It specifies the number of DDS instances of this definition
+                    will be created 
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:attributeGroup>
+
+    <xs:complexType name="dataWriter">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                An application writes data using a DataWriter. It is bound at
+                creation time to a Topic, thus specifying the name under which a
+                DataWriter will publish the data and the type associated with the
+                data.
+
+                Note that, by default, this element is a one-to-one
+                correspondence with a DataWriter instance, that is, a DataWriter
+                instance will be created for each one of these elements within a
+                Publisher.
+
+                This element may also be defined within a "participant" element,
+                which means that it will be managed by the implicit publisher.
+                (See User's manual section 6.3)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="datawriter_qos"
+                        minOccurs="0"
+                        type="dataWriterQosProfileChild"/>
+        </xs:sequence>
+
+        <xs:attributeGroup ref="entityAttrGroup"/>
+        <xs:attribute name="topic_ref" type="elementReference" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    It specifies the topic this data writer is bound to. It must
+                    refer to one of the topics defined in the domain that the
+                    corresponding participant belongs to by specifying the topic
+                    name. Note that only the topic name is needed.
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="dataReader">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                The DataReader is the entity used by the application to
+                subscribe to updated values of data. The DataReader is bound at
+                creation time to a Topic, thus specifying the named an typed
+                data stream to which it is subscribed.
+
+                Note that, by default, this element is a one-to-one
+                correspondence with a DataReader instance, that is, a
+                DataReader instance will be created for each one of these elements
+                within a Subscriber.
+
+                This element may also be defined within a "participant" element,
+                which means that it will be managed by the implicit subscriber.
+                (See User's manual section 7.3)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="filter"
+                            type="filter"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            This element enables the creation of a ContentFilteredTopic
+                            from the topic referred by this DataReader's "topic_ref"
+                            attribute
+                            This element is deprecated in XML use content_filter
+                            instead
+                            Supported only in RTI Connext DDS Professional and
+                            RTI Connext DDS Secure.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="content_filter"
+                            type="filter"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            This element enables the creation of a ContentFilteredTopic
+                            from the topic referred by this DataReader's "topic_ref"
+                            attribute
+                            Supported only in RTI Connext DDS Professional and
+                            RTI Connext DDS Secure.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:choice>
+            <xs:element name="datareader_qos"
+                        type="dataReaderQosProfileChild"
+                        minOccurs="0"/>
+        </xs:sequence>
+
+        <xs:attributeGroup ref="entityAttrGroup"/>
+        <xs:attribute name="topic_ref" type="elementReference" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    It specifies the topic this data reader is bound to. It must
+                    refer to one of the topics defined in the domain that the
+                    corresponding participant belongs to by specifying the topic
+                    name. Note that only the topic name is needed
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="publisher">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                A Publisher is the DDS object responsible for sending data and
+                manages the activities of several DataWriters. The Publisher
+                determines when the data is actually sent to other applications.
+
+                Note that, by default, this element is a one-to-one correspondence
+                with a Publisher instance, that is, a Publisher instance will be
+                created for each one of these elements within a DomainParticipant.
+                (See User's manual section 6.2)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="data_writer"
+                    type="dataWriter"/>
+            <xs:element name="publisher_qos"
+                    type="publisherQosProfileChild"/>
+        </xs:choice>
+
+        <xs:attributeGroup ref="entityAttrGroup"/>
+    </xs:complexType>
+
+    <xs:complexType name="subscriber">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                A Subscriber is the DDS object responsible for receiving data and
+                manages the activities of several DataReaders. The Subscriber
+                determines when the data received from applications is actually
+                available for access through the DataReader. Note that, by default,
+                this element is a one-to-one correspondence with a Subscriber
+                instance, that is, a Subscriber instance will be created for each
+                one of these elements within a DomainParticipant.
+                (See User's manual section 7.2)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="data_reader"
+                        type="dataReader"/>
+            <xs:element name="subscriber_qos"
+                        type="subscriberQosProfileChild"/>
+        </xs:choice>
+
+        <xs:attributeGroup ref="entityAttrGroup"/>
+    </xs:complexType>
+
+    <xs:complexType name="participant">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                Applications that want to exchange data using DDS must belong to
+                the same Domain. To belong to a Domain, it's needed to configure
+                and create a DomainParticipant bound to that doamin.
+                DomainParticipants own Topics, Publishers and Subscribers which
+                in turn owns DataWriters and DataReaders. Thus all DDS Entities
+                belong to a specific domain. Note that this element is not a
+                one-to-one correspondence with a DomainParticipant instance, that is,
+                multiple DomainParticipant instances may be created from this
+                participant defintion.
+                (See User's manual chapter 8)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="memory_management"
+                        type="sampleMemoryManagement"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            RTI extension.
+
+                            Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                            ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="participant_qos"
+                            type="participantQosProfileChild">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            Specifies the QoS configuration for this Participant.
+
+                            If no tag is specified, the Participant is created
+                            with the default QoS profile (unless otherwise
+                            overridden via API).
+
+                            Note that this element is allowed to appear multiple
+                            times in order to allow flexibility in the order of
+                            the elements. However semantically only one QoS is
+                            applicable and if multiple are specified, only the
+                            first QoS element is used.
+
+                            This element is deprecated in XML use
+                            domain_participant_qos instead.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="domain_participant_qos"
+                            type="domainParticipantQosProfileChild">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            Specifies the QoS configuration for this Participant.
+
+                            If no tag is specified, the Participant is created
+                            with the default QoS profile (unless otherwise
+                            overridden via API).
+
+                            Note that this element is allowed to appear multiple
+                            times in order to allow flexibility in the order of
+                            the elements. However semantically only one QoS is
+                            applicable and if multiple are specified, only the
+                            first QoS element is used.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="register_type"
+                            type="registerType">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            It is allowed to register types locally. A
+                            registered type defined here may overwrite one
+                            defined in the domain this participant is bound to
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="topic"
+                            type="topic">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            It is allowed to define Topics locally. A topic
+                            defined here may overwrite one defined in the domain
+                            this participant is bound to
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="data_writer"
+                            type="dataWriter">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            RTI extension.
+
+                            Specifies a DataWriter configuration that will be
+                            created inside the implicit Publisher.
+
+                            Only supported in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="data_reader"
+                            type="dataReader">
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en-US">
+                            <![CDATA[
+                            RTI extension.
+
+                            Specifies a DataReader configuration that will be
+                            created inside the implicit Subscriber.
+
+                            Only supported in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                            ]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="publisher"
+                            type="publisher"/>
+                <xs:element name="subscriber"
+                            type="subscriber"/>
+            </xs:choice>
+        </xs:sequence>
+
+         <xs:attributeGroup ref="entityNameAttrGroup">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    Participant definition name. This represent a specify
+                    participant configuration, not a DomainParticipant name
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+         </xs:attributeGroup>
+        <xs:attribute name="domain_ref" type="elementReference" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    It specifies the domain this participant is bound. It must
+                    refer to one of the defined domains in the "domain_library"
+                    section by specifying the fully qualified name
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="domain_id" type="xs:nonNegativeInteger">
+            <xs:annotation>
+                <xs:documentation xml:lang="en-US">
+                    <![CDATA[
+                    Specifies the domain ID the participant is bound. It
+                    overrides the one specified in the bound domain and/or base
+                    participant
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="base_name" type="elementBaseName"/>
+    </xs:complexType>
+
+    <xs:complexType name="domain">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                Domains represent logical, isolated, communication networks.
+                Broadly speaking, a domain represents the set of applications
+                that are communicating with each other.
+
+                As such it must define the Global Data Space (GDS) by
+                specifying data types and topics.
+                (See User's manual chapter 8)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice minOccurs="1" maxOccurs="unbounded">
+            <xs:element name="register_type"
+                        type="registerType"/>
+            <xs:element name="topic"
+                        type="topic"/>
+        </xs:choice>
+
+        <xs:attributeGroup ref="entityNameAttrGroup">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[
+                    Domain name which may be referred for any participant in the
+                    participant library
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attributeGroup>
+        <xs:attribute name="domain_id" type="xs:nonNegativeInteger">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[
+                    ID assigned to this domain
+                    ]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="base_name" type="elementBaseName"/>
+    </xs:complexType>
+
+    <xs:complexType name="participantLibrary">
+        <xs:annotation>
+            <xs:documentation xml:lang="en-US">
+                <![CDATA[
+                The Participant Library provides a way to group a set of
+                participants under a namespace
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="domain_participant" type="participant"/>
+        </xs:choice>
+
+        <xs:attributeGroup ref="entityNameAttrGroup"/>
+    </xs:complexType>
+
+</xs:schema>
