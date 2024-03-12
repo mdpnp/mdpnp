@@ -128,6 +128,11 @@
           <PropertyValueFactory property="unit_id" />
          </cellValueFactory>
         </TableColumn>
+        <TableColumn prefWidth="75.0" text="Sequence">
+         <cellValueFactory>
+          <PropertyValueFactory property="pubcount" />
+         </cellValueFactory>
+        </TableColumn>
 
        </columns>
       </TableView>

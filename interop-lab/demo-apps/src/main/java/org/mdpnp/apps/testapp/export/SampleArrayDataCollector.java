@@ -125,6 +125,7 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
         private final long        time;
         private final Number[]    value;
         private final SampleArrayFx data;
+        private final int pubcount;
 
         public SampleArrayEvent(SampleArrayFx data) {
             this(UNDEFINED, data);
@@ -135,6 +136,7 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
             data = v;
             value = data.getValues();
             time = data.getDevice_time().getTime();
+            pubcount = data.getPubcount();
             //We MUST read the presentation_time property in order to change the validity of the sample.  See Issue #8
             data.getPresentation_time();
         }
@@ -156,6 +158,9 @@ public class SampleArrayDataCollector extends DataCollector<SampleArrayFx> {
         }
         public long getFrequency() {
             return data.getFrequency();
+        }
+        public int getPubcount() {
+        	return pubcount;
         }
     }
 

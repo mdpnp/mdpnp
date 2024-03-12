@@ -354,6 +354,9 @@ module ice {
    * vendor_metric_id is informational only, may be left blank, and must not be expected.
    * If non-blank it contains a nomenclature code from a proprietary interface.
    * 
+   * 
+   * pubcount is a number to indicate which order samples were published in.
+   * 
    * Stability: 2 - Unstable
    */
   struct SampleArray {
@@ -366,6 +369,7 @@ module ice {
     Values values;
     Time_t device_time;
     Time_t presentation_time;
+    long pubcount;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist SampleArray unique_device_identifier metric_id instance_id unit_id frequency
   const string SampleArrayTopic = "SampleArray";

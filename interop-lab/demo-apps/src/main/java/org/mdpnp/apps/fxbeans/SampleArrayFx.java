@@ -139,6 +139,20 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
         this.presentation_timeProperty().set(presentation_time);
     }
     
+    private IntegerProperty pubcount;
+    public int getPubcount() {
+        return pubcountProperty().get();
+    }
+    public void setPubcount(int pubcount) {
+        pubcountProperty().set(pubcount);
+    }
+    public IntegerProperty pubcountProperty() {
+        if(null == pubcount) {
+            pubcount = new SimpleIntegerProperty(this, "pubcount");
+        }
+        return pubcount;
+    }
+    
     public SampleArrayFx() {
     }
     
@@ -157,6 +171,7 @@ public class SampleArrayFx extends AbstractFx<ice.SampleArray> {
         valuesProperty().set(values);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
         setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
+        setPubcount(v.pubcount);
         super.update(v, s);
     }
 

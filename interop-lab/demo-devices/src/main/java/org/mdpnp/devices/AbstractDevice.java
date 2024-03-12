@@ -351,7 +351,7 @@ public abstract class AbstractDevice {
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        holder.data.pubcount++;        
+        holder.data.pubcount++;
         Time_t t = DomainClock.toDDSTime(time.getTime());
         holder.data.presentation_time.sec = (int)(t.sec);
         holder.data.presentation_time.nanosec = (int)(t.nanosec);
@@ -592,7 +592,6 @@ public abstract class AbstractDevice {
                                                           NullSaveContainer<Number> newValues,
                                                           String metric_id, String vendor_metric_id, int instance_id, String unit_id, int frequency,
                                                           DeviceClock.Reading timestamp) {
-
         holder = ensureHolderConsistency(holder, metric_id, vendor_metric_id, instance_id, unit_id, frequency);
 
         if (!newValues.isNull()) {
@@ -647,6 +646,7 @@ public abstract class AbstractDevice {
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
+        holder.data.pubcount++;
 
         DeviceClock.Reading adjusted = deviceTimestamp.refineResolutionForFrequency(holder.data.frequency,
                                                                                     holder.data.values.userData.size());
@@ -656,33 +656,33 @@ public abstract class AbstractDevice {
         sampleArrayDataWriter.write(holder.data,
                                                 holder.handle==null?InstanceHandle_t.HANDLE_NIL:holder.handle);
         //If we look at fill() we can see that it adds floats to the array.
-        float[] floatsForDb=holder.data.values.userData.toArrayFloat(new float[0]);
-        if(sampleStatement!=null) {
-	        try {
-				sampleStatement.setInt(1, holder.data.presentation_time.sec);
-				sampleStatement.setInt(2, holder.data.presentation_time.nanosec);
-				sampleStatement.setString(3, deviceIdentity.unique_device_identifier);
-				sampleStatement.setString(4, holder.data.metric_id);
-				/*
-				 * This is not necessarily the best way of serialising floats - if it turns out to be too big of
-				 * a performance hit, we can check out alternatives like 
-				 * https://www.factual.com/blog/the-flotsam-project-insanely-fast-floating-point-number-serialization-for-java-and-javascript/
-				 * and
-				 * https://github.com/RuedigerMoeller/fast-serialization
-				 */
-				JsonArrayBuilder builder=Json.createArrayBuilder();
-				for(int i=0;i<floatsForDb.length;i++) {
-					builder.add(floatsForDb[i]);
-				}
-				JsonArray jsonArray=builder.build();
-				sampleStatement.setString(5, jsonArray.toString());
-				boolean resType=sampleStatement.execute();
-			} catch (SQLException e) {
-				//Because this is executing once per second, including the stack trace would
-				//cause a very large log file.
-				log.warn("Failed to execute sample statement - "+e.getMessage());
-			}
-        }
+//        float[] floatsForDb=holder.data.values.userData.toArrayFloat(new float[0]);
+//        if(sampleStatement!=null) {
+//	        try {
+//				sampleStatement.setInt(1, holder.data.presentation_time.sec);
+//				sampleStatement.setInt(2, holder.data.presentation_time.nanosec);
+//				sampleStatement.setString(3, deviceIdentity.unique_device_identifier);
+//				sampleStatement.setString(4, holder.data.metric_id);
+//				/*
+//				 * This is not necessarily the best way of serialising floats - if it turns out to be too big of
+//				 * a performance hit, we can check out alternatives like 
+//				 * https://www.factual.com/blog/the-flotsam-project-insanely-fast-floating-point-number-serialization-for-java-and-javascript/
+//				 * and
+//				 * https://github.com/RuedigerMoeller/fast-serialization
+//				 */
+//				JsonArrayBuilder builder=Json.createArrayBuilder();
+//				for(int i=0;i<floatsForDb.length;i++) {
+//					builder.add(floatsForDb[i]);
+//				}
+//				JsonArray jsonArray=builder.build();
+//				sampleStatement.setString(5, jsonArray.toString());
+//				boolean resType=sampleStatement.execute();
+//			} catch (SQLException e) {
+//				//Because this is executing once per second, including the stack trace would
+//				//cause a very large log file.
+//				log.warn("Failed to execute sample statement - "+e.getMessage());
+//			}
+//        }
     }
 
     private InstanceHolder<SampleArray> ensureHolderConsistency(InstanceHolder<SampleArray> holder,

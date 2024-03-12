@@ -122,6 +122,8 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
         for(Number n : v) {
             sb.append(",").append(scientificFormat.format(n.doubleValue()));
         }
+        
+        sb.append(separator).append(value.getPubcount());
 
         return sb.toString();
     }
