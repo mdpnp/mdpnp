@@ -351,7 +351,7 @@ public abstract class AbstractDevice {
             holder.data.device_time.sec = 0;
             holder.data.device_time.nanosec = 0;
         }
-        
+        holder.data.pubcount++;        
         Time_t t = DomainClock.toDDSTime(time.getTime());
         holder.data.presentation_time.sec = (int)(t.sec);
         holder.data.presentation_time.nanosec = (int)(t.nanosec);

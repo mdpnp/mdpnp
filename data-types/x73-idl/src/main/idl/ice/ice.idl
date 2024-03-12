@@ -323,6 +323,8 @@ module ice {
    * vendor_metric_id is informational only, may be left blank, and must not be expected.
    * If non-blank it contains a nomenclature code from a proprietary interface.
    * 
+   * pubcount is a number to indicate which order samples were published in.
+   * 
    * Stability: 2 - Unstable
    */
   struct Numeric {
@@ -334,6 +336,7 @@ module ice {
     float value;
     Time_t device_time;
     Time_t presentation_time;
+    long pubcount;
   }; //@top-level true //@Extensibility MUTABLE_EXTENSIBILITY
   #pragma keylist Numeric unique_device_identifier metric_id vendor_metric_id instance_id unit_id
   const string NumericTopic = "Numeric";

@@ -127,6 +127,20 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         this.presentation_timeProperty().set(presentation_time);
     }
     
+    private IntegerProperty pubcount;
+    public int getPubcont() {
+        return pubcountProperty().get();
+    }
+    public void setPubcount(int pubcount) {
+        pubcountProperty().set(pubcount);
+    }
+    public IntegerProperty pubcountProperty() {
+        if(null == pubcount) {
+            pubcount = new SimpleIntegerProperty(this, "pubcount");
+        }
+        return pubcount;
+    }
+    
     public NumericFx() {
     }
         
@@ -141,6 +155,7 @@ public class NumericFx extends AbstractFx<ice.Numeric> implements Updatable<ice.
         setValue(v.value);
         setDevice_time(new Date(v.device_time.sec * 1000L + v.device_time.nanosec / 1000000L));
         setPresentation_time(new Date(v.presentation_time.sec * 1000L + v.presentation_time.nanosec / 1000000L));
+        setPubcount(v.pubcount);
         // The source_timestamp is convenient to key collection updates from so we fire it last
         
         super.update(v, s);

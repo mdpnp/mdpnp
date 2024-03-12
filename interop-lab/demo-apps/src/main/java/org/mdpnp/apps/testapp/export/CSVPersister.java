@@ -137,7 +137,8 @@ public class CSVPersister extends DataCollectorAppFactory.PersisterUIController 
             .append(value.getMetricId()).append(separator)
             .append(value.getInstanceId()).append(separator)
             .append(devTime).append(separator).append(mrn).append(separator).append(1).append(separator)
-            .append(valueFormat.format(value.getValue()));
+            .append(valueFormat.format(value.getValue())).append(separator)
+            .append(value.getPubcount());
 
         return sb.toString();
     }

@@ -94,6 +94,7 @@ public class NumericsDataCollector extends DataCollector<NumericFx> {
         private final long      time;
         private final double    value;
         private final NumericFx data;
+        private int pubcount;
 
         public NumericSampleEvent(NumericFx data) {
             this(UNDEFINED, data);
@@ -104,6 +105,7 @@ public class NumericsDataCollector extends DataCollector<NumericFx> {
             data = v;
             value = data.getValue();
             time = data.getDevice_time().getTime();
+            pubcount = data.getPubcont();
             //we MUST read the presentation_time property, in order to change the validity
             data.getPresentation_time();
         }
@@ -122,6 +124,9 @@ public class NumericsDataCollector extends DataCollector<NumericFx> {
         }
         public double getValue() {
             return value;
+        }
+        public int getPubcount() {
+        	return pubcount;
         }
     }
 
