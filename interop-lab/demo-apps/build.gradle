@@ -284,6 +284,39 @@ run {
 
 }
 
+task 'runDevice'(type: JavaExec) {
+    group = ApplicationPlugin.APPLICATION_GROUP
+    classpath=sourceSets.main.runtimeClasspath
+    mainClass='org.mdpnp.apps.testapp.Main'
+    if(localOsName.contains("linux")) {
+      if(localOsArch.contains("aarch")) {
+        environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+      } else {
+        environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      }
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+    }
+    if(localOsName.contains("windows")) {
+      environment 'PATH', currentPath + ';native/libs/windows'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+    }
+    if(localOsName.contains("mac")) {
+      environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+
+    }
+    jvmArgs = ['--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED',
+               '--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED',
+               '--add-exports=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED',
+               '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+               '--add-exports=javafx.controls/com.sun.javafx.charts=ALL-UNNAMED',
+    ]
+
+}
+
 task 'makeFlatRuntime'(type: Copy) {
     from configurations.runtimeClasspath
     into 'flat'
