@@ -33,14 +33,17 @@ class ice_SampleArraySubscriber:
         # A DomainParticipant allows an application to begin communicating in
         # a DDS domain. Typically there is one DomainParticipant per application.
         # DomainParticipant QoS is configured in USER_QOS_PROFILES.xml
-        participant = dds.DomainParticipant(domain_id)
+        
+        #QOS Adaptation for samples starts here
+        qos_provider = dds.QosProvider("ice_library.xml");
+        participant = dds.DomainParticipant(domain_id, qos_provider.participant_qos)
 
         # A Topic has a name and a datatype.
-        topic = dds.Topic(participant, "SampleArray", ice.SampleArray)
+        topic = dds.Topic(participant, ice.SampleArrayTopic, ice.SampleArray, qos_provider.topic_qos)
 
         # This DataReader reads data on Topic "Example ice_SampleArray".
         # DataReader QoS is configured in USER_QOS_PROFILES.xml
-        reader = dds.DataReader(participant.implicit_subscriber, topic)
+        reader = dds.DataReader(participant.implicit_subscriber, topic, qos_provider.datareader_qos_from_profile("ice_library::waveform_data"))
 
         # Initialize samples_read to zero
         samples_read = 0
