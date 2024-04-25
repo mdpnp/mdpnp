@@ -160,6 +160,7 @@ public class SimMultiparameter extends AbstractSimulatedConnectedDevice {
         systolic = createNumericInstance(rosetta.MDC_PRESS_BLD_ART_ABP_SYS.VALUE, "");
         diastolic = createNumericInstance(rosetta.MDC_PRESS_BLD_ART_ABP_DIA.VALUE, "");
 
+        deviceIdentity.manufacturer = "ICE";
         deviceIdentity.model = "Multiparameter (Simulated)";
         writeDeviceIdentity();
     }
