@@ -80,6 +80,40 @@ $element.getValue()
 #end
 
 public class  $constructMap.typecodeName {
+
+##------------------TypeCode without members for recursivity------------------
+#* We only want to generate the typecode without members for aggregate types 
+or for alias of an aggregate types. 
+#*--*##if($constructMap.constructKind.equals("struct")
+          || $constructMap.constructKind.equals("valueType")
+          || $constructMap.constructKind.equals("union")
+          || ($constructMap.constructKind.equals("alias") 
+                && !$constructMap.isBaseAliasPrimitive
+                && !$constructMap.isBaseAliasEnum))
+
+    public static final TypeCode VALUE_WO_MEMBERS = getTypeCodeWOMembers();
+
+    // We need a type code without member in case of recursion
+    @SuppressWarnings("cast")
+    public static TypeCode getTypeCodeWOMembers() {
+        TypeCode tc = null;
+#*----*##if(!$constructMap.constructKind.equals("alias"))
+#*------*##typeMember($constructMap) #typeVariable ($constructMap)[]=new #typeMember($constructMap)[0];
+#*----*##end
+        Annotations annotation = new Annotations();
+        annotation.allowed_data_representation_mask($constructMap.dataRepresentationMask);
+#*----*##if($constructMap.constructKind.equals("alias"))
+tc = TypeCodeFactory.TheTypeCodeFactory.create_alias_tc("${constructMap.typeCodeFQName}",
+${constructMap.typeCodeFirstMember.nativeTypeFQName}TypeCode.VALUE_WO_MEMBERS,
+#typeVariable($constructMap),
+annotation);
+#*----*##else
+#*------*##getTypeCodeFactory($constructMap)
+#*----*##end
+        return tc;
+    }
+#*--*##end
+
     public static final TypeCode VALUE = getTypeCode();
 
     // Depending on the type represented in the IDL, we may perform some redundant

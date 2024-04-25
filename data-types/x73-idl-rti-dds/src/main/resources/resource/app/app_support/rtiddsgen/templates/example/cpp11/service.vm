@@ -48,7 +48,9 @@
 #*------------*##if ($member.exceptionCount && $member.exceptionCount > 0)
 #*----------------*##foreach($excp in $member.exceptionList)
         // To throw ${excp.FQName} uncomment the following line
-        #if (!${envMap.rpcTest})//#end throw ${excp.FQName}();
+#*------------------*##if (!${envMap.rpcTest} || (${envMap.rpcTest} && $foreach.count != 1))
+        //#*
+#*------------------*##end throw ${excp.FQName}();
 #*----------------*##end
 #*------------*##end
 

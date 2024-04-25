@@ -15,6 +15,7 @@ package $constructMap.packageName;
 #end 
 
 import java.util.Objects;
+import java.lang.reflect.*;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -33,13 +34,16 @@ import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
-
+#if(${envMap.android})
+import android.util.Log;
+#end
 /**
  * Simple example showing all Connext code in one place for readability.
  */
 public class ${constructMap.name}Subscriber extends Application implements AutoCloseable {
 
     private DomainParticipant participant = null; // Usually one per application
+    private static final String TAG = "RTIConnextLog";
     private ${constructMap.name}DataReader reader = null;
     private final ${constructMap.name}${envMap.typeSeqSuffix} dataSeq = new ${constructMap.name}${envMap.typeSeqSuffix}();
     private final SampleInfoSeq infoSeq = new SampleInfoSeq();
@@ -60,6 +64,21 @@ public class ${constructMap.name}Subscriber extends Application implements AutoC
 
                 if (info.valid_data) {
                     System.out.println("Received" + dataSeq.get(i));
+
+#if(${envMap.android})
+                    // Print also to logcat
+                    Log.i(TAG, "Received" + dataSeq.get(i));
+#elseif(${envMap.universal}) 
+    if (System.getProperty("java.vm.name").equalsIgnoreCase("Dalvik")){
+        try {
+            Class<?> cls = Class.forName("android.util.Log");
+            Method method = cls.getMethod("i", String.class, String.class);
+            method.invoke(null, TAG, "Received");
+        } catch(Exception e) {
+            // nothing to do with this problem for now
+        }
+    }
+#end
                 }
                 samplesRead++;
             }

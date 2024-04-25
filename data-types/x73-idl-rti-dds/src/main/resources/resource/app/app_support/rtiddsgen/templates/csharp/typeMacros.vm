@@ -57,7 +57,7 @@
 ISequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>#*
 #*--*##else
 $member.nativeTypeFQName #*
-#*----*##if($member.isOptional && ($member.typeKind.equals("builtin") || $member.isEnum) && !$member.strSize)
+#*----*##if($member.isOptional && !$member.isOptionalArray && ($member.typeKind.equals("builtin") || $member.isEnum) && !$member.strSize)
 ? #*
 #*----*##end
 #declareArraydimensionListsIfNeeded($member false) #*
@@ -73,7 +73,7 @@ ${memberName}#if($foreach.hasNext), #end#*
 
 #macro (getPropertyAnnotations $member)
 #*--*##if($member.isKey)[Key]
-#*--*##elseif($member.isOptional && !$member.seqSize)[Optional]
+#*--*##elseif($member.isOptional)[Optional]
 #*--*##end
 #*--*##if($member.seqSize && !$member.seqSize.equals("-1"))[Bound($member.seqSize)]
 #*--*##end
@@ -155,6 +155,7 @@ new ${member.nativeTypeFQName}();
 }#*
 #*----*##end
 #*--*##end
+
 #end
 
 #macro(generateMembers $node $public $prefix)
@@ -188,7 +189,7 @@ ISequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>#*
 $member.nativeTypeFQName#declareArraydimensionListsIfNeeded($member false)#*
 #*-------*##else
 $member.nativeTypeFQName#*
-#*---------*##if($member.isOptional && ($member.typeKind.equals("builtin") || $member.isEnum))
+#*---------*##if($member.isOptional && !$member.isOptionalArray && ($member.typeKind.equals("builtin") || $member.isEnum))
 ?#*
 #*---------*##end
 #declareArraydimensionListsIfNeeded($member false)#*
@@ -212,7 +213,7 @@ $member.nativeTypeFQName#*
 #end
 
 #macro(generateGetterAndSetter $member)
-#*--*##if($member.seqSize)
+#*--*##if($member.seqSize && !$member.isOptional)
  { get; }#*
 #*--*##elseif($member.explicitMaxValue || $member.explicitMinValue)
 {
@@ -227,6 +228,13 @@ $member.nativeTypeFQName#*
                 this.${member.privateName} = value;
         }
 }
+
+private $member.nativeTypeFQName#if($member.isOptional)?#{end} $member.privateName;
+#*--*##else
+ { get; set; }#*
+#*--*##end
+#end
+
 
 #macro(getUnionDiscriminatorDefaultVale $node)
 #*----*##if($node.hasADefaultCaseLabel && !$node.hasAllCaseCovered)
@@ -245,12 +253,6 @@ $node.unionDiscriminatorMap.defaultDiscriminatorValue;
 #*----*##else
 ${node.unionDiscriminatorMap.labelList[0]};
 #*----*##end
-#end
-
-private $member.nativeTypeFQName#if($member.isOptional)?#{end} $member.privateName;
-#*--*##else
- { get; set; }#*
-#*--*##end
 #end
 
 #macro(initializeString $member $public)
@@ -297,6 +299,9 @@ if (#*
 #end
 
 #macro(equalsMember $member $alias)
+#*--*##if(($member.seqSize || $member.arrayTotalSize) && $member.isOptional)
+(ReferenceEquals(this.${member.name}, other.${member.name}) || (this.${member.name} != null && other.${member.name} != null && #*
+#*--*##end
 #*--*##if($member.seqSize || ($member.arrayTotalSize && $member.dimensionList.size() == 1))
 this.${member.name}.SequenceEqual(other.${member.name})#*
 #*--*##elseif($member.arrayTotalSize)
@@ -312,22 +317,23 @@ this.${member.name}.Equals((decimal) other.${member.name})#*
 #*--*##else
 this.${member.name}.Equals(other.${member.name})#*
 #*--*##end
+#*--*##if(($member.seqSize || $member.arrayTotalSize) && $member.isOptional)
+))#*
+#*--*##end
 #end
 
 #macro(getHash $member)
-this.#*
+this.${member.name}#*
 #*--*##if($member.seqSize)
-${member.name}.Count#*
+.Count#*
 #*--*##elseif($member.arrayTotalSize)
-${member.name}#getFirstPositionofArray($member)#*
-#*--*##else
-${member.name}#*
+#getFirstPositionofArray($member)#*
 #*--*##end
 #end
 
 #macro(copyMember $member)
 #*--*##if($member.isOptional)
-#*----*##if($member.typeKind.equals("user") && !$member.isAlias)
+#*----*##if(($member.typeKind.equals("user") && !$member.isAlias) || $member.seqSize || $member.arrayTotalSize)
 if(other.${member.name} != null)
 {
 #*----*##end
@@ -340,13 +346,15 @@ if(other.${member.name} != null)
 #*----*##end
 #*--*##elseif($member.arrayTotalSize)
         this.$member.privateName = #initializeArray($member true true)
-#*--*##elseif($member.typeKind.equals("user") && !$member.isAlias && !$member.isEnum)
+#*--*##elseif($member.typeKind.equals("user") && !$member.isEnum)
         this.$member.privateName = new ${member.nativeTypeFQName}(other.${member.name});
 #*--*##else
         this.$member.privateName = other.${member.name};
 #*--*##end
-#*--*##if($member.isOptional && $member.typeKind.equals("user") && !$member.isAlias)
+#*--*##if($member.isOptional)
+#*----*##if(($member.typeKind.equals("user") && !$member.isAlias) || $member.seqSize || $member.arrayTotalSize)
 }
+#*----*##end
 #*--*##end
 #end
 

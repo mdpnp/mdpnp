@@ -19,7 +19,9 @@
             || $type__.hasId
             || $type__.hasWString
             || !$type__.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")
-            || $type__.explicitDataRepresentationMask)
+            || $type__.explicitDataRepresentationMask
+            || !$type__.modulesName.isEmpty()
+            || !$type__.nativeFQNameInModule.equals($type__.FQName))
 ${envMap.AT_SIGN}$decoratorName__(
 #*----*##generateTypeAnnotations($type__)
 #*----*##generateMemberAnnotations($type__)
@@ -66,18 +68,24 @@ ${envMap.AT_SIGN}idl.alias
 #macro (generateTypeAnnotations $type__)
 #*--*##if ($type__.extensibility.equals("MUTABLE_EXTENSIBILITY")
             || $type__.extensibility.equals("FINAL_EXTENSIBILITY")
-            || $type__.explicitDataRepresentationMask)
+            || $type__.explicitDataRepresentationMask
+            || !$type__.modulesName.isEmpty()
+            || !$type__.nativeFQNameInModule.equals($type__.FQName))
     type_annotations = [#*
 #*----*##if ($type__.extensibility.equals("MUTABLE_EXTENSIBILITY"))
 idl.mutable#*
 #*----*##elseif ($type__.extensibility.equals("FINAL_EXTENSIBILITY"))
 idl.final#*
 #*----*##end
-#*----*##if ($type__.explicitDataRepresentationMask)
+#*----*##if ($type__.explicitDataRepresentationMask 
+			|| !$type__.modulesName.isEmpty()
+			|| !$type__.nativeFQNameInModule.equals($type__.FQName))
 ## Check again the extensibility to add comma if needed
 #*------*##if (!$type__.extensibility.equals("EXTENSIBLE_EXTENSIBILITY"))
 , #*
 #*------*##end
+#*----*##end
+#*----*##if ($type__.explicitDataRepresentationMask)
 #*------*##if ($type__.dataRepresentationMask == 5)
 idl.allowed_data_representation(xcdr2=True, xcdr1=True)#*
 #*------*##elseif ($type__.dataRepresentationMask == 4)
@@ -85,6 +93,14 @@ idl.allowed_data_representation(xcdr2=True, xcdr1=False)#*
 #*------*##else
 idl.allowed_data_representation(xcdr2=False, xcdr1=True)#*
 #*------*##end
+#*------*##if (!$type__.modulesName.isEmpty()
+			|| !$type__.nativeFQNameInModule.equals($type__.FQName))
+, #*
+#*------*##end
+#*----*##end
+#*----*##if (!$type__.modulesName.isEmpty() 
+				|| !$type__.nativeFQNameInModule.equals($type__.FQName))
+idl.type_name("$type__.FQName")#*
 #*----*##end
 ]#*
 ## If there are a member annotations after the type annotation we add ,

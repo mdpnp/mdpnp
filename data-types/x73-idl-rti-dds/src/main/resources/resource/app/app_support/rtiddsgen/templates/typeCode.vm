@@ -361,8 +361,8 @@ static DDS_Long ${node.nativeFQNameInModule}_g_tc_${member.name}_labels[$member.
 #macro(initArrayAndSeqElementTypeCodes $struct)
 #*--*##foreach($member in $struct.typeCodeMemberFieldMapList)
 #*----*##if($member.seqSize) 
-${member.typeCodeSeq}._data._typeCode = #getTypeCodeBasicReference ($member)
-#*-----*##if ($node.interpreted=="true" && 
+${member.typeCodeSeq}._data._typeCode = #getTypeCodeBasicReference ($member);
+#*------*##if ($node.interpreted=="true" && 
               !($node.languageBinding.equals("FLAT_DATA") 
                   && ($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || ($node.constructKind=="alias"))))
 #*--------*##if(!$language.equals("cpp11stl"))
@@ -380,8 +380,36 @@ ${member.typeCodeSeq}._data._sampleAccessInfo = &DDS_g_sai_seq;
 #*----*##end
 #*----*##if($member.dimensionList && $member.seqSize)
 ${member.typeCodeArray}._data._typeCode =(RTICdrTypeCode *)& $member.typeCodeSeq;
-#elseif($member.dimensionList)
-${member.typeCodeArray}._data._typeCode =#getTypeCodeBasicReference ($member)
+#*------*##if($member.isOptionalArray)
+#*--------*##if($language.equals("Cpp") && $envMap.allocateWithNew)
+${member.typeCodeArray}._data._sampleAccessInfo = &DDS_g_sai_opt_array_seqs_w_new;
+#*--------*##elseif($language.equals("cpp11stl"))
+${member.typeCodeArray}._data._sampleAccessInfo = interpreter::get_opt_array_sample_access_info< ${member.nativeTypeSeqFQName}>();
+#*--------*##else
+${member.typeCodeArray}._data._sampleAccessInfo = &DDS_g_sai_opt_array;
+#*--------*##end
+#*------*##end
+#*----*##elseif($member.dimensionList)
+${member.typeCodeArray}._data._typeCode =#getTypeCodeBasicReference ($member);
+#*------*##if($member.isOptionalArray)
+#*--------*##if($language.equals("Cpp") && $envMap.allocateWithNew)
+#*----------*##if($member.strSize)
+#*------------*##if(!$envMap.stringIsObject && !$member.typeName.equals("wstring"))
+${member.typeCodeArray}._data._sampleAccessInfo = &DDS_g_sai_string;
+#*------------*##elseif($member.typeName.equals("wstring"))
+${member.typeCodeArray}._data._sampleAccessInfo = &DDS_g_sai_wstring;
+#*------------*##else
+${member.typeCodeArray}._data._sampleAccessInfo = &DDS_g_sai_opt_array_stdstrings_w_new;
+#*------------*##end
+#*----------*##else
+${member.typeCodeArray}._data._sampleAccessInfo = (#getTypeCodeBasicReference ($member))->_sampleAccessInfo;
+#*----------*##end
+#*--------*##elseif($language.equals("cpp11stl"))
+${member.typeCodeArray}._data._sampleAccessInfo = interpreter::get_opt_array_sample_access_info< ${member.specTypeName}>();
+#*--------*##else
+${member.typeCodeArray}._data._sampleAccessInfo = &DDS_g_sai_opt_array;
+#*--------*##end
+#*------*##end
 #*----*##end
 #*--*##end
 #end
@@ -420,17 +448,16 @@ ${member.typeCodeArray}._data._typeCode =#getTypeCodeBasicReference ($member)
 #*--*##elseif($member.seqSize)
 (RTICdrTypeCode *)& $member.typeCodeSeq;
 #*--*##else
-#getTypeCodeBasicReference($member)
+#getTypeCodeBasicReference($member);
 #*--*##end
 #end
 
 #macro (getTypeCodeBasicReference $member)
 #*----*##if($member.typeKind=="user")
-(RTICdrTypeCode *)$member.typeCode;#*
+(RTICdrTypeCode *)$member.typeCode#*
 ----*##else
-(RTICdrTypeCode *)&$member.typeCode;#*
+(RTICdrTypeCode *)&$member.typeCode#*
 #*----*##end
-
 #end
 
 ##------------------------------------------------------------------------------
@@ -821,7 +848,7 @@ RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_seq_access_info
         NULL, \
         NULL \
     };
-    
+
     return &${node.nativeFQNameInModule}_g_seqSampleAccessInfo;
 }
 
@@ -881,8 +908,13 @@ RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_access_info()
 
 #*--*##if($node.constructKind.equals("union"))
 #*-------*##if($language.equals("C"))
+#*---------*##if($envMap.microCodeGeneration)
     ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-            (RTIXCdrUnsignedLong) RTIXCdrUtility_pointerToULongLong(&((${node.nativeFQNameInModule} *)NULL)->_d);
+            RTIXCdrUtility_pointerToUnsignedLong(&((${node.nativeFQNameInModule} *)NULL)->_d);
+#*---------*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] =
+            offsetof(struct ${node.nativeFQNameInModule}, _d);
+#*---------*##end
 #*-------*##elseif($language.equals("cpp11stl"))
     ${node.nativeFQNameInModule}_g_memberAccessInfos[0].bindingMemberValueOffset[0] =
             (RTIXCdrUnsignedLong) ((char *)&sample->_d() - (char *)sample);
@@ -911,28 +943,50 @@ RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_access_info()
 #*-----*##elseif($language.equals("cpp11stl"))
 #*-------*##if($node.constructKind.equals("union"))
 #*---------*##if(!$member.labelList[0].equals("default"))
-	sample->_d() = ${member.labelList[0]};
+#*-----------*##if($envMap.legacyMapping)
+    sample->_d() = ${member.labelList[0]};
+#*-----------*##else
+    sample->_d(${member.labelList[0]});
+#*-----------*##end
 #*---------*##else
 #*-----------*##if($node.hasAllCaseCovered && $node.hasADefaultCaseLabel)
+#*-------------*##if($envMap.legacyMapping)
     sample->_d() = static_cast< ${node.unionDiscriminatorMap.specTypeName} >(${node.unusedDiscriminatorValue});
+#*-------------*##else
+    sample->_d(static_cast< ${node.unionDiscriminatorMap.specTypeName} >(${node.unusedDiscriminatorValue}));
+#*-------------*##end
 #*-----------*##else
+#*-------------*##if($envMap.legacyMapping)
     sample->_d() = ${node.nativeFQName}::default_discriminator();
+#*-------------*##else
+    sample->_d(${node.nativeFQName}::default_discriminator());
+#*-------------*##end
 #*-----------*##end
 #*---------*##end
 #*-------*##end
     ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
-        (RTIXCdrUnsignedLong) ((char *)&sample->${member.name}() - (char *)sample);
+        (RTIXCdrUnsignedLong) ((char *)&sample->${member.name}#parenthesisIfNeeded($node) - (char *)sample);
 
 #*-----*##elseif($language.equals("C"))
-#*--------*##if($node.constructKind!="union")
+#*-------*##if($node.constructKind!="union")
+#*---------*##if($envMap.microCodeGeneration)
     ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
-            (RTIXCdrUnsignedLong) RTIXCdrUtility_pointerToULongLong(&((${node.nativeFQNameInModule} *)NULL)->$member.name);
-#*--------*##else
+            RTIXCdrUtility_pointerToUnsignedLong(&((${node.nativeFQNameInModule} *)NULL)->$member.name);
+#*---------*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] =
+            offsetof(struct ${node.nativeFQNameInModule}, $member.name);
+#*---------*##end
+#*-------*##else
+#*---------*##if($envMap.microCodeGeneration)
     ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
-            (RTIXCdrUnsignedLong) RTIXCdrUtility_pointerToULongLong(&((${node.nativeFQNameInModule} *)NULL)->_u.$member.name);
-#*--------*##end
+            RTIXCdrUtility_pointerToUnsignedLong(&((${node.nativeFQNameInModule} *)NULL)->_u.$member.name);
+#*---------*##else
+    ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] =
+            offsetof(struct ${node.nativeFQNameInModule}, _u.$member.name);
+#*---------*##end
+#*-------*##end
 
-#*------*##else
+#*-----*##else
 #*--------*##if($node.constructKind!="union")
     ${node.nativeFQNameInModule}_g_memberAccessInfos[$numMember].bindingMemberValueOffset[0] = 
            (RTIXCdrUnsignedLong) ((char *)&sample->$member.name - (char *)sample);

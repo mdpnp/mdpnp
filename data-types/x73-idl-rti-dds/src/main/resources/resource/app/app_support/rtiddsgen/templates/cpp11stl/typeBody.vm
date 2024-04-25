@@ -67,47 +67,35 @@ namespace $node.name {
 #else
 
 #if(!$node.constructKind.equals("union"))
+
 $node.name::${node.name}() #initialize($node) {
+
 #initializeArraysAndTypedef($node)
 }   
+
 #*--Copy Constructor-- Using default*#
 
-#*--CODEGENII-787 we don't generate param constructor if there are no params*#    
+#*--CODEGENII-787 we don't generate param constructor if there are no params*#
 #if($node.memberCount > 0
     || ($node.baseTypeMembers && $node.baseTypeMembers.size() > 0 ))
 #*--Params Constructor--*#
 $node.name::${node.name} (#paramConstructorHeader($node))#paramConstructorBody($node) {
+#*--*##if(!$envMap.legacyMapping)
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if(!$member.directive)
+${member.cName} = #*
+#*--------*##if($node.baseTypeMembersName.contains($member.name))
+${member.name}_2_;
+#*--------*##else
+${member.cName}_;
+#*--------*##end
+#*------*##end
+#*----*##end
+#*--*##end
 }
 #end
 
-${envMap.POUND_CHAR}ifdef RTI_CXX11_RVALUE_REFERENCES
-${envMap.POUND_CHAR}ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-  $node.name::${node.name}(${node.name}&& other_)#if(!$node.hasPointerMember) OMG_NOEXCEPT#end #move($node)  {
-  } 
-  
-  ${node.name}& $node.name::operator=(${node.name}&&  other_)#if(!$node.hasPointerMember) OMG_NOEXCEPT#end {
-      ${node.name} tmp(std::move(other_));
-      swap(tmp); 
-      return *this;
-  }
-${envMap.POUND_CHAR}endif
-${envMap.POUND_CHAR}endif   
-
-#else 
-${envMap.POUND_CHAR}ifdef RTI_CXX11_RVALUE_REFERENCES
-${envMap.POUND_CHAR}ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-$node.name::${node.name}(${node.name}&& other_) OMG_NOEXCEPT 
-  {
-#moveUnion($node)
-  }
-   
-${node.name}& $node.name::operator=(${node.name}&&  other_) OMG_NOEXCEPT {
-      ${node.name} tmp(std::move(other_));
-      swap(tmp); 
-      return *this;
-  }
-${envMap.POUND_CHAR}endif
-${envMap.POUND_CHAR}endif 
+#else
 #*we generate the constructors & destructor for the struct type*#
 $node.name::${node.unionStructName}::${node.unionStructName}() #initialize($node) {
 #initializeArraysAndTypedef($node)
@@ -121,10 +109,18 @@ $node.name::${node.unionStructName}::${node.unionStructName}(#paramConstructorHe
 
 $node.name::${node.name}() #initializeUnion($node) {
 }
-
 #end
 
-void $node.name::swap($node.name& #if($node.constructKind.equals("union") || $node.baseTypeFQName || !$node.memberFieldMapList.isEmpty())other_#end)  OMG_NOEXCEPT 
+#*----*##if(!$envMap.legacyMapping && $node.constructKind.equals("struct"))
+#operatorNewMappingBody($node)
+
+void swap($node.name& a, $node.name& b) noexcept 
+{
+    using std::swap;
+    #swapNewMapping($node)
+}  
+#*----*##else
+void $node.name::swap($node.name& #if($node.constructKind.equals("union") || $node.baseTypeFQName || !$node.memberFieldMapList.isEmpty())other_#end)  noexcept 
 {
     using std::swap;
     #swap($node)
@@ -133,9 +129,9 @@ void $node.name::swap($node.name& #if($node.constructKind.equals("union") || $no
 #operatorBody($node) 
 
 #getterAndSettersBody($node) ## this is only for memberes with fwd-decl types
-
+#*----*##end
 #outOperatorBody($node)
-       
+
 #if($node.constructKind.equals("union"))       
 $node.unionDiscriminatorMap.specTypeName ${node.name}::default_discriminator() {
 #if ($node.unionDiscriminatorMap.isEnum)
@@ -376,23 +372,35 @@ initialize_test_values< ${node.baseTypeFQName} >(sample);
 #*--*##if(!$node.constructKind.equals("union"))
 #*----*##foreach($member in $node.memberFieldMapList)
 #*------*##if(!$member.directive)
-initialize_test_values(sample.${member.name}());
+initialize_test_values(sample.${member.name}#parenthesisIfNeeded($node));
 #*------*##end
 #*----*##end
 #*--*##else
-#if($node.memberFieldMapList.size() > 1 
+#*----*##if($node.memberFieldMapList.size() > 1
     && !$node.memberFieldMapList[1].labelList[0].equals("default")
     && !$node.memberFieldMapList[1].directive)
+#*------*##if($envMap.legacyMapping)
 sample._d() = ${node.memberFieldMapList[1].labelList[0]};
-initialize_test_values(sample.${node.memberFieldMapList[1].name}());
-#else
-#*--*##if(!$node.memberFieldMapList[0].labelList[0].equals("default"))
+#*------*##else
+sample._d(${node.memberFieldMapList[1].labelList[0]});
+#*------*##end
+initialize_test_values(sample.${node.memberFieldMapList[1].name}#parenthesisIfNeeded($node));
+#*----*##else
+#*------*##if(!$node.memberFieldMapList[0].labelList[0].equals("default"))
+#*--------*##if($envMap.legacyMapping)
 sample._d() = ${node.memberFieldMapList[0].labelList[0]};
-#*--*##else
+#*--------*##else
+sample._d(${node.memberFieldMapList[0].labelList[0]});
+#*--------*##end
+#*------*##else
+#*--------*##if($envMap.legacyMapping)
 sample._d() = ${node.nativeFQName}::default_discriminator();
-#*--*##end
-initialize_test_values(sample.${node.memberFieldMapList[0].name}());
-#end
+#*--------*##else
+sample._d(${node.nativeFQName}::default_discriminator());
+#*--------*##end
+#*------*##end
+initialize_test_values(sample.${node.memberFieldMapList[0].name}#parenthesisIfNeeded($node));
+#*----*##end
 #*--*##end
 }
 #*----*##end ## FLAT_DATA

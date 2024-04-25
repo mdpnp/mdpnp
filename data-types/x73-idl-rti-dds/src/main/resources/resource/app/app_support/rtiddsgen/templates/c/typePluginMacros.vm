@@ -107,114 +107,123 @@
 #*----*##elseif($member.dimensionList )
 #*------*##printArray($member)
 #*----*##elseif($member.seqSize)
-#*------*##printSeq($member "1")
+#*------*##printSeq($member "1" ${member.sampleRef} ${member.sample})
 #*----*##elseif($member.typeKind=="user")
 #*------*##printUser($member)
 #*----*##else
 #*------*##printBuiltin($member)
-#*----*##end     
+#*----*##end
 
 #end
 
 ##-----------------------------------------------------------------------------
-## Macro to print arrray of sequences
+## Macro to print array of sequences
 ##-----------------------------------------------------------------------------
 #macro(printArrayOfSeq $member)
 {
     int i;
-
+#*--*##if($member.isOptionalArray)
+#*----*##declareMemberType($member)* elem = NULL;
+    if (${member.sampleRef} == NULL) {
+        RTICdrType_printIndent(indent_level+1);
+        RTILogParamString_printPlain("$member.printName: NULL\n");
+    } else {
+        RTICdrType_printIndent(indent_level+1);
+        RTILogParamString_printPlain("$member.printName:\n");
+        elem = (#declareMemberType($member)*) (${member.sampleRef}[0]);
+        for (i = 0; i < (int) ($member.arrayTotalSize); i++, elem++) {
+#*--------*##printSeq($member "2" "elem" "(*elem)")
+        }
+    }
+#*--*##else
     RTICdrType_printIndent(indent_level+1);
     RTILogParamString_printPlain("$member.printName:\n");
     for (i = 0; i < (int) ($member.arrayTotalSize); i++) {
-#*--*##printSeq($member "2")
+#*--*##printSeq(
+            $member
+            "2"
+            "${member.sampleRef}#if($member.dimensionList)[i]#end"
+            "(*(${member.sampleRef}#if($member.dimensionList)[i]#end))")
     }
+#**--*##end
 }
 #end
 
 ##-----------------------------------------------------------------------------
 ## Macro to print sequences
+## - $member: the sequence member to print.
+## - $indent: the current indentation level.
+## - $seqSampleRef__: the reference to the sequence member.
+## - $seqSample__: the sequence sample itself.
 ##-----------------------------------------------------------------------------
-#macro(printSeq $member $indent)
-#if(${member.isOptional})
-if (${member.sampleRef}#if($member.dimensionList)[i]#end == NULL) {
+#macro(printSeq $member $indent $seqSampleRef__ $seqSample__)
+#if(${member.isOptional} && !${member.isOptionalArray})
+if ($seqSampleRef__ == NULL) {
     RTICdrType_printIndent(indent_level+ $indent);
 #*--*##if($member.dimensionList)
     RTILogParamString_printPlain("%s[%d]: NULL\n","$member.printName",i);
 #*--*##else
      RTILogParamString_printPlain("$member.printName: NULL\n");
-#*--*##end            
+#*--*##end
 } else {
-#end    
+#end
 #*--*##if($member.typeKind=="user")
-    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
-----*#${member.sampleRef}#if($member.dimensionList)[i]#end) != NULL) {
+    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqSampleRef__) != NULL) {
         RTICdrType_printArray(
-            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end), 
-            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqSampleRef__),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($seqSampleRef__),
             sizeof(${member.nativeTypeFQName}),
             (RTICdrTypePrintFunction)${member.nativeTypeFQName}PluginSupport_print_data,
             #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
     } else {
         RTICdrType_printPointerArray(
-            ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end), 
-            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI($seqSampleRef__),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($seqSampleRef__),
             (RTICdrTypePrintFunction)${member.nativeTypeFQName}PluginSupport_print_data,
             #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
     }
-    
+
 #*--*##elseif($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring")))
 #*----*##if($member.isPointer)
-#*------*##set($sequenceElement="(*(${member.sampleRef}#if($member.dimensionList)[i]#end))")
+#*------*##set($sequenceElement="(*($seqSampleRef__))")
 #*----*##else
-#*------*##set($sequenceElement="${member.sample}#if($member.dimensionList)[i]#end")
+#*------*##set($sequenceElement="${seqSample__}")
 #*----*##end
 #*----*##printStringObjectSeq(${sequenceElement} $member)
 #*--*##elseif($member.strSize)
-    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end) != NULL) {
+    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqSampleRef__) != NULL) {
         RTICdrType_printStringArray(
-            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
-            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($member.sampleRef#if($member.dimensionList)[i]#end),
+            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqSampleRef__),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($seqSampleRef__),
             #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent,
             $member.typeEnum);
     } else {
         RTICdrType_printStringPointerArray(
-            ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
-            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
+            ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI($seqSampleRef__),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($seqSampleRef__),
             #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent,
             $member.typeEnum);
     }
-        
-#*--*##else    
-    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end) != NULL) {
+
+#*--*##else
+    if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqSampleRef__) != NULL) {
         RTICdrType_printArray(
-            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
-            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($member.sampleRef#if($member.dimensionList)[i]#end),
+            ${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqSampleRef__),
+            (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($seqSampleRef__),
             $member.elementSize,
             (RTICdrTypePrintFunction)$member.elementPrintMethod,
             #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
     } else {
             RTICdrType_printPointerArray(
-                ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
---------------*#$member.sampleRef#if($member.dimensionList)[i]#end),
-                (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
---------------*#$member.sampleRef #if($member.dimensionList)[i]#end),
+                ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI($seqSampleRef__),
+                (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length($seqSampleRef__),
                 (RTICdrTypePrintFunction)$member.elementPrintMethod,
                 #if($member.dimensionList)"" #else "$member.printName"#end, indent_level + $indent);
     }
-    
+
 
 #*--*##end
-#if(${member.isOptional})
+#if(${member.isOptional} && !${member.isOptionalArray})
 }
 #*--*##end
 #end
@@ -354,10 +363,10 @@ extended = RTI_TRUE;
 #*----------*##elseif($member.needExtendedId=="no")
 extended = RTI_FALSE;
 #*----------*##else
-extended = stream->_xTypesState.useExtendedId;
+extended = cdrStream->_xTypesState.useExtendedId;
 #*----------*##end  
 memberLengthPosition = RTICdrStream_serializeParameterHeader(
-                                   stream, &state, extended, memberId, RTI_FALSE);
+                                   cdrStream, &state, extended, memberId, RTI_FALSE);
 if (memberLengthPosition == NULL) {
     return RTI_FALSE;
 }
@@ -386,7 +395,7 @@ if ($member.sampleRef!=NULL) {
 #*--*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $member.name!="_d") 
 || (!$node.extensibilility.equals("MUTABLE_EXTENSIBILITY") && $member.isOptional))
 if (!RTICdrStream_serializeParameterLength(
-        stream, &state, extended, memberLengthPosition)) {
+        cdrStream, &state, extended, memberLengthPosition)) {
     return RTI_FALSE;
 }
 #*--*##end
@@ -429,7 +438,7 @@ if (!RTICdrStream_serializeParameterLength(
 if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(${member.sampleRef}#*
 ------*##if($member.dimensionList)[i]#end) != NULL) {
     if (!RTICdrStream_serializeNonPrimitiveSequence(
-        stream,
+        cdrStream,
         ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
 ------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
         (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(#*
@@ -443,7 +452,7 @@ if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(${member.sampleRef}#*
     } 
 } else {
     if (!RTICdrStream_serializeNonPrimitivePointerSequence(
-        stream,
+        cdrStream,
         (const void **) ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
 ------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
         (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(${member.sampleRef}#if($member.dimensionList)[i]#end),
@@ -458,7 +467,7 @@ if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(${member.sampleRef}#*
 if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
 ------*#${member.sampleRef}#if($member.dimensionList)[i]#end) != NULL) {
     if (!$member.sequenceSerializeMethod#if($envMap.ignoreAlignment)Fast#end(
-             stream,
+             cdrStream,
              ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
 ------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
              (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(${member.sampleRef}#if($member.dimensionList)[i]#end),
@@ -471,7 +480,7 @@ if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
     } 
 } else {
     if (!${member.pointerSequenceSerializeMethod}(
-             stream,
+             cdrStream,
              (const void **) ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
 ------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
              (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_length(${member.sampleRef}#if($member.dimensionList)[i]#end),
@@ -500,10 +509,10 @@ if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
 #*----*##if($member.typeKind=="user")
 #*------*##if ($member.isPointer) 
 if (!RTICdrStream_serializeNonPrimitivePointerArray( 
-        stream,  (const void**) ${member.sampleRef},
+        cdrStream,  (const void**) ${member.sampleRef},
 #*------*##else    
 if (!RTICdrStream_serializeNonPrimitiveArray(
-        stream,  (void*)${member.sample},
+        cdrStream,  (void*)${member.sample},
 #*------*##end        
         $member.arrayTotalSize, sizeof($member.nativeTypeFQName),
         (RTICdrStreamSerializeFunction)${member.nativeTypeFQName}Plugin_serialize$serializeSuffix,
@@ -515,16 +524,16 @@ if (!RTICdrStream_serializeStringPointerArray(
 #*------*##else 
 if (!RTICdrStream_serializeStringArray(
 #*------*##end
-        stream, #if($member.isPointer)(const void**)${member.sampleRef}#else (void*)${member.sample} #end ,
+        cdrStream, #if($member.isPointer)(const void**)${member.sampleRef}#else (void*)${member.sample} #end ,
         $member.arrayTotalSize, #getStrSize($member "serialize") + 1,
         $member.typeEnum)) {
 #*----*##else
 #*------*##if ($member.isPointer)
 if (!RTICdrStream_serializePrimitivePointerArray(
-        stream, (const  void**) ${member.sampleRef}, $member.arrayTotalSize,$member.typeEnum))  {
+        cdrStream, (const  void**) ${member.sampleRef}, $member.arrayTotalSize,$member.typeEnum))  {
 #*------*##else 
 if (!RTICdrStream_serializePrimitiveArray#if($envMap.ignoreAlignment)Fast#end(
-        stream, (void*) ${member.sample}, $member.arrayTotalSize, $member.typeEnum)) {
+        cdrStream, (void*) ${member.sample}, $member.arrayTotalSize, $member.typeEnum)) {
 #*------*##end
 #*----*##end
 return RTI_FALSE;
@@ -542,7 +551,7 @@ return RTI_FALSE;
 if(!${member.nativeTypeFQName}Plugin_serialize${serializeSuffix}(
             endpoint_data,
             (const ${member.nativeTypeFQName}*) ${member.sampleRef},
-            stream,
+            cdrStream,
             RTI_FALSE, encapsulation_id,
             RTI_TRUE,
             endpoint_plugin_qos)) {
@@ -559,7 +568,7 @@ return RTI_FALSE;
 #*--*##if ($envMap.ignoreAlignment)
 #*----*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
 if (!${member.elementSerializeMethod}Fast(
-        stream,#if($member.isPointer)*#end ${member.sampleRef}, #getStrSize($member "serialize") + 1)) {
+        cdrStream,#if($member.isPointer)*#end ${member.sampleRef}, #getStrSize($member "serialize") + 1)) {
         return RTI_FALSE;
 }
 #*----*##else
@@ -567,20 +576,20 @@ if (!${member.elementSerializeMethod}Fast(
 #*--------*##serializeStringObjectFast($member)
 #*------*##else
 ${member.elementSerializeMethod}Fast(
-    stream, ${member.sampleRef}) ;
+    cdrStream, ${member.sampleRef}) ;
 #*------*##end
 #*----*##end
 
 #*--*##else
 #*----*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
 if (!${member.elementSerializeMethod}(
-    stream, #if($member.isPointer)*#end${member.sampleRef}, #getStrSize($member "serialize") + 1)) {
+    cdrStream, #if($member.isPointer)*#end${member.sampleRef}, #getStrSize($member "serialize") + 1)) {
 #*----*##else
 #*------*##if($member.strSize)
 if (!#serializeStringObject($member)) {
 #*------*##else
 if (!${member.elementSerializeMethod}(
-    stream, ${member.sampleRef})) {
+    cdrStream, ${member.sampleRef})) {
 #*------*##end
 #*----*##end
     return RTI_FALSE;
@@ -609,16 +618,16 @@ if(serialize_encapsulation) {
 #end
 #*--*##if($node.isMetpType)
     if (!METypePlugin_serializeAndSetCdrEncapsulation(
-            endpoint_data,stream,encapsulation_id,&metp)) {
+            endpoint_data,cdrStream,encapsulation_id,&metp)) {
         return RTI_FALSE;
     }
 #*--*##else    
-    if (!RTICdrStream_serializeAndSetCdrEncapsulation(stream , encapsulation_id)) {
+    if (!RTICdrStream_serializeAndSetCdrEncapsulation(cdrStream , encapsulation_id)) {
         return RTI_FALSE;
     }
 #*--*##end
 
-    rti_position = RTICdrStream_resetAlignment(stream);
+    rti_position = RTICdrStream_resetAlignment(cdrStream);
 }
 #end
 
@@ -633,7 +642,7 @@ RTIBool mustUnderstand = RTI_TRUE;
 #end
 
     if (!RTICdrStream_serializeParameterHeader(
-          stream,
+          cdrStream,
           NULL,
           RTI_FALSE,
           RTI_CDR_PID_LIST_END,
@@ -641,7 +650,7 @@ RTIBool mustUnderstand = RTI_TRUE;
               return RTI_FALSE;
     }
 }
-stream->_xTypesState.skipListEndId = ignoreListEndId;
+cdrStream->_xTypesState.skipListEndId = ignoreListEndId;
 #end
 
 ##******************************************************************************
@@ -747,7 +756,7 @@ return RTI_FALSE;
 if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*-
 ------*#${member.sampleRef}#if($member.dimensionList)[i]#end) != NULL) {
     if (!RTICdrStream_deserializeNonPrimitiveSequence(
-        stream,
+        cdrStream,
         ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
 --------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
         &sequence_length,
@@ -760,7 +769,7 @@ if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*-
     }
 } else {
     if (!RTICdrStream_deserializeNonPrimitivePointerSequence(
-         stream,
+         cdrStream,
          (void **) ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
 --------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
          &sequence_length,
@@ -785,7 +794,7 @@ if (!${member.nativeTypeSeqFQName}_set_length(
 if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
 --------*#${member.sampleRef}#if($member.dimensionList)[i]#end) != NULL) {
     if (!$member.sequenceDeserializeMethod#if($envMap.ignoreAlignment)Fast#end(
-        stream,
+        cdrStream,
         ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(${member.sampleRef}#if($member.dimensionList)[i]#end),
         &sequence_length,
         (RTICdrUnsignedLong) ${member.nativeTypeSeqFQName}_get_maximum(${member.sampleRef}#if($member.dimensionList)[i]#end),
@@ -798,7 +807,7 @@ if (${member.nativeTypeSeqFQName}_get_contiguous_bufferI(#*
     }
 } else {
     if (!${member.pointerSequenceDeserializeMethod}(
-        stream,
+        cdrStream,
         (void **) ${member.nativeTypeSeqFQName}_get_discontiguous_bufferI(#*
 --------*#${member.sampleRef}#if($member.dimensionList)[i]#end),
         &sequence_length,
@@ -831,7 +840,7 @@ if (!${member.nativeTypeSeqFQName}_set_length(${member.sampleRef}#if($member.dim
 if(!${member.nativeTypeFQName}Plugin_${serializeSuffix}(
             endpoint_data,
             ${member.sampleRef},
-            stream,
+            cdrStream,
             RTI_FALSE, RTI_TRUE,
             endpoint_plugin_qos)) {
 #*--*##continueDeserialization ($member $serializeSuffix)
@@ -848,10 +857,10 @@ if(!${member.nativeTypeFQName}Plugin_${serializeSuffix}(
 #*----*##if($member.typeKind=="user")
 #*------*##if ($member.isPointer) 
 if (!RTICdrStream_deserializeNonPrimitivePointerArray( 
-    stream,  (void**) ${member.sampleRef},
+    cdrStream,  (void**) ${member.sampleRef},
 #*------*##else    
 if (!RTICdrStream_deserializeNonPrimitiveArray(
-    stream,  (void*)${member.sample},
+    cdrStream,  (void*)${member.sample},
 #*------*##end        
     $member.arrayTotalSize, sizeof($member.nativeTypeFQName),
     (RTICdrStreamDeserializeFunction)${member.nativeTypeFQName}Plugin_${serializeSuffix},
@@ -863,16 +872,16 @@ if (!RTICdrStream_deserializeStringPointerArrayEx(
 #*------*##else 
 if (!RTICdrStream_deserializeStringArrayEx(
 #*------*##end
-    stream, #if($member.isPointer)(void**)${member.sampleRef}#else (void*)${member.sample} #end ,
+    cdrStream, #if($member.isPointer)(void**)${member.sampleRef}#else (void*)${member.sample} #end ,
     $member.arrayTotalSize, #getStrSize($member "deserialize") + 1,
     $member.typeEnum,#reallocateString($member))) {
 #*----*##else
 #*------*##if ($member.isPointer)
 if (!RTICdrStream_deserializePrimitivePointerArray(
-    stream, (void**) ${member.sampleRef}, $member.arrayTotalSize,$member.typeEnum))  {
+    cdrStream, (void**) ${member.sampleRef}, $member.arrayTotalSize,$member.typeEnum))  {
 #*------*##else 
 if (!RTICdrStream_deserializePrimitiveArray#if($envMap.ignoreAlignment)Fast#end(
-    stream, (void*) ${member.sample}, $member.arrayTotalSize, $member.typeEnum)) {
+    cdrStream, (void*) ${member.sample}, $member.arrayTotalSize, $member.typeEnum)) {
 #*------*##end
 #*----*##end
 #*------*##continueDeserialization ($member $serializeSuffix)
@@ -887,7 +896,7 @@ if (!RTICdrStream_deserializePrimitiveArray#if($envMap.ignoreAlignment)Fast#end(
 #deserializeStringObject($member $serializeSuffix)
 #*--*##else
 if (!${member.elementDeserializeMethod}#if ($envMap.ignoreAlignment)Fast#end(
-    stream,#if(!$member.isPointer)&#end$member.sampleRef, #getStrSize($member "deserialize") + 1,#reallocateString($member))) {
+    cdrStream,#if(!$member.isPointer)&#end$member.sampleRef, #getStrSize($member "deserialize") + 1,#reallocateString($member))) {
 #*----*##continueDeserialization ($member $serializeSuffix)
 }
 #*--*##end
@@ -899,14 +908,14 @@ if (!${member.elementDeserializeMethod}#if ($envMap.ignoreAlignment)Fast#end(
 #*------*##deserializeStr($member $serializeSuffix)
 #*----*##else
 ${member.elementDeserializeMethod}Fast(
-        stream, ${member.sampleRef}) ;
+        cdrStream, ${member.sampleRef}) ;
 #*---*##end
 #*--*##else
 #*----*##if($member.strSize)
 #*------*##deserializeStr($member $serializeSuffix)
 #*----*##else
 if (!${member.elementDeserializeMethod}(
-    stream, ${member.sampleRef})) {
+    cdrStream, ${member.sampleRef})) {
 #*------*##continueDeserialization ($member $serializeSuffix)
 }
 #*----*##end
@@ -917,19 +926,19 @@ if (!${member.elementDeserializeMethod}(
     if (deserialize_encapsulation) {
 #*--*##if($node.isMetpType)
       if (!METypePlugin_deserializeAndSetCdrEncapsulation(
-        	endpoint_data, stream, &metp)) {
+        	endpoint_data, cdrStream, &metp)) {
 #*--*##else
-      if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
+      if (!RTICdrStream_deserializeAndSetCdrEncapsulation(cdrStream)) {
 #*--*##end
         return RTI_FALSE;
       }
 
-    rti_position = RTICdrStream_resetAlignment(stream);
+    rti_position = RTICdrStream_resetAlignment(cdrStream);
   }
 #*--*##if($node.isMetpType)
     else {
         if (RTICdrEncapsulation_validShmemRefEncapsulationId(
-            RTICdrStream_getEncapsulationKind(stream))) {
+            RTICdrStream_getEncapsulationKind(cdrStream))) {
             metp = RTI_TRUE;
         }
     }
@@ -991,14 +1000,14 @@ switch (memberId) {
         } break;
 #end
 }
-RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
 #end
 
 
 #macro (preDeserializeOptionalMember $member $serializeSuffix)
 
 if (!RTICdrStream_deserializeParameterHeader(
-                     stream,
+                     cdrStream,
                      &state,
                      &memberId,
                      &length,
@@ -1012,7 +1021,7 @@ if (length > 0) {
 #end
 
 #macro (postDeserializeOptionalMember)
-RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
 #end
 ##******************************************************************************
 ## Macro to Skip
@@ -1090,7 +1099,7 @@ return RTI_FALSE;
 #macro(skipUser $member)
 if (!${member.nativeTypeFQName}Plugin_skip(
     endpoint_data,
-    stream, 
+    cdrStream, 
     RTI_FALSE, RTI_TRUE, 
     endpoint_plugin_qos)) {
 #*--*##continueSkip  ($member) 
@@ -1103,14 +1112,14 @@ if (!${member.nativeTypeFQName}Plugin_skip(
 #macro(skipSeq $member)
 #*--*##if($member.typeKind=="user")
 if (!RTICdrStream_skipNonPrimitiveSequence(
-    stream,
+    cdrStream,
     &sequence_length,
     (RTICdrStreamSkipFunction)${member.nativeTypeFQName}Plugin_skip,
     RTI_FALSE,RTI_TRUE,
     endpoint_data,endpoint_plugin_qos)) {
 #*--*##else
 if (!${member.sequenceSkipMethod}(
-    stream,
+    cdrStream,
     &sequence_length,
     #if($member.strSize)#getStrSize($member "skip") + 1, #end           
     $member.typeEnum)){
@@ -1125,13 +1134,13 @@ if (!${member.sequenceSkipMethod}(
 #macro(skipArray $member)
 #*--*##if($member.typeKind=="user")
 if (!RTICdrStream_skipNonPrimitiveArray(
-        stream,$member.arrayTotalSize,
+        cdrStream,$member.arrayTotalSize,
         (RTICdrStreamSkipFunction)${member.nativeTypeFQName}Plugin_skip, 
         RTI_FALSE,RTI_TRUE,
         endpoint_data,endpoint_plugin_qos)){
 #*--*##elseif($member.strSize)
 if (!${member.arraySkipMethod}(
-        stream, $member.arrayTotalSize, #getStrSize($member "skip") + 1,
+        cdrStream, $member.arrayTotalSize, #getStrSize($member "skip") + 1,
         $member.typeEnum)){
 #*--*##else
 #*----*##if($member.isPointer)
@@ -1139,7 +1148,7 @@ if (!RTICdrStream_skipPrimitivePointerArray(
 #*----*##else
 if (!${member.arraySkipMethod}(
 #*----*##end
-         stream, $member.arrayTotalSize, $member.typeEnum)) {
+         cdrStream, $member.arrayTotalSize, $member.typeEnum)) {
 #*--*##end
 #*--*##continueSkip  ($member) 
 }      
@@ -1150,7 +1159,7 @@ if (!${member.arraySkipMethod}(
 ## Macro to SkipPrimitive
 ##------------------------------------------------------------------------------
 #macro(skipPrimitive $member)
-if (!$member.elementSkipMethod (stream#if(${member.strSize}), #getStrSize($member "skip")+1#end)) {
+if (!$member.elementSkipMethod (cdrStream#if(${member.strSize}), #getStrSize($member "skip")+1#end)) {
 #*--*##continueSkip  ($member)      
 }
 #end
@@ -1167,14 +1176,14 @@ switch (memberId) {
         if (!${node.unionDiscriminatorMap.nativeTypeFQName}Plugin_deserialize_sample(
             endpoint_data,
             &disc,
-            stream, 
+            cdrStream, 
             RTI_FALSE, RTI_TRUE, 
             endpoint_plugin_qos)) {
                 return RTI_FALSE;
         }
 #*----*##else
         if (!${node.unionDiscriminatorMap.elementDeserializeMethod}(
-            stream, &disc)) {
+            cdrStream, &disc)) {
                 return RTI_FALSE;
         }
 #*-----*##end
@@ -1198,7 +1207,7 @@ switch (memberId) {
         } break;
 #end
 }
-RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
 #end
 
 ##******************************************************************************
@@ -1796,7 +1805,7 @@ if (include_encapsulation) {
 
 #macro (mutableDeserializeHeader)
 if (!RTICdrStream_deserializeParameterHeader(
-         stream,
+         cdrStream,
          &state,
          &memberId,
          &length,
@@ -1808,10 +1817,10 @@ if (!RTICdrStream_deserializeParameterHeader(
 if (!extended) {
     if (memberId == RTI_CDR_PID_LIST_END) {
         end = RTI_TRUE;
-        RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+        RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
         continue;
     }else if (memberId == RTI_CDR_PID_IGNORE) {
-        RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+        RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
         continue;
     }
 }
@@ -1820,7 +1829,7 @@ if (!extended) {
 
 #macro (unboundedCode $member $serializeSuffix) 
 #if($member.seqSize=="-1")
-if (!RTICdrStream_lookUnsignedLong(stream,&sequence_length)) {
+if (!RTICdrStream_lookUnsignedLong(cdrStream,&sequence_length)) {
     #continueDeserialization($member $serializeSuffix) 
 }
 if (!${member.nativeTypeSeqFQName}_set_maximum(${member.sampleRef}#if($member.dimensionList)[i]#end,sequence_length)) {
@@ -1845,6 +1854,13 @@ programProperty.generateV2Encapsulation = RTI_XCDR_FALSE;
 #set($node.allowXcdr2=true)
 programProperty.generateV1Encapsulation = RTI_XCDR_FALSE;
 programProperty.generateV2Encapsulation = RTI_XCDR_TRUE;
+#*--*##end
+#*--*##if($envMap.generateBigEndian)
+programProperty.generateBigEndian = RTI_XCDR_TRUE;
+programProperty.generateLittleEndian = RTI_XCDR_FALSE;
+#*--*##elseif($envMap.generateLittleEndian)
+programProperty.generateBigEndian = RTI_XCDR_FALSE;
+programProperty.generateLittleEndian = RTI_XCDR_TRUE;
 #*--*##end
 #*--*##if($envMap.serializeSentinelOnBase)
 programProperty.serializeSentinelOnBase = RTI_XCDR_TRUE;

@@ -15,6 +15,7 @@ package $constructMap.packageName;
 #end 
 
 import java.util.Objects;
+import java.lang.reflect.*;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
@@ -22,14 +23,17 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
-
-/** 
+#if(${envMap.android})
+import android.util.Log;
+#end
+/**
  * Simple example showing all Connext code in one place for readability.
  */
 public class ${constructMap.name}Publisher extends Application implements AutoCloseable {
 
     // Usually one per application
     private DomainParticipant participant = null;
+    private static final String TAG = "RTIConnextLog";
 
     private void runApplication() {
         // Start communicating in a domain
@@ -89,7 +93,20 @@ public class ${constructMap.name}Publisher extends Application implements AutoCl
 #*------*##end
 
             System.out.println("Writing ${constructMap.name}, count " + samplesWritten);
-
+#if(${envMap.android})
+            // Print also to logcat
+            Log.i(TAG, "Writing ${constructMap.name}, count " + samplesWritten);
+#elseif(${envMap.universal})
+    if (System.getProperty("java.vm.name").equalsIgnoreCase("Dalvik")){
+        try {
+            Class<?> cls = Class.forName("android.util.Log");
+            Method method = cls.getMethod("i", String.class, String.class);
+            method.invoke(null, TAG, "Writing ${constructMap.name}, count " + samplesWritten);
+        } catch(Exception e) {
+            // nothing to do with this problem for now
+        }
+    }
+#end
             writer.write(data, InstanceHandle_t.HANDLE_NIL);
             try {
                 final long sendPeriodMillis = 1000; // 1 second

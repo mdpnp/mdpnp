@@ -51,23 +51,47 @@ DEBUG=1
 DEBUG=0 
 #end
 endif
+
 ifeq ($(DEBUG),1)
 DEBUG_FLAGS += -g
+DEBUG_SFX = d
 else
 DEBUG_FLAGS = 
+DEBUG_SFX =
 endif
 
 JAVA_PATH = java
 JAVAC_PATH = javac
 JAR_PATH = jar
 
+#if(${archMap.TARGET_ID}=="android-28")
+#[[#]]# Android 9 uses by default tools version 28.0.3, which does not support Java 11.
+#[[#]]# We specify source and target compatibility with Java 8.
+JAVA8_FLAGS = -source 1.8 -target 1.8
+#end
+
+#[[#]]# replace TARGET_ID with the android platfrom that you want to use
+#[[#]]# use "android list targets" to see the list of available targets
+#if(${archMap.TARGET_ID}=="android-28")
+## Android 9
+TARGET_ID = ${archMap.TARGET_ID}
+#elseif(${archMap.ANDROID_SDK_VERSION}=="31")
+## Android 12
+ifdef ANDROID_API
+	TARGET_ID = android-#[[$]]#(ANDROID_API)
+else
+	TARGET_ID = android-${archMap.ANDROID_SDK_VERSION}
+endif
+#end
 JAVA_SOURCES =#foreach($source in ${sourceFileList}) $source#end
 
 CLASS_FILES  = #[[$]]#(JAVA_SOURCES:%.java=%.class)
 
 JAR_FILE = ${exampleTypeClassPath}.jar
 
-RTI_CLASSPATH := #[[$]]#(NDDSHOME)/lib/java/nddsjava${global.libSuffix}.jar
+RTI_LIBS_JAR = #[[$]]#(NDDSHOME)/lib/java/nddsjava#[[$]]#(DEBUG_SFX).jar
+RTI_ANDROID_JAR = #[[$]]#(ANDROID_SDK_ROOT)/platforms/#[[$]]#(TARGET_ID)/android.jar
+RTI_CLASSPATH := #[[$]]#(RTI_LIBS_JAR):#[[$]]#(RTI_ANDROID_JAR)
 
 ifeq (#[[$]]#(OS),Windows_NT)
 CP_SEP = ;
@@ -76,7 +100,7 @@ CP_SEP = :
 endif
 
 %.class : %.java
-	#[[$]]#(JAVAC_PATH) $(DEBUG_FLAGS) -classpath .#[[$]]#(CP_SEP)#[[$]]#(RTI_CLASSPATH) $<
+	#[[$]]#(JAVAC_PATH) #if(${archMap.TARGET_ID}=="android-28") $(JAVA8_FLAGS) #end $(DEBUG_FLAGS) -classpath .#[[$]]#(CP_SEP)#[[$]]#(RTI_CLASSPATH) $<
 
 ${exampleType}.jar : #[[$]]#(CLASS_FILES)
 	#[[$]]#(JAR_PATH) cfv #[[$]]#@ #[[$]]#(CLASS_FILES)
@@ -91,13 +115,12 @@ all: #[[$]]#(CLASS_FILES) #[[$]]#(JAR_FILE)
 
 .SECONDARY:
 
+PUB_PATH = objs/#[[$]]#(TARGET_ARCH)/publisher
+SUB_PATH = objs/#[[$]]#(TARGET_ARCH)/subscriber
+
 ANDROID_PACKAGE_PREFIX = ${typePackage}
 
-ANDROID_PUSH_DEST = /data/data/#[[$]]#(ANDROID_PACKAGE_PREFIX)
-
-#[[#]]# replace TARGET_ID with the android platfrom that you want to use
-#[[#]]# use "android list targets" to see the list of available targets
-TARGET_ID = ${archMap.TARGET_ID}
+ANDROID_PUSH_DEST = /data/data/${typePackage}
 
 #[[#]]# if you have more than 1 device connected, you may need to define this
 #[[#]]# use "adb devices" to check which devices are connected
@@ -105,20 +128,24 @@ TARGET_ID = ${archMap.TARGET_ID}
 
 ANDROID_ABI = ${archMap.ANDROID_ABI}
 
-NDDSLIBS = libnddscore${global.libSuffix}.so libnddsc${global.libSuffix}.so libnddsjava${global.libSuffix}.so
-
+#if(${archMap.TARGET_ID}=="android-28")
 ifeq (#[[$]]#(OS),Windows_NT)
 ANDROID_CMD = android.bat
 else
 ANDROID_CMD = android
 endif
+#end
+
+NDDSLIBS = libnddscore#[[$]]#(DEBUG_SFX).so libnddsc#[[$]]#(DEBUG_SFX).so libnddsjava#[[$]]#(DEBUG_SFX).so
 
 #[[#]]#
 #[[#]]# Convenient way to build a dex
 #[[#]]#
 
+#if(${archMap.TARGET_ID}=="android-28")
 ${exampleType}.dex : ${exampleType}.jar
-	dx --dex --output=${exampleType}.dex ${exampleType}.jar #[[$]]#(RTI_CLASSPATH)
+	dx --dex --output=${exampleType}.dex ${exampleType}.jar #[[$]]#(RTI_LIBS_JAR)
+#end
 
 #[[#]]#
 #[[#]]# commands to copy and run with dex in shell as root on the device
@@ -147,6 +174,8 @@ ${exampleType}.pushdex :
 #[[#]]# Convenient way to create projects
 #[[#]]#
 
+#if(${archMap.TARGET_ID}=="android-28")
+## Android 9
 ${exampleType}.projects : ${exampleType}Publisher/publisher \
 		  	   ${exampleType}Subscriber/subscriber \
 			   ${exampleType}Project.publisherlib \
@@ -157,7 +186,7 @@ ${exampleType}%/publisher ${exampleType}%/subscriber :
 
 ${exampleType}Project.%lib :
 	mkdir -p objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs
-	cp #[[$]]#(RTI_CLASSPATH) objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/
+	cp #[[$]]#(RTI_LIBS_JAR) objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/
 	mkdir -p objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)
 	#[[$]]#(foreach lib, #[[$]]#(NDDSLIBS), cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/#[[$]]#(lib) objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/ ; )
 
@@ -176,17 +205,52 @@ ${exampleType}Project.%jar: objs/#[[$]]#(TARGET_ARCH)/%/libs/${exampleType}.jar 
 objs/#[[$]]#(TARGET_ARCH)/%/libs/${exampleType}.jar : ${exampleType}.jar
 	cp #[[$]]#< #[[$]]#@
 
+${exampleType}.installapks :
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/publisher/bin/${exampleType}Publisher-debug.apk
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/subscriber/bin/${exampleType}Subscriber-debug.apk
+
+#else
+## Android 12
+${exampleType}.apks : ${exampleType}Project.publisherlib \
+			   		      ${exampleType}Project.subscriberlib \
+							  ${exampleType}Project.publisherjar \
+							      ${exampleType}Project.subscriberjar;
+	cd $(PUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 dependencies
+	cd $(PUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 build
+	cd $(SUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 dependencies
+	cd $(SUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 build
+
+${exampleType}Project.%lib :
+	cp #[[$]]#(RTI_LIBS_JAR) objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/
+	mkdir -p objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)
+	#[[$]]#(foreach lib, #[[$]]#(NDDSLIBS), cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/#[[$]]#(lib) objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/ ; )
+
+#[[#]]#
+#[[#]]# Convenient way to build apks
+#[[#]]#
+
+#[[#]]# this command will work only if cygwin is installed
+${exampleType}.apks : ${exampleType}Project.publisherjar \
+		       ${exampleType}Project.subscriberjar
+
+${exampleType}Project.%jar: objs/#[[$]]#(TARGET_ARCH)/%/src/main/jniLibs/${exampleType}.jar ;
+
+objs/#[[$]]#(TARGET_ARCH)/%/src/main/jniLibs/${exampleType}.jar : ${exampleType}.jar
+	cp #[[$]]#< #[[$]]#@
+
 #[[#]]#
 #[[#]]# Installing apks to device
 #[[#]]#
 
 ${exampleType}.installapks :
-	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/publisher/bin/${exampleType}Publisher-debug.apk
-	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/subscriber/bin/${exampleType}Subscriber-debug.apk
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/publisher/build/outputs/apk/debug/publisher-debug.apk
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/subscriber/build/outputs/apk/debug/subscriber-debug.apk
 	
 #[[#]]#
 #[[#]]# Example to unistall apks on device
 #[[#]]#
+
+#end
 
 ${exampleType}.uninstallapks :
 	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).publisher

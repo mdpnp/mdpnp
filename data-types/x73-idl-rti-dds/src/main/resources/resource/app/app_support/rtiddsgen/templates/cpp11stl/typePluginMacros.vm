@@ -277,10 +277,10 @@ extended = RTI_TRUE;
 #*----------*##elseif($member.needExtendedId=="no")
 extended = RTI_FALSE;
 #*----------*##else
-extended = stream->_xTypesState.useExtendedId;
+extended = cdrStream->_xTypesState.useExtendedId;
 #*----------*##end  
 memberLengthPosition = RTICdrStream_serializeParameterHeader(
-                                   stream, &state, extended, memberId, RTI_FALSE);
+                                   cdrStream, &state, extended, memberId, RTI_FALSE);
 if (memberLengthPosition == NULL) {
     return RTI_FALSE;
 }                            
@@ -305,7 +305,7 @@ if ($member.sampleRef != NULL) {
 #*--*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $member.name!="_d") 
 || (!$node.extensibilility.equals("MUTABLE_EXTENSIBILITY") && $member.isOptional))
 if (!RTICdrStream_serializeParameterLength(
-        stream, &state, extended, memberLengthPosition)) {
+        cdrStream, &state, extended, memberLengthPosition)) {
     return RTI_FALSE;
 }
 #*--*##end
@@ -337,7 +337,7 @@ if (!RTICdrStream_serializeParameterLength(
 #macro(serializeSeq $member $serializeSuffix )
 #*--*##if($member.typeKind=="user")
 if (!::rti::topic::cdr::serialize_vector(
-	    stream,
+	    cdrStream,
 	    ${member.sample}#if($member.dimensionList)[i]#end,
 	    #getSeqSize($member "serialize"),
 	    (RTICdrStreamSerializeFunction)${member.nativeTypeFQName}Plugin_serialize${serializeSuffix},
@@ -350,7 +350,7 @@ if (!::rti::topic::cdr::serialize_vector(
 } 
 #*--*##elseif($member.strSize)
 if (!::rti::topic::cdr::serialize(
-        stream,
+        cdrStream,
 #*----*##if($member.dimensionList)
         ${member.sample}[i],
         #getSeqSize($member "serialize"),
@@ -362,7 +362,7 @@ if (!::rti::topic::cdr::serialize(
     return RTI_FALSE;
 }
 #*--*##else
-if (!::rti::topic::cdr::serialize_vector(stream, ${member.sample}#if($member.dimensionList)[i]#end, #getSeqSize($member "serialize"))) {
+if (!::rti::topic::cdr::serialize_vector(cdrStream, ${member.sample}#if($member.dimensionList)[i]#end, #getSeqSize($member "serialize"))) {
     return RTI_FALSE;
 }
 #*--*##end
@@ -376,7 +376,7 @@ if (!::rti::topic::cdr::serialize_vector(stream, ${member.sample}#if($member.dim
 #*--*##if($member.typeKind=="user")
 #*----*##if ($member.isPointer) 
 if (!::rti::topic::cdr::serialize_pointer_array( 
-        stream,  
+        cdrStream,  
         ${member.sample},
         (RTICdrStreamSerializeFunction)${member.nativeTypeFQName}Plugin_serialize$serializeSuffix,
         RTI_FALSE,
@@ -386,7 +386,7 @@ if (!::rti::topic::cdr::serialize_pointer_array(
         endpoint_plugin_qos)) {
 #*----*##else    
 if (!RTICdrStream_serializeNonPrimitiveArray(
-        stream,  
+        cdrStream,  
         (void *) ${member.sample}.data(),
         $member.arrayTotalSize, 
         sizeof($member.nativeTypeFQName),
@@ -398,17 +398,17 @@ if (!RTICdrStream_serializeNonPrimitiveArray(
 #*----*##end        
 #*--*##elseif($member.strSize)
 if (!::rti::topic::cdr::serialize(
-        stream,
+        cdrStream,
         ${member.sample},
         #getStrSize($member "serialize") + 1)) {
 #*--*##else
 #*----*##if ($member.isPointer)
 if (!::rti::topic::cdr::serialize_pointer_array(
-        stream, 
+        cdrStream, 
         ${member.sample}))  {
 #*----*##else 
 if (!::rti::topic::cdr::serialize(
-        stream, 
+        cdrStream, 
         ${member.sample})) {
 #*----*##end
 #*--*##end
@@ -425,7 +425,7 @@ return RTI_FALSE;
 if(!${member.nativeTypeFQName}Plugin_serialize${serializeSuffix}(
             endpoint_data,
             ${member.sampleRef},
-            stream,
+            cdrStream,
             RTI_FALSE, encapsulation_id,
             RTI_TRUE,
             endpoint_plugin_qos)) {
@@ -442,24 +442,24 @@ return RTI_FALSE;
 #*--*##if ($envMap.ignoreAlignment)
 #*----*##if($member.strSize)
 if (!${member.elementSerializeMethod}Fast(
-        stream, 
+        cdrStream, 
         (${member.sample}).c_str(), 
         #getStrSize($member "serialize") + 1)) {
         return RTI_FALSE;
 }
 #*----*##else
 ${member.elementSerializeMethod}Fast(
-    stream, ${member.sampleRef}) ;
+    cdrStream, ${member.sampleRef}) ;
 #*----*##end
 #*--*##else
 #*----*##if($member.strSize)
 if (!${member.elementSerializeMethod}(
-        stream, 
+        cdrStream, 
         (${member.sample}).c_str(), 
         #getStrSize($member "serialize") + 1)) {
 #*----*##else
 if (!${member.elementSerializeMethod}(
-    stream, ${member.sampleRef})) {
+    cdrStream, ${member.sampleRef})) {
 #*----*##end
     return RTI_FALSE;
 }
@@ -487,15 +487,15 @@ if(serialize_encapsulation) {
 #end
 #*--*##if($node.isMetpType)
     if (!METypePlugin_serializeAndSetCdrEncapsulation(
-            endpoint_data,stream,encapsulation_id,&metp)) {
+            endpoint_data,cdrStream,encapsulation_id,&metp)) {
         return RTI_FALSE;
     }
 #*--*##else  
-    if (!RTICdrStream_serializeAndSetCdrEncapsulation(stream , encapsulation_id)) {
+    if (!RTICdrStream_serializeAndSetCdrEncapsulation(cdrStream , encapsulation_id)) {
         return RTI_FALSE;
     }
 #*--*##end
-    rti_position = RTICdrStream_resetAlignment(stream);
+    rti_position = RTICdrStream_resetAlignment(cdrStream);
 }
 #end
 
@@ -510,7 +510,7 @@ RTIBool mustUnderstand = RTI_TRUE;
 #end
 
     if (!RTICdrStream_serializeParameterHeader(
-          stream,
+          cdrStream,
           NULL,
           RTI_FALSE,
           RTI_CDR_PID_LIST_END,
@@ -518,7 +518,7 @@ RTIBool mustUnderstand = RTI_TRUE;
               return RTI_FALSE;
     }
 }
-stream->_xTypesState.skipListEndId = ignoreListEndId;
+cdrStream->_xTypesState.skipListEndId = ignoreListEndId;
 #end
 
 ##******************************************************************************
@@ -639,7 +639,7 @@ return RTI_FALSE;
 #macro(deserializeSeq $member $serializeSuffix)
 #*--*##if($member.typeKind=="user")
 if (!::rti::topic::cdr::deserialize_vector(
-	    stream,
+	    cdrStream,
 	    ${member.sample}#if($member.dimensionList)[i]#end,
 	    #getSeqSize($member "deserialize"),
 	    (RTICdrStreamDeserializeFunction)${member.nativeTypeFQName}Plugin_${serializeSuffix},
@@ -651,7 +651,7 @@ if (!::rti::topic::cdr::deserialize_vector(
 }
 #*--*##elseif($member.strSize)
 if (!::rti::topic::cdr::deserialize(
-	    stream,
+	    cdrStream,
 	    ${member.sample}#if($member.dimensionList)[i]#end,
 	    #getSeqSize($member "deserialize"),
 	    #getStrSize($member "deserialize") +1)) {
@@ -659,7 +659,7 @@ if (!::rti::topic::cdr::deserialize(
 }
 #*--*##else
 if (!::rti::topic::cdr::deserialize_vector(
-        stream, 
+        cdrStream, 
         ${member.sample}#if($member.dimensionList)[i]#end, 
         #getSeqSize($member "deserialize"))) {
 #*----*##continueDeserialization ($member $serializeSuffix)
@@ -675,7 +675,7 @@ if (!::rti::topic::cdr::deserialize_vector(
 if(!${member.nativeTypeFQName}Plugin_${serializeSuffix}(
             endpoint_data,
             ${member.sampleRef},
-            stream,
+            cdrStream,
             RTI_FALSE, RTI_TRUE,
             endpoint_plugin_qos)) {
 #*--*##continueDeserialization ($member $serializeSuffix)
@@ -687,11 +687,11 @@ if(!${member.nativeTypeFQName}Plugin_${serializeSuffix}(
 #*--*##if($member.typeKind=="user")
 #*----*##if ($member.isPointer) 
 if (!::rti::topic::cdr::deserialize_pointer_array( 
-    stream, 
+    cdrStream, 
     ${member.sample},
 #*----*##else    
 if (!RTICdrStream_deserializeNonPrimitiveArray(
-    stream, 
+    cdrStream, 
     (void *) ${member.sample}.data(),
     $member.arrayTotalSize, 
     sizeof($member.nativeTypeFQName),
@@ -704,17 +704,17 @@ if (!RTICdrStream_deserializeNonPrimitiveArray(
     endpoint_plugin_qos)) {
 #*--*##elseif($member.strSize)
 if (!::rti::topic::cdr::deserialize(
-    stream, 
+    cdrStream, 
     ${member.sample},
     #getStrSize($member "deserialize") + 1)) {
 #*--*##else
 #*----*##if ($member.isPointer)
 if (!::rti::topic::cdr::deserialize_pointer_array(
-    stream, 
+    cdrStream, 
     ${member.sample}))  {
 #*----*##else 
 if (!::rti::topic::cdr::deserialize(
-    stream, 
+    cdrStream, 
     ${member.sample}))  {
 #*----*##end
 #*--*##end
@@ -726,16 +726,16 @@ if (!::rti::topic::cdr::deserialize(
 #macro(deserializeBuiltin  $member $serializeSuffix)
 #*--*##if ($envMap.ignoreAlignment && !$member.strSize)
 ${member.elementDeserializeMethod}Fast(
-        stream, ${member.sampleRef});
+        cdrStream, ${member.sampleRef});
 #*--*##else
 #*--*##if($member.strSize)
 if (!::rti::topic::cdr::deserialize(
-        stream, 
+        cdrStream, 
         ${member.sample}, 
         #getStrSize($member "deserialize") + 1)) {
 #*--*##else
 if (!${member.elementDeserializeMethod}(
-    stream, 
+    cdrStream, 
     ${member.sampleRef})) {
 #*--*##end
 #*------*##continueDeserialization ($member $serializeSuffix)
@@ -747,19 +747,19 @@ if (!${member.elementDeserializeMethod}(
     if (deserialize_encapsulation) {
 #*--*##if($node.isMetpType)
       if (!METypePlugin_deserializeAndSetCdrEncapsulation(
-        	endpoint_data, stream, &metp)) {
+        	endpoint_data, cdrStream, &metp)) {
 #*--*##else
-      if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
+      if (!RTICdrStream_deserializeAndSetCdrEncapsulation(cdrStream)) {
 #*--*##end
         return RTI_FALSE;
       }
 
-    rti_position = RTICdrStream_resetAlignment(stream);
+    rti_position = RTICdrStream_resetAlignment(cdrStream);
   }
 #*--*##if($node.isMetpType)
     else {
         if (RTICdrEncapsulation_validShmemRefEncapsulationId(
-            RTICdrStream_getEncapsulationKind(stream))) {
+            RTICdrStream_getEncapsulationKind(cdrStream))) {
             metp = RTI_TRUE;
         }
     }
@@ -810,14 +810,14 @@ switch (memberId) {
         } break;
 #end
 }
-RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
 #end
 
 
 #macro (preDeserializeOptionalMember $member $serializeSuffix)
 
 if (!RTICdrStream_deserializeParameterHeader(
-                     stream,
+                     cdrStream,
                      &state,
                      &memberId,
                      &length,
@@ -831,7 +831,7 @@ if (length > 0) {
 #end
 
 #macro (postDeserializeOptionalMember)
-RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
 #end
 ##******************************************************************************
 ## Macro to Skip
@@ -908,7 +908,7 @@ return RTI_FALSE;
 #macro(skipUser $member)
 if (!${member.nativeTypeFQName}Plugin_skip(
     endpoint_data,
-    stream, 
+    cdrStream, 
     RTI_FALSE, RTI_TRUE, 
     endpoint_plugin_qos)) {
 #*--*##continueSkip  ($member) 
@@ -921,14 +921,14 @@ if (!${member.nativeTypeFQName}Plugin_skip(
 #macro(skipSeq $member)
 #*--*##if($member.typeKind=="user")
 if (!RTICdrStream_skipNonPrimitiveSequence(
-    stream,
+    cdrStream,
     &sequence_length,
     (RTICdrStreamSkipFunction)${member.nativeTypeFQName}Plugin_skip,
     RTI_FALSE,RTI_TRUE,
     endpoint_data,endpoint_plugin_qos)) {
 #*--*##else
 if (!${member.sequenceSkipMethod}(
-    stream,
+    cdrStream,
     &sequence_length,
     #if($member.strSize)#getStrSize($member "skip") + 1, #end           
     $member.typeEnum)){
@@ -943,13 +943,13 @@ if (!${member.sequenceSkipMethod}(
 #macro(skipArray $member)
 #*--*##if($member.typeKind=="user")
 if (!RTICdrStream_skipNonPrimitiveArray(
-        stream,$member.arrayTotalSize,
+        cdrStream,$member.arrayTotalSize,
         (RTICdrStreamSkipFunction)${member.nativeTypeFQName}Plugin_skip, 
         RTI_FALSE,RTI_TRUE,
         endpoint_data,endpoint_plugin_qos)){
 #*--*##elseif($member.strSize)
 if (!${member.arraySkipMethod}(
-        stream, $member.arrayTotalSize, #getStrSize($member "skip") + 1,
+        cdrStream, $member.arrayTotalSize, #getStrSize($member "skip") + 1,
         $member.typeEnum)){
 #*--*##else
 #*----*##if($member.isPointer)
@@ -957,7 +957,7 @@ if (!RTICdrStream_skipPrimitivePointerArray(
 #*----*##else
 if (!${member.arraySkipMethod}(
 #*----*##end
-         stream, $member.arrayTotalSize, $member.typeEnum)) {
+         cdrStream, $member.arrayTotalSize, $member.typeEnum)) {
 #*--*##end
 #*--*##continueSkip  ($member) 
 }      
@@ -968,7 +968,7 @@ if (!${member.arraySkipMethod}(
 ## Macro to SkipPrimitive
 ##------------------------------------------------------------------------------
 #macro(skipPrimitive $member)
-if (!$member.elementSkipMethod (stream#if(${member.strSize}), #getStrSize($member "skip")+1#end)) {
+if (!$member.elementSkipMethod (cdrStream#if(${member.strSize}), #getStrSize($member "skip")+1#end)) {
 #*--*##continueSkip  ($member)      
 }
 #end
@@ -985,14 +985,14 @@ switch (memberId) {
         if (!${node.unionDiscriminatorMap.nativeTypeFQName}Plugin_deserialize_sample(
             endpoint_data,
             &disc,
-            stream, 
+            cdrStream, 
             RTI_FALSE, RTI_TRUE, 
             endpoint_plugin_qos)) {
                 return RTI_FALSE;
         }
 #*----*##else
         if (!${node.unionDiscriminatorMap.elementDeserializeMethod}(
-            stream, &disc)) {
+            cdrStream, &disc)) {
                 return RTI_FALSE;
         }
 #*-----*##end
@@ -1016,7 +1016,7 @@ switch (memberId) {
         } break;
 #end
 }
-RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
 #end
 
 ##******************************************************************************
@@ -1557,7 +1557,7 @@ if (include_encapsulation) {
 ##-----------------------------------------------------------------------------
 #macro (mutableDeserializeHeader)
 if (!RTICdrStream_deserializeParameterHeader(
-         stream,
+         cdrStream,
          &state,
          &memberId,
          &length,
@@ -1569,10 +1569,10 @@ if (!RTICdrStream_deserializeParameterHeader(
 if (!extended) {
     if (memberId == RTI_CDR_PID_LIST_END) {
         end = RTI_TRUE;
-        RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+        RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
         continue;
     }else if (memberId == RTI_CDR_PID_IGNORE) {
-        RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+        RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
         continue;
     }
 }
@@ -1602,6 +1602,13 @@ programProperty.generateV2Encapsulation = RTI_XCDR_FALSE;
 #*----*##set($node.allowXcdr2=true)
 programProperty.generateV1Encapsulation = RTI_XCDR_FALSE;
 programProperty.generateV2Encapsulation = RTI_XCDR_TRUE;
+#*--*##end
+#*--*##if($envMap.generateBigEndian)
+programProperty.generateBigEndian = RTI_XCDR_TRUE;
+programProperty.generateLittleEndian = RTI_XCDR_FALSE;
+#*--*##elseif($envMap.generateLittleEndian)
+programProperty.generateBigEndian = RTI_XCDR_FALSE;
+programProperty.generateLittleEndian = RTI_XCDR_TRUE;
 #*--*##end
 #*--*##if($envMap.serializeSentinelOnBase)
 programProperty.serializeSentinelOnBase = RTI_XCDR_TRUE;

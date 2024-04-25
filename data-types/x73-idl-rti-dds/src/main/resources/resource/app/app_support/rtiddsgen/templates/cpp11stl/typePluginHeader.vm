@@ -127,7 +127,11 @@ typedef  struct ${node.nativeFQNameInModule} ${node.nativeFQNameInModule}KeyHold
 #*----------*##if($node.languageBinding.equals("FLAT_DATA"))
 typedef ::rti::flat::Sample< ${node.nativeFQName}Offset > ${node.nativeFQNameInModule}KeyHolder;
 #*----------*##else
-typedef  class ${node.nativeFQNameInModule} ${node.nativeFQNameInModule}KeyHolder;
+#*------------*##if($envMap.legacyMapping)
+typedef class ${node.nativeFQNameInModule} ${node.nativeFQNameInModule}KeyHolder;
+#*------------*##else
+typedef struct ${node.nativeFQNameInModule} ${node.nativeFQNameInModule}KeyHolder;
+#*------------*##end
 #*----------*##end
 #*--------*##end
 #*------*##end ##if struct.hasKey
@@ -289,7 +293,7 @@ NDDSUSERDllExport extern RTIBool
 ${node.nativeFQNameInModule}Plugin_serialize(
     PRESTypePluginEndpointData endpoint_data,
     const ${node.nativeFQNameInModule} *sample,
-    struct RTICdrStream *stream, 
+    struct RTICdrStream *cdrStream, 
     RTIBool serialize_encapsulation,
     RTIEncapsulationId encapsulation_id,
     RTIBool serialize_sample, 
@@ -301,7 +305,7 @@ NDDSUSERDllExport extern RTIBool
 ${node.nativeFQNameInModule}Plugin_deserialize_sample(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} *sample, 
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_sample, 
     void *endpoint_plugin_qos);
@@ -322,7 +326,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} **sample, 
     RTIBool * drop_sample,
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_sample, 
     void *endpoint_plugin_qos);
@@ -339,7 +343,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_from_cdr_buffer(
 NDDSUSERDllExport extern RTIBool
 ${node.nativeFQNameInModule}Plugin_skip(
     PRESTypePluginEndpointData endpoint_data,
-    struct RTICdrStream *stream, 
+    struct RTICdrStream *cdrStream, 
     RTIBool skip_encapsulation,  
     RTIBool skip_sample, 
     void *endpoint_plugin_qos);
@@ -443,7 +447,7 @@ NDDSUSERDllExport extern RTIBool
 ${node.nativeFQNameInModule}Plugin_serialize_key(
     PRESTypePluginEndpointData endpoint_data,
     const ${node.nativeFQNameInModule} *sample,
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool serialize_encapsulation,
     RTIEncapsulationId encapsulation_id,
     RTIBool serialize_key,
@@ -455,7 +459,7 @@ NDDSUSERDllExport extern RTIBool
 ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} * sample,
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_key,
     void *endpoint_plugin_qos);
@@ -468,7 +472,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_key(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} ** sample,
     RTIBool * drop_sample,
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_key,
     void *endpoint_plugin_qos);
@@ -479,7 +483,7 @@ NDDSUSERDllExport extern RTIBool
 ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} *sample,
-    struct RTICdrStream *stream, 
+    struct RTICdrStream *cdrStream, 
     RTIBool deserialize_encapsulation,  
     RTIBool deserialize_key, 
     void *endpoint_plugin_qos);
@@ -513,7 +517,7 @@ ${node.nativeFQNameInModule}Plugin_instance_to_keyhash(
 NDDSUSERDllExport extern RTIBool 
 ${node.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
     PRESTypePluginEndpointData endpoint_data,
-    struct RTICdrStream *stream, 
+    struct RTICdrStream *cdrStream, 
     DDS_KeyHash_t *keyhash,
     RTIBool deserialize_encapsulation,
     void *endpoint_plugin_qos); 

@@ -593,8 +593,8 @@
 #*----*##end
 #*----*##if($member.isOptional || $member.isPointer)
 #*-------*##set($member.isPointerOrOptional="true")
-#*--*##end
-#*-------*##assignMemberTypeCode ($member)
+#*----*##end
+#*----*##assignMemberTypeCode ($member)
 #*--*##end
 #end
 
@@ -712,16 +712,29 @@ $element.value
 #end
 
 
-#macro (allocPointerObjectNoCheck $nameRef $type $isAliasOfArray $memoryManager)
+#macro (allocPointerObjectNoCheck $nameRef $type $isAliasOfArray $memoryManager $member__)
 #*--*##if($memoryManager)
 $nameRef = REDAInlineMemory_reserveBuffer(
         memoryManager, 
         (REDAInlineMemorySize) sizeof($type));
 #*--*##else
 #*----*##if($envMap.allocateWithNew)
-$nameRef = new (std::nothrow) $type#if($isAliasOfArray)[1]#end();
+$nameRef = new (std::nothrow) $type#*
+#*------*##if($isAliasOfArray || $member__.isOptionalArray)
+[1]#*
+#*--------*##if(${member__.isOptionalArray})
+#*----------*##foreach($s in ${member__.dimensionList})
+[$s]#*
+#*----------*##end
+#*--------*##end
+#*------*##end
+();
 #*----*##else
+#*------*##if($member__.isOptionalArray)
+RTIOsapiHeap_allocateArray((void **) &($nameRef), $member__.arrayTotalSize, $type);
+#*------*##else
 RTIOsapiHeap_allocateStructure(&($nameRef),$type);
+#*------*##end
 #*----*##end
 #*--*##end
 #end
@@ -734,20 +747,20 @@ RTIOsapiHeap_allocateStructure(&($nameRef),$type);
 #*--*##end
 #end
 
-#macro (allocPointerObject $nameRef $type $isAliasOfArray $cppConstructor $memoryManager)
-#*--*##allocPointerObjectNoCheck ($nameRef $type $isAliasOfArray $memoryManager)
+#macro (allocPointerObject $nameRef $type $isAliasOfArray $cppConstructor $memoryManager $member__)
+#*--*##allocPointerObjectNoCheck ($nameRef $type $isAliasOfArray $memoryManager $member__)
 if ($nameRef==NULL) {
 #*--*##returnInit($cppConstructor)
 }
 #end
 
-#macro (deletePointerObject $nameRef $isAliasOfArray $setNameRefToNull $memoryManager__)
+#macro (deletePointerObject $nameRef $isAliasOfArray $setNameRefToNull $memoryManager__ $member__)
 #*----*##if($memoryManager__)
     RTIOsapiUtility_unusedReturnValue(
             REDAInlineMemBuffer_release($nameRef), 
             RTIBool);
 #*----*##elseif($envMap.allocateWithNew)
-    delete #if($isAliasOfArray)[]#end $nameRef;
+    delete #if($isAliasOfArray || $member__.isOptionalArray)[]#end $nameRef;
 #*----*##else
     RTIOsapiHeap_freeStructure($nameRef);
 #*----*##end
@@ -762,7 +775,7 @@ if ($nameRef==NULL) {
  {
             void * buffer;
 #*------*##end
-#*------*##allocPointerObject($param "#declareMemberType(${member})" $member.isAliasOfArray false false)
+#*------*##allocPointerObject($param "#declareMemberType(${member})" $member.isAliasOfArray false false $member)
 
         if(!${member.nativeTypeSeqFQName}_initialize($param)){
             return RTI_FALSE;
@@ -778,7 +791,7 @@ if ($nameRef==NULL) {
         }
 #*------*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
       buffer = ${member.nativeTypeSeqFQName}_get_contiguous_bufferI($param);
-#*----------*##callToInitStrArray($member "buffer" true false false)
+#*----------*##callToInitStrArray($member "buffer" true false false false)
         }
 #*------*##end
 #*----*##else
@@ -787,7 +800,7 @@ if ($nameRef==NULL) {
              ($member.strSize &&
               ($envMap.stringIsObject && !$member.typeName.equals("wstring")) &&
               $member.typeKind.equals("user")))
-#*------*##allocPointerObject($param $member.nativeTypeFQName $member.isAliasOfArray false false)
+#*------*##allocPointerObject($param $member.nativeTypeFQName $member.isAliasOfArray false false $member)
 #*----*##end
 
 #*----*##if($member.typeKind.equals("user"))

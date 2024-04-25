@@ -88,10 +88,10 @@ public void serialized_sample_to_keyhash(
 #setInBaseClassVariablesDes()
 #*--*##end  
 
-        DefaultEndpointData endpointData = (DefaultEndpointData) endpoint_data;
+#*--*##defineDefaultEndpointData()
         java.lang.Object sample = null;
 
-        sample = endpointData.get_sample();
+        sample = epd.get_sample();
 
         if (sample == null) {
             throw new RETCODE_ERROR("Missing intermediate sample");
@@ -139,7 +139,7 @@ typedDst.clear();
 #*------*##if (${constructMap.extensibility} !="FINAL_EXTENSIBILITY")
 src.inBaseClass = true;
 #*------*##end  
-        ${constructMap.baseTypeFQName}TypeSupport.get_instance().serialized_sample_to_key(endpoint_data,sample,
+        ${constructMap.baseTypeFQName}TypeSupport.get_instance().serialized_sample_to_key(epd,sample,
                              src, false, true,
                              endpoint_plugin_qos);
 #*------*##if (${constructMap.extensibility} !="FINAL_EXTENSIBILITY")
@@ -157,7 +157,7 @@ buffer.setCurrentPosition(begin);
 #if (!$constructMap.extensibility.equals("FINAL_EXTENSIBILITY"))
 src.inBaseClass = true;
 #end
-        ${constructMap.baseTypeFQName}TypeSupport.get_instance().skip(endpoint_data, src,
+        ${constructMap.baseTypeFQName}TypeSupport.get_instance().skip(epd, src,
          false, true,
          endpoint_plugin_qos);
 #if (!$constructMap.extensibility.equals("FINAL_EXTENSIBILITY"))
@@ -187,7 +187,7 @@ src.inBaseClass = false;
         }
 
         instance_to_keyhash(
-            endpoint_data,
+            epd,
             keyhash,
             sample,
             src.getEncapsulationKind());

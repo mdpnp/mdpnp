@@ -91,8 +91,7 @@
 currentAlignment +=#*
 #*----*##alignmentMaxSizeMember(
                   $serializeSuffix__
-                  $member__
-                  $member__.currentAlignment);
+                  $member__);
 #*--*##end
 #end
 
@@ -142,70 +141,69 @@ currentAlignment +=  ${constructMap__.unionDiscriminatorMap.nativeTypeFQName}Typ
 #*--*##else
 #createAlignmentMaxSizeMember($serializeSuffix__ $constructMap__.unionDiscriminatorMap);
 #*--*##end
-#*--*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-
-#*----*##headerMaxSize($constructMap__.extensibility false 4)
-
-#*--*##end
+previousAlignment = currentAlignment;
+previousBaseAlignment = epd.getBaseAlignment();
 #*--*##foreach($member in $constructMap__.memberFieldMapList)
 #*----*##if($member.directive)
 #*------*##copyDirective ($member)
 #*----*##else
-#*------*##if($member.dimensionList && $member.seqSize)
 {
-   long maxSize = $member.currentAlignment;
-#*--------*##addArrayDHeaderSizeWithMember($member "maxSize" "maxSize")
-    for (long i = 0; i < ($member.arrayTotalSize); i++) {
-#*--------*##addSequenceDHeaderSizeWithMember($member "maxSize" "maxSize")
-        maxSize +=#alignmentMaxSizeSeq($member "maxSize"));
-    }
-    maxSerialized = java.lang.Math.max((maxSize - $member.currentAlignment),
-                                   maxSerialized);
-}
-#*------*##else
-{
-    long maxSize = $member.currentAlignment;
-#*--------*##if($member.dimensionList)
-#*----------*##addArrayDHeaderSizeWithMember($member "maxSize" "maxSize")
-#*--------*##elseif($member.seqSize)
-#*----------*##addSequenceDHeaderSizeWithMember($member "maxSize" "maxSize")
-#*--------*##end
-    
-    maxSerialized = java.lang.Math.max(
-        (maxSize - $member.currentAlignment)
-                + #alignmentMaxSizeMember($serializeSuffix__ $member "maxSize"),
-        maxSerialized);
-}
+    currentAlignment = previousAlignment;
+    epd.setBaseAlignment(previousBaseAlignment);
+#*------*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+## (isOptional == false) because union members shall never be optional
+#*--------*##headerMaxSize($constructMap__.extensibility false $member.LC)
 #*------*##end
+#*------*##if($member.dimensionList && $member.seqSize)
+#*--------*##addArrayDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+    for (long i = 0; i < ($member.arrayTotalSize); i++) {
+#*--------*##addSequenceDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+        currentAlignment += #alignmentMaxSizeSeq($member ${member.currentAlignment}));
+    }
+#*------*##else
+#*--------*##if($member.dimensionList)
+#*----------*##addArrayDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+#*--------*##elseif($member.seqSize)
+#*----------*##addSequenceDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+#*--------*##end
+    currentAlignment += #alignmentMaxSizeMember($serializeSuffix__ $member );
+#*------*##end
+    if (currentAlignment > maxAlignment) {
+        maxAlignment = currentAlignment;
+        maxBaseAlignment = epd.getBaseAlignment();
+    }
+}
 #*----*##end
 #*--*##end 
+currentAlignment = maxAlignment;
+epd.setBaseAlignment(maxBaseAlignment);
 #end
 
 ##------------------------------------------------------------------------
 ## Macro for MaxSerialize or MinSerialize of an element
 ##------------------------------------------------------------------------
 
-#macro(alignmentMaxSizeMember $serializeSuffix__ $member__ $currentAlignment__)
+#macro(alignmentMaxSizeMember $serializeSuffix__ $member__)
 #*--*##if($member__.seqSize && $member__.dimensionList)
 #*----*##alignmentMaxSizeArrayOfSeq(
                 $member__
                 "currentAlignment"
-                $currentAlignment__)
+                ${member__.currentAlignment})#*
 #*--*##elseif($member__.seqSize)
-#*----*##alignmentMaxSizeSeq($member__ $currentAlignment__))
+#*----*##alignmentMaxSizeSeq($member__ ${member__.currentAlignment}))#*
 #*--*##elseif($member__.dimensionList)
-#*----*##alignmentMaxSizeArray($member__ $currentAlignment__ $serializeSuffix__))
+#*----*##alignmentMaxSizeArray($member__ ${member__.currentAlignment} $serializeSuffix__))#*
 #*--*##elseif($member__.typeKind=="user")
 ${member__.nativeTypeFQName}TypeSupport.get_instance().get_serialized_${serializeSuffix__}_max_size(
         epd,
         false,
         final_encapsulation_id,
-        $currentAlignment__)
+        ${member__.currentAlignment})#*
 #*--*##elseif($member__.strSize)
 ${member__.elementSizeMethod}#*
-       *#($currentAlignment__, (#getStrSize($member__ "alignmentMax"))+1)
+       *#(${member__.currentAlignment}, (#getStrSize($member__ "alignmentMax"))+1)#*
 #*--*##else
- ${member__.elementSizeMethod}($currentAlignment__)
+ ${member__.elementSizeMethod}(${member__.currentAlignment})#*
 #*--*##end
 #end
 
@@ -319,9 +317,7 @@ if (xcdr1) {
                   $member__.currentAlignmentV2)
 #*----*##end
 currentAlignment += #*
-#*------*##alignmentMinSizeMember(
-                $member__ 
-                $member__.currentAlignment);
+#*------*##alignmentMinSizeMember($member__);
 
 #*--*##end
 #end
@@ -377,68 +373,68 @@ currentAlignment +=  ${constructMap.unionDiscriminatorMap.nativeTypeFQName}TypeS
 #*--*##else
 #createAlignmentMinSizeMember( $constructMap.unionDiscriminatorMap)
 #*--*##end
-#*--*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-#*----*##headerMinSize($constructMap.extensibility false "true" 4)
-#*--*##end
+previousAlignment = currentAlignment;
+previousBaseAlignment = epd.getBaseAlignment();
 #*--*##foreach($member in $constructMap.memberFieldMapList)
 #*----*##if($member.directive)
-#*----*##copyDirective ($member)
+#*------*##copyDirective ($member)
 #*----*##else
-#*------*##if($member.dimensionList && $member.seqSize)
 {
-   long minSize = $member.currentAlignment;
-#*--------*##addArrayDHeaderSizeWithMember($member "minSize" "minSize")
-    for (long i = 0; i < ($member.arrayTotalSize); i++) {
-#*--------*##addSequenceDHeaderSizeWithMember($member "minSize" "minSize")
-        minSize +=#alignmentMinSizeSeq($member "minSize"));
-    }
-    minSerialized = java.lang.Math.min(
-            (minSize - $member.currentAlignment),
-            minSerialized);
-}
-#*------*##else
-{
-    long minSize = $member.currentAlignment;
-#*--------*##if($member.dimensionList)
-#*----------*##addArrayDHeaderSizeWithMember($member "minSize" "minSize")
-#*--------*##elseif($member.seqSize)
-#*----------*##addSequenceDHeaderSizeWithMember($member "minSize" "minSize")
-#*--------*##end
-    
-    minSerialized = java.lang.Math.min(
-        (minSize - $member.currentAlignment)
-                + #alignmentMinSizeMember($member "minSize"),
-        minSerialized);
-}
+    currentAlignment = previousAlignment;
+    epd.setBaseAlignment(previousBaseAlignment);
+#*------*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+## (isOptional == false) because union members shall never be optional
+#*--------*##headerMinSize($constructMap.extensibility false "false" $member.LC)
 #*------*##end
+#*------*##if($member.dimensionList && $member.seqSize)
+#*--------*##addArrayDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+    for (long i = 0; i < ($member.arrayTotalSize); i++) {
+#*--------*##addSequenceDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+        currentAlignment += #alignmentMinSizeSeq($member ${member.currentAlignment}));
+    }
+#*------*##else
+#*--------*##if($member.dimensionList)
+#*----------*##addArrayDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+#*--------*##elseif($member.seqSize)
+#*----------*##addSequenceDHeaderSizeWithMember($member "currentAlignment" "currentAlignment")
+#*--------*##end
+    currentAlignment += #alignmentMinSizeMember($member);
+#*------*##end
+    if (currentAlignment < minAlignment) {
+        minAlignment = currentAlignment;
+        minBaseAlignment = epd.getBaseAlignment();
+    }
+}
 #*----*##end
-#*--*##end 
+#*--*##end
+currentAlignment = minAlignment;
+epd.setBaseAlignment(minBaseAlignment);
 #end
 
 ##------------------------------------------------------------------------
 ## Macro for  MinSerialize of an element
 ##------------------------------------------------------------------------
 
-#macro(alignmentMinSizeMember $member__ $currentAlignment__)
+#macro(alignmentMinSizeMember $member__)
 #*--*##if($member__.seqSize && $member__.dimensionList)
 #*----*##alignmentMinSizeArrayOfSeq(
                 $member__
                 "currentAlignment"
-                $currentAlignment__)
+                ${member__.currentAlignment})#*
 #*--*##elseif($member__.seqSize)
-#*----*##alignmentMinSizeSeq($member__ $currentAlignment__))
+#*----*##alignmentMinSizeSeq($member__ ${member__.currentAlignment}))#*
 #*--*##elseif($member__.dimensionList)
-#*----*##alignmentMinSizeArray($member__ $currentAlignment__))
+#*----*##alignmentMinSizeArray($member__ ${member__.currentAlignment}))#*
 #*--*##elseif($member__.typeKind=="user")
 ${member__.nativeTypeFQName}TypeSupport.get_instance().get_serialized_sample_min_size(
         epd,
         false,
         final_encapsulation_id,
-        $currentAlignment__)
+        ${member__.currentAlignment})#*
 #*--*##elseif($member__.strSize)
-${member__.elementSizeMethod}($currentAlignment__, 1)
+${member__.elementSizeMethod}(${member__.currentAlignment}, 1)#*
 #*--*##else
-${member__.elementSizeMethod}($currentAlignment__)
+${member__.elementSizeMethod}(${member__.currentAlignment})#*
 #*--*##end
 #end
 
@@ -571,7 +567,7 @@ currentAlignment+= CdrHeader.getHeaderSizeAndAlign(epd, currentAlignment, _cdrPr
 #*---------*##end
 #*--*##if($constructMap.unionDiscriminatorMap.typeKind=="enum")
 currentAlignment += ${constructMap.unionDiscriminatorMap.nativeTypeFQName}TypeSupport.get_instance().get_serialized_sample_size(
-                        endpoint_data,false,final_encapsulation_id,currentAlignment,typedSrc._d);
+                        epd,false,final_encapsulation_id,currentAlignment,typedSrc._d);
 #*--*##else
 #*----*##alignmentSampleMember($constructMap.unionDiscriminatorMap)
 #*--*##end
@@ -638,7 +634,7 @@ currentAlignment+= CdrHeader.getHeaderSizeAndAlign(epd, currentAlignment, _cdrPr
               "currentAlignment")
 #*--*##if($member__.typeKind=="user")
 currentAlignment += ${member__.nativeTypeFQName}TypeSupport.get_instance().get_sequence_serialized_size(
-        endpoint_data,
+        epd,
         ${member__.currentAlignment},
         typedSrc.${member__.name}#arraydimensionListsWithIndex($member__),
         final_encapsulation_id);
@@ -662,7 +658,7 @@ currentAlignment += ${member.sequenceActualSizeMethod}(
 #*--*##if($member__.typeKind=="user")
 #*----*##openForLoopIfArray($member__)
 currentAlignment += ${member__.nativeTypeFQName}TypeSupport.get_instance().get_serialized_sample_size(
-                            endpoint_data,
+                            epd,
                             false,
                             final_encapsulation_id,
                             ${member__.currentAlignment},
@@ -686,7 +682,7 @@ currentAlignment += ${member__.elementSizeMethod}(${member__.currentAlignment});
 
 #macro(serialize $constructMap)
 #*--*##if($constructMap.unionDiscriminatorMap)
-#*----*##serializeUnion($constructMap)
+#*----*##serializeUnion($constructMap false)
 #*--*##else
 #*----*##foreach($member in $constructMap.memberFieldMapList)
 #*------*##if($member.directive)
@@ -709,7 +705,14 @@ if (typedSrc.${member.name} != null) {
 #*--------*##end
 memberLengthPosition = dst.writeMemberId(xcdr1, $member.id, false, $member.needExtendedId, $member.LC);
 #*------*##serializeMember($member "")
-dst.writeMemberLength(xcdr1, memberLengthPosition, $member.id, 0, $member.needExtendedId, $member.LC);
+dst.writeMemberLength(
+        xcdr1,
+        memberLengthPosition,
+        $member.id,
+        0,
+        $member.needExtendedId,
+        $member.LC,
+        epd.getXTypesComplianceMask().isParameterLengthWithPaddingEnabled());
 #*--------*##if($member.isOptional)
 }
 #*--------*##end
@@ -724,7 +727,13 @@ if (typedSrc.${member.name} != null) {
     memberLengthPosition = dst.writeOptionalMemberHeader(xcdr1, $member.id, true, $member.needExtendedId, $member.LC, false);
 }
 if(xcdr1){
-    dst.writeOptionalMemberLength(xcdr1, memberLengthPosition, $member.id, 0, $member.needExtendedId, $member.LC);
+    dst.writeOptionalMemberLength(xcdr1,
+            memberLengthPosition,
+            $member.id,
+            0,
+            $member.needExtendedId,
+            $member.LC,
+            epd.getXTypesComplianceMask().isParameterLengthWithPaddingEnabled());
 }
 #*--------*##else
  #*------*##serializeMember($member "")
@@ -733,27 +742,33 @@ if(xcdr1){
 ##------------------------------------------------------------------------
 ## Macro for serialize
 ##------------------------------------------------------------------------
-#macro (serializeUnion $constructMap)
-#*--------*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-memberLengthPosition = dst.writeMemberId(xcdr1, $constructMap.unionDiscriminatorMap.id, false, false, $constructMap.unionDiscriminatorMap.LC);  
+#macro (serializeUnion $constructMap__ $serializeForKeyHashInXcdr2__)
+#*--------*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY") && !$serializeForKeyHashInXcdr2__)
+memberLengthPosition = dst.writeMemberId(xcdr1, $constructMap__.unionDiscriminatorMap.id, false, false, $constructMap__.unionDiscriminatorMap.LC);  
 #*----------*##end
-#if($constructMap.unionDiscriminatorMap.typeKind=="enum")
-${constructMap.unionDiscriminatorMap.nativeTypeFQName}TypeSupport.get_instance().serialize(endpoint_data,#*
+#if($constructMap__.unionDiscriminatorMap.typeKind=="enum")
+${constructMap__.unionDiscriminatorMap.nativeTypeFQName}TypeSupport.get_instance().serialize(epd,#*
 *#  typedSrc._d, dst, false, final_encapsulation_id,true,endpoint_plugin_qos);            
 #else
-dst.${constructMap.unionDiscriminatorMap.elementSerializeMethod}(typedSrc._d);
+dst.${constructMap__.unionDiscriminatorMap.elementSerializeMethod}(typedSrc._d);
 #end
-#*--------*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-dst.writeMemberLength(xcdr1, memberLengthPosition, $constructMap.unionDiscriminatorMap.id, 0, false,$constructMap.unionDiscriminatorMap.LC);
+#*--------*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY") && !$serializeForKeyHashInXcdr2__)
+dst.writeMemberLength(xcdr1,
+        memberLengthPosition,
+        $constructMap__.unionDiscriminatorMap.id,
+        0,
+        false,
+        $constructMap__.unionDiscriminatorMap.LC,
+        epd.getXTypesComplianceMask().isParameterLengthWithPaddingEnabled());
 #*----------*##end
-#*--*##foreach($member in $constructMap.memberFieldMapList)
+#*--*##foreach($member in $constructMap__.memberFieldMapList)
 #*----*##if($member.directive)
 #*----*##copyDirective ($member)
 #*----*##else
 #*--*##set($loopNumber = $foreach.count)
 #*------*##foreach($element in $member.labelList)
 #*------*##if($loopNumber==1 && $foreach.count==1)
-#*----------*##if(!$constructMap.hasOnlyADefaultCase)
+#*----------*##if(!$constructMap__.hasOnlyADefaultCase)
 if (typedSrc._d == ($element)){
 #*----------*##end
 #*------*##elseif(!$element.contains("default"))
@@ -761,26 +776,31 @@ if (typedSrc._d == ($element)){
 #*------*##elseif($element.contains("default"))
 } else {
 #*------*##end
-#*------*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-memberLengthPosition =dst.writeMemberId(xcdr1, $member.id, false, $member.needExtendedId, $member.LC);   
-#*------*##end   
-#*------*##serializeMember($member "" )
-#*--------*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))     
+#*------*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY") && !$serializeForKeyHashInXcdr2__)
+memberLengthPosition =dst.writeMemberId(xcdr1, $member.id, false, $member.needExtendedId, $member.LC);
+#*------*##end
+#*--------*##if($serializeForKeyHashInXcdr2__)
+#*----------*##serializeMember($member "_key_for_keyhash")
+#*--------*##else
+#*----------*##serializeMember($member "")
+#*--------*##end
+#*--------*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY") && !$serializeForKeyHashInXcdr2__)
 dst.writeMemberLength(
-            xcdr1,
-            memberLengthPosition,
-            $member.id,
-            0,
-            $member.needExtendedId,
-            $member.LC);
+        xcdr1,
+        memberLengthPosition,
+        $member.id,
+        0,
+        $member.needExtendedId,
+        $member.LC,
+        epd.getXTypesComplianceMask().isParameterLengthWithPaddingEnabled());
 #*--------*##end  
 #*------*##end ## for
 #*--*##end ## if
 #*--*##end ## for
-#*--*##if(!$constructMap.hasOnlyADefaultCase)
+#*--*##if(!$constructMap__.hasOnlyADefaultCase)
 }
 #*--*##end
-#end               
+#end
 
 ##------------------------------------------------------------------------
 ## Macro for serialized_Sample_size an element
@@ -792,7 +812,7 @@ dst.writeMemberLength(
 #*--*##end
 #*--*##openForLoopIfArray($member)
 #*--*##if($member.seqSize)
-#*----*##serializeSeq ($member)
+#*----*##serializeSeq ($member $serializeSuffix)
 #*--*##else 
 #*----*##serializeBasic($member $serializeSuffix)
 #*--*##end ##if
@@ -805,17 +825,17 @@ dst.writeMemberLength(
 ## Macro for serialized_Sample_size of a sequence 
 ##------------------------------------------------------------------------
 
-#macro(serializeSeq $member)
-#*--*##writeSequenceDHeaderWithMember($member)
-#*--*##if($member.typeKind=="user")
-${member.nativeTypeFQName}TypeSupport.get_instance().serialize_sequence(endpoint_data,#*
-*# dst, typedSrc.${member.name}#arraydimensionListsWithIndex($member),#getSeqSize($member "serialize"), endpoint_plugin_qos);
-#*--*##elseif($member.strSize)
-dst.${member.sequenceSerializeMethod}(typedSrc.$member.name#arraydimensionListsWithIndex($member),(#getStrSize($member "serialize")),#getSeqSize($member "serialize"));
+#macro(serializeSeq $member__ $serializeSuffix__)
+#*--*##writeSequenceDHeaderWithMember($member__)
+#*--*##if($member__.typeKind=="user")
+${member__.nativeTypeFQName}TypeSupport.get_instance().serialize_sequence${serializeSuffix__}(epd,#*
+*# dst, typedSrc.${member__.name}#arraydimensionListsWithIndex($member__),#getSeqSize($member__ "serialize"), endpoint_plugin_qos);
+#*--*##elseif($member__.strSize)
+dst.${member__.sequenceSerializeMethod}(typedSrc.$member__.name#arraydimensionListsWithIndex($member__),(#getStrSize($member__ "serialize")),#getSeqSize($member "serialize"));
 #*--*##else
-dst.${member.sequenceSerializeMethod}(typedSrc.$member.name#arraydimensionListsWithIndex($member),#getSeqSize($member "serialize"));
+dst.${member__.sequenceSerializeMethod}(typedSrc.$member__.name#arraydimensionListsWithIndex($member__),#getSeqSize($member__ "serialize"));
 #*--*##end
-#*--*##setSequenceDHeaderWithMember($member)
+#*--*##setSequenceDHeaderWithMember($member__)
 #end
 
 ##------------------------------------------------------------------------
@@ -823,13 +843,8 @@ dst.${member.sequenceSerializeMethod}(typedSrc.$member.name#arraydimensionListsW
 ##------------------------------------------------------------------------
 #macro(serializeBasic $member $serializeSuffix)
 #*--*##if($member.typeKind=="user")
-#*----*##if(!$serializeSuffix.equals(""))
-${member.nativeTypeFQName}TypeSupport.get_instance().serialize_${serializeSuffix}(endpoint_data,#*
+${member.nativeTypeFQName}TypeSupport.get_instance().serialize${serializeSuffix}(epd,#*
 *# typedSrc.${member.name}#arraydimensionListsWithIndex($member), dst, false, final_encapsulation_id,true,endpoint_plugin_qos);
-#*----*##else
-${member.nativeTypeFQName}TypeSupport.get_instance().serialize(endpoint_data,#*
-*# typedSrc.${member.name}#arraydimensionListsWithIndex($member), dst, false, final_encapsulation_id,true,endpoint_plugin_qos);
-#*----*##end
 #*--*##elseif($member.strSize)
 dst.${member.elementSerializeMethod}(typedSrc.$member.name#arraydimensionListsWithIndex($member),#getStrSize($member "serialize"));
 #*--*##else
@@ -887,6 +902,9 @@ if (xcdr1) {
 #end ## macro
 
 #macro(mutableMethod $method $constructMap)
+#*--*##if($constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
+        boolean haveUnknownEnum = false;
+#*--*##end
 while (end != true && src.available() > 0) {
         #resizeDesBufferSize()
             switch (memberInfo.memberId) {
@@ -973,25 +991,41 @@ if (typedDst._d == ($element)){
 #*--*##if($constructMap.extensibility.equals("EXTENSIBLE_EXTENSIBILITY") &&
     !$constructMap.hasADefaultCaseLabel)
 else {
-     if ((endpoint_data == null 
-            || ((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator 
-                == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR_AND_SELECT_DEFAULT#*
+    
+     if (!xcdr1 && src.available() > 0) {
+        if (epd.getSampleAssignabilityProperty() == null
+                || epd.getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator 
+                    == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR_AND_SELECT_DEFAULT#*
 #*----*##if($constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
-
-            || ((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator 
-                == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR#*
+#* If SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR and the
+   discriminator is an enum we only preserve the discriminator value if is one
+   of the valid enumerators. *# 
+                || (epd.getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator 
+                    == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR
+                    && typedDst._d == null)#*
 #*----*##end
-         ) #* Closing parenthesis independently of the last condition*#
-         && src.available() > 0) {
-         #* We check here that we have an actual member value, in that case we need to reset the sample *#
-            ((${constructMap.name})dst).clear();
-     }#*
-#*--*##if($constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
-     else {
-        typedDst._d = ${constructMap.unionDiscriminatorMap.nativeTypeFQName}.valueOf(${constructMap.unionDiscriminatorMap.defaultDiscriminatorValue});
-     }
-#*--*##end
-
+             ) {
+             #* We check here that we have an actual member value, in that case we need to reset the sample *#
+                ((${constructMap.name})dst).clear();
+        } else if (epd.getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator 
+                    == SampleAssignabilityProperty.REJECT_UNKNOWN_DISCRIMINATOR){
+            throw new java.lang.IllegalArgumentException(
+                    "Deserialization error. Unknown union discriminator value "#*
+#*----*##if($constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
+                    + ordinal);
+#*----*##else
+                    + typedDst._d);
+#*----*##end
+        }
+    }
+#*----*##if($constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
+#* If we are in XCDR 1, or the discriminitro do not select any union branch in
+   the writer, the enumerator may still be null because we have not processed
+   the assignability option. *#
+    else if (typedDst._d == null) {
+        ((${constructMap.name})dst).clear();
+    }
+#*----*##end
 }
 #*--*##end
 #end
@@ -999,10 +1033,9 @@ else {
 #macro (deserializeDiscriminator $discriminator)
 #*--*##if($discriminator.typeKind=="enum")
 #*----*##if ($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-typedDst._d = (${discriminator.nativeTypeFQName})${discriminator.nativeTypeFQName}TypeSupport.get_instance().#*
-*#deserialize_sample(endpoint_data, typedDst._d, src, false, true, endpoint_plugin_qos);
+#*------*##deserializeEnum(${discriminator} ${discriminator.nativeTypeFQName} "typedDst._d" true true)
 #*----*##else
-#*------*##deserializeEnum(${discriminator} ${discriminator.nativeTypeFQName} "typedDst._d" true)
+#*------*##deserializeEnum(${discriminator} ${discriminator.nativeTypeFQName} "typedDst._d" true false)
 #*----*##end
 
 #*--*##else
@@ -1010,19 +1043,23 @@ typedDst._d = src.${discriminator.elementDeserializeMethod}();
 #*--*##end
 #end
 
-#macro (deserializeEnum $constructMap__ $name__ $dst__$isDiscriminator__)
+#macro (deserializeEnum $constructMap__ $name__ $dst__ $isDiscriminator__ $isMutable__)
     int ordinal = src.readInt();
     $dst__= ${name__}.valueOf(ordinal);
     if ($dst__== null) {
 #*--*##if($isDiscriminator__)
-        if (endpoint_data != null
-            && !((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownEnumValue) {
+        if (epd.getSampleAssignabilityProperty() != null
+            && !epd.getSampleAssignabilityProperty().acceptUnknownEnumValue) {
             throw new java.lang.IllegalArgumentException(
                     "invalid enumerator " + ordinal);
         }
+#*----*##if($isMutable__)
+        $dst__ = ${name__}.create();
+        haveUnknownEnum = true;
+#*----*##end
 #*--*##else
-        if (endpoint_data == null
-        || ((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownEnumValue) {
+        if (epd.getSampleAssignabilityProperty() == null
+        || epd.getSampleAssignabilityProperty().acceptUnknownEnumValue) {
 
             $dst__= ${name__}.valueOf($constructMap__.defaultLiteralMember.ordinal);
         } else {
@@ -1044,22 +1081,19 @@ default:
     }
 #*------*##else
     {
-        if (endpoint_data == null 
-             || ((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator
+        if (epd.getSampleAssignabilityProperty() == null 
+             || epd.getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator
                     == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR_AND_SELECT_DEFAULT#*
 #*----*##if($constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
 
-             || ((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator
-                    == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR#*
+             || (epd.getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator
+                    == SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR
+                    && haveUnknownEnum)#*
 #*----*##end
               ) {
             ((${constructMap.name})dst).clear();
-#*----*##if(!$constructMap.unionDiscriminatorMap.typeKind.equals("enum"))
-        } else if (((DefaultEndpointData)endpoint_data).getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator
-                    != SampleAssignabilityProperty.ACCEPT_UNKNOWN_DISCRIMINATOR) {
-#*----*##else
-        } else {
-#*----*##end
+        } else if (epd.getSampleAssignabilityProperty().acceptUnknownUnionDiscriminator 
+                    == SampleAssignabilityProperty.REJECT_UNKNOWN_DISCRIMINATOR){
             throw new RETCODE_ERROR("unknown member ID "+ memberInfo.memberId);
         }
     } break;
@@ -1097,7 +1131,7 @@ case $member.id:
 #*--*##end
 #*--*##openForLoopIfArray($member)
 #*--*##if($member.seqSize)
-#*----*##deserializeSeq($member)
+#*----*##deserializeSeq($member  $deserializeSuffix)
 #*--*##else
 #*----*##deserializeBasic($member $deserializeSuffix)
 #*--*##end ##if
@@ -1112,13 +1146,18 @@ break;
 ## Macro for deserialize a sequence
 ##------------------------------------------------------------------------
 
-#macro (deserializeSeq $member)
-#*--*##skipSequenceDHeaderWithMember($member)
-#*--*##if($member.typeKind=="user")
-${member.nativeTypeFQName}TypeSupport.get_instance().deserialize_sequence(endpoint_data,#*
-*# typedDst.${member.name}#arraydimensionListsWithIndex($member), src, #getSeqSize($member "deserialize"), endpoint_plugin_qos);            
+#macro (deserializeSeq $member__ $deserializeSuffix__)
+#*--*##skipSequenceDHeaderWithMember($member__)
+#*--*##if($member__.typeKind=="user")
+#*----*##if($deserializeSuffix__.contains("key_sample"))
+${member__.nativeTypeFQName}TypeSupport.get_instance().deserialize_sequence_key(epd,#*
+*# typedDst.${member__.name}#arraydimensionListsWithIndex($member__), src, #getSeqSize($member__ "deserialize"), endpoint_plugin_qos);            
+#*----*##else
+${member__.nativeTypeFQName}TypeSupport.get_instance().deserialize_sequence(epd,#*
+*# typedDst.${member__.name}#arraydimensionListsWithIndex($member__), src, #getSeqSize($member__ "deserialize"), endpoint_plugin_qos);            
+#*----*##end
 #*--*##else
-src.${member.sequenceDeserializeMethod}(typedDst.${member.name}#arraydimensionListsWithIndex($member), #getSeqSize($member "deserialize"));
+src.${member__.sequenceDeserializeMethod}(typedDst.${member__.name}#arraydimensionListsWithIndex($member__), #getSeqSize($member__ "deserialize"));
 #*--*##end
 #end
 
@@ -1128,7 +1167,7 @@ src.${member.sequenceDeserializeMethod}(typedDst.${member.name}#arraydimensionLi
 #macro(deserializeBasic $member $deserializeSuffix)
 #*--*##if($member.typeKind=="user")
 typedDst.${member.name}#arraydimensionListsWithIndex($member) = ($member.nativeTypeFQName)${member.nativeTypeFQName}TypeSupport.#*
-*#get_instance().${deserializeSuffix}(endpoint_data, typedDst.${member.name}#arraydimensionListsWithIndex($member),#*
+*#get_instance().${deserializeSuffix}(epd, typedDst.${member.name}#arraydimensionListsWithIndex($member),#*
 *# src, false, true, endpoint_plugin_qos);     
 #*--*##elseif($member.strSize)
 typedDst.$member.name#arraydimensionListsWithIndex($member) = src.${member.elementDeserializeMethod}(#getStrSize($member "deserialize"));
@@ -1246,7 +1285,7 @@ if (disc == ($element)){
 #macro (skipDiscriminator $discriminator)
 #*--*##if($discriminator.typeKind=="enum")
 disc = (${discriminator.nativeTypeFQName})${discriminator.nativeTypeFQName}TypeSupport.get_instance().deserialize_sample(#*
-*#endpoint_data, disc, src, false, true, endpoint_plugin_qos);            
+*#epd, disc, src, false, true, endpoint_plugin_qos);            
 #*--*##else
 disc = src.${discriminator.elementDeserializeMethod}();
 #*--*##end  
@@ -1280,7 +1319,7 @@ break;
 #macro (skipSeq $member)
 #*--*##skipSequenceDHeaderWithMember($member)
 #*--*##if ($member.typeKind=="user") 
-${member.nativeTypeFQName}TypeSupport.get_instance().skip_sequence(endpoint_data, src, endpoint_plugin_qos);
+${member.nativeTypeFQName}TypeSupport.get_instance().skip_sequence(epd, src, endpoint_plugin_qos);
 #*--*##else 
 src.${member.sequenceSkipMethod}();
 #*--*##end
@@ -1291,7 +1330,7 @@ src.${member.sequenceSkipMethod}();
 ##------------------------------------------------------------------------
 #macro (skipBasic $member)
 #*--*##if($member.typeKind=="user")
-${member.nativeTypeFQName}TypeSupport.get_instance().skip(endpoint_data, src, false, true, endpoint_plugin_qos);
+${member.nativeTypeFQName}TypeSupport.get_instance().skip(epd, src, false, true, endpoint_plugin_qos);
 #*--*##else
 src.${member.elementSkipMethod}();
 #*--*##end ##if
@@ -1305,9 +1344,9 @@ src.${member.elementSkipMethod}();
 #macro(serializeKeyMaxSize $serializeSuffix__  $constructMap__ $ignoreHeader__)
 #*--*##foreach($member in $constructMap__.memberFieldMapList)
 #*----*##if($member.isKey)
-#*------*##if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY") 
+#*------*##if($constructMap__.extensibility.equals("MUTABLE_EXTENSIBILITY")
                   && !$ignoreHeader__.equals("true"))
-currentAlignment += (_cdrPrimitiveType.getPadSize(currentAlignment, 4) + 12);
+#*--------*##headerMaxSize($constructMap__.extensibility $member.isOptional $member.LC)
 #*------*##end
 #*------*##createAlignmentMaxSizeMember($serializeSuffix__ $member)
 #*----*##end ##if
@@ -1326,15 +1365,16 @@ boolean needExtendedId;
 #if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
 memberLengthPosition = dst.writeMemberId(xcdr1, $member.id, false, $member.needExtendedId, $member.LC);
 #end    
-#serializeMember($member "key")
+#serializeMember($member "_key")
 #if($constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
 dst.writeMemberLength(
-            xcdr1,
-            memberLengthPosition,
-            $member.id,
-            0,
-            $member.needExtendedId,
-            $member.LC);
+        xcdr1,
+        memberLengthPosition,
+        $member.id,
+        0,
+        $member.needExtendedId,
+        $member.LC,
+        epd.getXTypesComplianceMask().isParameterLengthWithPaddingEnabled());
 #end
 #end ##if
 #end ##for
@@ -1489,7 +1529,6 @@ if (epd == null) {
 #macro (calculateUseExtendedMemberId $constructMap)
 
         long maxLength = 0;
-        DefaultEndpointData epd = (DefaultEndpointData) endpoint_data;
          
         if (!dst.isDirty()) {
             
@@ -1551,16 +1590,16 @@ if (!inBaseClass_tmp && !xcdr1) {
 }
 #end
 
-#macro (writeNonPrimitiveCollectionDHeader $dHeaderPosition__) 
-if (!xcdr1 && TypePluginProperty.dheaderInNonPrimitiveCollections) {
+#macro (writeNonPrimitiveCollectionDHeader $dHeaderPosition__)
+if (!xcdr1 && epd.getXTypesComplianceMask().isDHeaderInNonPrimitiveCollectionsEnabled()) {
     $dHeaderPosition__ = dst.writeDHeader();
 }
 #end
 
-#macro (writeEnumCollectionDHeader $dHeaderPosition__) 
-if (!xcdr1 
-        && TypePluginProperty.dheaderInNonPrimitiveCollections
-        && !TypePluginProperty.enumAsPrimitiveInCollections) {
+#macro (writeEnumCollectionDHeader $dHeaderPosition__)
+if (!xcdr1
+        && epd.getXTypesComplianceMask().isDHeaderInNonPrimitiveCollectionsEnabled()
+        && !epd.getXTypesComplianceMask().isEnumAsPrimitiveInCollectionsEnabled()) {
     $dHeaderPosition__ = dst.writeDHeader();
 }
 #end
@@ -1591,16 +1630,16 @@ if (!xcdr1
 #*--*##writeNonPrimitiveDHeaderWithMember($member__ true "dheaderArrPosition")
 #end
 
-#macro (skipNonPrimitiveCollectionDHeader) 
-if (!xcdr1 && TypePluginProperty.dheaderInNonPrimitiveCollections) {
+#macro (skipNonPrimitiveCollectionDHeader)
+if (!xcdr1 && epd.getXTypesComplianceMask().isDHeaderInNonPrimitiveCollectionsEnabled()) {
     src.skipInt();
 }
 #end
 
-#macro (skipEnumCollectionDHeader) 
+#macro (skipEnumCollectionDHeader)
 if (!xcdr1
-        && TypePluginProperty.dheaderInNonPrimitiveCollections
-        && !TypePluginProperty.enumAsPrimitiveInCollections) {
+        && epd.getXTypesComplianceMask().isDHeaderInNonPrimitiveCollectionsEnabled()
+        && !epd.getXTypesComplianceMask().isEnumAsPrimitiveInCollectionsEnabled()) {
     src.skipInt();
 }
 #end
@@ -1655,19 +1694,19 @@ if (!xcdr1) {
 }
 #end
 
-#macro (addNonPrimitiveCollectionDHeaderSize 
-        $currentAlignmentVar__ 
-        $currentAlignment__) 
-if (!xcdr1 && TypePluginProperty.dheaderInNonPrimitiveCollections) {
+#macro (addNonPrimitiveCollectionDHeaderSize
+        $currentAlignmentVar__
+        $currentAlignment__)
+if (!xcdr1 && epd.getXTypesComplianceMask().isDHeaderInNonPrimitiveCollectionsEnabled()) {
     $currentAlignmentVar__ += _cdrPrimitiveType.getIntMaxSizeSerialized(
             $currentAlignment__);
 }
 #end
 
-#macro (addEnumCollectionDHeaderSize $currentAlignmentVar__ $currentAlignment__) 
-if (!xcdr1 
-        && TypePluginProperty.dheaderInNonPrimitiveCollections
-        && !TypePluginProperty.enumAsPrimitiveInCollections) {
+#macro (addEnumCollectionDHeaderSize $currentAlignmentVar__ $currentAlignment__)
+if (!xcdr1
+        && epd.getXTypesComplianceMask().isDHeaderInNonPrimitiveCollectionsEnabled()
+        && !epd.getXTypesComplianceMask().isEnumAsPrimitiveInCollectionsEnabled()) {
     $currentAlignmentVar__ += _cdrPrimitiveType.getIntMaxSizeSerialized(
             $currentAlignment__);
 }

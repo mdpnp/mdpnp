@@ -128,7 +128,9 @@ SHAREDLIB_SFX =
 LINKER_FLAGS += -dum
 #end
 #else
+#if($global.architectureName.toString().contains("Vx6") || $global.architectureName.toString().contains("Vx7"))
 LINKER_FLAGS += -non-static
+#end
 #end ## compiler is clang **
 LIBS = -L#[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH) \
        #foreach($p in ${additionalLibraryPaths}) -L$p#end \
@@ -143,7 +145,7 @@ LIBS = #[[$]]#(SYSLIBS)
 else
 SHAREDLIB_SFX = z
 DEFINES += -DRTI_STATIC
-#if($compiler.toString().contains("clang"))
+#if($compiler.toString().contains("clang") || !($global.architectureName.toString().contains("Vx6") || $global.architectureName.toString().contains("Vx7")))
 LINKER_FLAGS += -static
 #end
 LIBS = -L#[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH) \

@@ -18,13 +18,12 @@
 
 .SECONDARY:
 
+PUB_PATH = objs/#[[$]]#(TARGET_ARCH)/publisher
+SUB_PATH = objs/#[[$]]#(TARGET_ARCH)/subscriber
+
 ANDROID_PACKAGE_PREFIX = ${typePackage}
 
-ANDROID_PUSH_DEST = /data/data/#[[$]]#(ANDROID_PACKAGE_PREFIX)
-
-#[[#]]# replace TARGET_ID with the android platform that you want to use
-#[[#]]# use "android list targets" to see the list of available targets
-TARGET_ID = ${archMap.TARGET_ID}
+ANDROID_PUSH_DEST = /data/data/${typePackage}
 
 #[[#]]# if you have more than 1 device connected, you may need to define this
 #[[#]]# use "adb devices" to check which devices are connected
@@ -32,11 +31,28 @@ TARGET_ID = ${archMap.TARGET_ID}
 
 ANDROID_ABI = ${archMap.ANDROID_ABI}
 
+#if(${archMap.ANDROID_SDK_VERSION}=="28")
 ifeq (#[[$]]#(OS),Windows_NT)
 ANDROID_CMD = android.bat
 else
 ANDROID_CMD = android
 endif
+#end
+
+#if(${global.language}!="C")
+#if(${archMap.ANDROID_SDK_VERSION}=="31")
+
+#[[#]]# To override the path to libc++_shared.so, define the environment variable
+#[[#]]# ANDROID_PATH_TO_CPP_SHARED_SO and set it to the path.
+
+ifdef ANDROID_PATH_TO_CPP_SHARED_SO
+	ANDROID_PATH_TO_CPP_SHARED_SO_FINAL = #[[$]]#(ANDROID_PATH_TO_CPP_SHARED_SO)
+else
+	ANDROID_PATH_TO_CPP_SHARED_SO_FINAL = #[[$]]#(ANDROID_NDK_ROOT)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}
+endif
+
+#end
+#end
 
 #[[#]]#
 #[[#]]# Commands to copy and run executables as root on shell on the device
@@ -77,28 +93,93 @@ ${global.idlFileName}.so : #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%.so) #[[
 ${global.execNames}.so : #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%.so) #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so) ;
 #end
 #[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%.so) : objs/#[[$]]#(TARGET_ARCH)/lib%.so : objs/#[[$]]#(TARGET_ARCH)/%.o #[[$]]#(COMMONOBJS)
+#if(${archMap.ANDROID_SDK_VERSION}=="32")
+	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS_SHARED_START) -shared -o #[[$]]#@ objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*.o #[[$]]#(COMMONOBJS) #[[$]]#(LINKER_FLAGS_SHARED_END) #[[$]]#(LIBS)
+#else
 	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS) -shared -o #[[$]]#@ objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*.o #[[$]]#(COMMONOBJS) #[[$]]#(LIBS)
+#end
 
 $(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so) : objs/#[[$]]#(TARGET_ARCH)/lib%_jni.so: %_jni${sourceFileExtension} objs/#[[$]]#(TARGET_ARCH)/lib%.so
 	#[[$]]#(COMPILER) #[[$]]#(COMPILER_FLAGS) -o objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*_jni.o #[[$]]#(DEFINES) -c #[[$]]#<
+#if(${archMap.ANDROID_SDK_VERSION}=="32")
+	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS_SHARED_START) -shared -o #[[$]]#@ objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*_jni.o #[[$]]#(LINKER_FLAGS_SHARED_END) -Lobjs/#[[$]]#(TARGET_ARCH) -l#[[$]]#* #[[$]]#(LIBS)
+#else
 	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS) -shared -o #[[$]]#@ objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*_jni.o -Lobjs/#[[$]]#(TARGET_ARCH) -l#[[$]]#* #[[$]]#(LIBS)
+#end
 
 #if(${global.idlFileName})
+#if(${archMap.TARGET_ID}=="android-28")
 #[[#]]#
 #[[#]]# Convenient way to create projects
 #[[#]]#
-
 ${global.idlFileName}.projects : ${global.idlFileName}Publisher/publisher \
 		  	       ${global.idlFileName}Subscriber/subscriber ;
 
 ${global.idlFileName}%/publisher ${global.idlFileName}%/subscriber :
 	#[[$]]#(ANDROID_CMD) update project -n ${global.idlFileName}_$(notdir #[[$]]#@) -t #[[$]]#(TARGET_ID) -p objs/#[[$]]#(TARGET_ARCH)/#[[$]]#(notdir #[[$]]#@)
+#end
+
+  #if(${archMap.ANDROID_SDK_VERSION}=="32" || ${archMap.ANDROID_SDK_VERSION}=="31")
 
 #[[#]]#
-#[[#]]# Convenient way to build apks
+#[[#]]# Build apks.
+#[[#]]#
+
+#[[#]]# Note: Please, make sure to set GRADLE_HOME env. variable to your Gradle installation, as this makefile leverages Gradle to build
+#[[#]]# Android applications. If building C++, make sure to also set ANDROID_NDK_ROOT to your local NDK installation.
 #[[#]]#
 
 #[[#]]# this command will work only if cygwin is installed
+${global.idlFileName}.apks : ${global.idlFileName}Project.publisherlib \
+			   				 	 ${global.idlFileName}Project.subscriberlib
+	cd $(PUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 dependencies
+	cd $(PUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 build
+	cd $(SUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 dependencies
+	cd $(SUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 build
+
+${global.idlFileName}Project.publisherlib : objs/#[[$]]#(TARGET_ARCH)/publisher/src/main/jniLibs/#[[$]]#(ANDROID_ABI).dir \
+			          objs/#[[$]]#(TARGET_ARCH)/publisher/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}.so \
+				  objs/#[[$]]#(TARGET_ARCH)/publisher/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}_jni.so copyddslib.publisher;
+
+${global.idlFileName}Project.subscriberlib : objs/#[[$]]#(TARGET_ARCH)/subscriber/src/main/jniLibs/#[[$]]#(ANDROID_ABI).dir \
+			          objs/#[[$]]#(TARGET_ARCH)/subscriber/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}.so \
+				  objs/#[[$]]#(TARGET_ARCH)/subscriber/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}_jni.so copyddslib.subscriber;
+
+objs/#[[$]]#(TARGET_ARCH)/publisher/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/%.so \
+objs/#[[$]]#(TARGET_ARCH)/subscriber/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/%.so : objs/#[[$]]#(TARGET_ARCH)/%.so
+	cp #[[$]]#< #[[$]]#@
+
+copyddslib.%:
+#foreach($coreLib in ${corelibs})
+	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${coreLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#end
+#foreach($addLib in ${additionalRtiLibraries})
+	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${addLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#end
+#if(${global.language}!="C")
+#if(${archMap.ANDROID_SDK_VERSION}=="28")
+## Android 9
+	cp #[[$]]#(ANDROID_NDK_ROOT)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="31")
+## Android 12
+	cp #[[$]]#(ANDROID_PATH_TO_CPP_SHARED_SO_FINAL)/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="32")
+## AOSP 12
+	cp #[[$]]#(AOSP_ROOT)/out/soong/.intermediates/external/libcxx/libc++/android_arm64_armv8-a_shared/libc++.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#end
+#end
+
+#[[#]]#
+
+#[[#]]# Example to install apks on device
+#[[#]]#
+
+${global.idlFileName}.installapks :
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/publisher/build/outputs/apk/debug/publisher-debug.apk
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/subscriber/build/outputs/apk/debug/subscriber-debug.apk
+  
+  #else ## This is not android-31 or 32 **
+
 ${global.idlFileName}.apks : ${global.idlFileName}Project.publisherlib \
 			   ${global.idlFileName}Project.subscriberlib
 	cd objs/#[[$]]#(TARGET_ARCH)/publisher; ant debug
@@ -106,41 +187,32 @@ ${global.idlFileName}.apks : ${global.idlFileName}Project.publisherlib \
 
 ${global.idlFileName}Project.publisherlib : objs/#[[$]]#(TARGET_ARCH)/publisher/libs.dir \
 				  objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI).dir \
-			          objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}.so \
-				  objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}_jni.so copyddslib_shared.publisher #if(${global.dynamicLinking})copyddslib.publisher#end;
+			      objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}.so \
+				  objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.pubSuffix}_jni.so copyddslib.publisher;
 
 ${global.idlFileName}Project.subscriberlib : objs/#[[$]]#(TARGET_ARCH)/subscriber/libs.dir \
 				  objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI).dir \
-			          objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}.so \
-				  objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}_jni.so copyddslib_shared.subscriber #if(${global.dynamicLinking})copyddslib.subscriber#end;
-
+			      objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}.so \
+				  objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/lib${global.idlFileName}${global.subSuffix}_jni.so copyddslib.subscriber;
 
 objs/#[[$]]#(TARGET_ARCH)/publisher/libs/#[[$]]#(ANDROID_ABI)/%.so \
 objs/#[[$]]#(TARGET_ARCH)/subscriber/libs/#[[$]]#(ANDROID_ABI)/%.so : objs/#[[$]]#(TARGET_ARCH)/%.so
 	cp #[[$]]#< #[[$]]#@
 
-copyddslib_shared.%:
-		
-#if(${global.language}!="C")
-	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
-		
-	#else
-		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
-	#end
-#end
-
-
-#if(${global.dynamicLinking})
 copyddslib.%:
 #foreach($coreLib in ${corelibs})
 	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${coreLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
 #end
 #if(${global.language}!="C")
-	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
-		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/gnu-libstdc++/${archMap.ANDROID_GCC}/libs/${archMap.ANDROID_ABI}/libgnustl_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
-	#else
-		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
-	#end
+#if(${archMap.ANDROID_SDK_VERSION}=="28")
+## Android 9
+	cp #[[$]]#(ANDROID_NDK_ROOT)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="31")
+## Android 12
+	cp #[[$]]#(ANDROID_PATH_TO_CPP_SHARED_SO_FINAL)/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="32")
+## AOSP 12
+	cp #[[$]]#(AOSP_ROOT)/out/soong/.intermediates/external/libcxx/libc++/android_arm64_armv8-a_shared/libc++.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
 #end
 #end
 
@@ -151,6 +223,7 @@ copyddslib.%:
 ${global.idlFileName}.installapks :
 	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/publisher/bin/${global.idlFileName}${global.pubSuffix}-debug.apk
 	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/subscriber/bin/${global.idlFileName}${global.subSuffix}-debug.apk
+  #end ## end if android-31 or 32
 	
 #[[#]]#
 #[[#]]# Example to unistall apks on device
@@ -159,7 +232,57 @@ ${global.idlFileName}.installapks :
 ${global.idlFileName}.uninstallapks :
 	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).publisher
 	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).subscriber
-#else
+
+#else ## global.idlFileName is not set so we have to use global.execNames
+
+  #if(${archMap.ANDROID_SDK_VERSION}=="32" || ${archMap.ANDROID_SDK_VERSION}=="31")
+#[[#]]# Example makefile creation
+
+#[[#]]#
+#[[#]]# Convenient way to build apks
+#[[#]]#
+#[[#]]# Note: Please, make sure to set GRADLE_HOME env. variable to your Gradle installation, as this makefile leverages Gradle to build
+#[[#]]# Android applications. If building C++, make sure to also set ANDROID_NDK_ROOT to your local NDK installation.
+#[[#]]#
+
+#[[#]]# this command will work only if cygwin is installed
+${global.execNames}.apks : ${global.execNames}Project.lib 
+	cd $(PUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 dependencies
+	cd $(PUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 build
+	cd $(SUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 dependencies
+	cd $(SUB_PATH) && #[[$]]#(GRADLE_HOME)/bin/gradle -Dhttps.protocols=TLSv1.2 build
+
+${global.execNames}Project.lib :  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/src/main/jniLibs/#[[$]]#(ANDROID_ABI).dir \
+                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}.so \
+                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}_jni.so copyddslib;
+
+
+objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/%.so : objs/#[[$]]#(TARGET_ARCH)/%.so
+	cp #[[$]]#< #[[$]]#@
+
+copyddslib%:
+#foreach($coreLib in ${corelibs})
+	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${coreLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#end
+#if(${global.language}!="C")
+#if(${archMap.ANDROID_SDK_VERSION}=="28")
+	cp #[[$]]#(ANDROID_NDK_ROOT)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="31")
+	cp #[[$]]#(ANDROID_PATH_TO_CPP_SHARED_SO_FINAL)/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="32")
+	cp #[[$]]#(AOSP_ROOT)/out/soong/.intermediates/external/libcxx/libc++/android_arm64_armv8-a_shared/libc++.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#end
+#end
+
+#[[#]]#
+#[[#]]# Example to install apks on device
+#[[#]]#
+
+${global.execNames}.installapks :
+	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/build/outputs/apk/debug/${global.execNames}-debug.apk
+
+  #else ## this is not android-32 or 31
+
 #[[#]]# Example makefile creation
 
 #[[#]]# Convenient way to create projects
@@ -174,50 +297,38 @@ ${global.execNames}%/ :
 #[[#]]# Convenient way to build apks
 #[[#]]#
 
-#[[#]]# this command will work only if cygwin is installed
-${global.execNames}.apks : ${global.execNames}Project.lib 
+${global.execNames}.apks : ${global.execNames}Project.lib
 	cd objs/#[[$]]#(TARGET_ARCH)/${global.execNames}; ant debug
-
+ 
 ${global.execNames}Project.lib : objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs.dir \
                                   objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI).dir \
                                   objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}.so \
-                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}_jni.so copyddslib_shared #if(${global.dynamicLinking})copyddslib#end;
-
-
+                                  objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/lib${global.execNames}_jni.so copyddslib;
 objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/libs/#[[$]]#(ANDROID_ABI)/%.so : objs/#[[$]]#(TARGET_ARCH)/%.so
 	cp #[[$]]#< #[[$]]#@
 
-copyddslib_shared.%:
-		
-#if(${global.language}!="C")
-	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
-		
-	#else
-		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
-	#end
-#end
-
-
-#if(${global.dynamicLinking})
 copyddslib%:
 #foreach($coreLib in ${corelibs})
 	cp #[[$]]#(NDDSHOME)/lib/#[[$]]#(TARGET_ARCH)/lib${coreLib}#[[$]]#(DEBUG_SFX).so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
 #end
+
 #if(${global.language}!="C")
-	#if(${archMap.TARGET_ID}=="1" || ${archMap.TARGET_ID}=="android-21")
-		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/gnu-libstdc++/${archMap.ANDROID_GCC}/libs/${archMap.ANDROID_ABI}/libgnustl_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
-	#else
-		cp #[[$]]#(ANDROID_NDK_PATH)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
-	#end
+#if(${archMap.ANDROID_SDK_VERSION}=="28")
+	cp #[[$]]#(ANDROID_NDK_ROOT)/sources/cxx-stl/llvm-libc++/libs/${archMap.ANDROID_ABI}/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="31")
+	cp #[[$]]#(ANDROID_PATH_TO_CPP_SHARED_SO_FINAL)/libc++_shared.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/src/main/jniLibs/#[[$]]#(ANDROID_ABI)/
+#elseif(${archMap.ANDROID_SDK_VERSION}=="32")
+	cp #[[$]]#(AOSP_ROOT)/out/soong/.intermediates/external/libcxx/libc++/android_arm64_armv8-a_shared/libc++.so objs/#[[$]]#(TARGET_ARCH)/#[[$]]#*/libs/#[[$]]#(ANDROID_ABI)/
 #end
 #end
 
 #[[#]]#
 #[[#]]# Example to install apks on device
 #[[#]]#
-
 ${global.execNames}.installapks :
 	adb #[[$]]#(DEVICE) install objs/#[[$]]#(TARGET_ARCH)/${global.execNames}/bin/${global.execNames}-debug.apk
+
+  #end ## android-32 or 31
 
 #[[#]]#
 #[[#]]# Example to unistall apks on device
@@ -225,7 +336,8 @@ ${global.execNames}.installapks :
 
 ${global.execNames}.uninstallapks :
 	adb #[[$]]#(DEVICE) uninstall #[[$]]#(ANDROID_PACKAGE_PREFIX).${global.execNames}
-#end
+
+#end ## if global.idlFileName is set
 
 #[[#]]#
 #[[#]]# Example to capture logs

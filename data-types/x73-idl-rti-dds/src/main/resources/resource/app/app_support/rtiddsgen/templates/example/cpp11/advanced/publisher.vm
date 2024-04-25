@@ -67,9 +67,10 @@ class RTIAndroidBuffer : public std::streambuf {
             /* forward message */
             if (publisher_onCout != NULL) {
                 rc = publisher_onCout(writebuf);
-            } else {
-                rc = __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf) >  0;
             }
+
+            /* log also to logcat */
+            __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf);
 
             this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1);
         }
@@ -238,23 +239,39 @@ ${envMap.POUND_CHAR}endif
                     && !$member.resolvedTypeOptional
                     && !$member.isPointer)
 #*--------*##if(${constructMap.hasArrayMember})
+#*----------*##if($constructMap.useSettersAndGetters)
         data->${member.name}(#*
+#*----------*##else
+        data->${member.name} = #*
+#*----------*##end
 #*--------*##else
+#*----------*##if($constructMap.useSettersAndGetters)
         data.${member.name}(#*
+#*------------*##else
+        data.${member.name} = #*
+#*------------*##end
 #*--------*##end
 #*--------*##if(!$member.nativeTypeFQName.equals("uint32_t")&&
                 !$member.nativeTypeFQName.equals("DDS_LongLong")&&
                 !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
-#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written)#if($constructMap.useSettersAndGetters))#end;
 #*--------*##else
-#*----------*#samples_written);
+#*----------*#samples_written#if($constructMap.useSettersAndGetters))#end;
 #*--------*##end
 #*--------*##elseif($member.isPointer)
 // The member ${member.name} is @external, it has to be initialized before writing
 #*----------*##if(${constructMap.hasArrayMember})
+#*------------*##if($constructMap.useSettersAndGetters)
         data->${member.name}(#*
+#*------------*##else
+        data->${member.name} = #*
+#*------------*##end
 #*----------*##else
+#*------------*##if($constructMap.useSettersAndGetters)
         data.${member.name}(#*
+#*------------*##else
+        data.${member.name} = #*
+#*------------*##end
 #*----------*##end
 std::shared_ptr< #*
 #*---------*##if($member.seqSize)
@@ -269,7 +286,7 @@ $member.specTypeName#*
 #*------------*##if($member.typeKind.equals("user"))
 ()#*
 #*------------*##end
-#*---------*##end));
+#*---------*##end)#if($constructMap.useSettersAndGetters))#end;
 #*--------*##end
 #*------*##end
 

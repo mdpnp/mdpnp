@@ -59,9 +59,10 @@ class RTIAndroidBuffer : public std::streambuf {
             /* forward message */
             if (publisher_onCout != NULL) {
                 rc = publisher_onCout(writebuf);
-            } else {
-                rc = __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf) >  0;
             }
+
+            /* log also to logcat */
+            __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf);
 
             this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1);
         }

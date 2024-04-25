@@ -48,6 +48,8 @@
   or consult the Code Generator User's Manual.
 */
 
+#setMapping()
+
 ${envMap.POUND_CHAR}ifndef ${envMap.inputFileNameMacro}_${envMap.executionID}_hpp
 ${envMap.POUND_CHAR}define ${envMap.inputFileNameMacro}_${envMap.executionID}_hpp
 
@@ -60,13 +62,21 @@ ${envMap.POUND_CHAR}include "dds/core/SafeEnumeration.hpp"
 ${envMap.POUND_CHAR}include "dds/core/String.hpp"
 ${envMap.POUND_CHAR}include "dds/core/array.hpp"
 ${envMap.POUND_CHAR}include "dds/core/vector.hpp"
-${envMap.POUND_CHAR}include "dds/core/Optional.hpp"
 ${envMap.POUND_CHAR}include "dds/core/External.hpp"
 ${envMap.POUND_CHAR}include "rti/core/LongDouble.hpp"
 ${envMap.POUND_CHAR}include "rti/core/Pointer.hpp"
 ${envMap.POUND_CHAR}include "rti/core/array.hpp"
-${envMap.POUND_CHAR}include "rti/core/BoundedSequence.hpp"
 ${envMap.POUND_CHAR}include "rti/topic/TopicTraits.hpp"
+
+${envMap.POUND_CHAR}include "omg/types/string_view.hpp"
+
+#if($envMap.legacyMapping)
+${envMap.POUND_CHAR}include "rti/core/BoundedSequence.hpp"
+${envMap.POUND_CHAR}include "dds/core/Optional.hpp"
+#else
+${envMap.POUND_CHAR}include "omg/types/sequence.hpp"
+${envMap.POUND_CHAR}include "omg/types/optional.hpp"
+#end
 
 ${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
     ${envMap.POUND_CHAR}include "dds/domain/DomainParticipant.hpp"
@@ -115,19 +125,33 @@ ${envMap.POUND_CHAR}include "${node.file}.hpp"
 namespace $node.name {
 #*--*##elseif($node.constructKind.equals("moduleClose")) 
 } // namespace $node.name  
-#*--*##elseif($node.constructKind.equals("structFwd") 
-        || $node.constructKind.equals("valueTypeFwd") 
+#*--*##elseif($node.constructKind.equals("structFwd"))
+#*----*##if($envMap.legacyMapping || $node.languageBinding.equals("FLAT_DATA"))
+class NDDSUSERDllExport $node.name;
+#*----*##else
+struct NDDSUSERDllExport $node.name;
+#*----*##end
+#*--*##elseif($node.constructKind.equals("valueTypeFwd") 
         || $node.constructKind.equals("unionFwd")
         || $node.constructKind.equals("interfaceFwd"))
 class NDDSUSERDllExport $node.name;
 #*--*##elseif($node.constructKind.equals("const"))
 #*----*##assignMemberVariables($node)
 #*----*##assignCppMemberVariables($node)
-#*----*##if($node.specTypeName.equals("std::wstring"))
+#*----*##if($envMap.legacyMapping)
+#*------*##if($node.specTypeName.equals("std::wstring"))
 static const wchar_t ${node.nativeFQNameInModule}_VALUE_[] = ${node.value};
-static const $node.specTypeName ${node.nativeFQNameInModule}(${node.nativeFQNameInModule}_VALUE_);
+static const $node.specConstantTypeName ${node.nativeFQNameInModule}(${node.nativeFQNameInModule}_VALUE_);
+#*------*##else
+static const $node.specConstantTypeName ${node.nativeFQNameInModule} = ${node.value};
+#*------*##end
 #*----*##else
-static const $node.specTypeName ${node.nativeFQNameInModule} = ${node.value};
+#*------*##if($node.specTypeName.equals("std::wstring"))
+RTI_CONSTEXPR_OR_CONST_STRING wchar_t ${node.nativeFQNameInModule}_VALUE_[] = ${node.value};
+RTI_CONSTEXPR_OR_CONST_STRING $node.specConstantTypeName ${node.nativeFQNameInModule}(${node.nativeFQNameInModule}_VALUE_);
+#*------*##else
+RTI_CONSTEXPR_OR_CONST_STRING $node.specConstantTypeName ${node.nativeFQNameInModule} = ${node.value};
+#*------*##end
 #*----*##end
 #*--*##elseif($node.constructKind.equals("alias"))
 #*----*##assignTypeVariables($node)
@@ -156,55 +180,63 @@ using ${node.nativeFQNameInModule}Service =
 #flatTypeDeclaration($node)
 #else ## Generate a regular "plain" (non-flat-data) type
 #*----*##exportStdTypeInstantiations($node)
-#*----*##if($node.baseTypeFQName)
+#*----*##if(!$envMap.legacyMapping && $node.constructKind.equals("struct"))
+#*------*##if($node.baseTypeFQName)
+struct NDDSUSERDllExport $node.name
+: public $node.baseTypeFQName {
+#*------*##else
+struct NDDSUSERDllExport $node.name {
+#*------*##end
+#*----*##else
+#*------*##if($node.baseTypeFQName)
 class NDDSUSERDllExport $node.name
 : public $node.baseTypeFQName {
-#*----*##else
+#*------*##else
 class NDDSUSERDllExport $node.name {
+#*------*##end
 #*----*##end
+#*----*##if(!$envMap.legacyMapping && $node.constructKind.equals("struct"))
+#declare($node)
+#*----*##else
 public:
-        ${node.name}();
-        
-#if(!$node.constructKind.equals("union"))
-#*--CODEGENII-787 we don't generate param constructor if there are no params*#    
-#if($node.memberCount > 0
-    || ($node.baseTypeMembers && $node.baseTypeMembers.size() > 0 ))
-#if($node.memberCount.equals(1))explicit#end ${node.name}(#paramConstructorHeader($node));
-#end
-#end
+#*----*##end
 
-${envMap.POUND_CHAR}ifdef RTI_CXX11_RVALUE_REFERENCES
-${envMap.POUND_CHAR}ifndef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-  ${node.name} (${node.name}&&) = default;
-  ${node.name}& operator=(${node.name}&&) = default;
-  ${node.name}& operator=(const ${node.name}&) = default;
-  ${node.name}(const ${node.name}&) = default;
-${envMap.POUND_CHAR}else
-  ${node.name}(${node.name}&& other_)#if(!$node.hasPointerMember) OMG_NOEXCEPT#end;  
-  ${node.name}& operator=(${node.name}&&  other_)#if(!$node.hasPointerMember) OMG_NOEXCEPT#end;
-${envMap.POUND_CHAR}endif
-${envMap.POUND_CHAR}endif 
-         
+${node.name}();
+#*----*##if(!$node.constructKind.equals("union"))
+#*--CODEGENII-787 we don't generate param constructor if there are no params*#
+#*------*##if($node.memberCount > 0
+                || ($node.baseTypeMembers && $node.baseTypeMembers.size() > 0 ))
+#*--------*##if($node.memberCount.equals(1))explicit#end ${node.name}(#paramConstructorHeader($node));
+#*------*##end
+#*----*##end
+
+#*----*##if(!$envMap.legacyMapping && $node.constructKind.equals("struct"))
+};
+
+NDDSUSERDllExport bool operator == (const ${node.name}& a, const ${node.name}& b);
+NDDSUSERDllExport bool operator != (const ${node.name}& a, const ${node.name}& b);
+NDDSUSERDllExport void swap(${node.name}& a, ${node.name}& b)  noexcept;
+
+#*----*##else
 #getterAndSettersHeader($node)
-
 #operatorHeader($node) 
-  
-#if($node.constructKind.equals("union"))       
-    static $node.unionDiscriminatorMap.specTypeName default_discriminator();  
-#end  
+#if($node.constructKind.equals("union"))
+    static $node.unionDiscriminatorMap.specTypeName default_discriminator();
+#end
 
-    void swap(${node.name}& other_) OMG_NOEXCEPT ;
-    
+    void swap(${node.name}& other_) noexcept ;
+
   private:
 
 #declare($node)
 
 };
 
-inline void swap(${node.name}& a, ${node.name}& b)  OMG_NOEXCEPT 
+inline void swap(${node.name}& a, ${node.name}& b)  noexcept 
 {
     a.swap(b);
 }
+#*----*##end
 
 NDDSUSERDllExport std::ostream& operator<<(std::ostream& o, const $node.name& sample);
 

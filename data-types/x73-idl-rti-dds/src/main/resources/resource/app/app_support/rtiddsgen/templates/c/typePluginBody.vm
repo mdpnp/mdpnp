@@ -208,7 +208,7 @@ ${node.nativeFQNameInModule}PluginSupport_create_data_w_params(
 		return NULL;
     }
 
-#*--*##allocPointerObjectNoCheck ("sample" "${node.nativeFQNameInModule}" $node.isAliasOfArray false)
+#*--*##allocPointerObjectNoCheck ("sample" "${node.nativeFQNameInModule}" $node.isAliasOfArray false $null)
     if (sample == NULL) {
     	return NULL;
     }
@@ -232,23 +232,24 @@ ${node.nativeFQNameInModule}PluginSupport_create_data_w_params(
          freeing sample. It is a false positive since all the members' memory 
          is freed in the call "${node.nativeFQName}_finalize_ex" */
         /* coverity[leaked_storage : FALSE] */
-#*----*##deletePointerObject ("sample" $node.isAliasOfArray true false)
+#*----*##deletePointerObject ("sample" $node.isAliasOfArray true false $null)
     }
 #*--*##else
 
 #*----*##if ($node.constructKind=="alias")    
     try {
-        ${node.nativeFQName}_construct_w_params(sample, alloc_params);
+        if (!${node.nativeFQName}_construct_w_params(sample, alloc_params)) {
+#*--------*##deletePointerObject ("sample" $node.isAliasOfArray true false $null)
+        }
     } catch(const std::bad_alloc&) {
-#*------*##deletePointerObject ("sample" $node.isAliasOfArray true false)
-        return NULL;
+#*------*##deletePointerObject ("sample" $node.isAliasOfArray true false $null)
     }
 #*----*##end
 
 #*--*##end
     return sample;
 #*----*##end ## FLAT_DATA
-} 
+}
 
 ${node.nativeFQNameInModule} *
 ${node.nativeFQNameInModule}PluginSupport_create_data_ex(RTIBool allocate_pointers) 
@@ -263,13 +264,14 @@ ${node.nativeFQNameInModule}PluginSupport_create_data_ex(RTIBool allocate_pointe
     if (allocate_pointers) {}
 #*--*##end
 
-#*--*##allocPointerObjectNoCheck ("sample" "${node.nativeFQNameInModule}" $node.isAliasOfArray false)
+#*--*##allocPointerObjectNoCheck ("sample" "${node.nativeFQNameInModule}" $node.isAliasOfArray false $null)
 
     if(sample == NULL) {
         return NULL;
     }
 
 #*--*##if(!$envMap.generateCppConstructor)
+    /* coverity[example_checked : FALSE] */
     if (!${node.nativeFQName}_initialize_ex(sample,allocate_pointers, RTI_TRUE)) {
         /* Coverity reports a possible uninit_use_in_call that will happen if the
          new fails. But if new fails then sample == null and the method will
@@ -284,7 +286,7 @@ ${node.nativeFQNameInModule}PluginSupport_create_data_ex(RTIBool allocate_pointe
          freeing sample. It is a false positive since all the members' memory 
          is freed in the call "${node.nativeFQName}_finalize_ex" */
         /* coverity[leaked_storage : FALSE] */
-#*----*##deletePointerObject ("sample" $node.isAliasOfArray true false)
+#*----*##deletePointerObject ("sample" $node.isAliasOfArray true false $null)
     }
 #*--*##else
 
@@ -296,10 +298,11 @@ ${node.nativeFQNameInModule}PluginSupport_create_data_ex(RTIBool allocate_pointe
         allocParams.allocate_pointers =  (DDS_Boolean)allocate_pointers;
         allocParams.allocate_memory = (DDS_Boolean)RTI_TRUE;
 
-        ${node.nativeFQName}_construct_w_params(sample, &allocParams);
+        if (!${node.nativeFQName}_construct_w_params(sample, &allocParams)) {
+#*--------*##deletePointerObject ("sample" $node.isAliasOfArray true false $null)
+        }
     } catch(const std::bad_alloc&) {
-#*------*##deletePointerObject ("sample" $node.isAliasOfArray true false)
-        return NULL;
+#*------*##deletePointerObject ("sample" $node.isAliasOfArray true false $null)
     }
 #*----*##end
 
@@ -331,7 +334,7 @@ ${node.nativeFQNameInModule}PluginSupport_destroy_data_w_params(
 #*----*##else
     ${node.nativeFQName}_finalize_w_params(sample,dealloc_params);
 
-#*--*##deletePointerObject ("sample" $node.isAliasOfArray false false)
+#*--*##deletePointerObject ("sample" $node.isAliasOfArray false false $null)
 #*----*##end ## FLAT_DATA
 }
 
@@ -345,7 +348,7 @@ ${node.nativeFQNameInModule}PluginSupport_destroy_data_ex(
 #*----*##else
     ${node.nativeFQName}_finalize_ex(sample,deallocate_pointers);
 
-#*--*##deletePointerObject ("sample" $node.isAliasOfArray false false)
+#*--*##deletePointerObject ("sample" $node.isAliasOfArray false false $null)
 #*----*##end ## FLAT_DATA
 }
 
@@ -479,7 +482,7 @@ ${node.nativeFQNameInModule}PluginSupport_create_key_ex(RTIBool allocate_pointer
     if (allocate_pointers) {}
 #*--*##end
 
-#*--*##allocPointerObjectNoCheck ("key" "${node.nativeFQNameInModule}KeyHolder" false false)
+#*--*##allocPointerObjectNoCheck ("key" "${node.nativeFQNameInModule}KeyHolder" false false $null)
 
 #*--*##if(!$envMap.generateCppConstructor)
     ${node.nativeFQName}_initialize_ex(key,allocate_pointers, RTI_TRUE);
@@ -508,7 +511,7 @@ ${node.nativeFQNameInModule}PluginSupport_destroy_key_ex(
 #*----*##else
     ${node.nativeFQName}_finalize_ex(key,deallocate_pointers);
 
-#*----*##deletePointerObject ("key" $node.isAliasOfArray false false)
+#*----*##deletePointerObject ("key" $node.isAliasOfArray false false $null)
 #*----*##end
 }
 
@@ -947,7 +950,7 @@ RTIBool
 ${node.nativeFQNameInModule}Plugin_serialize(
     PRESTypePluginEndpointData endpoint_data,
     const ${node.nativeFQNameInModule} *sample, 
-    struct RTICdrStream *stream,    
+    struct RTICdrStream *cdrStream,    
     RTIBool serialize_encapsulation,
     RTIEncapsulationId encapsulation_id,
     RTIBool serialize_sample, 
@@ -966,7 +969,7 @@ ${node.nativeFQNameInModule}Plugin_serialize(
         if (!METypePlugin_serialize(
                 endpoint_data,
                 sample,
-                stream,
+                cdrStream,
                 serialize_encapsulation,
                 encapsulation_id,
                 serialize_sample,
@@ -984,7 +987,7 @@ ${node.nativeFQNameInModule}Plugin_serialize(
     retval = PRESTypePlugin_interpretedSerialize(
     	endpoint_data,
     	sample, 
-    	stream,    
+    	cdrStream,    
     	serialize_encapsulation,
     	encapsulation_id,
     	serialize_sample, 
@@ -995,7 +998,7 @@ ${node.nativeFQNameInModule}Plugin_serialize(
         return RTI_FALSE;
     }
     if (serialize_encapsulation_requested) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 #*----*##end
     return retval;
@@ -1046,27 +1049,27 @@ ${node.nativeFQNameInModule}Plugin_serialize(
 #*------*##end
 #if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || $node.hasOptionalMember)
      &&$node.constructKind!="enum")
-      if (RTICdrStream_isDirty(stream)) {
+      if (RTICdrStream_isDirty(cdrStream)) {
 #*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-            ignoreListEndId = stream->_xTypesState.skipListEndId;
+            ignoreListEndId = cdrStream->_xTypesState.skipListEndId;
 #*--------*##end
       } else {
             /* Top level */
-            RTICdrStream_setDirtyBit(stream,RTI_TRUE);
+            RTICdrStream_setDirtyBit(cdrStream,RTI_TRUE);
 
 
 #*------------*##if ($envMap.mutExtCode)
-                stream->_xTypesState.useExtendedId = RTI_TRUE;
+                cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
 #*------------*##else
                 if (PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(endpoint_data) > 65535) {
-                    stream->_xTypesState.useExtendedId = RTI_TRUE;
+                    cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
                 } else {
-                    stream->_xTypesState.useExtendedId = RTI_FALSE;
+                    cdrStream->_xTypesState.useExtendedId = RTI_FALSE;
                 }
 #*------------*##end
        }
 #*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-        stream->_xTypesState.skipListEndId = RTI_FALSE;
+        cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
 #*--------*##end
 
 
@@ -1075,7 +1078,7 @@ ${node.nativeFQNameInModule}Plugin_serialize(
         if (!METypePlugin_serialize(
         	endpoint_data,
         	sample,
-        	stream,
+        	cdrStream,
         	serialize_encapsulation,
         	encapsulation_id,
         	serialize_sample,
@@ -1102,7 +1105,7 @@ if (#*
         return RTI_FALSE;       
     }
 
-    if (!RTICdrStream_serializeEnum(stream, sample))
+    if (!RTICdrStream_serializeEnum(cdrStream, sample))
     {
        return RTI_FALSE;
     }
@@ -1110,15 +1113,15 @@ if (#*
 #*------*##else  
 #*--------*##if($node.baseTypeFQName)  
 #*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-    stream->_xTypesState.skipListEndId = RTI_TRUE;
+    cdrStream->_xTypesState.skipListEndId = RTI_TRUE;
 #*----------*##end
     if (!${node.baseTypeFQName}Plugin_serialize(endpoint_data,
-             (const ${node.baseTypeFQName}*)sample,stream,RTI_FALSE,encapsulation_id,
+             (const ${node.baseTypeFQName}*)sample,cdrStream,RTI_FALSE,encapsulation_id,
              RTI_TRUE,endpoint_plugin_qos)) {
         return RTI_FALSE;
     }
 #*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-    stream->_xTypesState.skipListEndId = RTI_FALSE;
+    cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
 #*----------*##end    
 #*--------*##end  
 #*------*##if($node.constructKind=="union")
@@ -1129,10 +1132,10 @@ if (#*
 #*----------*##elseif($node.unionDiscriminatorMap.needExtendedId=="no")
         extended = RTI_FALSE;
 #*----------*##else
-        extended = stream->_xTypesState.useExtendedId;
+        extended = cdrStream->_xTypesState.useExtendedId;
 #*----------*##end                                   
         memberLengthPosition = RTICdrStream_serializeParameterHeader(
-                                   stream, &state, extended, memberId, RTI_FALSE);
+                                   cdrStream, &state, extended, memberId, RTI_FALSE);
         if (memberLengthPosition == NULL) {
             return RTI_FALSE;
         }
@@ -1140,7 +1143,7 @@ if (#*
 #*--------*##serializeMember($node.unionDiscriminatorMap "")
 #if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
     if (!RTICdrStream_serializeParameterLength(
-             stream, &state, extended, memberLengthPosition)) {
+             cdrStream, &state, extended, memberLengthPosition)) {
         return RTI_FALSE;
     } 
 #end    
@@ -1175,7 +1178,7 @@ else if (serialize_sample) {
 #*------*##end
  
   if(serialize_encapsulation) {
-    RTICdrStream_restoreAlignment(stream,rti_position);
+    RTICdrStream_restoreAlignment(cdrStream,rti_position);
   }
 
 #*------*##if((!$node.isMetpType) && ($node.constructKind=="enum"))
@@ -1190,7 +1193,7 @@ else if (serialize_sample) {
 RTIBool
 ${node.nativeFQNameInModule}Plugin_serialize_test_only(
         const ${node.nativeFQNameInModule} *sample,
-        struct RTICdrStream *stream,
+        struct RTICdrStream *cdrStream,
         RTIBool serialize_encapsulation,
         RTIEncapsulationId encapsulation_id,
         RTIBool serialize_sample,
@@ -1201,7 +1204,7 @@ ${node.nativeFQNameInModule}Plugin_serialize_test_only(
     return ${node.nativeFQNameInModule}Plugin_serialize(
             (PRESTypePluginEndpointData) &epd,
             sample,
-            stream,
+            cdrStream,
             serialize_encapsulation,
             encapsulation_id,
             serialize_sample,
@@ -1217,7 +1220,7 @@ RTIBool
 ${node.nativeFQNameInModule}Plugin_deserialize_sample(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} *sample,
-    struct RTICdrStream *stream,   
+    struct RTICdrStream *cdrStream,   
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_sample, 
     void *endpoint_plugin_qos)
@@ -1225,7 +1228,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_sample(
 #*--*##if ($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp"))
     RTIOsapiUtility_unusedParameter(endpoint_data);
     RTIOsapiUtility_unusedParameter(sample);
-    RTIOsapiUtility_unusedParameter(stream);
+    RTIOsapiUtility_unusedParameter(cdrStream);
     RTIOsapiUtility_unusedParameter(deserialize_encapsulation);
     RTIOsapiUtility_unusedParameter(deserialize_sample);
     RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
@@ -1235,7 +1238,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_sample(
 	return PRESTypePlugin_interpretedDeserialize(
     	endpoint_data,
     	sample,
-    	stream,   
+    	cdrStream,   
     	deserialize_encapsulation,
     	deserialize_sample, 
     	endpoint_plugin_qos);
@@ -1282,11 +1285,11 @@ ${node.nativeFQNameInModule}Plugin_deserialize_sample(
     if (endpoint_plugin_qos) {} /* To avoid warnings */
 #*--*##end    
 #*--*##deserializeEncapsulation ($node)
-    if(deserialize_sample) {
+    if(deserialize_sample && sample != NULL) {
     
 #*------*##if (($node.constructKind=="enum") 
                  && (!$node.extensibility.equals("FINAL_EXTENSIBILITY")))
-    if (!RTICdrStream_deserializeLong(stream, &enum_tmp))
+    if (!RTICdrStream_deserializeLong(cdrStream, &enum_tmp))
     {
      return RTI_FALSE;
     }
@@ -1310,7 +1313,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_sample(
                 if (ap->acceptUnknownEnumValue) {
                     ${node.nativeFQNameInModule}_initialize(sample);
                 } else {
-                    stream->_xTypesState.unassignable = RTI_TRUE;
+                    cdrStream->_xTypesState.unassignable = RTI_TRUE;
                     RTICdrLog_exception(
                        &RTI_CDR_LOG_DESERIALIZE_INVALID_ENUMERATOR_ds, 
                        enum_tmp, 
@@ -1321,7 +1324,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_sample(
     }
       
 #*------*##elseif ($node.constructKind=="enum")
-if (!RTICdrStream_deserializeLong(stream, sample))
+if (!RTICdrStream_deserializeLong(cdrStream, sample))
     {
      return RTI_FALSE;
     }
@@ -1332,24 +1335,24 @@ if (!RTICdrStream_deserializeLong(stream, sample))
 #*--------*##if($node.baseTypeFQName) 
 #*----------*##if (($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) )
     {
-        char *begin = RTICdrStream_getCurrentPosition(stream);
-        RTICdrStream_pushState(stream, &state, -1);
+        char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+        RTICdrStream_pushState(cdrStream, &state, -1);
 #*----------*##end        
         if (!${node.baseTypeFQName}Plugin_deserialize_sample(endpoint_data,
-                  (${node.baseTypeFQName} *)sample,stream,RTI_FALSE,RTI_TRUE,
+                  (${node.baseTypeFQName} *)sample,cdrStream,RTI_FALSE,RTI_TRUE,
                   endpoint_plugin_qos)) {
               return RTI_FALSE;
         }
 #*----------*##if (($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) )        
         RTICdrStream_popState(
-                stream, &state);
-            RTICdrStream_setCurrentPosition(stream, begin);
+                cdrStream, &state);
+            RTICdrStream_setCurrentPosition(cdrStream, begin);
         }     
 #*----------*##end
 #*--------*##end
 
 #*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))   
-        while (end != RTI_TRUE && RTICdrStream_getRemainder(stream) > 0) {
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
 #*--------*##mutableDeserializeHeader()
 #*--------*##deserializeMutableType($node "deserialize_sample")
         }
@@ -1383,14 +1386,18 @@ done = RTI_TRUE;
     goto fin;  /* To avoid unused label warning */
 #*------*##end
 fin:
+    /* Coverity reports a dead_error_line. with some types. Depending on the 
+        idl code that we are generating, the coditional block may be dead
+        code. */
+    /* coverity[dead_error_line] */
     if (done != RTI_TRUE && 
-        RTICdrStream_getRemainder(stream) >=
+        RTICdrStream_getRemainder(cdrStream) >=
            RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
         return RTI_FALSE;   
     }
 #*------*##end
     if(deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 
     return RTI_TRUE;
@@ -1427,7 +1434,7 @@ ${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer_ex(
 #flatPluginSerializeToCdrBufferBody($node)
 #*----*##else
     RTIEncapsulationId encapsulationId = RTI_CDR_ENCAPSULATION_ID_INVALID;
-    struct RTICdrStream stream;
+    struct RTICdrStream cdrStream;
     struct PRESTypePluginDefaultEndpointData epd;
     RTIBool result;
 #*------*##if($node.interpreted=="true")
@@ -1489,19 +1496,19 @@ ${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer_ex(
         return RTI_TRUE;
     }    
     
-    RTICdrStream_init(&stream);
-    RTICdrStream_set(&stream, (char *)buffer, *length);
+    RTICdrStream_init(&cdrStream);
+    RTICdrStream_set(&cdrStream, (char *)buffer, *length);
     
     result = #serializeFncName($node)(
             (PRESTypePluginEndpointData)&epd,
             sample,
-            &stream,
+            &cdrStream,
             RTI_TRUE,
             encapsulationId,
             RTI_TRUE,
             NULL);
 
-    *length = (unsigned int) RTICdrStream_getCurrentPositionOffset(&stream);
+    *length = (unsigned int) RTICdrStream_getCurrentPositionOffset(&cdrStream);
     return result;
 #*----*##end ## FLAT_DATA  
 }
@@ -1529,7 +1536,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize_from_cdr_buffer(
     const char * buffer,
     unsigned int length)
 {
-    struct RTICdrStream stream;
+    struct RTICdrStream cdrStream;
     struct PRESTypePluginDefaultEndpointData epd;
 #*----*##if($node.interpreted=="true")
     struct RTIXCdrTypePluginProgramContext defaultProgramContext =
@@ -1553,13 +1560,13 @@ ${node.nativeFQNameInModule}Plugin_deserialize_from_cdr_buffer(
     epd._assignabilityProperty.acceptUnknownUnionDiscriminator = 
             RTI_XCDR_ACCEPT_UNKNOWN_DISCRIMINATOR_AND_SELECT_DEFAULT;
 
-    RTICdrStream_init(&stream);
-    RTICdrStream_set(&stream, (char *)buffer, length);
+    RTICdrStream_init(&cdrStream);
+    RTICdrStream_set(&cdrStream, (char *)buffer, length);
     
     ${node.nativeFQNameInModule}_finalize_optional_members(sample, RTI_TRUE);
     return #deserializeSampleFncName($node)( 
         (PRESTypePluginEndpointData)&epd, sample,
-        &stream, RTI_TRUE, RTI_TRUE, 
+        &cdrStream, RTI_TRUE, RTI_TRUE,
         NULL);
 }
 #*--*##end
@@ -1678,7 +1685,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} **sample,
     RTIBool * drop_sample,
-    struct RTICdrStream *stream,   
+    struct RTICdrStream *cdrStream,   
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_sample, 
     void *endpoint_plugin_qos)
@@ -1691,7 +1698,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
 #*------*##end       
     if (drop_sample) {} /* To avoid warnings */
 #*------*##if($node.interpreted!="true")
-    stream->_xTypesState.unassignable = RTI_FALSE;
+    cdrStream->_xTypesState.unassignable = RTI_FALSE;
 #*------*##end
 #*------*##if($node.isMetpType)
 #*------*##deserializeEncapsulation ($node)
@@ -1701,7 +1708,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
 		endpoint_data,
 		(void**)sample,
         	drop_sample,
-        	stream,
+        	cdrStream,
         	deserialize_encapsulation,
         	deserialize_sample,
         	endpoint_plugin_qos);
@@ -1714,7 +1721,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
 #*--------*##if ($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp"))
             RTIXCdrFlatSample_initializeEncapsulation(
                     *(char **)sample,
-                    RTICdrStream_getEncapsulationKind(stream));
+                    RTICdrStream_getEncapsulationKind(cdrStream));
         }
 #*----------*##flatPluginDeserializeBody($node)
 #*--------*##else                                    
@@ -1724,18 +1731,26 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
 #*------*##if ($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp") && !$node.isMetpType)    
 #*--------*##flatPluginDeserializeBody($node)
 #*------*##elseif (!($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp")))  
-	result = #deserializeSampleFncName($node)( 
-        	endpoint_data, (sample != NULL)?*sample:NULL,
-        	stream, deserialize_encapsulation, deserialize_sample, 
-        	endpoint_plugin_qos);
+    /*  Depending on the type and the flags used in rtiddsgen, coverity may detect
+        that sample is always null. Since the case is very dependant on
+        the IDL/XML and the configuration we keep the check for safety.
+    */
+    result = #deserializeSampleFncName($node)(
+            endpoint_data,
+            /* coverity[check_after_deref] */
+            (sample != NULL) ? *sample : NULL,
+            cdrStream,
+            deserialize_encapsulation,
+            deserialize_sample,
+            endpoint_plugin_qos);
 #*------*##end
 #*------*##if($node.interpreted!="true")
         if (result) {
-             if (stream->_xTypesState.unassignable) {
+             if (cdrStream->_xTypesState.unassignable) {
                  result = RTI_FALSE;
              }
         }
-        if (!result && stream->_xTypesState.unassignable ) {
+        if (!result && cdrStream->_xTypesState.unassignable ) {
         
             RTICdrLog_exception(
                &RTI_CDR_LOG_UNASSIGNABLE_SAMPLE_OF_TYPE_s, 
@@ -1751,7 +1766,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
         result = RTI_TRUE;
     }
     if (deserialize_encapsulation_requested) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 #*-------*##end
 
@@ -1766,7 +1781,7 @@ ${node.nativeFQNameInModule}Plugin_deserialize(
 #*--*##if (!$node.skipTypePluginCodeGen)
 RTIBool ${node.nativeFQNameInModule}Plugin_skip(
     PRESTypePluginEndpointData endpoint_data,
-    struct RTICdrStream *stream,   
+    struct RTICdrStream *cdrStream,   
     RTIBool skip_encapsulation,
     RTIBool skip_sample, 
     void *endpoint_plugin_qos)
@@ -1774,7 +1789,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_skip(
 #*--*##if ($node.interpreted=="true")
 	return PRESTypePlugin_interpretedSkip(
     		endpoint_data,
-    		stream,   
+    		cdrStream,   
     		skip_encapsulation,
     		skip_sample, 
     		endpoint_plugin_qos);
@@ -1805,11 +1820,11 @@ RTIBool ${node.nativeFQNameInModule}Plugin_skip(
 #*------*##end
 
     if(skip_encapsulation) {
-        if (!RTICdrStream_skipEncapsulation(stream)) {
+        if (!RTICdrStream_skipEncapsulation(cdrStream)) {
             return RTI_FALSE;
         }
 
-        rti_position = RTICdrStream_resetAlignment(stream);
+        rti_position = RTICdrStream_resetAlignment(cdrStream);
     }
 
     if (skip_sample) {
@@ -1819,30 +1834,30 @@ RTIBool ${node.nativeFQNameInModule}Plugin_skip(
 #*----------*##elseif($node.baseTypeFQName) 
 #*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))       
     {
-        char *begin = RTICdrStream_getCurrentPosition(stream);
-        RTICdrStream_pushState(stream, &state, -1);
+        char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+        RTICdrStream_pushState(cdrStream, &state, -1);
 #*------------*##end
         if (!${node.baseTypeFQName}Plugin_skip(endpoint_data,
-                  stream,RTI_FALSE,RTI_TRUE,
+                  cdrStream,RTI_FALSE,RTI_TRUE,
                   endpoint_plugin_qos)) {
               return RTI_FALSE;
         }
 #*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))      
         
         RTICdrStream_popState(
-                stream, &state);
-            RTICdrStream_setCurrentPosition(stream, begin);
+                cdrStream, &state);
+            RTICdrStream_setCurrentPosition(cdrStream, begin);
         }     
 #*------------*##end
 #*------*##end   
 #if($node.extensibility.equals("MUTABLE_EXTENSIBILITY")  && (!$node.constructKind.equals("enum")))       
-        while (end != RTI_TRUE && RTICdrStream_getRemainder(stream) > 0) {
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
 #*--------*##mutableDeserializeHeader()
 #*------*##end   
 
 
 #*------*##if($node.constructKind=="enum")   
-        if (!RTICdrStream_skipEnum(stream)) {
+        if (!RTICdrStream_skipEnum(cdrStream)) {
             return RTI_FALSE;
         }
 #*------*##else   
@@ -1860,14 +1875,14 @@ RTIBool ${node.nativeFQNameInModule}Plugin_skip(
         if (!${node.unionDiscriminatorMap.nativeTypeFQName}Plugin_deserialize_sample(
             endpoint_data,
             &disc,
-            stream, 
+            cdrStream, 
             RTI_FALSE, RTI_TRUE, 
             endpoint_plugin_qos)) {
                 return RTI_FALSE;
         }
 #*------------*##else
         if (!${node.unionDiscriminatorMap.elementDeserializeMethod}(
-            stream, &disc)) {
+            cdrStream, &disc)) {
                 return RTI_FALSE;
         }
 
@@ -1900,14 +1915,18 @@ RTIBool ${node.nativeFQNameInModule}Plugin_skip(
     goto fin;  /* To avoid unused label warning */
 #*------*##end
 fin:
+    /* Coverity reports a dead_error_line. with some types. Depending on the 
+        idl code that we are generating, the coditional block may be dead
+        code. */
+    /* coverity[dead_error_line] */
     if (done != RTI_TRUE && 
-        RTICdrStream_getRemainder(stream) >=
+        RTICdrStream_getRemainder(cdrStream) >=
            RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
         return RTI_FALSE;   
     }
 #*------*##end
     if(skip_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 
     return RTI_TRUE;
@@ -2299,17 +2318,23 @@ ${node.nativeFQNameInModule}Plugin_get_serialized_sample_size(
         current_alignment = initial_alignment;
 #*------*##if($node.languageBinding.equals("FLAT_DATA"))
 #*--------*##flatPluginGetSerializedSampleSizeBody($node)
-#*------*##end
-#*----*##end
+#*------*##else
 	return PRESTypePlugin_interpretedGetSerializedSampleSize(
         	endpoint_data,
         	include_encapsulation,
         	encapsulation_id,
         	current_alignment,
         	sample);
-#*----*##if($node.isMetpType)
+#*------*##end
     }
-#*----*##end        	
+#*----*##else
+	return PRESTypePlugin_interpretedGetSerializedSampleSize(
+        	endpoint_data,
+        	include_encapsulation,
+        	encapsulation_id,
+        	current_alignment,
+        	sample);
+#*----*##end
 #*--*##else ## not interpreted
 #*------*##if($node.constructKind=="enum")
 
@@ -2413,7 +2438,7 @@ RTIBool
 ${node.nativeFQNameInModule}Plugin_serialize_key_for_keyhash(
     PRESTypePluginEndpointData endpoint_data,
     const ${node.nativeFQNameInModule} *sample, 
-    struct RTICdrStream *stream,    
+    struct RTICdrStream *cdrStream,    
     RTIEncapsulationId encapsulation_id,
     void *endpoint_plugin_qos)
 {
@@ -2423,13 +2448,13 @@ ${node.nativeFQNameInModule}Plugin_serialize_key_for_keyhash(
     return PRESTypePlugin_interpretedSerializeKeyForKeyhash(
             endpoint_data,
             sample, 
-            stream,    
+            cdrStream,    
             encapsulation_id,
             endpoint_plugin_qos);
 #*--*##else
     return ${node.nativeFQName}Plugin_serialize_key(endpoint_data,
             sample, 
-            stream,    
+            cdrStream,    
             RTI_FALSE,
             encapsulation_id,
             RTI_TRUE,
@@ -2443,7 +2468,7 @@ RTIBool
 ${node.nativeFQNameInModule}Plugin_serialize_key(
     PRESTypePluginEndpointData endpoint_data,
     const ${node.nativeFQNameInModule} *sample, 
-    struct RTICdrStream *stream,    
+    struct RTICdrStream *cdrStream,    
     RTIBool serialize_encapsulation,
     RTIEncapsulationId encapsulation_id,
     RTIBool serialize_key,
@@ -2463,7 +2488,7 @@ ${node.nativeFQNameInModule}Plugin_serialize_key(
     return PRESTypePlugin_interpretedSerializeKey(
         	endpoint_data,
         	sample, 
-        	stream,    
+        	cdrStream,    
         	serialize_encapsulation,
         	encapsulation_id,
         	serialize_key,
@@ -2473,7 +2498,7 @@ ${node.nativeFQNameInModule}Plugin_serialize_key(
 #*--*##else
 #*------*##if($node.constructKind=="enum")
     return  ${node.nativeFQName}Plugin_serialize(
-            endpoint_data, sample, stream, 
+            endpoint_data, sample, cdrStream, 
             serialize_encapsulation, encapsulation_id, 
             serialize_key, endpoint_plugin_qos);
 
@@ -2516,44 +2541,44 @@ ${node.nativeFQNameInModule}Plugin_serialize_key(
             struct RTICdrStreamState state;
 #*------------*##end            
     
-            if (RTICdrStream_isDirty(stream)) {
-                ignoreListEndId = stream->_xTypesState.skipListEndId; 
+            if (RTICdrStream_isDirty(cdrStream)) {
+                ignoreListEndId = cdrStream->_xTypesState.skipListEndId; 
             } else {
                 /* Top level */
-                RTICdrStream_setDirtyBit(stream,RTI_TRUE);
+                RTICdrStream_setDirtyBit(cdrStream,RTI_TRUE);
 
 #*------------*##if ($envMap.mutExtCode)
-                stream->_xTypesState.useExtendedId = RTI_TRUE;
+                cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
 #*------------*##else
                 if (PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(endpoint_data) > 65535) {
-                    stream->_xTypesState.useExtendedId = RTI_TRUE;
+                    cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
                 } else {
-                    stream->_xTypesState.useExtendedId = RTI_FALSE;
+                    cdrStream->_xTypesState.useExtendedId = RTI_FALSE;
                 }
 #*------------*##end
             }
 
 #*------------*##if(!$node.hasKeyBaseType || $envMap.serializeSentinelOnBase)
-            stream->_xTypesState.skipListEndId = RTI_FALSE;
+            cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
 #*------------*##end  
 #*----------*##end  
 
 #*------------*##if($node.hasKeyBaseType)  
 #*--------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
 #*----------------*##if(!$envMap.serializeSentinelOnBase)
-            stream->_xTypesState.skipListEndId = RTI_TRUE;
+            cdrStream->_xTypesState.skipListEndId = RTI_TRUE;
 #*----------------*##else
-            stream->_xTypesState.skipListEndId = RTI_FALSE;
+            cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
 #*----------------*##end
 #*--------------*##end
 		    if (!${node.baseTypeFQName}Plugin_serialize_key(endpoint_data, 
-		             (const ${node.baseTypeFQName}*)sample, stream, RTI_FALSE, 
+		             (const ${node.baseTypeFQName}*)sample, cdrStream, RTI_FALSE, 
 		             encapsulation_id,RTI_TRUE, endpoint_plugin_qos)) {
 		        return RTI_FALSE;
 		    }
 #*--------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
                            !$envMap.serializeSentinelOnBase)
-            stream->_xTypesState.skipListEndId = RTI_FALSE;
+            cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
 #*--------------*##end
 #*------------*##end
 
@@ -2567,7 +2592,7 @@ ${node.nativeFQNameInModule}Plugin_serialize_key(
     }
 
     if(serialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 
     return RTI_TRUE;
@@ -2582,7 +2607,7 @@ ${node.nativeFQNameInModule}Plugin_serialize_key(
 RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} *sample, 
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_key,
     void *endpoint_plugin_qos)
@@ -2593,7 +2618,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
 	return PRESTypePlugin_interpretedDeserializeKey(
         	endpoint_data,
         	sample,
-        	stream,
+        	cdrStream,
         	deserialize_encapsulation,
         	deserialize_key,
         	endpoint_plugin_qos);
@@ -2604,7 +2629,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
 
 #*------*##if($node.constructKind=="enum")
     return  ${node.nativeFQName}Plugin_deserialize_sample(
-            endpoint_data, sample, stream, deserialize_encapsulation, 
+            endpoint_data, sample, cdrStream, deserialize_encapsulation, 
             deserialize_key, endpoint_plugin_qos);
 #*------*##else
     char * rti_position = NULL;
@@ -2618,7 +2643,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
 #*--*##end    
     
 #*--*##deserializeEncapsulation ($node)
-    if (deserialize_key) {
+    if (deserialize_key && sample != NULL) {
 #*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&$node.hasKey )
         DDS_UnsignedLong memberId = 0;
         DDS_UnsignedLong length = 0;
@@ -2636,20 +2661,20 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
 #*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
                        !$envMap.serializeSentinelOnBase)
     {
-        char *begin = RTICdrStream_getCurrentPosition(stream);
-        RTICdrStream_pushState(stream, &state, -1);
+        char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+        RTICdrStream_pushState(cdrStream, &state, -1);
 #*----------*##end
    
         if (!${node.baseTypeFQName}Plugin_deserialize_key_sample(endpoint_data,
-                (${node.baseTypeFQName}*)sample,stream,RTI_FALSE,RTI_TRUE,endpoint_plugin_qos)) {
+                (${node.baseTypeFQName}*)sample,cdrStream,RTI_FALSE,RTI_TRUE,endpoint_plugin_qos)) {
             return RTI_FALSE;
         }    
 
 #*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
                        !$envMap.serializeSentinelOnBase)
         RTICdrStream_popState(
-                stream, &state);
-            RTICdrStream_setCurrentPosition(stream, begin);
+                cdrStream, &state);
+            RTICdrStream_setCurrentPosition(cdrStream, begin);
     }     
 #*----------*##end    
 #*--------*##end        
@@ -2658,7 +2683,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
     }
 
     if(deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 
     return RTI_TRUE;
@@ -2679,7 +2704,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} **sample, 
     RTIBool * drop_sample,
-    struct RTICdrStream *stream,
+    struct RTICdrStream *cdrStream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_key,
     void *endpoint_plugin_qos)
@@ -2687,12 +2712,12 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key(
     RTIBool result;
 #*--------*##if ($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp"))
     void* return_loaned_buffer = 
-            (*(char **)sample == RTICdrStream_getBuffer(stream)) ? 
+            (*(char **)sample == RTICdrStream_getBuffer(cdrStream)) ? 
                     *(void **)sample : NULL;        
 #*--------*##end    
     if (drop_sample) {} /* To avoid warnings */
 #*--------*##if($node.interpreted!="true")
-    stream->_xTypesState.unassignable = RTI_FALSE;
+    cdrStream->_xTypesState.unassignable = RTI_FALSE;
 #*--------*##end
 #*--*##if($node.isMetpType)
     if (deserialize_key) {
@@ -2717,20 +2742,29 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key(
     if (deserialize_encapsulation && deserialize_key) {
         RTIOsapiMemory_copy(
                 (void *) *sample,
-                RTICdrStream_getBuffer(stream),
+                RTICdrStream_getBuffer(cdrStream),
                 RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
     } else if (deserialize_key) {
         RTIXCdrFlatSample_initializeEncapsulation(
                 *reinterpret_cast<char **>(sample),
-                RTICdrStream_getEncapsulationKind(stream));    
+                RTICdrStream_getEncapsulationKind(cdrStream));
     }
 #*--*##end
+    /*  Depending on the type and the flags used in rtiddsgen, coverity may detect
+        that sample is always null. Since the case is very dependant on
+        the IDL/XML and the configuration we keep the check for safety.
+    */
     result= #deserializeKeySampleFncName($node)(
-        endpoint_data, (sample != NULL)?*sample:NULL, stream,
-        deserialize_encapsulation, deserialize_key, endpoint_plugin_qos);
+        endpoint_data,
+        /* coverity[check_after_deref] */
+        (sample != NULL) ? *sample : NULL,
+        cdrStream,
+        deserialize_encapsulation,
+        deserialize_key,
+        endpoint_plugin_qos);
 #*--------*##if($node.interpreted!="true")
     if (result) {
-        if (stream->_xTypesState.unassignable) {
+        if (cdrStream->_xTypesState.unassignable) {
             result = RTI_FALSE;
         }
     }
@@ -2740,7 +2774,7 @@ RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key(
         REDAFastBufferPool_returnBuffer(
                 PRESTypePluginDefaultEndpointData_getFstSampleDataPool(
                         endpoint_data),
-                RTICdrStream_getBuffer(stream));  
+                RTICdrStream_getBuffer(cdrStream));
     }        
 #*----*##end  
     return result;    
@@ -2931,7 +2965,7 @@ RTIBool
 ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
     PRESTypePluginEndpointData endpoint_data,
     ${node.nativeFQNameInModule} *sample,
-    struct RTICdrStream *stream, 
+    struct RTICdrStream *cdrStream, 
     RTIBool deserialize_encapsulation,  
     RTIBool deserialize_key, 
     void *endpoint_plugin_qos)
@@ -2940,7 +2974,7 @@ ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
 	return PRESTypePlugin_interpretedSerializedSampleToKey(
         	endpoint_data,
         	sample,
-        	stream, 
+        	cdrStream, 
         	deserialize_encapsulation,  
         	deserialize_key, 
         	endpoint_plugin_qos);
@@ -2949,7 +2983,7 @@ ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
 #*------*##if($node.constructKind=="enum")
 
     return  ${node.nativeFQName}Plugin_deserialize_sample(
-            endpoint_data, sample, stream, deserialize_encapsulation, 
+            endpoint_data, sample, cdrStream, deserialize_encapsulation, 
             deserialize_key, endpoint_plugin_qos);
 
 #*------*##else
@@ -2980,16 +3014,16 @@ ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
 #*--------*##end
 #*----------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType") 
                  && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")))
-   if (stream == NULL) {
+   if (cdrStream == NULL) {
        error = RTI_TRUE;
        goto fin;
    }
 #*----------*##end
    if(deserialize_encapsulation) {
-        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
+        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(cdrStream)) {
             return RTI_FALSE;
         }
-        rti_position = RTICdrStream_resetAlignment(stream);
+        rti_position = RTICdrStream_resetAlignment(cdrStream);
     }
 
     if (deserialize_key) {
@@ -2998,19 +3032,19 @@ ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
                   &&((${node.hasKeyBaseType})||($node.hasKey && $node.baseTypeFQName)))
               
   {
-                    char *begin = RTICdrStream_getCurrentPosition(stream);
+                    char *begin = RTICdrStream_getCurrentPosition(cdrStream);
                     RTICdrStream_pushState(
-                        stream, &state, -1);
+                        cdrStream, &state, -1);
 #*----------*##end      
 #*----------*##if(${node.hasKeyBaseType})       
         if (!${node.baseTypeFQName}Plugin_serialized_sample_to_key(endpoint_data,
                 (${node.baseTypeFQName} *)sample,
-                stream, RTI_FALSE, RTI_TRUE,
+                cdrStream, RTI_FALSE, RTI_TRUE,
                 endpoint_plugin_qos)) {
             return RTI_FALSE;
         }
 #*----------*##elseif($node.hasKey && $node.baseTypeFQName) 
-        if (!${node.baseTypeFQName}Plugin_skip(endpoint_data, stream,
+        if (!${node.baseTypeFQName}Plugin_skip(endpoint_data, cdrStream,
                 RTI_FALSE, RTI_TRUE,
                 endpoint_plugin_qos)) {
             return RTI_FALSE;
@@ -3020,8 +3054,8 @@ ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
 #*----------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
                   &&((${node.hasKeyBaseType})||($node.hasKey && $node.baseTypeFQName)))
         RTICdrStream_popState(
-                        stream, &state);
-                    RTICdrStream_setCurrentPosition(stream, begin);
+                        cdrStream, &state);
+                    RTICdrStream_setCurrentPosition(cdrStream, begin);
                     }
 #*----------*##end  
       
@@ -3034,8 +3068,12 @@ ${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
       done = RTI_TRUE;
 fin:
     if(!error) {
+        /* Coverity reports a dead_error_line. with some types. Depending on the 
+        idl code that we are generating, the coditional block may be dead
+        code. */
+        /* coverity[dead_error_line] */
         if (done != RTI_TRUE && 
-            RTICdrStream_getRemainder(stream) >=
+            RTICdrStream_getRemainder(cdrStream) >=
                 RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
             return RTI_FALSE;   
         }
@@ -3045,7 +3083,7 @@ fin:
 #*----------*##end                
 
     if(deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
                 
                 
@@ -3337,7 +3375,7 @@ ${envMap.POUND_CHAR}endif
         (NDDS_WriterHistory_Allocator_returnBufferWithParams_fn)
         ${node.nativeFQNameInModule}Plugin_return_buffer_w_params;
     plugin->getBuffer = NULL;
-    plugin->returnBuffer = NULL;        
+    plugin->returnBuffer = NULL;
 #*--------*##else
     plugin->getBuffer = 
         (PRESTypePluginGetBufferFunction)
@@ -3346,7 +3384,7 @@ ${envMap.POUND_CHAR}endif
         (PRESTypePluginReturnBufferFunction)
         ${node.nativeFQNameInModule}Plugin_return_buffer;
     plugin->getBufferWithParams = NULL;
-    plugin->returnBufferWithParams = NULL;  
+    plugin->returnBufferWithParams = NULL;
 #*--------*##end
     plugin->getSerializedSampleSizeFnc =
         (PRESTypePluginGetSerializedSampleSizeFunction)

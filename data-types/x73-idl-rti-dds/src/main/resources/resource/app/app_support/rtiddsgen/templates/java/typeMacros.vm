@@ -444,9 +444,9 @@ for(int i__ = 0; i__< $member__.name#arraydimensionListsWithIndex($member__).siz
 #*-----*##copyDirectiveNoBegin ($member)
 #*-----*##elseif(!$member.constructKind.equals("const"))
 #*-------*##if($member.isOptional)
-#*-----*##copyOptionalMember($member " ")
+#*-----*##copyOptionalMember($member)
 #*-------*##else
-#*-----*##copyMember($member " ")
+#*-----*##copyMember($member)
 #*-------*##end
 #*----*##end ## if
 #*--*##end ## for
@@ -481,9 +481,9 @@ for(int i__ = 0; i__< $member__.name#arraydimensionListsWithIndex($member__).siz
 #*--------*##end
 #*------*##set($pos = "-1")
 #*-------*##if($member.isOptional)
-#*-----*##copyOptionalMember($member " ")
+#*-----*##copyOptionalMember($member)
 #*-------*##else
-#*-----*##copyMember($member " ")
+#*-----*##copyMember($member)
 #*-------*##end
 #*------*##end ## for
 #*----*##end ## if
@@ -497,7 +497,7 @@ for(int i__ = 0; i__< $member__.name#arraydimensionListsWithIndex($member__).siz
 ##  Macro to copy the a member
 ##-----------------------------------------------------------------------------
 
-#macro(copyMember $member $kindCopy)
+#macro(copyMember $member)
 #*--*##if($member.seqSize)
 #*----*##openForLoopIfArray($member)
 typedDst.$member.name#arraydimensionListsWithIndex($member).copy_from(typedSrc.$member.name#arraydimensionListsWithIndex($member));
@@ -505,13 +505,8 @@ typedDst.$member.name#arraydimensionListsWithIndex($member).copy_from(typedSrc.$
 #elseif($member.dimensionList)
 #*--*##if($member.typeKind=="user")
 #*--*##openForLoopIfArray($member)
-#if ($kindCopy.equals("coypyData"))
-typedDst.${member.name}#arraydimensionListsWithIndex($member) = ($member.nativeTypeFQName) #*
-*#${member.nativeTypeFQName}TypeSupport.get_instance().copy_data(typedDst.$member.name#arraydimensionListsWithIndex($member),typedSrc.$member.name#arraydimensionListsWithIndex($member));
-#else
 typedDst.${member.name}#arraydimensionListsWithIndex($member) = ($member.nativeTypeFQName) typedDst.${member.name}#*
 *##arraydimensionListsWithIndex($member).copy_from(typedSrc.$member.name#arraydimensionListsWithIndex($member));
-#end
 #*--*##closeForLoopIfArray($member)
 #*--*##else
 #*--*##openForLoopIfArrayForCopy($member)
@@ -522,11 +517,7 @@ typedDst.${member.name}#arraydimensionListsWithIndex($member) = ($member.nativeT
 #*--*##end
 
 #elseif($member.typeKind=="user")
-#if ($kindCopy.equals("coypyData"))
-typedDst.${member.name} = ($member.nativeTypeFQName) ${member.nativeTypeFQName}TypeSupport.get_instance().copy_data(typedDst.$member.name,typedSrc.$member.name);
-#else
 typedDst.${member.name} = ($member.nativeTypeFQName) typedDst.${member.name}.copy_from(typedSrc.$member.name);
-#end
 #else       
 typedDst.$member.name = typedSrc.$member.name;
 #end        
@@ -536,7 +527,7 @@ typedDst.$member.name = typedSrc.$member.name;
 ##  Macro to copy optional member
 ##-----------------------------------------------------------------------------
 
-#macro (copyOptionalMember $member $kindCopy)
+#macro (copyOptionalMember $member)
 #** The copy for optional primitives is just the copyMember **#
 #if(${member.typeKind}=="user" || $member.seqSize || $member.dimensionList)
 if (typedDst.$member.name == null && typedSrc.$member.name !=null){

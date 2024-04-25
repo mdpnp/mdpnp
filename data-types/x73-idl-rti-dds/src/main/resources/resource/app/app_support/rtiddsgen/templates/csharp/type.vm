@@ -71,11 +71,11 @@ public class $node.name : #if($node.baseTypeFQName) $node.baseTypeFQName,#end IE
         public ${node.name}()
         {
 #*--*##foreach($member in $node.memberFieldMapList)
-#*----*##if((!$member.isOptional || $member.seqSize) &&
-                            ($member.typeKind.equals("user") ||
-                            $member.seqSize ||
-                            $member.arrayTotalSize ||
-                            $member.explicitDefaultValue))
+#*----*##if((!$member.isOptional) &&
+                    ($member.typeKind.equals("user") ||
+                    $member.seqSize ||
+                    $member.arrayTotalSize ||
+                    $member.explicitDefaultValue))
 #*------*##if($member.directive)
 #*--------*##handleCopyDirective($member.directive $member.value false)
 #*------*##else
@@ -126,7 +126,18 @@ $member.name = #initializeMember($member, true);
 #*------*##if($member.directive)
 #*--------*##handleCopyDirective($member.directive $member.value false)
 #*------*##else
+#*--------*##if($member.isOptional && ($member.seqSize || $member.arrayTotalSize))
+            if (this.${member.name} != null)
+            {
+#*--------*##end
             hash.Add(#getHash($member));
+#*--------*##if($member.isOptional && ($member.seqSize || $member.arrayTotalSize))
+            }
+            else
+            {
+                hash.Add(-1);
+            }
+#*--------*##end
 #*------*##end
 #*----*##end
 

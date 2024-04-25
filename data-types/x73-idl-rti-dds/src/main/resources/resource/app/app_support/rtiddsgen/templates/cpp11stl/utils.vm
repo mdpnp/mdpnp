@@ -91,12 +91,14 @@
 #*----*##if (!$member.directive)
 #*------*##assignMemberVariables ($member $node)
 #*------*##assignCppMemberVariables ($member $node.languageBinding $foreach.count)
+#*------*##assignParameterByReference ($member $node)
 #*----*##end
 #*--*##end##foreach
 #*--*##foreach ($member in $node.memberFieldMapList)
 #*----*##if (!$member.directive)
 #*------*##assignMemberVariables ($member $node)
 #*------*##assignCppMemberVariables ($member $node.languageBinding $foreach.count)
+#*------*##assignParameterByReference ($member $node)
 #*----*##end
 #*--*##end##foreach
 #*--*##foreach ($member in $node.typeCodeMemberFieldMapList)
@@ -116,7 +118,9 @@
 #*----*##set($node.unionStructName="Union_")
 #*----*##set($node.needsSwitchCode=((($node.needsDefaultCase && $node.memberFieldMapList.size() > 0)
                 || ($node.memberFieldMapList.size() > 1 && !$node.needsDefaultCase))))
-#*--*##end  
+#*--*##end
+#*--*##set($node.useSettersAndGetters=((!$envMap.legacyMapping.equals("legacy") && $node.constructKind.equals("union")))
+                || $envMap.legacyMapping.equals("legacy"))
 #end##macro
 
 
@@ -124,10 +128,14 @@
 #*--*##set($aliasTag ="_AliasTag_t")
 #*--*##if (!$member.initialized)
 ##We check that this set is only done once
-#*----*##set($member.initialized="true") 
+#*----*##set($member.initialized="true")
 #*--*##end
 #*--*##set($member.index=$index)
-#*--*##set($member.cName="m_${member.name}_")
+#*--*##if($envMap.legacyMapping)
+#*----*##set($member.cName="m_${member.name}_")
+#*--*##else
+#*----*##set($member.cName=${member.name})
+#*--*##end
 #*--*##if($member.typeKind=="user")
 #*----*##if($member.isAlias)
 #*------*##set($member.typeCode="&::rti::topic::dynamic_type< ${member.nativeTypeFQName}${aliasTag}>::get().native()")
@@ -140,7 +148,12 @@
 ## We need to change the defaultValue for typedef wstring if not it will use
 ## {0}
 #*------*##if($member.typeKindResolved=="wstring")
-#*----------*##set($member.defaultValue="L""""")
+#*--------*##if($envMap.legacyMapping)
+#*----------*##set($member.specConstantTypeName="std::wstring")
+#*--------*##else
+#*----------*##set($member.specConstantTypeName="::omg::types::wstring_view")
+#*--------*##end
+#*--------*##set($member.defaultValue="L""""")
 #*------*##end
 #*--*##else
 #*------*##set($member.elementSerializeMethod="::rti::topic::cdr::serialize")
@@ -210,8 +223,18 @@
 #*------*##set($member.specTypeName="::rti::core::LongDouble")
 #*------*##set($member.defaultValue="0.0")
 #*----*##elseif($member.nativeTypeFQName=="std::string")
+#*--------*##if($envMap.legacyMapping)
+#*----------*##set($member.specConstantTypeName="std::string")
+#*--------*##else
+#*----------*##set($member.specConstantTypeName="::omg::types::string_view")
+#*--------*##end
 #*------*##set($member.specTypeName="std::string")
 #*----*##elseif($member.nativeTypeFQName=="dds::core::wstring")
+#*--------*##if($envMap.legacyMapping)
+#*----------*##set($member.specConstantTypeName="std::wstring")
+#*--------*##else
+#*----------*##set($member.specConstantTypeName="::omg::types::wstring_view")
+#*--------*##end
 #*------*##set($member.specTypeName="std::wstring")
 #*------*##set($member.defaultValue="L""""")
 #*----*##elseif($member.nativeTypeFQName=="void")
@@ -236,11 +259,10 @@
 #*--*##set($member.completeSpecTypeName="#declareSpecArrayType($member)")
 #*--*##end
 #*--*##if($member.isOptional)
-#*----*##if($member.completeSpecTypeName.endsWith(">"))
-#** If the spectTypeNamealready contains a > we need to introduce a space **#
-#*------*##set($member.completeSpecTypeName="::dds::core::optional< $member.completeSpecTypeName >")
+#*----*##if($envMap.legacyMapping)
+#*--------*##set($member.completeSpecTypeName="::dds::core::optional< $member.completeSpecTypeName >")
 #*----*##else
-#*------*##set($member.completeSpecTypeName="::dds::core::optional< $member.completeSpecTypeName >")
+#*--------*##set($member.completeSpecTypeName="::omg::types::optional< $member.completeSpecTypeName >")
 #*----*##end
 #*--*##end
 
@@ -275,6 +297,10 @@
 #*----*##end
 #*--*##end
 
+#*--*##if(!$member.specConstantTypeName)
+#*----*##set($member.specConstantTypeName=$member.specTypeName)
+#*--*##end
+
 #end
 
 #macro(declareSpecArrayType $member)
@@ -285,9 +311,19 @@
 #end
 
 #macro(declareSpecSeqType $member)
-#if($member.seqSize == "-1" || $member.useVector || $envMap.alwaysUseStdVector)
-std::vector< $member.specTypeName >#else
-::rti::core::bounded_sequence< $member.specTypeName, $member.seqSize >#end
+#*--*##if($envMap.legacyMapping)
+#*----*##if($member.seqSize == "-1" || $member.useVector || $envMap.alwaysUseStdVector)
+std::vector< $member.specTypeName >#*
+#*----*##else
+::rti::core::bounded_sequence< $member.specTypeName, $member.seqSize >#*
+#*----*##end
+#*--*##else
+#*----*##if($member.seqSize == "-1" || $member.useVector || $envMap.alwaysUseStdVector)
+::omg::types::sequence< $member.specTypeName >#*
+#*----*##else
+::omg::types::bounded_sequence< $member.specTypeName, $member.seqSize >#*
+#*----*##end
+#*--*##end
 #end
 
 
@@ -302,6 +338,21 @@ $element.value
 
 #macro (copyAllDirectives $element)
 $element.value
+#end
+
+#macro (assignParameterByReference $member__ $type__)
+#*--*##if($member__.complexType && $envMap.legacyMapping)
+#*----*##set ($member__.setterByReference = true)
+#*--*##elseif($member__.complexType
+                    && !$envMap.legacyMapping
+                    && $type__.constructKind.equals("union")
+                    && $member__.resolvedTypeEnum)
+#*----*##set ($member__.setterByReference = false)
+#*--*##elseif($member__.complexType && !$envMap.legacyMapping)
+#*----*##set ($member__.setterByReference = true)
+#*--*##else
+#*----*##set ($member__.setterByReference = false)
+#*--*##end
 #end
 
 ##******************************************************************************
@@ -347,5 +398,17 @@ ${envMap.POUND_CHAR}endif
          * Prevents compiler warnings when discriminator is an enum.
          */
     }
+#*--*##end
+#end
+
+#macro(setMapping)
+#*--*##if(!$envMap.mapping || $envMap.mapping.equals("legacy"))
+#*----*##set($envMap.legacyMapping="legacy")
+#*--*##end
+#end
+
+#macro(parenthesisIfNeeded $node__)
+#*--*##if($node__.useSettersAndGetters)
+#*----*#()#*
 #*--*##end
 #end

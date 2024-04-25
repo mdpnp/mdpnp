@@ -103,6 +103,7 @@ ${envMap.POUND_CHAR}endif
 
 #*--*##defineResourceClassIdSnippet("GET_METRIC_GROUP_INFO_SNIPPET" "get_metric_group_info") 
 #*--*##defineResourceClassIdSnippet("GET_RESOURCE_INFO_SNIPPET" "get_resource_info")
+#*--*##defineResourceClassIdSnippet("GET_METRIC_INFO_SNIPPET" "get_metric_info")
 
 #foreach($node in $constructMapList)
 #*--*##if($node.constructKind=="directive") ##if it is a directive we print its value

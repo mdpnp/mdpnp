@@ -178,7 +178,7 @@ new int[] {#foreach($element in $member.labelList)#*
 
 #macro (typeCodeBasic $member)
 #if($member.typeKind.equals("user"))#*
-*#${member.nativeTypeFQName}TypeCode.VALUE#*-
+*#${member.nativeTypeFQName}#addtypeCodeValueSuffix($member)#*-
 --*##elseif($member.strSize)#*- is a string or wstring
 --*#new TypeCode(${member.typeCode},#getStrSize($member "typeCode"))#*-
 --*##else#*-
@@ -210,10 +210,10 @@ tc = TypeCodeFactory.TheTypeCodeFactory.create_#getconstructKind($constructMap)_
 
 #macro (getLastTypeCode $constructMap)
 #*--*##if($constructMap.constructKind.equals("valueType") || $constructMap.baseTypeFQName)VM_NONE.VALUE,#*
-------*##if($constructMap.baseTypeFQName)${constructMap.typeCodeBaseTypeFQName}TypeCode.VALUE,#else#* *#TypeCode.TC_NULL,#end#*
+------*##if($constructMap.baseTypeFQName)${constructMap.typeCodeBaseTypeFQName}#addtypeCodeValueSuffix($member),#else#* *#TypeCode.TC_NULL,#end#*
 ----*##elseif($constructMap.constructKind.equals("alias"))#typeCodeMember($constructMap.typeCodeFirstMember),#*
 ----*##elseif($constructMap.constructKind.equals("union"))#*
-------*##if($constructMap.typeCodeUnionDiscriminatorMap.typeKind!="builtin")${constructMap.typeCodeUnionDiscriminatorMap.nativeTypeFQName}TypeCode.VALUE#*
+------*##if($constructMap.typeCodeUnionDiscriminatorMap.typeKind!="builtin")${constructMap.typeCodeUnionDiscriminatorMap.nativeTypeFQName}#addtypeCodeValueSuffix($member)#*
 ------*##else$constructMap.typeCodeUnionDiscriminatorMap.typeCode#end,#if($constructMap.defaultIndex)$constructMap.defaultIndex,#else -1,#end#*
 *##end#end
 
@@ -325,6 +325,14 @@ new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${mem
 #*----*##if($member.tcKind!="TCKind.TK_NULL")
 , memberAnnotation#*
 #*----*##end
+#*--*##end
+#end
+
+#macro(addtypeCodeValueSuffix $member__)
+#*--*##if($member__.isRecursiveMember)
+TypeCode.VALUE_WO_MEMBERS
+#*--*##else
+TypeCode.VALUE
 #*--*##end
 #end
 ##-----------------------------------------------------------------------------

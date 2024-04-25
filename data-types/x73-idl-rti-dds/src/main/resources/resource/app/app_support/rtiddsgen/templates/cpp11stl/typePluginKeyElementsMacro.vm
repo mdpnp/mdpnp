@@ -71,7 +71,7 @@
 if (!${struct.nativeFQName}Plugin_serialize(
          endpoint_data,
          sample,
-         stream,
+         cdrStream,
          RTI_FALSE, encapsulation_id,
          RTI_TRUE,
          endpoint_plugin_qos)) {
@@ -91,7 +91,7 @@ if (!${struct.nativeFQName}Plugin_serialize(
 #set($deserializeSuffix="deserialize_key_sample")
 #*--*##if($struct.hasKey || $struct.constructKind=="alias")
 #*------*##if($struct.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
-        while (end != RTI_TRUE && RTICdrStream_getRemainder(stream) > 0) {
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
 #*--------*##mutableDeserializeHeader()
             switch (memberId) {
 #*------*##end
@@ -113,14 +113,14 @@ if (!${struct.nativeFQName}Plugin_serialize(
                 }break;
            }
             
-          RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+          RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
    
 }
 #*------*##end
 #*--*##else
 #*----*##if(!${struct.hasKeyBaseType})   
 if (!${struct.nativeFQName}Plugin_deserialize_sample(
-         endpoint_data, sample, stream, 
+         endpoint_data, sample, cdrStream, 
          RTI_FALSE, RTI_TRUE, 
          endpoint_plugin_qos)) {
          return RTI_FALSE;
@@ -137,7 +137,7 @@ if (!${struct.nativeFQName}Plugin_deserialize_sample(
 #set($deserializeSuffix="serialized_sample_to_key")
 #*--*##if($struct.hasKey || $struct.hasKeyBaseType|| $struct.constructKind=="alias")
 #*------*##if($struct.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-        while (end != RTI_TRUE && RTICdrStream_getRemainder(stream) > 0) {
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
 #*--------*##mutableDeserializeHeader()
             switch (memberId) {
 #*------*##end
@@ -165,7 +165,7 @@ if (!${struct.nativeFQName}Plugin_deserialize_sample(
                 }break;
            }
             
-          RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+          RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
    
 }
 #*------*##end
@@ -173,7 +173,7 @@ if (!${struct.nativeFQName}Plugin_deserialize_sample(
 #*--*##else
 #*------*##if(!${struct.hasKeyBaseType}) 
 if (!${struct.nativeFQName}Plugin_deserialize_sample(
-         endpoint_data, sample, stream, RTI_FALSE, 
+         endpoint_data, sample, cdrStream, RTI_FALSE, 
          RTI_TRUE, endpoint_plugin_qos)) {
          return RTI_FALSE;
 }
@@ -236,7 +236,7 @@ ${struct.nativeFQNameInModule}Plugin_instance_to_key(
 
 #*----*##foreach($member2 in $struct.memberFieldMapList)
 #*------*##if($member2.isKey)
-#*--------*#dst->${member2.name}() = src->${member2.name}();
+#*--------*#dst->${member2.name}#parenthesisIfNeeded($node) = src->${member2.name}#parenthesisIfNeeded($node);
 #*------*##end
 #*----*##end
     return RTI_TRUE;
@@ -270,7 +270,7 @@ ${struct.nativeFQNameInModule}Plugin_key_to_instance(
 #*----*##end
 #*----*##foreach($member2 in $struct.memberFieldMapList)
 #*------*##if($member2.isKey)
-#*--------*#dst->${member2.name}() = src->${member2.name}();
+#*--------*#dst->${member2.name}#parenthesisIfNeeded($node) = src->${member2.name}#parenthesisIfNeeded($node);
 #*------*##end
 #*----*##end
     return RTI_TRUE;
@@ -348,6 +348,13 @@ ${struct.nativeFQNameInModule}Plugin_instance_to_keyhash(
         }
 
         RTICdrStream_set(md5Stream, buffer, size);
+        /*
+         * Coverity reports a possible negative value returned when calling
+         * RTICdrStream_getBufferLength(md5Stream), although it is checked
+         * if md5Stream or buffer are NULL beforehand.
+         */
+        /* coverity[negative_returns : FALSE] */
+        /* coverity[overrun-buffer-arg : FALSE] */
         RTIOsapiMemory_zero(
             RTICdrStream_getBuffer(md5Stream),
             RTICdrStream_getBufferLength(md5Stream));
@@ -399,7 +406,7 @@ ${struct.nativeFQNameInModule}Plugin_instance_to_keyhash(
 RTIBool 
 ${struct.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
     PRESTypePluginEndpointData endpoint_data,
-    struct RTICdrStream *stream, 
+    struct RTICdrStream *cdrStream, 
     DDS_KeyHash_t *keyhash,
     RTIBool deserialize_encapsulation,
     void *endpoint_plugin_qos)
@@ -411,7 +418,7 @@ ${struct.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
     
     if(deserialize_encapsulation) {
       if (!METypePlugin_deserializeAndSetCdrEncapsulation(
-                endpoint_data, stream, &metp)) {
+                endpoint_data, cdrStream, &metp)) {
           return RTI_FALSE;
       }
       deserialize_encapsulation = RTI_FALSE;  
@@ -421,7 +428,7 @@ ${struct.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
                 endpoint_data,
                 (void**)&sample,
                 NULL,
-                stream,
+                cdrStream,
                 RTI_FALSE,
                 RTI_TRUE,
                 endpoint_plugin_qos)) {
@@ -431,7 +438,7 @@ ${struct.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
         sample = (${struct.nativeFQNameInModule} *) 
                 METypePlugin_getTempSample(endpoint_data);    
 #*----*##elseif ($node.languageBinding.equals("FLAT_DATA"))
-    sample = (${struct.nativeFQNameInModule} *)RTICdrStream_getBuffer(stream);
+    sample = (${struct.nativeFQNameInModule} *)RTICdrStream_getBuffer(cdrStream);
 #*----*##else
     sample = (${struct.nativeFQNameInModule} *)
                 PRESTypePluginDefaultEndpointData_getTempSample(endpoint_data);
@@ -443,7 +450,7 @@ ${struct.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
     if (!#serializeSampleToKeyFncName($node)(
             endpoint_data,
             sample,
-            stream, 
+            cdrStream, 
             deserialize_encapsulation, 
             RTI_TRUE,
             endpoint_plugin_qos)) {
@@ -461,7 +468,7 @@ ${struct.nativeFQNameInModule}Plugin_serialized_sample_to_keyhash(
             keyhash,
             sample,
 #*----*##if (!$node.languageBinding.equals("FLAT_DATA"))    
-            RTICdrStream_getEncapsulationKind(stream))) {
+            RTICdrStream_getEncapsulationKind(cdrStream))) {
 #*----*##else    
             RTI_CDR_ENCAPSULATION_ID_CDR2_BE)) {
 #*----*##end
@@ -502,7 +509,7 @@ try
     if (endpoint_plugin_qos) {} /* To avoid warnings */
 #*----*##if(($struct.constructKind=="struct" ||$struct.constructKind=="valueType") 
              && (!$struct.extensibility.equals("MUTABLE_EXTENSIBILITY")))
-    if (stream == NULL) {
+    if (cdrStream == NULL) {
        error = RTI_TRUE;
        goto fin;
    }
@@ -519,14 +526,14 @@ try
     if(deserialize_encapsulation) {
 #*--*##if($node.isMetpType)    
       if (!METypePlugin_deserializeAndSetCdrEncapsulation(
-        	endpoint_data, stream, &metp)) {
+        	endpoint_data, cdrStream, &metp)) {
 #*--*##else
-        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
+        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(cdrStream)) {
 #*--*##end
             return RTI_FALSE;
         }
 
-        rti_position = RTICdrStream_resetAlignment(stream);
+        rti_position = RTICdrStream_resetAlignment(cdrStream);
     }
 
 #*----*##if($node.isMetpType)
@@ -535,7 +542,7 @@ try
 		endpoint_data,
 		(void**)&sample,
         	NULL,
-        	stream,
+        	cdrStream,
         	RTI_FALSE,
         	RTI_TRUE,
         	endpoint_plugin_qos)) {
@@ -555,19 +562,19 @@ try
                   &&((${struct.hasKeyBaseType})||($struct.hasKey && $struct.baseTypeFQName)))
               
   {
-                    char *begin = RTICdrStream_getCurrentPosition(stream);
+                    char *begin = RTICdrStream_getCurrentPosition(cdrStream);
                     RTICdrStream_pushState(
-                        stream, &state, -1);
+                        cdrStream, &state, -1);
 #*----------*##end      
 #*----*##if($struct.hasKeyBaseType)     
     if (!${struct.baseTypeFQName}Plugin_serialized_sample_to_key(endpoint_data,
             (${struct.baseTypeFQName} *)sample,
-            stream, RTI_FALSE, RTI_TRUE,
+            cdrStream, RTI_FALSE, RTI_TRUE,
             endpoint_plugin_qos)) {
         return RTI_FALSE;
     }
 #*----*##elseif($struct.hasKey && $struct.baseTypeFQName) 
-        if (!${struct.baseTypeFQName}Plugin_skip(endpoint_data, stream,
+        if (!${struct.baseTypeFQName}Plugin_skip(endpoint_data, cdrStream,
                 RTI_FALSE, RTI_TRUE,
                 endpoint_plugin_qos)) {
             return RTI_FALSE;
@@ -577,14 +584,14 @@ try
 #*----------*##if(($struct.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
                   &&((${struct.hasKeyBaseType})||($struct.hasKey && $struct.baseTypeFQName)))
         RTICdrStream_popState(
-                        stream, &state);
-                    RTICdrStream_setCurrentPosition(stream, begin);
+                        cdrStream, &state);
+                    RTICdrStream_setCurrentPosition(cdrStream, begin);
                     }
 #*----------*##end  
       
 #*----*##if($struct.hasKey)
 #*------*##if($struct.extensibility.equals("MUTABLE_EXTENSIBILITY"))
-        while (end != RTI_TRUE && RTICdrStream_getRemainder(stream) > 0) {
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
 #*--------*##mutableDeserializeHeader()
             switch (memberId) {
 #*------*##end
@@ -617,7 +624,7 @@ try
                 }break;
            }
             
-          RTICdrStream_moveToNextParameterHeader(stream, &state, length);
+          RTICdrStream_moveToNextParameterHeader(cdrStream, &state, length);
    
 }
 #*------*##end
@@ -627,8 +634,12 @@ try
     done = RTI_TRUE;
 fin:
     if(!error) {
+        /* Coverity reports a dead_error_line. with some types. Depending on the 
+        idl code that we are generating, the coditional block may be dead
+        code. */
+        /* coverity[dead_error_line] */
         if (done != RTI_TRUE && 
-            RTICdrStream_getRemainder(stream) >=
+            RTICdrStream_getRemainder(cdrStream) >=
                 RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
             return RTI_FALSE;   
         }
@@ -641,14 +652,14 @@ fin:
 #*----*##end
 
       if(deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,rti_position);
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
     }
 
     if (!${struct.nativeFQName}Plugin_instance_to_keyhash(
             endpoint_data,
             keyhash,
             sample,
-            RTICdrStream_getEncapsulationKind(stream))) {
+            RTICdrStream_getEncapsulationKind(cdrStream))) {
         return RTI_FALSE;
     }
 

@@ -31,34 +31,56 @@ ${envMap.POUND_CHAR}include <string>
 #*--*##set($member.cStr=".c_str()")
 #end
 
-#macro (allocateString $dstPtr $member $mode $memoryManager)
-$dstPtr = (std::string *) new (std::nothrow) std::string();
+#macro (allocateString $dstPtr__ $member__ $mode__ $memoryManager__)
+$dstPtr__ = (std::string (*)#*
+#*--*##if($member__.isOptionalArray)
+#*----*##foreach($s in ${member__.dimensionList})
+[$s]#*
+#*----*##end
+#*--*##end
+) new (std::nothrow) std::string #*
+#*--*##if($member__.isOptionalArray)
+[1]#*
+#*----*##foreach($s in ${member__.dimensionList})
+[$s]#*
+#*----*##end
+#*--*##end
+();
 #end
 
 #macro (printStringObjectArray $member)
 {
     const DDS_Char * strArray[($member.arrayTotalSize)];
     int i;
-#*----*##if($member.isPointer)
+#*--*##if($member.isPointer)
     std::string ** elem = (std::string**) ${member.sampleRef};
-#*----*##else
+#*--*##else
     std::string * elem = (std::string*) ${member.sampleRef};
-#*----*##end
+#*--*##end
+
+#*--*##if($member.isOptionalArray)
+if (${member.sampleRef} == NULL) {
+    RTILogParamString_printPlain("$member.printName: NULL\n");
+} else {
+#*--*##end
 
     for (i = 0; i < (int)($member.arrayTotalSize);
          ++i, ++elem) {
-#*----*##if($member.isPointer)
+#*--*##if($member.isPointer)
         strArray[i] = (**elem).c_str();
-#*----*##else
+#*--*##else
         strArray[i] = (*elem).c_str();
-#*----*##end
+#*--*##end
     }
-        
+
     RTICdrType_printStringArray(
         strArray,
         ($member.arrayTotalSize),
         "$member.printName", indent_level + 1,
         $member.typeEnum);
+#*--*##if($member.isOptionalArray)
+}
+#*--*##end
 }
 #end
 
@@ -96,13 +118,13 @@ $dstPtr = (std::string *) new (std::nothrow) std::string();
         (int) ${sequenceElement}.length();
         
     if (!RTICdrStream_serializeUnsignedLong(
-            stream, &sequence_length)) {
+            cdrStream, &sequence_length)) {
         return RTI_FALSE;
     }
         
     for (j = 0; j < (sequence_length); j++) {
         if (!RTICdrStream_serializeString(
-                 stream, 
+                 cdrStream, 
                  ${sequenceElement}[j].c_str(), 
                  #getStrSize($member "serialize") +1)) {
             return RTI_FALSE;
@@ -128,7 +150,7 @@ $dstPtr = (std::string *) new (std::nothrow) std::string();
         }
 #*----*##end
         if (!RTICdrStream_serializeString(
-                 stream,
+                 cdrStream,
 #*----*##if($member.isPointer)
                  (**elem).c_str(),
 #*----*##else
@@ -143,14 +165,14 @@ $dstPtr = (std::string *) new (std::nothrow) std::string();
 
 #macro (serializeStringObjectFast $member)
 if (!${member.elementSerializeMethod}Fast(
-        stream,#if($member.isPointer)*#end ${member.sample}.c_str(), #getStrSize($member "serialize") + 1)) {
+        cdrStream,#if($member.isPointer)*#end ${member.sample}.c_str(), #getStrSize($member "serialize") + 1)) {
         return RTI_FALSE;
 }
 #end
 
 #macro (serializeStringObject $member)
 ${member.elementSerializeMethod}(
-    stream, ${member.sample}.c_str(), #getStrSize($member "serialize") + 1)
+    cdrStream, ${member.sample}.c_str(), #getStrSize($member "serialize") + 1)
 #end
 
 #macro (deserializeStringObjectSeq $sequenceElement $member $serializeSuffix)
@@ -161,7 +183,7 @@ ${member.elementSerializeMethod}(
     char * tmp_str;
         
     if (!RTICdrStream_deserializeUnsignedLong(
-            stream, &sequence_length)) {
+            cdrStream, &sequence_length)) {
 #*----*##continueDeserialization ($member $serializeSuffix)
     }
         
@@ -169,11 +191,11 @@ ${member.elementSerializeMethod}(
     ${sequenceElement}.ensure_length(sequence_length,sequence_length);
         
     for (j = 0; j < (int)(sequence_length); j++) {
-        str_position = RTICdrStream_getCurrentPosition(stream);
+        str_position = RTICdrStream_getCurrentPosition(cdrStream);
                 
         if (!RTICdrStream_deserializeUnsignedLong(
-                stream, &str_length)) {
-            RTICdrStream_setCurrentPosition(stream, str_position);
+                cdrStream, &str_length)) {
+            RTICdrStream_setCurrentPosition(cdrStream, str_position);
 #*----*##continueDeserialization ($member $serializeSuffix)
         }
                 
@@ -182,10 +204,10 @@ ${member.elementSerializeMethod}(
 #*----*##continueDeserialization ($member $serializeSuffix)
         }
                 
-        RTICdrStream_setCurrentPosition(stream, str_position);
+        RTICdrStream_setCurrentPosition(cdrStream, str_position);
         
         if (!RTICdrStream_deserializeStringObject(
-            stream, tmp_str, #getStrSize($member "deserialize") +1)) {
+            cdrStream, tmp_str, #getStrSize($member "deserialize") +1)) {
             DDS_String_free(tmp_str);
 #*----*##continueDeserialization ($member $serializeSuffix)
         }
@@ -210,11 +232,11 @@ ${member.elementSerializeMethod}(
   
     for (i = 0; i < (int)($member.arrayTotalSize);
          ++i, ++elem) {
-        str_position = RTICdrStream_getCurrentPosition(stream);
+        str_position = RTICdrStream_getCurrentPosition(cdrStream);
             
         if (!RTICdrStream_deserializeUnsignedLong(
-                stream, &str_length)) {
-            RTICdrStream_setCurrentPosition(stream, str_position);
+                cdrStream, &str_length)) {
+            RTICdrStream_setCurrentPosition(cdrStream, str_position);
 #*----*##continueDeserialization ($member $serializeSuffix)
         }
             
@@ -223,10 +245,10 @@ ${member.elementSerializeMethod}(
 #*----*##continueDeserialization ($member $serializeSuffix)
         }
             
-        RTICdrStream_setCurrentPosition(stream, str_position);
+        RTICdrStream_setCurrentPosition(cdrStream, str_position);
     
         if (!RTICdrStream_deserializeStringObject(
-            stream, tmp_str, #getStrSize($member "serialize") + 1)) {
+            cdrStream, tmp_str, #getStrSize($member "serialize") + 1)) {
             DDS_String_free(tmp_str);
 #*----*##continueDeserialization ($member $serializeSuffix)
         }
@@ -247,11 +269,11 @@ ${member.elementSerializeMethod}(
     char * str_position;
     char * tmp_str;
         
-    str_position = RTICdrStream_getCurrentPosition(stream);
+    str_position = RTICdrStream_getCurrentPosition(cdrStream);
         
     if (!RTICdrStream_deserializeUnsignedLong(
-            stream, &str_length)) {
-        RTICdrStream_setCurrentPosition(stream, str_position);
+            cdrStream, &str_length)) {
+        RTICdrStream_setCurrentPosition(cdrStream, str_position);
 #*----*##continueDeserialization ($member $serializeSuffix)
     }
         
@@ -261,10 +283,10 @@ ${member.elementSerializeMethod}(
 #*----*##continueDeserialization ($member $serializeSuffix)
     }
         
-    RTICdrStream_setCurrentPosition(stream, str_position);
+    RTICdrStream_setCurrentPosition(cdrStream, str_position);
 
     if (!${member.elementDeserializeMethod}#if ($envMap.ignoreAlignment)Fast#end(
-            stream, &tmp_str, #getStrSize($member "deserialize") + 1, RTI_FALSE)) {
+            cdrStream, &tmp_str, #getStrSize($member "deserialize") + 1, RTI_FALSE)) {
             DDS_String_free(tmp_str);
 #*----*##continueDeserialization ($member $serializeSuffix)
     }

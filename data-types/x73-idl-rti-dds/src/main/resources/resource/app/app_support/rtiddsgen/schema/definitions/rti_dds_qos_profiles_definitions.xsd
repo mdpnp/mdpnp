@@ -118,7 +118,7 @@
             <xs:enumeration value="BuiltinQosSnippetLib::Feature.FlowController.52Mbps"/>
             <xs:enumeration value="BuiltinQosSnippetLib::Feature.AutoTuning.Enable"/>
             <xs:enumeration value="BuiltinQosSnippetLib::Feature.Monitoring.Enable"/>
-            <xs:enumeration value="BuiltinQosSnippetLib::Feature.Observability.Enable"/>
+            <xs:enumeration value="BuiltinQosSnippetLib::Feature.Monitoring2.Enable"/>
             <xs:enumeration value="BuiltinQosSnippetLib::Feature.Security.Enable"/>
             <xs:enumeration value="BuiltinQosSnippetLib::Feature.TopicQuery.Enable"/>
             <xs:enumeration value="BuiltinQosSnippetLib::Transport.TCP.LAN.Client"/>
@@ -179,7 +179,7 @@
             <xs:enumeration value="BuiltinQosLib::Generic.510TransportCompatibility"/>
             <xs:enumeration value="BuiltinQosLib::Generic.Monitoring.Common"/>
             <xs:enumeration value="BuiltinQosLib::Generic.Security"/>
-            <xs:enumeration value="BuiltinQosLib::Generic.Observability"/>
+            <xs:enumeration value="BuiltinQosLib::Generic.Monitoring2"/>
             <xs:enumeration value="BuiltinQosLib::Baseline.5.0.0"/>
             <xs:enumeration value="BuiltinQosLib::Baseline.5.1.0"/>
             <xs:enumeration value="BuiltinQosLib::Baseline.5.2.0"/>
@@ -336,7 +336,7 @@
         </xs:annotation>
         <xs:restriction base="xs:string">
             <xs:whiteSpace value="collapse"/>
-            <xs:pattern value="([a-zA-Z0-9/\-*_.:\]\[\s])+"/>
+            <xs:pattern value="([a-zA-Z0-9/\-*_.:\]\[@\s])+"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -546,11 +546,11 @@
         </xs:restriction>
     </xs:simpleType>
 
-    <xs:simpleType name="instanceStateRecoveryKind">
+    <xs:simpleType name="instanceStateConsistencyKind">
         <xs:restriction base="xs:string">
             <xs:whiteSpace value="collapse"/>
-            <xs:enumeration value="NO_INSTANCE_STATE_RECOVERY"/>
-            <xs:enumeration value="RECOVER_INSTANCE_STATE_RECOVERY"/>
+            <xs:enumeration value="NO_RECOVER_INSTANCE_STATE_CONSISTENCY"/>
+            <xs:enumeration value="RECOVER_INSTANCE_STATE_CONSISTENCY"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -613,7 +613,7 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Supported values:
+                Supported values (case-insensitive):
                 - ZLIB
                 - BZIP2
                 - LZ4
@@ -791,6 +791,19 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:simpleType name="nonNegativeIntegerUpTo256Unlimited">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="nonNegativeIntegerUpTo256"/>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="LENGTH_UNLIMITED"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+
     <xs:simpleType name="nonNegativeIntegerUpTo65535">
         <xs:restriction base="xs:nonNegativeInteger">
             <xs:maxInclusive value="65535"/>
@@ -859,7 +872,7 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Supported values:
+                Supported values (case-insensitive):
                     - MASK_DEFAULT
                     - MASK_NONE
                     - MASK_ALL
@@ -875,7 +888,9 @@
         <xs:restriction base="xs:string">
             <xs:whiteSpace value="collapse"/>
             <xs:pattern value="(MASK_DEFAULT|MASK_NONE|MASK_ALL)"/>
+            <xs:pattern value="(mask_default|mask_none|mask_all)"/>
             <xs:pattern value="(UDPv4|UDPv4_WAN|UDPv6|SHMEM|INTRA)(\s*\|\s*(UDPv4|UDPv4_WAN|UDPv6|SHMEM|INTRA))*"/>
+            <xs:pattern value="(udpv4|udpv4_wan|udpv6|shmem|intra)(\s*\|\s*(udpv4|udpv4_wan|udpv6|shmem|intra))*"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -895,7 +910,7 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Supported values:
+                Supported values (case-insensitive):
                     - MASK_DEFAULT
                     - MASK_NONE
                     - MASK_ALL
@@ -973,7 +988,7 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Supported values:
+                Supported values (case-insensitive):
                     - MASK_DEFAULT
                     - MASK_NONE
                     - SPDP
@@ -981,24 +996,42 @@
                     - DPSE
                     - SDP is a combination of SPDP and SEDP
                     - SPDP2
+                    - SDP2 is a combination of SPDP2 and SEDP
 
-                DPSE (Dynamic Participant, Static Endpoint) is configured in RTI
-                Connext DDS Professional with the Limited Bandwidth Endpoint
-                Discovery plugin add-on library, therefore the library
-                (librtilbedisc) of the plugin should be installed and reachable
-                (PATH, LD_LIBRARY_PATH or DYLD_LIBRARY_PATH).
-                In RTI Connext DDS Micro, static endpoint discovery is a
-                built-in feature and does not require an additional library to
-                be linked at run-time.
-                Setting DPSE will enable SPDP, disable SEDP, and add some
-                properties.
+                Using DPSE (Dynamic Participant, Static Endpoint) in RTI Connext
+                Professional requires the 'librtilbedisc' library (included in
+                the Professional bundles) to be reachable (PATH, LD_LIBRARY_PATH
+                or DYLD_LIBRARY_PATH).
+                In RTI Connext Micro, static endpoint discovery is a built-in
+                feature and does not require an additional library to be linked
+                at run-time.
+                Setting DPSE in RTI Connext Professional will enable SPDP,
+                disable SEDP, and add some properties.
                 ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
             <xs:whiteSpace value="collapse"/>
-            <xs:pattern value="(MASK_DEFAULT|MASK_NONE)"/>
-            <xs:pattern value="(SPDP|SEDP|DPSE|SDP|SPDP2)(\s*\|\s*(SPDP|SEDP|DPSE|SDP|SPDP2))*"/>
+            <xs:enumeration value="MASK_DEFAULT"/>
+            <xs:enumeration value="MASK_NONE"/>
+            <xs:enumeration value="MASK_ALL"/>
+
+            <xs:enumeration value="SPDP"/>
+            <xs:enumeration value="SEDP"/>
+            <xs:enumeration value="DPSE"/>
+            <xs:enumeration value="SPDP2"/>
+            <xs:enumeration value="SDP"/>
+
+            <xs:enumeration value="SPDP | SEDP"/>
+            <xs:enumeration value="SPDP | DPSE"/>
+
+            <xs:enumeration value="SEDP | SPDP"/>
+            <xs:enumeration value="SEDP | SPDP2"/>
+
+            <xs:enumeration value="SPDP2 | SEDP"/>
+            <xs:enumeration value="SPDP2 | DPSE"/>
+
+             <xs:enumeration value="SDP2"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -1367,16 +1400,6 @@
             <xs:enumeration value="NOTICE"/>
             <xs:enumeration value="INFORMATIONAL"/>
             <xs:enumeration value="DEBUG"/>
-        </xs:restriction>
-    </xs:simpleType>
-
-    <!-- RTI extension -->
-    <xs:simpleType name="sysLogFacilityKind">
-        <xs:restriction base="xs:string">
-            <xs:enumeration value="SECURITY"/>
-            <xs:enumeration value="MIDDLEWARE"/>
-            <xs:enumeration value="USER"/>
-            <xs:enumeration value="SERVICE"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -2266,7 +2289,7 @@
     </xs:simpleType>
 
     <!-- RTI extension -->
-    <xs:complexType name="threadSettingsReceiverPool">
+    <xs:complexType name="threadSettingsFullConfig">
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
@@ -2880,6 +2903,17 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="port_offset"
+                        type="xs:nonNegativeInteger"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[
+                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:all>
     </xs:complexType>
 
@@ -3077,6 +3111,9 @@
                         minOccurs="0"/>
             <xs:element name="join_multicast_group_timeout"
                         type="joinMulticastGroupTimeout"
+                        minOccurs="0"/>
+            <xs:element name="port_offset"
+                        type="xs:nonNegativeInteger"
                         minOccurs="0"/>
         </xs:all>
     </xs:complexType>
@@ -3501,6 +3538,18 @@
         </xs:choice>
     </xs:complexType>
 
+    <xs:simpleType name="positiveInteger_UNLIMITED">
+        <xs:annotation>
+            <xs:documentation>
+                &lt;LENGTH_UNLIMITED|xs:positiveInteger&gt;
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="collapse"/>
+            <xs:pattern value="(LENGTH_UNLIMITED|[1-9]([0-9])*)?"/>
+        </xs:restriction>
+    </xs:simpleType>
+
     <!-- RTI extension -->
     <xs:complexType name="endpointGroup">
         <xs:annotation>
@@ -3516,7 +3565,7 @@
                         type="xs:string"
                         minOccurs="0"/>
             <xs:element name="quorum_count"
-                        type="xs:positiveInteger"
+                        type="positiveInteger_UNLIMITED"
                         minOccurs="0"/>
         </xs:all>
     </xs:complexType>
@@ -3543,18 +3592,25 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Configuration of the dedicated DomainParticipant for the 
-                Observability Library. When <dedicated_participant>/<enable> 
-                is set to true, the Observability Library creates a separate 
+                Configuration of the dedicated DomainParticipant for 
+                Monitoring Library 2.0. When <dedicated_participant>/<enable> 
+                is set to true, Monitoring Library 2.0 creates a separate 
                 DomainParticipant to distribute telemetry data.
                 ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:all>
-            <xs:element name="enable" type="xs:boolean"/>
-            <xs:element name="domain_id" type="xs:nonNegativeInteger"/>
+            <xs:element name="enable"
+                        type="xs:boolean"
+                        minOccurs="0"/>
+            <xs:element name="domain_id"
+                        type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
             <xs:element name="participant_qos_profile_name"
                         type="xs:string"
+                        minOccurs="0"/>
+            <xs:element name="collector_initial_peers"
+                        type="stringSeq"
                         minOccurs="0"/>
         </xs:all>
     </xs:complexType>
@@ -3564,7 +3620,7 @@
             <xs:documentation>
                 <![CDATA[
                 Event metrics distribution configuration for the 
-                Observability Library. These settings configure how event 
+                Monitoring Library 2.0. These settings configure how event 
                 metrics are collected and distributed.
                 ]]>
             </xs:documentation>
@@ -3577,7 +3633,7 @@
                         type="xs:string"
                         minOccurs="0"/>
             <xs:element name="thread" 
-                        type="threadSettings"
+                        type="threadSettingsFullConfig"
                         minOccurs="0"/>
             <xs:element name="publication_period"
                         type="duration"
@@ -3589,8 +3645,8 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Periodic metrics distribution configuration for the 
-                Observability Library. These settings configure how periodic 
+                Periodic metrics distribution configuration for 
+                Monitoring Library 2.0. These settings configure how periodic 
                 metrics are collected and distributed.
                 ]]>
             </xs:documentation>
@@ -3600,7 +3656,7 @@
                         type="xs:string"
                         minOccurs="0"/>
             <xs:element name="thread" 
-                        type="threadSettings"
+                        type="threadSettingsFullConfig"
                         minOccurs="0"/>
             <xs:element name="polling_period"
                         type="duration"
@@ -3612,9 +3668,9 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Logging distribution configuration for the Observability 
-                Library. These settings configure how log and secure log
-                messages are collected and distributed.
+                Logging distribution configuration for Monitoring
+                Library 2.0. These settings configure how log and secure
+                log messages are collected and distributed.
                 ]]>
             </xs:documentation>
         </xs:annotation>
@@ -3629,7 +3685,7 @@
                         type="xs:string"
                         minOccurs="0"/>
             <xs:element name="thread" 
-                        type="threadSettings"
+                        type="threadSettingsFullConfig"
                         minOccurs="0"/>
             <xs:element name="publication_period"
                         type="duration"
@@ -3641,8 +3697,8 @@
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Metrics and logs distribution settings for the 
-                Observability Library.
+                Metrics and logs distribution settings for
+                Monitoring Library 2.0.
                 ]]>
             </xs:documentation>
         </xs:annotation>
@@ -3665,106 +3721,115 @@
         </xs:all>
     </xs:complexType>
 
-    <xs:complexType name="monitoringMetricSelector">
+    <xs:complexType name="monitoringMetric">
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Sequence of metric path expressions where a path expression is 
-                a string using the POSIX® fnmatch syntax. For example, 
-                dds.data_writer.* selects all metrics for DataWriters. 
+                Sequence of metric path expressions where a path expression is
+                a string using the POSIX® fnmatch syntax.
                 ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
             <xs:element name="element"
                         type="xs:string"
+                        minOccurs="0"
                         maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
-    <xs:complexType name="monitoringMetricGroup">
+    <xs:complexType name="monitoringMetricSelectionItem">
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
                 Selects a set of resources and metrics for the resources.
-                
-                A resource selector is a path expression with components 
-                separated by '/' and where each component is a string using the 
-                POSIX® fnmatch syntax. For example: 
-                /applications/MyApp/domain_participants/* selects all
-                DomainParticipants. The fnmatch expressions are applied per
-                component unless the special '//' is used. In that case, the
+
+                A resource selection is a path expression with components
+                separated by '/'. Each component can be a resource class ID, a
+                resource name using the POSIX® fnmatch syntax, or a resource
+                GUID.
+
+                For example: /applications/MyApp/domain_participants/* selects
+                all DomainParticipants in "MyApp".
+                /applications/MyApp/domain_participants/GUID(1234.5678.4321.8765)
+                selects a DomainParticipant with a specific resource GUID in
+                "MyApp".
+
+                The fnmatch expressions are applied per component unless the
+                special XPath '//' operator is used. In that case, the
                 following fnmatch expression applies across all components
-                following '//'. For example, 
-                /applications/MyApp/domain_participants//*
-                selects all Participants, Publishers, Subscribers, Readers, and
-                Writers.
-                
-                A metric selector is a sequence of metric path expressions
-                where a path expression is a string using the POSIX® 
-                fnmatch syntax. For example, dds.data_writer.* selects all 
-                metrics for DataWriters. 
+                following '//' regardless of their location in the resource
+                hierarchy. For example, /applications/MyApp/domain_participants//*
+                selects all Participants, Publishers, Subscribers, Topics,
+                Readers, and Writers.
+
+                A metric selection is a sequence of metric path expressions
+                where a path expression is a string using the POSIX®
+                fnmatch syntax. There are two sequences: one for enabled
+                metrics and another for disabled. For example, if
+                dds.data_writer.* is in enabled_metrics_selection, all the
+                metrics for DataWriters are enabled for the selected resources.
                 ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:all>
-            <xs:element name="resource_selector" type="xs:string"/>
-            <xs:element name="metric_selector"
-                        type="monitoringMetricSelector"/>
+            <xs:element name="resource_selection" type="xs:string"/>
+            <xs:element name="enabled_metrics_selection"
+                        minOccurs="0"
+                        type="monitoringMetric"/>
+            <xs:element name="disabled_metrics_selection"
+                        minOccurs="0"
+                        type="monitoringMetric"/>
         </xs:all>
     </xs:complexType>
 
-    <xs:complexType name="monitoringMetricGroupCollection">
+    <xs:complexType name="monitoringMetricSelection">
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                A set of metric groups.
+                A set of resource selections and enabled and disabled metrics.
                 ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
             <xs:element name="element"
-                        type="monitoringMetricGroup"
+                        type="monitoringMetricSelectionItem"
+                        minOccurs="0"
                         maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
-    <xs:complexType name="monitoringLogForwardingSetting">
+    <xs:complexType name="monitoringLoggingForwardingSettings">
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                Specifies the forwarding log level for a syslog facility.
+                Specifies the forwarding log levels for the different syslog
+                facilities.
                 ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:all>
-            <xs:element name="facility" type="sysLogFacilityKind"/>
-            <xs:element name="forwarding_verbosity" 
-                        type="sysLogVerbosityKind"/>
+            <xs:element name="middleware_forwarding_level"
+                        type="sysLogVerbosityKind"
+                        minOccurs="0"/>
+            <xs:element name="security_event_forwarding_level"
+                        type="sysLogVerbosityKind"
+                        minOccurs="0"/>
+            <xs:element name="service_forwarding_level"
+                        type="sysLogVerbosityKind"
+                        minOccurs="0"/>
+            <xs:element name="user_forwarding_level"
+                        type="sysLogVerbosityKind"
+                        minOccurs="0"/>
         </xs:all>
     </xs:complexType>
 
-    <xs:complexType name="monitoringLogs">
+    <xs:complexType name="monitoringTelemetryData">
         <xs:annotation>
             <xs:documentation>
                 <![CDATA[
-                A set of log forwarding settings.
-                ]]>
-            </xs:documentation>
-        </xs:annotation>
-        <xs:sequence>
-            <xs:element name="element"
-                        type="monitoringLogForwardingSetting"
-                        maxOccurs="unbounded"/>
-        </xs:sequence>
-    </xs:complexType>
-
-    <xs:complexType name="monitoringData">
-        <xs:annotation>
-            <xs:documentation>
-                <![CDATA[
-                In a Connext application using the RTI Observability 
-                Library, it controls the initial metrics to be collected and
+                In a Connext application using RTI Monitoring Library 2.0,
+                it controls the initial metrics to be collected and
                 distributed as well the forwarded log messages.
 
                 In RTI Collector Service, it controls the initial metrics
@@ -3775,16 +3840,97 @@
             </xs:documentation>
         </xs:annotation>
         <xs:all>
-            <xs:element name="metric_groups"
-                        type="monitoringMetricGroupCollection"
+            <xs:element name="metrics"
+                        type="monitoringMetricSelection"
                         minOccurs="0"/>
             <xs:element name="logs"
-                        type="monitoringLogs"
+                        type="monitoringLoggingForwardingSettings"
                         minOccurs="0"/>
         </xs:all>
     </xs:complexType>
 
 
+    <!-- RTI extension -->
+    <xs:simpleType name="durabilityJournalKind">
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="collapse">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:whiteSpace>
+            <xs:enumeration value="DELETE"/>
+            <xs:enumeration value="TRUNCATE"/>
+            <xs:enumeration value="PERSIST"/>
+            <xs:enumeration value="MEMORY"/>
+            <xs:enumeration value="WAL"/>
+            <xs:enumeration value="OFF"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="durabilitySynchronizationKind">
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="collapse">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:whiteSpace>
+            <xs:enumeration value="FULL"/>
+            <xs:enumeration value="NORMAL"/>
+            <xs:enumeration value="OFF"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="durabilityPersistentStorage">
+        <xs:annotation>
+            <xs:documentation>
+                <![CDATA[
+                Allows enabling and configuring durable writer history and 
+                durable reader state.
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:all>
+            <xs:element name="enable"
+                        type="xs:boolean"
+                        minOccurs="0"/>
+            <xs:element name="file_name"
+                        type="xs:string"
+                        nillable="true"/>
+            <xs:element name="trace_file_name"
+                        type="xs:string"
+                        minOccurs="0"
+                        nillable="true"/>
+            <xs:element name="journal_kind"
+                        type="durabilityJournalKind"
+                        minOccurs="0"/>
+            <xs:element name="synchronization_kind"
+                        type="durabilitySynchronizationKind"
+                        minOccurs="0"/>
+            <xs:element name="vacuum"
+                        type="xs:boolean"
+                        minOccurs="0"/>
+            <xs:element name="restore"
+                        type="xs:boolean"
+                        minOccurs="0"/>
+            <xs:element name="writer_instance_cache_allocation"
+                        type="allocationSettings"
+                        minOccurs="0"/>
+            <xs:element name="writer_sample_cache_allocation"
+                        type="allocationSettings"
+                        minOccurs="0"/>
+            <xs:element name="writer_memory_state"
+                        type="xs:boolean"
+                        minOccurs="0"/>
+            <xs:element name="reader_checkpoint_frequency"
+                        type="xs:unsignedInt"
+                        minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>        
+    
     <!-- =================================================================== -->
     <!-- QoS Policies                                                        -->
     <!-- =================================================================== -->
@@ -3892,6 +4038,19 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="storage_settings"
+                        type="durabilityPersistentStorage"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[
+                        RTI Extension.
+
+                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:all>
     </xs:complexType>
 
@@ -3915,6 +4074,19 @@
             <!-- RTI extension -->
             <xs:element name="direct_communication"
                         type="xs:boolean"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[
+                        RTI Extension.
+
+                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="storage_settings"
+                        type="durabilityPersistentStorage"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
@@ -4264,8 +4436,8 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="instance_state_recovery_kind"
-                        type="instanceStateRecoveryKind"
+            <xs:element name="instance_state_consistency_kind"
+                        type="instanceStateConsistencyKind"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
@@ -4925,6 +5097,28 @@
             </xs:element>
             <xs:element name="max_topic_queries"
                         type="positiveIntegerUnlimited"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[
+                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="autopurge_remote_not_alive_writer_delay"
+                        type="durationAuto"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[
+                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
+                        ]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="autopurge_remote_virtual_writer_delay"
+                        type="duration"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
@@ -5670,17 +5864,15 @@
                             - SDP is a combination of SPDP and SEDP
                             - SPDP2
 
-                        DPSE (Dynamic Participant, Static Endpoint) is
-                        configured in RTI Connext DDS Professional with the
-                        Limited Bandwidth Endpoint Discovery plugin add-on
-                        library, therefore the library (librtilbedisc) of the
-                        plugin should be installed and reachable (PATH,
-                        LD_LIBRARY_PATH or DYLD_LIBRARY_PATH).
-                        In RTI Connext DDS Micro, static endpoint discovery is a
-                        built-in feature and does not require an additional
-                        library to be linked at run-time.
-                        Setting DPSE will enable SPDP, disable SEDP, and add
-                        some properties.
+                        Using DPSE (Dynamic Participant, Static Endpoint) in RTI Connext
+                        Professional requires the 'librtilbedisc' library (included in
+                        the Professional bundles) to be reachable (PATH, LD_LIBRARY_PATH
+                        or DYLD_LIBRARY_PATH).
+                        In RTI Connext Micro, static endpoint discovery is a built-in
+                        feature and does not require an additional library to be linked
+                        at run-time.
+                        Setting DPSE in RTI Connext Professional will enable SPDP,
+                        disable SEDP, and add some properties.
                         ]]>
                     </xs:documentation>
                 </xs:annotation>
@@ -6416,89 +6608,97 @@
             </xs:element>
             <xs:element name="participant_user_data_max_length"
                         type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
+            <xs:element name="participant_user_data_max_count"
+                        type="nonNegativeIntegerDerived"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="topic_data_max_length"
                         type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
+            <xs:element name="topic_data_max_count"
+                        type="nonNegativeIntegerDerived"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="publisher_group_data_max_length"
                         type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
+            <xs:element name="publisher_group_data_max_count"
+                        type="nonNegativeIntegerDerived"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="subscriber_group_data_max_length"
                         type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
+            <xs:element name="subscriber_group_data_max_count"
+                        type="nonNegativeIntegerDerived"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="writer_user_data_max_length"
                         type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
+            <xs:element name="writer_user_data_max_count"
+                        type="nonNegativeIntegerDerived"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="reader_user_data_max_length"
                         type="xs:nonNegativeInteger"
+                        minOccurs="0"/>
+            <xs:element name="reader_user_data_max_count"
+                        type="nonNegativeIntegerDerived"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="max_partitions"
                         type="nonNegativeIntegerUpTo64"
+                        minOccurs="0"/>
+            <xs:element name="max_partition_cumulative_characters"
+                        type="nonNegativeIntegerUpTo256"
+                        minOccurs="0"/>
+            <xs:element name="max_partition_string_size"
+                        type="nonNegativeIntegerUpTo256Unlimited"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="max_partition_cumulative_characters"
-                        type="nonNegativeIntegerUpTo256"
+            <xs:element name="max_partition_string_allocation"
+                        type="nonNegativeIntegerUpTo256Unlimited"
                         minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
+                        <![CDATA[Supported only in RTI Connext DDS Micro.]]>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
@@ -6906,7 +7106,7 @@
         </xs:annotation>
         <xs:all>
             <xs:element name="thread"
-                        type="threadSettingsReceiverPool"
+                        type="threadSettingsFullConfig"
                         minOccurs="0"/>
             <xs:element name="buffer_size"
                         type="positiveIntegerAuto"
@@ -7359,7 +7559,7 @@
                 <<RTI Extension>>
                 The MULTICAST_MAPPING QoS policy allows you to specify a list
                 of multicast addresses to be used by DataReaders for receiving
-                messages. The address is choosed using the topicname.
+                messages. The address is chosen using the topicname.
                 ]]>
             </xs:documentation>
         </xs:annotation>
@@ -7586,9 +7786,9 @@
             <xs:documentation>
                 <![CDATA[
                 <<RTI Extension>>
-                The Monitoring QoS policy configures the RTI Observability 
-                Library. The configuration includes the selection and distribution
-                of telemetry data (metrics and logs).
+                The Monitoring QoS policy configures RTI Monitoring
+                Library 2.0. The configuration includes the selection and
+                distribution of telemetry data (metrics and logs).
                 ]]>
             </xs:documentation>
         </xs:annotation>
@@ -7598,9 +7798,9 @@
             <xs:element name="distribution_settings" 
                         type="monitoringDistributionSettings" 
                         minOccurs="0"/>
-            <!-- Not supported yet.
-            <xs:element name="data" type="monitoringData" minOccurs="0"/>
-            -->
+            <xs:element name="telemetry_data"
+                        type="monitoringTelemetryData"
+                        minOccurs="0"/>
         </xs:all>
     </xs:complexType>
 
@@ -8025,15 +8225,7 @@
             </xs:element>
             <xs:element name="partition"
                         type="partitionQosPolicy"
-                        minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
+                        minOccurs="0"/>
             <xs:element name="group_data"
                         type="groupDataQosPolicy"
                         minOccurs="0">
@@ -8125,15 +8317,7 @@
             </xs:element>
             <xs:element name="partition"
                         type="partitionQosPolicy"
-                        minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <![CDATA[
-                        Supported only in RTI Connext DDS Professional and RTI Connext DDS Secure.
-                        ]]>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
+                        minOccurs="0"/>
             <xs:element name="group_data"
                         type="groupDataQosPolicy"
                         minOccurs="0">

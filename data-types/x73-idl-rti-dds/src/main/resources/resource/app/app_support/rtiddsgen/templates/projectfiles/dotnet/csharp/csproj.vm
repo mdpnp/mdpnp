@@ -13,9 +13,9 @@
 #end
   <ItemGroup>
 #if(${archMap.DOTNET_VERSION} >= 3)
-    <PackageReference Include="Rti.ConnextDds.Extra" Version="$archMap.CsDdsExtraVersion"/>
+    <PackageReference Include="Rti.ConnextDds.Extra" Version="${archMap.CsDdsExtraVersion}.*"/>
 #else
-    <PackageReference Include="Rti.ConnextDds" Version="$archMap.CsDdsVersion"/>
+    <PackageReference Include="Rti.ConnextDds" Version="${archMap.CsDdsVersion}.*"/>
 #end
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21308.1" />
   </ItemGroup>

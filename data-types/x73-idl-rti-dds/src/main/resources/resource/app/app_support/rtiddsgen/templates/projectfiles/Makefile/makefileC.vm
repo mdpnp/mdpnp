@@ -57,19 +57,77 @@ ${archMap.CSR_VAR}
 #end
 #if (${archMap.COMP_PATH_VAR})
 ${archMap.COMP_PATH_VAR}
-
 #end
+
+##
+## For Android, the Connext libs are built and tested against a specific
+## Android SDK. In platforms.vm the SDK version is represented by the 
+## ANDROID_SDK_VERSION. However, an end user should be able to use a different
+## SDK version via the ANDROID_API environment variable.
+##
+#if($isAndroid)
+ifdef ANDROID_API
+## Env var with SDK version is set.
+    ANDROID_SDK_VER_FINAL = $(ANDROID_API)
+    COMPILER_FINAL= $(subst ${archMap.ANDROID_SDK_VERSION},$(ANDROID_SDK_VER_FINAL),${compiler})
+    LINKER_FINAL= $(subst ${archMap.ANDROID_SDK_VERSION},$(ANDROID_SDK_VER_FINAL),${linker})
+else
+## default settings are being used
+    ANDROID_SDK_VER_FINAL = ${archMap.ANDROID_SDK_VERSION}
+    COMPILER_FINAL = ${compiler}
+    LINKER_FINAL = ${linker}
+endif
+#end
+
 ifndef COMPILER
+#if($isAndroid)
+    COMPILER = $(COMPILER_FINAL)
+#else    
     COMPILER = ${compiler}
+#end
 endif
 COMPILER_FLAGS =#foreach($compilerFlag in ${compilerFlags}) -$compilerFlag#end
 
 ifndef LINKER
+#if($isAndroid)
+    LINKER = $(LINKER_FINAL)
+#else    
     LINKER = ${linker}
+#end
 endif
 LINKER_FLAGS =#foreach($linkerFlag in ${linkerFlags}) -$linkerFlag#end
 
+#if(${archMap.ANDROID_SDK_VERSION}=="32")
+#if(${global.language}!="C")
+LINKER_FLAGS_EXEC_START =${archMap.CXX_LINKER_FLAGS_EXEC_START}
+LINKER_FLAGS_EXEC_END =${archMap.CXX_LINKER_FLAGS_EXEC_END}
+LINKER_FLAGS_SHARED_START =${archMap.CXX_LINKER_FLAGS_SHARED_START}
+LINKER_FLAGS_SHARED_END =${archMap.CXX_LINKER_FLAGS_SHARED_END}
+#else
+LINKER_FLAGS_EXEC_START =${archMap.C_LINKER_FLAGS_EXEC_START}
+LINKER_FLAGS_EXEC_END =${archMap.C_LINKER_FLAGS_EXEC_END}
+LINKER_FLAGS_SHARED_START =${archMap.C_LINKER_FLAGS_SHARED_START}
+LINKER_FLAGS_SHARED_END =${archMap.C_LINKER_FLAGS_SHARED_END}
+#end
+#end
+
+#if($isAndroid)
+#if(${archMap.ANDROID_SDK_VERSION}=="32")
+SYSLIBS =
+#else
+ifdef ANDROID_API
+## A different SDK version is being used so we need to replace the SYSLIB path
+    ANDROID_SYSLIB_PATH_FINAL = $(subst ${archMap.ANDROID_SDK_VERSION},$(ANDROID_SDK_VER_FINAL),${archMap.ANDROID_SYSLIB_PATH})
+    SYSLIBS = $(ANDROID_SYSLIB_PATH_FINAL) #foreach($syslib in ${syslibs}) -$syslib#end
+
+else
+    SYSLIBS = ${archMap.ANDROID_SYSLIB_PATH} #foreach($syslib in ${syslibs}) -$syslib#end
+
+endif
+#end
+#else ## not android
 SYSLIBS =#foreach($syslib in ${syslibs}) -$syslib#end
+#end
 
 DEFINES =#foreach($define in ${defines}) -$define#end #foreach($define in ${additionalDefines}) -$define#end
 
@@ -88,6 +146,14 @@ else
     DEBUG_SFX = 
 endif
 
+#if($isAndroid)
+#[[#]]# replace TARGET_ID with the android platform that you want to use
+#[[#]]# use "android list targets" to see the list of available targets
+TARGET_ID := android-${archMap.ANDROID_SDK_VERSION}
+
+## Android only supports shared libraries. 
+SHAREDLIB=1
+#else 
 ifndef SHAREDLIB
 #if(${global.libSuffix}=="z" || ${global.libSuffix}=="zd")
     SHAREDLIB=0
@@ -95,8 +161,9 @@ ifndef SHAREDLIB
     SHAREDLIB=1
 #end
 endif
+#end
 
-#if(${openSsl1Libraries})
+#if(${openSsl1Libraries} || ${openSsl3StaticLibraries} || ${wolfSslStaticLibraries})
 ifeq ($(CRYPTO_LIB), WOLFSSL)
     WOLFSSL=1
 else ifeq ($(CRYPTO_LIB), OPENSSL1)
@@ -122,7 +189,7 @@ else
     SHAREDLIB_SFX = z
     DEFINES += -DRTI_STATIC
 
-    #if(${openSsl1Libraries})
+    #if(${openSsl1Libraries} || ${openSsl3StaticLibraries} || ${wolfSslStaticLibraries})
     #*--*##if(${archMap.WOLFSSL_LIBRARIES})
 
     ifeq ($(WOLFSSL),1)
@@ -196,7 +263,11 @@ COMMONOBJS    = #[[$]]#(COMMONSOURCES:%${sourceFileExtension}=objs/#[[$]]#(TARGE
 	#[[$]]#(EXEC:%=objs/#[[$]]#(TARGET_ARCH)/%)
 
 objs/#[[$]]#(TARGET_ARCH)/% : objs/#[[$]]#(TARGET_ARCH)/%.o
+#if(${archMap.ANDROID_SDK_VERSION}=="32")
+	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS_EXEC_START) -o #[[$]]#@ #[[$]]#@.o #[[$]]#(COMMONOBJS) #[[$]]#(LINKER_FLAGS_EXEC_END) #[[$]]#(LIBS)
+#else
 	#[[$]]#(LINKER) #[[$]]#(LINKER_FLAGS) -o #[[$]]#@ #[[$]]#@.o #[[$]]#(COMMONOBJS) #[[$]]#(LIBS)
+#end
 
 objs/#[[$]]#(TARGET_ARCH)/%.o : #[[$]]#(SOURCE_DIR)%${sourceFileExtension} #foreach($h in ${additionalHeaderFiles}) #[[$]]#(SOURCE_DIR)$h#end #if(${global.idlFileName}) #[[$]]#(SOURCE_DIR)${global.idlFileName}${headerFileExtension} #end
 #*-- This intro is needed as the previous line ends with the end --*#

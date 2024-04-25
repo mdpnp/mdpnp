@@ -59,12 +59,13 @@
 <!ELEMENT union (discriminator,(case|directive)+)>
 <!ATTLIST union name NMTOKEN #REQUIRED>
 <!ATTLIST union extensibility CDATA #IMPLIED>
-<!ATTLIST union data_representation CDATA #IMPLIED>
-<!ATTLIST union allowed_data_representation CDATA #IMPLIED>
 <!ATTLIST union topLevel (true|false|1|0) "true">
 <!ATTLIST union nested (true|false|1|0) "false">
 <!ATTLIST union resolveName (true|false|1|0) #IMPLIED>
 <!ATTLIST union autoid (hash|sequential) #IMPLIED>
+<!ATTLIST union data_representation CDATA #IMPLIED>
+<!ATTLIST union allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST union languageBinding (plain|flat_data) #IMPLIED>
 <!ATTLIST union transferMode (shmem_ref|inband) #IMPLIED>
 
 <!ELEMENT const EMPTY>

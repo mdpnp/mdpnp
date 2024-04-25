@@ -17,9 +17,6 @@ const struct RTI_Monitoring_MetricGroupInfo *
     static RTIBool isInitialized = RTI_FALSE;
     static struct RTI_Monitoring_MetricGroupInfo metricGroupInfo[${node.metricGroupMapList.size()}] =
     {
-#*--*##set ($lastMetricGroupIndex = $node.metricGroupMapList.size())
-#*--*##set ($lastMetricGroupIndex= $lastMetricGroupIndex - 1)
-#*--*##set ($count=0)
 #*--*##foreach ($metricGroup in $node.metricGroupMapList)
         {
             ${metricGroup.idNativeFQName},
@@ -27,11 +24,10 @@ const struct RTI_Monitoring_MetricGroupInfo *
             ${node.nativeFQNameInModule}_${metricGroup.name}_set_dist_into_sample,
             ${node.nativeFQNameInModule}_${metricGroup.name}_delete_dist
         }#*
-------*##if ($count != $lastMetricGroupIndex),
+------*##if ($foreach.hasNext),
 #*----*##else
 
 #*----*##end
-#*----*##set ($count = $count +1)
 #*--*##end
     };
 
@@ -42,6 +38,56 @@ const struct RTI_Monitoring_MetricGroupInfo *
     isInitialized = RTI_TRUE;
     
     return metricGroupInfo;
+}
+#end
+
+#macro(declareGetMetricInfo $node__)
+NDDSUSERDllExport const struct RTI_Monitoring_MetricInfo * 
+        ${node__.nativeFQNameInModule}_get_metric_info(void);
+#end
+
+#macro (getMetricDistributionKind $metric__)
+#*--*##if ($metric__.distributionKind.equals("UNSPECIFIED"))
+    DDS_OBSERVABLE_UNSPECIFIED_DISTRIBUTION_KIND
+#*--*##elseif ($metric__.distributionKind.equals("PERIODIC"))
+    DDS_OBSERVABLE_PERIODIC_DISTRIBUTION_KIND
+#*--*##else
+    DDS_OBSERVABLE_ON_CHANGE_DISTRIBUTION_KIND
+#*--*##end
+#end
+
+#macro(defineGetMetricInfo $node__)
+const struct RTI_Monitoring_MetricInfo * 
+        ${node__.nativeFQNameInModule}_get_metric_info(void)
+{
+#*--*##if ($node__.metricMapList.size() == 0)
+    return NULL;
+#*--*##else
+    static RTIBool isInitialized = RTI_FALSE;
+    static struct RTI_Monitoring_MetricInfo metricInfo[${node__.metricMapList.size()}] =
+    {
+#*----*##foreach ($metric in $node__.metricMapList)
+        {
+            (char *) ${metric.otelNameNativeFQName},
+            ${metric.idNativeFQName},
+            ${metric.groupIndexNativeFQName},
+            #getMetricDistributionKind($metric)
+        }#*
+--------*##if ($foreach.hasNext),
+#*------*##else
+
+#*------*##end
+#*----*##end
+    };
+
+    if (isInitialized) {
+        return metricInfo;
+    }
+
+    isInitialized = RTI_TRUE;
+    
+    return metricInfo;
+#*--*##end
 }
 #end
 
@@ -59,6 +105,7 @@ const struct RTI_Monitoring_ResourceInfo *
     {
         ${node__.resourcePeriodicCountConstantFQName},
         ${node__.resourceEventCountConstantFQName},
+        ${node__.resourceMetricCountConstantFQName}
     };
 
     if (isInitialized) {

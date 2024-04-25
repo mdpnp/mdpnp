@@ -28,6 +28,29 @@
 
 #******************** ANDROID ********************#
 
+#arch("arm64Android12","clang12.0.8ndkr23b", {
+    $OS : $OS.ANDROID,
+    $PLATFORM : $PLATFORM.arm64,
+    $C_COMPILER : "aarch64-linux-android31-clang",
+    $C_COMPILER_FLAGS : ["Wall", "I$(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"],
+    $C_LINKER : "aarch64-linux-android31-clang",
+    $C_LINKER_FLAGS : [],
+    $CXX_COMPILER : "aarch64-linux-android31-clang++",
+    $CXX_COMPILER_FLAGS : ["Wall", "Wno-return-type-c-linkage", "Wno-deprecated-register", "I$(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/c++/v1"],
+    $CXX_LINKER : "aarch64-linux-android31-clang++",
+    $CXX_LINKER_FLAGS : [],
+    $C_SYSLIBS :  ["llog", "lc", "lm"],
+    $CXX_SYSLIBS : ["llog", "lc", "lm", "L$(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android", "lc++_shared"],
+    $DEFINES : ["fpic", "DLINUX", "DRTI_LINUX", "DRTI_ANDROID=12", "DRTI_64BIT", "DRTI_LINUX26", "DRTI_UNIX"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true,
+    "ANDROID_SYSLIB_PATH" : "-L$(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/31",
+    "ANDROID_SDK_VERSION" : "31",
+    "ANDROID_ABI" : "arm64-v8a"
+})
+
 #arch("arm64Android9.0","clang8.0ndkr19b", {
     $OS : $OS.ANDROID,
     $PLATFORM : $PLATFORM.arm64,
@@ -47,7 +70,8 @@
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true,
     "TARGET_ID" : "android-28",
-    "ANDROID_ABI" : "arm64-v8a"
+    "ANDROID_ABI" : "arm64-v8a",
+    $HIDDEN: true
 })
 
 #arch("armv7Android9.0","clang8.0ndkr19b", {
@@ -69,7 +93,8 @@
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
     $SUPPORTS_CPP11: true,
     "TARGET_ID" : "android-28",
-    "ANDROID_ABI" : "armeabi-v7a"
+    "ANDROID_ABI" : "armeabi-v7a",
+    $HIDDEN: true
 })
 
 #******************** LINUX ********************#
@@ -114,21 +139,22 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 })
 
 #arch("armv7aLinux3.12","gcc4.9.3cortex-a9", {
-        $OS : $OS.UNIX,
-        $C_COMPILER : "arm-linux-gnueabihf-gcc",
-        $C_COMPILER_FLAGS : [],
-        $C_LINKER : "arm-linux-gnueabihf-gcc",
-        $C_LINKER_FLAGS : [],
-        $CXX_COMPILER : "arm-linux-gnueabihf-g++",
-        $CXX_COMPILER_FLAGS : [],
-        $CXX_LINKER : "arm-linux-gnueabihf-g++",
-        $CXX_LINKER_FLAGS : ["static-libgcc"],
-        $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
-        $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mlong-calls", "funwind-tables"],
-        $INCLUDES : [],
-        $SUPPORTS_JAVA : true,
+    $OS : $OS.UNIX,
+    $C_COMPILER : "arm-linux-gnueabihf-gcc",
+    $C_COMPILER_FLAGS : [],
+    $C_LINKER : "arm-linux-gnueabihf-gcc",
+    $C_LINKER_FLAGS : [],
+    $CXX_COMPILER : "arm-linux-gnueabihf-g++",
+    $CXX_COMPILER_FLAGS : [],
+    $CXX_LINKER : "arm-linux-gnueabihf-g++",
+    $CXX_LINKER_FLAGS : ["static-libgcc"],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+    $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mlong-calls", "funwind-tables"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("armv8Linux4.9","gcc6.2.0", {
@@ -166,7 +192,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "CSR_VAR" : "#SYSROOT = # Set the location of the Yocto toolchain sysroot",
     $SUPPORTS_JAVA : true,
     $CPP11_COMPILER_FLAGS : ["std=c++11"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("armv7Linux4","gcc7.5.0" {
@@ -179,7 +206,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_COMPILER_FLAGS : ["march=armv7", "mthumb", "mfloat-abi=hard", "mabi=aapcs-linux", "pthread"],
     $CXX_LINKER : "arm-linux-gnueabihf-g++",
     $CXX_LINKER_FLAGS : ["static-libgcc", "pthread"],
-    $SYSLIBS : ["ldl", "lm", "lrt"],
+    $SYSLIBS : ["ldl", "lm", "lrt", "latomic"],
     $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX"],
     $INCLUDES : [],
     $SUPPORTS_JAVA : true,
@@ -316,7 +343,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $SYSLIBS : ["lm", "lpthread", "lrt", "ldl", "no-pie", "rdynamic"],
     $DEFINES : ["DRTI_UNIX"],
     $INCLUDES : [],
-    $SUPPORTS_JAVA : true,
+    $SUPPORTS_JAVA : false,
     $CPP11_COMPILER_FLAGS : ["std=c++11"], 
     $SUPPORTS_CPP11: true,
     $OPENSSL_LIBRARIES: ["/usr/lib/libssl.so", "/usr/lib/libcrypto.so"]
@@ -360,7 +387,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $SUPPORTS_JAVA : true,
     $CPP11_COMPILER_FLAGS : ["std=c++11", "fno-omit-frame-pointer"],
     $SUPPORTS_CPP11: true,
-    $OPENSSL_LIBRARIES: ["/usr/lib64/libssl.so", "/usr/lib64/libcrypto.so"]
+    $OPENSSL_LIBRARIES: ["/usr/lib64/libssl.so", "/usr/lib64/libcrypto.so"],
+    $HIDDEN: true
 })
 
 #arch("x64RedHawk8.4","gcc8.5.0", {
@@ -475,7 +503,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $SUPPORTS_ADA : true,
     $SUPPORTS_JAVA : true,
     $CPP11_COMPILER_FLAGS : ["std=c++0x"],
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })
 
 #arch("x64Linux3","gcc4.8.2", {
@@ -511,7 +540,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_LINKER_FLAGS : ["static-libgcc"],
     $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
     $DEFINES : ["fPIC", "DRTI_UNIX", "DRTI_LINUX", "march=armv7-a", "mcpu=cortex-a9", "mthumb", "mlong-calls"],
-    $INCLUDES : []
+    $INCLUDES : [],
+    $HIDDEN : true
 })
 
 #arch("armv7aWRLinux8","gcc5.2.0", {
@@ -615,6 +645,42 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CPP11_COMPILER_FLAGS : ["std=c++14"],
     $SUPPORTS_CPP11: true,
     $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/x64Linux4gcc7.3.0/release/lib/libwolfssl.a"]
+})
+
+#arch("x64Linux5Unreal5.2","clang15", {
+    $OS : $OS.UNIX,
+    $PLATFORM : $PLATFORM.x64,
+    $C_COMPILER : "$(COMPILER_PATH)/clang",
+    $C_COMPILER_FLAGS : [
+        "m64", "Wall", "Wno-deprecated-builtins", "Wno-return-type-c-linkage",
+        "-sysroot=$(COMPILERSYSROOT)"
+    ],
+    $C_LINKER : "$(COMPILER_PATH)/clang",
+    $C_LINKER_FLAGS : [
+        "m64", "-sysroot=$(COMPILERSYSROOT)", "fuse-ld=lld",
+        "L$(UNREAL_ENGINE_ROOT)/Engine/Source/ThirdParty/Unix/LibCxx/lib/Unix/x86_64-unknown-linux-gnu"
+    ],
+    $CXX_COMPILER : "$(COMPILER_PATH)/clang++",
+    $CXX_COMPILER_FLAGS : [
+        "m64", "Wall", "Wno-deprecated-builtins", "Wno-return-type-c-linkage",
+        "isystem$(UNREAL_ENGINE_ROOT)/Engine/Source/ThirdParty/Unix/LibCxx/include/c++/v1",
+        "-sysroot=$(COMPILERSYSROOT)", "stdlib=libc++", "fno-rtti"
+    ],
+    $CXX_LINKER : "$(COMPILER_PATH)/clang++",
+    $CXX_LINKER_FLAGS : [
+        "m64", "-sysroot=$(COMPILERSYSROOT)", "fuse-ld=lld", "stdlib=libc++",
+        "L$(UNREAL_ENGINE_ROOT)/Engine/Source/ThirdParty/Unix/LibCxx/lib/Unix/x86_64-unknown-linux-gnu"
+    ],
+    $SYSLIBS : ["ldl", "lm", "lpthread", "lrt", "rdynamic"],
+    $DEFINES : ["DRTI_UNIX", "DRTI_LINUX", "DRTI_64BIT"],
+    $INCLUDES : [],
+    $SUPPORTS_JAVA : true,
+    $MAKEFILE_TEMPLATE: "makefileC.vm",
+    "TR_VAR" : "#UNREAL_ENGINE_ROOT = Path to the Unreal Engine installation",
+    "CSR_VAR" : "COMPILERSYSROOT = $(UNREAL_ENGINE_ROOT)/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/Linux_x64/v21_clang-15.0.1-centos7/x86_64-unknown-linux-gnu",
+    "COMP_PATH_VAR" : "COMPILER_PATH = $(COMPILERSYSROOT)/bin",
+    $CPP11_COMPILER_FLAGS : ["std=c++11"],
+    $SUPPORTS_CPP11: true
 })
 
 #arch("x64Linux","gcc7.4.1", {
@@ -788,6 +854,18 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "PROJECT_TOOLSVERSION" : "12.0",
     $SUPPORTS_CPP11: true,
     $HIDDEN: true
+})
+
+#arch("net8","", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.x64,
+    $DOTNET_VERSION : 8,
+    $PROJECT_FILE_EXT: ".csproj",
+    $CS_TYPE_PROJECT_TEMPLATE : "csproj.vm",
+    $CS_NUGET_CONF_TEMPLATE : "nuget.vm",
+    $SUPPORTS_JAVA : false,
+    $SUPPORTS_CPP11: false,
+    "PLATFORM_TOOLSET": "net8"
 })
 
 #arch("net7","", {
@@ -1062,6 +1140,29 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\x64Win64VS2017\static_release\lib\libcrypto.lib", "crypt32.lib"]
 })
 
+#arch("arm64Win64","VS2022", {
+    $OS : $OS.WIN,
+    $PLATFORM : $PLATFORM.arm64,
+    $VS_VERSION : "VS2022",
+    $VS_NUMBER : "17",
+    $SUPPORTS_JAVA : true,
+    $PROJECT_FILE_EXT: ".vcxproj",
+    $C_PUBSUB_PROJECT_TEMPLATE :"vcxproj.vm",
+    $C_PUBSUB_FILTER_PROJECT_TEMPLATE :"vcxprojFilters.vm",
+    $PUBSUB_SOLUTION_TEMPLATE : "projectVSSolution.vm",
+    $DEFINES : ["WIN32"],
+    "SOL_FORMAT_VERSION" : "12.00",
+    "DEBUG_INFORMATION_FORMAT" : "ProgramDatabase",
+    "TARGET_MACHINE" : "machineARM64",
+    "PLATFORM_TOOLSET": "<PlatformToolset>v143</PlatformToolset>",
+	"TARGET_PLATFORM_VERSION" : "10.0",
+    "FRAMEWORK_PROFILE": "",
+    "PROJECT_TOOLSVERSION" : "17.0",
+    $SUPPORTS_CPP11: true,
+    $OPENSSL_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$opensslVersion\arm64Win64VS2022\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$opensslVersion\arm64Win64VS2022\static_release\lib\libcrypto.lib", "crypt32.lib"],
+    $OPENSSL3_LIBRARIES: ["$(NDDSHOME)\third_party\openssl-$openssl3Version\arm64Win64VS2022\static_release\lib\libssl.lib", "$(NDDSHOME)\third_party\openssl-$openssl3Version\arm64Win64VS2022\static_release\lib\libcrypto.lib", "crypt32.lib"]
+})
+
 #******************** DARWIN ********************#
 #arch("x64Darwin15","clang7.0", {
     $OS : $OS.DARWIN,
@@ -1154,7 +1255,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CXX_LINKER_FLAGS : [],
     $SYSLIBS : [],
     $DEFINES : ['DRTI_UNIX', 'DRTI_DARWIN'],
-    $SUPPORTS_JAVA : false,
+    $SUPPORTS_JAVA : true,
     $CPP11_COMPILER_FLAGS : ["std=c++11"],
     $SUPPORTS_CPP11: true,
     "COPY_DYNAMIC_LIBS" : "true"
@@ -1278,7 +1379,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX'],
         $INCLUDES : [],
-        $SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true,
+        $HIDDEN : true
 })
 
 #arch("armv7QNX7.0.0","qcc_cxx5.4.0", {
@@ -1294,7 +1396,7 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
- $SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true
 })
 
 #arch("armv7QNX7.0.0","qcc_gpp5.4.0", {
@@ -1344,15 +1446,16 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
-        $SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true,
+        $HIDDEN : true
 })
 
 #arch("armv7QNX7.1","qcc_cxx8.3.0", {
         $OS : $OS.QNX,
         $C_COMPILER : "qcc",
-        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c"],
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx"],
         $C_LINKER : "qcc",
-        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c"],
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx"],
         $CXX_COMPILER : "qcc",
         $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_cxx","lang-c++"],
         $CXX_LINKER : "qcc",
@@ -1361,15 +1464,16 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $DEFINES : ['DRTI_QNX'],
         $INCLUDES : [],
         $SUPPORTS_CPP11: true,
-        $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/armv7QNX7qcc_cxx8.3.0/release/lib/libwolfssl.a"]
+        $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/armv7QNX7qcc_cxx8.3.0/release/lib/libwolfssl.a"],
+        $HIDDEN : true
 })
 
 #arch("armv7QNX7.1","qcc_gpp8.3.0", {
         $OS : $OS.QNX,
         $C_COMPILER : "qcc",
-        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c"],
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp"],
         $C_LINKER : "qcc",
-        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c"],
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp"],
         $CXX_COMPILER : "qcc",
         $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoarmv7le","Y_gpp","lang-c++"],
         $CXX_LINKER : "qcc",
@@ -1384,9 +1488,9 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 #arch("armv8QNX7.1","qcc_cxx8.3.0", {
         $OS : $OS.QNX,
         $C_COMPILER : "qcc",
-        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c"],
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx"],
         $C_LINKER : "qcc",
-        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c"],
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx"],
         $CXX_COMPILER : "qcc",
         $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c++"],
         $CXX_LINKER : "qcc",
@@ -1397,12 +1501,29 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SUPPORTS_CPP11: true
 })
 
+#arch("armv8QOS2.2","qcc_cxx8.3.0", {
+        $OS : $OS.QNX,
+        $C_COMPILER : "qcc",
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx"],
+        $C_LINKER : "qcc",
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx"],
+        $CXX_COMPILER : "qcc",
+        $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c++"],
+        $CXX_LINKER : "qcc",
+        $CXX_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_cxx","lang-c++"],
+        $SYSLIBS : ['lm', 'lsocket'],
+        $DEFINES : ['DRTI_QNX'],
+        $INCLUDES : [],
+        $SUPPORTS_CPP11: true,
+        $WOLFSSL_LIBRARIES: ["$(NDDSHOME)/third_party/wolfssl-$wolfsslVersion/armv8QOS2.2qcc_cxx8.3.0/release/lib/libwolfssl.a"]
+})
+
 #arch("armv8QNX7.1","qcc_gpp8.3.0", {
         $OS : $OS.QNX,
         $C_COMPILER : "qcc",
-        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c"],
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp"],
         $C_LINKER : "qcc",
-        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c"],
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp"],
         $CXX_COMPILER : "qcc",
         $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntoaarch64le","Y_gpp","lang-c++"],
         $CXX_LINKER : "qcc",
@@ -1417,9 +1538,9 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 #arch("x64QNX7.1","qcc_cxx8.3.0", {
         $OS : $OS.QNX,
         $C_COMPILER : "qcc",
-        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c"],
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx"],
         $C_LINKER : "qcc",
-        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c"],
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx"],
         $CXX_COMPILER : "qcc",
         $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_cxx","lang-c++"],
         $CXX_LINKER : "qcc",
@@ -1433,9 +1554,9 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
 #arch("x64QNX7.1","qcc_gpp8.3.0", {
         $OS : $OS.QNX,
         $C_COMPILER : "qcc",
-        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c"],
+        $C_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp"],
         $C_LINKER : "qcc",
-        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c"],
+        $C_LINKER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp"],
         $CXX_COMPILER : "qcc",
         $CXX_COMPILER_FLAGS : ["Vgcc/8.3.0,gcc_ntox86_64","Y_gpp","lang-c++"],
         $CXX_LINKER : "qcc",
@@ -1443,7 +1564,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX'],
         $INCLUDES : [],
-        $SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true,
+        $HIDDEN : true
 })
 
 #arch("i86QNX7.0.0","qcc_gpp5.4.0", {
@@ -1477,7 +1599,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         $SYSLIBS : ['lm', 'lsocket'],
         $DEFINES : ['DRTI_QNX', 'DRTI_QNX7'],
         $INCLUDES : [],
-	$SUPPORTS_CPP11: true
+        $SUPPORTS_CPP11: true,
+        $HIDDEN: true
 })
 
 #arch("x64QNX7.0.0","qcc_gpp5.4.0", {
@@ -1971,8 +2094,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         'u __wr_need_frame_add', 'u __tls__',
         'T$(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o'],
 	$SYSLIBS : ['L$(VSB_DIR)/usr/lib/common', '-start-group', '-as-needed',
-        'lc', 'lc_internal', 'lllvm', 'lcplusplus', 'lllvmcplus', 'ldl',
-        'lnet', '-end-group'],
+        'lssl', 'lcrypto', 'lc', 'lc_internal', 'lllvm', 'lcplusplus', 
+        'lllvmcplus', 'ldl', 'lnet', '-end-group'],
 	$DEFINES : ['DRTI_CLANG','DRTI_VXWORKS', 'DRTI_64BIT', 'D__vxworks', 'D__VXWORKS__',
         'D__RTP__', 'D__ELF__', 'D_USE_INIT_ARRAY', 'DCPU=_VX_CORE',
         'DTOOL_FAMILY=llvm', 'DTOOL=llvm', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'
@@ -2018,7 +2141,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CPP11_COMPILER_FLAGS : ['std=c++14'],
     $SUPPORTS_CPP11 : true,
     "CPP11_SYSLIBS" : "",
-    "CPP_SYSLIBS" : ""
+    "CPP_SYSLIBS" : "",
+    $HIDDEN: true
 })
 
 #arch("armv8Vx7SR0660","llvm10.0.1.cortex-a53_rtp", {
@@ -2043,8 +2167,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
         'u __wr_need_frame_add', 'u __tls__',
         'T$(VSB_DIR)/usr/ldscripts/rtp.ld -EL $(VSB_DIR)/usr/lib/common/crt0.o'],
     $SYSLIBS : ['L$(VSB_DIR)/usr/lib/common', '-start-group', '-as-needed',
-        'lc', 'lc_internal', 'lllvm', 'lcplusplus', 'lllvmcplus', 'ldl',
-        'lnet', '-end-group'],
+        'lssl', 'lcrypto', 'lc', 'lc_internal', 'lllvm', 'lcplusplus', 
+        'lllvmcplus', 'ldl', 'lnet', '-end-group'],
     $DEFINES : ['DRTI_CLANG','DRTI_VXWORKS', 'DRTI_64BIT', 'D__vxworks', 'D__VXWORKS__',
         'D__RTP__', 'D__ELF__', 'D_USE_INIT_ARRAY', 'DCPU=_VX_CORTEX_A53', "DARMEL",
         'DTOOL_FAMILY=llvm', 'DTOOL=llvm', 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'
@@ -2056,7 +2180,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $CPP11_COMPILER_FLAGS : ['std=c++14'],
     $SUPPORTS_CPP11 : true,
     "CPP11_SYSLIBS" : "",
-    "CPP_SYSLIBS" : ""
+    "CPP_SYSLIBS" : "",
+    $HIDDEN: true
 })
 
 #arch("x64Vx21.11","llvm12.0.1.1", {
@@ -2091,7 +2216,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     $SUPPORTS_CPP11 : true,
     "NM_VAR"  : "NM = $(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/nmpentium",
     "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_VX7_HOST_TYPE)/bin/tclsh $(WIND_BUILD)/mk/tcl/munch.tcl -c pentium -tags $(VSB_DIR)/krnl/tags/dkm.tags",
-    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(VSB_DIR)/krnl/ldscripts/dkm.ld"
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(VSB_DIR)/krnl/ldscripts/dkm.ld",
+    $HIDDEN: true
 })
 
 #arch("x64Vx21.11","llvm12.0.1.1_rtp", {
@@ -2131,6 +2257,199 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
     "vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
     $CPP11_COMPILER_FLAGS : [],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : "",
+    $HIDDEN: true
+})
+
+#arch("ppc32Vx22.03","gcc8.3.0_rtp", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : true,
+    $C_COMPILER : "$(WIND_GNU_PATH)/$(WIND_GNU_HOST_TYPE)/bin/ccppc",
+    $C_COMPILER_FLAGS : [ "mabi=no-altivec", "mno-altivec",
+        "mstrict-align", "msecure-plt", "fno-builtin", "fno-strict-aliasing",
+        "isystem $(VSB_DIR)/usr/h/public"],
+    $C_LINKER : "$(WIND_GNU_PATH)/$(WIND_GNU_HOST_TYPE)/bin/ldppc",
+    $C_LINKER_FLAGS : ["m elf32ppc", "z noseparate-code", "u __tls__",
+        "u __wr_need_frame_add", "-defsym __wrs_rtp_base=0x80000000",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o",
+        "-secure-plt"],
+    $CXX_COMPILER : "$(WIND_GNU_PATH)/$(WIND_GNU_HOST_TYPE)/bin/c++ppc",
+    $CXX_COMPILER_FLAGS : [ "mabi=no-altivec", "mno-altivec",
+        "mstrict-align", "msecure-plt", "fno-builtin", "fno-strict-aliasing",
+        "isystem $(VSB_DIR)/usr/h/public"],
+    $CXX_LINKER : "$(WIND_GNU_PATH)/$(WIND_GNU_HOST_TYPE)/bin/ldppc",
+    $CXX_LINKER_FLAGS : ["m elf32ppc", "z noseparate-code", "u __tls__",
+        "u __wr_need_frame_add", "-defsym __wrs_rtp_base=0x80000000",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o",
+        "-secure-plt"],
+    $SYSLIBS : ["L $(VSB_DIR)/usr/lib/common", "-as-needed", "-start-group",
+        "lcplusplus", "lgnucplus", "lnet", "lc", "lc_internal", "ldl", "lgnu",
+        "-end-group"],
+    $DEFINES : ["DRTI_VXWORKS", "D__ELF__", "D__RTP__", "D__VXWORKS__",
+        "D__ppc", "D__ppc__", "D__vxworks", "D_USE_INIT_ARRAY",
+        'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"', "D_VX_CPU=_VX_PPCE500MC",
+        "DCPU=PPC32", "DPPC", "DTOOL=gnu", "DTOOL_FAMILY=gnu"],
+    $INCLUDES : ["$(VSB_DIR)/share/h"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $CPP11_COMPILER_FLAGS : [],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : ""
+})
+
+#arch("x64Vx22.09","llvm13.0.1.3", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : false,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c11", "m64",
+        "march=core2", "mcmodel=kernel", "mno-red-zone", "mno-implicit-float",
+        "fno-builtin", "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "ftls-model=local-exec", "nostdlibinc", "nostdinc++"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $C_LINKER_FLAGS : [ "m elf_x86_64", "X", "r", "-eh-frame-hdr",
+        "-force-group-allocation"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang++",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "m64",
+        "march=core2", "mcmodel=kernel", "mno-red-zone", "mno-implicit-float",
+        "fno-builtin", "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "ftls-model=local-exec", "nostdlibinc", "nostdinc++"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $CXX_LINKER_FLAGS : [ "m elf_x86_64", "X", "r", "-eh-frame-hdr",
+        "-force-group-allocation"],
+    $SYSLIBS : [],
+    $DEFINES : ["DRTI_VXWORKS", "DRTI_CLANG", "DRTI_64BIT",
+        "D__vxworks", "D__VXWORKS__", "D__ELF__", "D_HAVE_TOOL_XTORS",
+        "D_USE_INIT_ARRAY", "DCPU=_VX_CORE", "D_VX_CPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", "D_WRS_KERNEL", "D_WRS_VX_SMP",
+        "D_WRS_CONFIG_SMP", 'D_VSB_CONFIG_FILE=\"$(VSB_DIR)/h/config/vsbConfig.h\"'],
+    $INCLUDES : ["$(VSB_DIR)/share/h", "$(VSB_DIR)/krnl/h/public", "$(VSB_DIR)/krnl/h/system"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    $CPP11_COMPILER_FLAGS : ["std=c++14"],
+    $SUPPORTS_CPP11 : true,
+    "NM_VAR"  : "NM = $(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/nmpentium",
+    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_VX7_HOST_TYPE)/bin/tclsh $(WIND_BUILD)/mk/tcl/munch.tcl -c pentium -tags $(VSB_DIR)/krnl/tags/dkm.tags",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(VSB_DIR)/krnl/ldscripts/dkm.ld",
+    $HIDDEN : true
+})
+
+#arch("x64Vx22.09","llvm13.0.1.3_rtp", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : true,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c11", "m64",
+        "march=core2", "mcmodel=small", "fasm", "fno-builtin",
+        "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "nostdlibinc", "nostdinc++",
+        "isystem$(VSB_DIR)/usr/h/public", "isystem$(VSB_DIR)/usr/h"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $C_LINKER_FLAGS : [ "m elf_x86_64", "z noseparate-code",
+        "-defsym __wrs_rtp_base=0x200000", "u __tls__", "u __wr_need_frame_add",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "m64",
+        "march=core2", "mcmodel=small", "fasm", "fno-builtin",
+        "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "nostdlibinc", "nostdinc++",
+        "isystem$(VSB_DIR)/usr/h/public", "isystem$(VSB_DIR)/usr/h",
+        "Wno-return-type-c-linkage"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $CXX_LINKER_FLAGS : ["m elf_x86_64", "z noseparate-code",
+        "-defsym __wrs_rtp_base=0x200000", "u __tls__", "u __wr_need_frame_add",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o"],
+    $SYSLIBS : ["L$(VSB_DIR)/usr/lib/common", "-start-group", "-as-needed",
+        "lssl", "lcrypto", "lc", "lc_internal", "lllvm", "lcplusplus", 
+        "lllvmcplus", "ldl", "lnet", "-end-group"],
+    $DEFINES : ["DRTI_VXWORKS", "DRTI_CLANG", "DRTI_64BIT",
+        "D__vxworks", "D__VXWORKS__", "D__RTP__", "D__ELF__",
+        "D_USE_INIT_ARRAY", "DCPU=_VX_CORE", "D_VX_CPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'],
+    $INCLUDES : ["$(VSB_DIR)/share/h"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $CPP11_COMPILER_FLAGS : ["std=c++14"],
+    $SUPPORTS_CPP11 : true,
+    "CPP11_SYSLIBS" : "",
+    "CPP_SYSLIBS" : "",
+    $HIDDEN : true
+})
+
+#arch("x64Vx23.09","llvm16.0", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : false,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c11", "m64",
+        "march=core2", "mcmodel=kernel", "mno-red-zone", "mno-implicit-float",
+        "fno-builtin", "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "ftls-model=local-exec", "nostdlibinc", "nostdinc++"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $C_LINKER_FLAGS : [ "m elf_x86_64", "X", "r", "-eh-frame-hdr",
+        "-force-group-allocation"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang++",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "m64",
+        "march=core2", "mcmodel=kernel", "mno-red-zone", "mno-implicit-float",
+        "fno-builtin", "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "ftls-model=local-exec", "nostdlibinc", "nostdinc++"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $CXX_LINKER_FLAGS : [ "m elf_x86_64", "X", "r", "-eh-frame-hdr",
+        "-force-group-allocation"],
+    $SYSLIBS : [],
+    $DEFINES : ["DRTI_VXWORKS", "DRTI_CLANG", "DRTI_64BIT",
+        "D__vxworks", "D__VXWORKS__", "D__ELF__", "D_HAVE_TOOL_XTORS",
+        "D_USE_INIT_ARRAY", "DCPU=_VX_CORE", "D_VX_CPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", "D_WRS_KERNEL", "D_WRS_VX_SMP",
+        "D_WRS_CONFIG_SMP", 'D_VSB_CONFIG_FILE=\"$(VSB_DIR)/h/config/vsbConfig.h\"'],
+    $INCLUDES : ["$(VSB_DIR)/share/h", "$(VSB_DIR)/krnl/h/public", "$(VSB_DIR)/krnl/h/system"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    $CPP11_COMPILER_FLAGS : ["std=c++14"],
+    $SUPPORTS_CPP11 : true,
+    "NM_VAR"  : "NM = $(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/nmpentium",
+    "MUNCH_VAR" : "MUNCH = $(WIND_FOUNDATION_PATH)/$(WIND_VX7_HOST_TYPE)/bin/tclsh $(WIND_BUILD)/mk/tcl/munch.tcl -c pentium -tags $(VSB_DIR)/krnl/tags/dkm.tags",
+    "MUNCHFLAGS_VAR" : "MUNCHFLAGS = -T $(VSB_DIR)/krnl/ldscripts/dkm.ld"
+})
+
+#arch("x64Vx23.09","llvm16.0_rtp", {
+    $OS : $OS.VXWORKS,
+    $IS_RTP : true,
+    $C_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $C_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "std=c11", "m64",
+        "march=core2", "mcmodel=small", "fasm", "fno-builtin",
+        "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "nostdlibinc", "nostdinc++",
+        "isystem$(VSB_DIR)/usr/h/public", "isystem$(VSB_DIR)/usr/h"],
+    $C_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $C_LINKER_FLAGS : [ "m elf_x86_64", "z noseparate-code", "z noexecstack",
+        "-defsym __wrs_rtp_base=0x200000", "u __tls__", "u __wr_need_frame_add",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o"],
+    $CXX_COMPILER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/clang",
+    $CXX_COMPILER_FLAGS : [ "-target=x86_64-wrs-vxworks", "m64",
+        "march=core2", "mcmodel=small", "fasm", "fno-builtin",
+        "fno-omit-frame-pointer", "fno-strict-aliasing",
+        "nostdlibinc", "nostdinc++",
+        "isystem$(VSB_DIR)/usr/h/public", "isystem$(VSB_DIR)/usr/h",
+        "Wno-return-type-c-linkage"],
+    $CXX_LINKER : "$(WIND_LLVM_PATH)/$(WIND_LLVM_HOST_TYPE)/bin/ldpentium",
+    $CXX_LINKER_FLAGS : ["m elf_x86_64", "z noseparate-code", "z noexecstack",
+        "-defsym __wrs_rtp_base=0x200000", "u __tls__", "u __wr_need_frame_add",
+        "T $(VSB_DIR)/usr/ldscripts/rtp.ld $(VSB_DIR)/usr/lib/common/crt0.o"],
+    $SYSLIBS : ["L$(VSB_DIR)/usr/lib/common", "-start-group", "-as-needed",
+        "lssl", "lcrypto", "lc", "lc_internal", "lllvm", "lcplusplus", 
+        "lllvmcplus", "ldl", "lnet", "-end-group"],
+    $DEFINES : ["DRTI_VXWORKS", "DRTI_CLANG", "DRTI_64BIT",
+        "D__vxworks", "D__VXWORKS__", "D__RTP__", "D__ELF__",
+        "D_USE_INIT_ARRAY", "DCPU=_VX_CORE", "D_VX_CPU=_VX_CORE",
+        "DTOOL_FAMILY=llvm", "DTOOL=llvm", 'D_VSB_CONFIG_FILE=\"$(vsbConfigFile)\"'],
+    $INCLUDES : ["$(VSB_DIR)/share/h"],
+    $MAKEFILE_TEMPLATE: "makefileCvxworks.vm",
+    "VSB_DIR_VAR" : "# VSB_DIR = Specify your VSB directory here",
+    "vsbConfigFile_VAR" : "vsbConfigFile = $(VSB_DIR)/h/config/vsbConfig.h",
+    $CPP11_COMPILER_FLAGS : ["std=c++14"],
     $SUPPORTS_CPP11 : true,
     "CPP11_SYSLIBS" : "",
     "CPP_SYSLIBS" : ""
@@ -2214,7 +2533,8 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "Cxx_intLIBS": [],
     "primaryTarget" : "ppc_integrity.tgt",
     $C_COMPILER_FLAGS : [],
-    $CXX_COMPILER_FLAGS : ["--exceptions"]
+    $CXX_COMPILER_FLAGS : ["--exceptions"],
+    $HIDDEN: true
 })
 
 #arch("pentiumInty11.pcx86-smp","", {
@@ -2261,5 +2581,6 @@ a different one set the $MAKEFILE_TEMPLATE variable*#
     "primaryTarget" : "86_integrity.tgt",
     $CXX_COMPILER_FLAGS : ["--exceptions", "--c++11"],
     $CPP11_COMPILER_FLAGS : ["--diag_suppress 1974,1518,236,76"], 
-    $SUPPORTS_CPP11: true
+    $SUPPORTS_CPP11: true,
+    $HIDDEN: true
 })

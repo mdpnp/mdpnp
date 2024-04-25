@@ -88,7 +88,7 @@ $directive.value
 #macro(declareMember $member)
 #*--*##if($member.pointerType && !$member.dimensionList)
 $member.pointerType ${member.cName};
-#*--*##elseif($member.aggregationInitialization)
+#*--*##elseif($member.aggregationInitialization || !$envMap.legacyMapping)
 $member.completeSpecTypeName ${member.cName} {};
 #*--*##else
 $member.completeSpecTypeName ${member.cName};
@@ -123,7 +123,7 @@ enum class ${node.nativeFQNameInModule} {
 
 #macro (getterAndSettersHeader $node)
 #*--*##if($node.constructKind.equals("union"))
-#*----*##getMemberBody ($node.unionDiscriminatorMap)
+#*----*##getMemberBody ($node.unionDiscriminatorMap $node)
 #*----*##assignMemberBody($node.unionDiscriminatorMap $node)
 #*--*##end
 #*--*##foreach($member in $node.memberFieldMapList)
@@ -134,15 +134,28 @@ enum class ${node.nativeFQNameInModule} {
 ## In general getters and setters are defined inline in the header, except when
 ## their type is forward-declared, in which case we need the full definition
 ## of the type first, so we define the getter and setter in the .cxx file
-#*------*##getMemberHeader( $member $node)
-#*------*##assignMemberHeader($member $node)
-#*------*##moveMemberHeader($member $node)
+#*--------*##getMemberHeader( $member $node)
+#*--------*##assignMemberHeader($member $node)
+#*--------*##moveMemberHeader($member $node)
 #*------*##else
-#*------*##getMemberBody( $member $node)
-#*------*##assignMemberBody($member $node)
-#*------*##moveMemberBody($member $node)
+#*--------*##getMemberBody( $member $node)
+#*--------*##assignMemberBody($member $node)
+#*--------*##moveMemberBody($member $node)
+#*--------*##if(!$envMap.legacyMapping)
+#*----------*##assignMemberBodyCpp11Mapping($member $node)
+#*----------*##moveMemberBodyCpp11Mapping($member $node)
+#*--------*##end
 #*------*##end
 #*----*##end
+#*--*##end
+#*--*##if(!$envMap.legacyMapping
+        && $node.constructKind.equals("union")
+        && !$node.hasAllCaseCovered
+        && !$node.hasADefaultCaseLabel)
+void _default() {
+    _d(${node.nativeFQName}::default_discriminator());
+}
+
 #*--*##end
 #end
 
@@ -162,15 +175,33 @@ enum class ${node.nativeFQNameInModule} {
 #end
 
 #macro (getMemberBodyWithFncName $member $node $functionName)
+#*--*##if(!$envMap.legacyMapping
+        && $node.constructKind.equals("union")
+        && $member.name.equals("_d"))
+${member.completeSpecTypeName} $functionName() const #noExcept($node) {
+#checkBadParamIfUnion ($member $node false)
+#returnMember ($member $node)
+}
+#*
+ * This method cannot be marked as const because it cannot be overloaded
+ * with ’type union::_d() const’. This method is not specified by the spec
+ * but we need it.
+ *#
+const ${member.completeSpecTypeName}& $functionName() #noExcept($node) {
+#checkBadParamIfUnion ($member $node false)
+#returnMember ($member $node)
+}
+#*--*##else
 ${member.completeSpecTypeName}& $functionName() #noExcept($node) {
-#checkBadParamIfUnion ($member $node)
+#checkBadParamIfUnion ($member $node false)
 #returnMember ($member $node)
 }
 
 const ${member.completeSpecTypeName}& $functionName() const #noExcept($node) {
-#checkBadParamIfUnion ($member $node)
+#checkBadParamIfUnion ($member $node false)
 #returnMember ($member $node)
 }
+#*--*##end
 
 #end
 
@@ -206,58 +237,95 @@ return ${member.cName};
 #end
 
 
-#macro (checkBadParamIfUnion $member $node)
-#*--*##if($node.constructKind.equals("union") && !$member.name.equals("_d") && !$node.hasOnlyADefaultCase)#*
-----------This for the members that are not in the default case----------------
-----*##if($member.index!=$node.defaultIndex +1)#*
---*#if (#foreach($element in $member.labelList) _d() != $element#*
-      *##if($member.labelList.size()>$foreach.count) && 
-         #end#end) {
-#*----------This for the members that are with the default case----------------           
-------------*##else#*
---*#if (!(#foreach($element in $node.unionDiscriminatorMap.labelList)#*
-       *##if(!$element.contains("default") && !$member.labelList.contains($element))_d() != $element#* 
-       *##if($foreach.count <$node.unionDiscriminatorMap.labelList.size() - $member.labelList.size()) &&
-          #end#end#end)) {
-#end
+#macro (checkBadParamIfUnion $member__ $node__ $setterWithDiscriminator__)
+#*--*##if($node__.constructKind.equals("union") && !$member__.name.equals("_d") && !$node__.hasOnlyADefaultCase)
+#*----------This for the members that are not in the default case----------------*#
+#*----*##if($member__.index!=$node__.defaultIndex +1)
+if (#*
+#*------*##foreach($element in $member__.labelList)
+#*--------*##if($setterWithDiscriminator__)
+discriminator #*
+#*--------*##else
+_d() #*
+#*--------*##end
+!= $element #*
+#*--------*##if($member__.labelList.size()>$foreach.count)
+&&
+#*--------*##end
+#*------*##end) {
+#*----------This for the members that are with the default case----------------*#
+#*----*##else
+if (!(#*
+#*------*##foreach($element in $node__.unionDiscriminatorMap.labelList)
+#*--------*##if(!$element.contains("default") && !$member__.labelList.contains($element))
+#*----------*##if($setterWithDiscriminator__)
+discriminator #*
+#*----------*##else
+_d() #*
+#*----------*##end
+!= $element #*
+#*----------*##if($foreach.count <$node__.unionDiscriminatorMap.labelList.size() - $member__.labelList.size())
+&&
+#*----------*##end
+#*--------*##end
+#*------*##end)) {
+#*----*##end
             throw ::dds::core::PreconditionNotMetError(
-                "${node.nativeFQName}::${member.name} not selected by the discriminator" );
+#*----*##if($setterWithDiscriminator__)
+                "The discriminator value is not valid for ${node__.nativeFQName}::${member__.name}" );
+#*----*##else
+                "${node__.nativeFQName}::${member__.name} not selected by the discriminator" );
+#*----*##end
         }
-#end
+#*--*##end
 #end
 
 
 ## set is reserver word so we need to call this differently
 #macro (assignMemberBodyWithFncName $member $node $functionName)
-#*--*##if($member.complexType)
+#*--*##if($member.setterByReference)
 void $functionName(const $member.completeSpecTypeName& value) {
 #*--*##else
 void $functionName($member.completeSpecTypeName value) {
 #*--*##end
 #*--*##if($node.constructKind.equals("union") && !$member.name.equals("_d"))
-#*--*##if(!$member.labelList.get(0).equals("default"))
-#*----*##assignMember ($member $node)
+#*----*##if(!$member.labelList.get(0).equals("default"))
+#*------*##assignMember ($member $node)
      m_d_= $member.labelList.get(0);
+#*----*##else
+#*------*##checkBadParamIfUnion ($member $node false)
+#*------*##assignMember ($member $node)
+#*----*##end
 #*--*##else
-#*----*##checkBadParamIfUnion ($member $node)
+#* This is the discriminator, so we don't need to checkBadParamIfUnion *#
 #*----*##assignMember ($member $node)
 #*--*##end
+}
+
+#end
+
+#macro (assignMemberBodyWithDiscriminatorWithFncName $member__ $node__ $functionName__)
+#*--*##if($member__.setterByReference)
+void $functionName__(const $member__.completeSpecTypeName& value, $node__.unionDiscriminatorMap.completeSpecTypeName discriminator) {
 #*--*##else
-#*----*##assignMember ($member $node)
-#*--*##end    
+void $functionName__($member__.completeSpecTypeName value, $node__.unionDiscriminatorMap.completeSpecTypeName discriminator) {
+#*--*##end
+#*--*##checkBadParamIfUnion($member__ $node__ true)
+#*--*##assignMember ($member__ $node__)
+    m_d_= discriminator;
 }
 
 #end
 
 #macro (moveMemberBodyWithFncName $member $node $functionName)
-#*--*##if($member.complexType && $envMap.language.equals("cpp11stl"))
+#*--*##if($member.setterByReference)
 void $functionName($member.completeSpecTypeName&& value) {
 #*---*##if($node.constructKind.equals("union") && !$member.name.equals("_d"))
 #*----*##if(!$member.labelList.get(0).equals("default"))
 #*----*##moveMember ($member $node)
      m_d_= $member.labelList.get(0);
 #*----*##else
-#*----*##checkBadParamIfUnion ($member $node)
+#*----*##checkBadParamIfUnion ($member $node false)
 #*----*##moveMember ($member $node)
 #*----*##end
 #*---*##else
@@ -267,12 +335,46 @@ void $functionName($member.completeSpecTypeName&& value) {
 #*--*##end
 #end
 
+#macro (moveMemberBodyWithDiscriminatorWithFncName $member__ $node__ $functionName__)
+#*--*##if($member.setterByReference)
+void $functionName__($member__.completeSpecTypeName&& value, $node__.unionDiscriminatorMap.completeSpecTypeName discriminator) {
+#*--*##checkBadParamIfUnion($member__ $node__ true)
+#*--*##moveMember ($member__ $node__)
+    m_d_= discriminator;
+}
+#*--*##end
+#end
+
 #macro (assignMemberBody $member $node)
-#assignMemberBodyWithFncName($member $node $member.name)
+#*--*##if(!(!$envMap.legacyMapping
+                && $node.constructKind.equals("union")
+                && $member.labelList.get(0).equals("default")))
+#*----*##assignMemberBodyWithFncName($member $node $member.name)
+#*--*##end
+#end
+
+#macro (assignMemberBodyCpp11Mapping $member__ $node__)
+#*--*##if($node__.constructKind.equals("union")
+                && ($member__.labelList.size() > 1
+                        || $member__.labelList.get(0).equals("default")))
+#assignMemberBodyWithDiscriminatorWithFncName($member__ $node__ $member__.name)
+#*--*##end
+#end
+
+#macro (moveMemberBodyCpp11Mapping $member__ $node__)
+#*--*##if($node__.constructKind.equals("union")
+                && ($member__.labelList.size() > 1
+                        || $member__.labelList.get(0).equals("default")))
+#moveMemberBodyWithDiscriminatorWithFncName($member__ $node__ $member__.name)
+#*--*##end
 #end
 
 #macro (moveMemberBody $member $node)
-#moveMemberBodyWithFncName($member $node $member.name)
+#*--*##if(!(!$envMap.legacyMapping
+                && $node.constructKind.equals("union")
+                && $member.labelList.get(0).equals("default")))
+#*----*##moveMemberBodyWithFncName($member $node $member.name)
+#*--*##end
 #end
 
 #macro (assignMember $member $node)
@@ -341,36 +443,36 @@ return true;
 #end
 
 
-#macro (absoluteValueForEqualsOperator $member__ $memberName__)
+#macro (absoluteValueForEqualsOperator $member__ $memberName__ $selfName__ $otherName__)
 std::fabs(#*
 #*--*##if($member__.isOptional)  
-*${memberName__} - *other_.${memberName__}#*
+*${selfName__}${memberName__} - *$otherName__.${memberName__}#*
 #*--*##else
-${memberName__} - other_.${memberName__}#*
+${selfName__}${memberName__} - $otherName__.${memberName__}#*
 #*--*##end)#*
 *##end
 
-#macro (equalsOperatorComparison $member__ $memberName__)
+#macro (equalsOperatorComparison $member__ $memberName__ $selfName__ $otherName__)
 #*--*##if(!$member__.isPointer 
         && ($member__.typeKindResolved=="float" 
         || $member__.typeKindResolved=="double"))
 #*----*##if($member__.isOptional)
-if (${memberName__}.has_value() != other_.${memberName__}.has_value()) {
+if (${selfName__}${memberName__}.has_value() != $otherName__.${memberName__}.has_value()) {
     return false;
-} else if (${memberName__}.has_value()) {
+} else if (${selfName__}${memberName__}.has_value()) {
 #*----*##end
 ## If backporting ROBUSTNESS-1317, review std::numeric_limits<...>::min(), it might 
 ## causes compilation issues on windows due to the preprocessor directive min()
 ## defined in windows.h
-if (#absoluteValueForEqualsOperator($member__ $memberName__) > std::numeric_limits< $member__.typeKindResolved>::epsilon()
-    && !(#absoluteValueForEqualsOperator($member__ $memberName__) < (std::numeric_limits< $member__.typeKindResolved>::min)())) {
+if (#absoluteValueForEqualsOperator($member__ $memberName__ $selfName__ $otherName__) > std::numeric_limits< $member__.typeKindResolved>::epsilon()
+    && !(#absoluteValueForEqualsOperator($member__ $memberName__ $selfName__ $otherName__) < (std::numeric_limits< $member__.typeKindResolved>::min)())) {
     return false;
 }
 #*----*##if($member__.isOptional)
 }
 #*----*##end
 #*--*##else
-if (${memberName__} != other_.${memberName__}) {
+if (${selfName__}${memberName__} != $otherName__.${memberName__}) {
      return false;
 }
 #*--*##end
@@ -378,9 +480,9 @@ if (${memberName__} != other_.${memberName__}) {
 
 #macro (equalsOperartorMemberBody $node__ $member__)
 #*--*##if($node__.constructKind.equals("union") && !$member__.name.equals("_d"))
-#equalsOperatorComparison($member__ "${node__.unionMemberCName}.${member__.cName}")
+#equalsOperatorComparison($member__ "${node__.unionMemberCName}.${member__.cName}" "" "other_")
 #*--*##else
-#equalsOperatorComparison($member__ "${member__.cName}")
+#equalsOperatorComparison($member__ "${member__.cName}" "" "other_")
 #*--*##end
 #end
 
@@ -397,16 +499,16 @@ bool ${node.name}::operator != (const ${node.name}& other_) const {
 #*--*##if($node.baseTypeFQName)
 ${node.baseTypeFQName}::swap(other_);
 #*----*##end
-#swapMembers($node)
+#swapMembers($node "" "other_")
 #*--*##end
 #end
 
-#macro (swapMembers $node)
-#*--*##foreach($member in $node.memberFieldMapList)
+#macro (swapMembers $node__ $selfName__ $otherName__)
+#*--*##foreach($member in $node__.memberFieldMapList)
 #*----*##if($member.directive)
 #*----*##copyDirectiveNoDeclaration($member)
 #*----*##else
-#*--------*#swap(${member.cName}, other_.${member.cName});
+#*--------*#swap(${selfName__}${member.cName}, $otherName__.${member.cName});
 #*----*##end
 #*--*##end
 #end
@@ -475,7 +577,7 @@ o <<"[";
 o << static_cast<const $node.baseTypeFQName &>(sample);
 #*--*##end
 #*--*##if ($node.constructKind.equals("union"))
-#*----*##outOperatorBodyMember($node.unionDiscriminatorMap) <<", ";
+#*----*##outOperatorBodyMember($node.unionDiscriminatorMap $node) <<", ";
 #*----*##if($node.needsSwitchCode)
 switch(::rti::topic::cdr::integer_case(sample._d())){
 #*----*##end
@@ -488,9 +590,9 @@ switch(::rti::topic::cdr::integer_case(sample._d())){
 #*--------*##initCases($member)
 #*------*##end
 #*------*##if ($member.accessExternal)
-if (sample.${member.name}()) {
+if (sample.${member.name}#parenthesisIfNeeded($node)) {
 #*------*##end
-#outOperatorBodyMember($member) 
+#outOperatorBodyMember($member $node) 
 #outOperatorAddEndOfLine($foreach.count $node.memberCount)
 #*------*##if ($member.accessExternal)
 } else {
@@ -516,30 +618,31 @@ return o;
 }
 #end
 
-#macro(outOperatorBodyMember $member__)
+#macro(outOperatorBodyMember $member__ $node__)
 ##if($member__.isPointer && !$member__.dimensionList)
-##::rti::util::print_ptr(o, sample.${member__.name}());
+##::rti::util::print_ptr(o, sample.${member__.name}#parenthesisIfNeeded($node__));
 #*--*##if ($member__.complexType || $member__.seqSize)
-o << "${member__.name}: " << sample.${member__.name}() #* 
-#*--*##elseif ($member__.specTypeName.equals("float")) 
-o << "${member__.name}: " << std::setprecision(9) <<sample.${member__.name}() #*
-#*--*##elseif ($member__.specTypeName.equals("double")) 
-o << "${member__.name}: " << std::setprecision(15) <<sample.${member__.name}() #*
+o << "${member__.name}: " << sample.${member__.name} #*
+#*--*##elseif ($member__.specTypeName.equals("float"))
+o << "${member__.name}: " << std::setprecision(9) << sample.${member__.name} #*
+#*--*##elseif ($member__.specTypeName.equals("double"))
+o << "${member__.name}: " << std::setprecision(15) << sample.${member__.name} #*
 #*--*##elseif (($member__.typeKindResolved == "octet")
-               ||($member__.specTypeName.equals("wchar_t"))) 
+               ||($member__.specTypeName.equals("wchar_t")))
 o << "${member__.name}: " << std::hex<<(int) #if($member__.accessExternal)*#end
-sample.${member__.name}() #*
+sample.${member__.name} #*
 #*--*##elseif ($member__.specTypeName.equals("uint8_t")
                 ||($member__.specTypeName.equals("int8_t")))
 o << "${member__.name}: " << (int) #if($member__.accessExternal)*#end
-sample.${member__.name}() #*
+sample.${member__.name} #*
 #*--*##elseif ($member__.specTypeName.equals("char"))
-o << "${member__.name}: " << sample.${member__.name}() #* 
+o << "${member__.name}: " << sample.${member__.name} #*
 #*--*##elseif ($member__.specTypeName.equals("boolean"))
-o << "${member__.name}: " << std::boolalpha << sample.${member__.name}() #* 
+o << "${member__.name}: " << std::boolalpha << sample.${member__.name} #*
 #*--*##else
-o << "${member__.name}: " << sample.${member__.name}() #* 
+o << "${member__.name}: " << sample.${member__.name} #*
 #*--*##end
+#*--*##parenthesisIfNeeded($node__)
 #end
 
 #macro (outOperatorBodyEnum $node)
@@ -576,18 +679,18 @@ return o;
                     && !${member.resolvedTypeOptional}
                     && !${member.resolvedTypePointer})
             || ($member.nativeTypeFQName=="rti::core::LongDouble"
-                && !$member.dimensionList 
+                && !$member.dimensionList
                 && !$member.seqSize)
             || !$member.complexType)
 #*----------*##if(!$firstInitialized):
                 #set($firstInitialized="true")
 #*----------*##else,
 #*----------*##end
-#*---------*##if($member.resolvedTypeEnum)${member.cName}($member.defaultEnumMemberName)#*
------------*##else ${member.cName} (${member.defaultValue})#end #*
---------*##end
+#*----------*##if($member.resolvedTypeEnum)${member.cName}($member.defaultEnumMemberName)#*
+#*----------*##else ${member.cName} (${member.defaultValue})#end #*
+#*--------*##end
+#*------*##end
 #*----*##end
-#*--*##end
 #*--*##end
 #set($firstInitialized=false)
 #end
@@ -597,8 +700,8 @@ return o;
 #*----*##if(!$member.directive)
 #*------*##if(!$member.isOptional && !$member.isPointer)
 #*--------*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING"
-            && !${member.resolvedTypePointer}
-            && !${member.resolvedTypeOptional})
+                && !${member.resolvedTypePointer}
+                && !${member.resolvedTypeOptional})
                 ${member.cName} = ${member.defaultValue};
 #*--------*##end
 #*--------*##if(!${member.aggregationInitialization})
@@ -632,33 +735,59 @@ topic_type_support< ${node.baseTypeFQName} >::reset_sample(sample);
 #*----*##if(!$member.directive)
 #*------*##if($node.constructKind.equals("union"))
 #*--------*##if(!$member.labelList[0].equals("default"))
+#*----------*##if($envMap.legacyMapping)
 sample._d() = ${member.labelList[0]};
+#*----------*##else
+sample._d(${member.labelList[0]});
+#*----------*##end
 #*--------*##else
 #*----------*##if($node.hasAllCaseCovered && $node.hasADefaultCaseLabel)
+#*------------*##if($envMap.legacyMapping)
 sample._d() = static_cast< ${node.unionDiscriminatorMap.specTypeName} >(${node.unusedDiscriminatorValue});
+#*------------*##end
 #*----------*##else
+#*------------*##if($envMap.legacyMapping)
 sample._d() = ${node.nativeFQName}::default_discriminator();
+#*------------*##end
 #*----------*##end
 #*--------*##end
 #*------*##end
 #*------*##if(${member.tcKind} != "RTI_XCDR_TK_NULL"
             && !${member.resolvedTypeOptional}
             && !${member.resolvedTypePointer})
-#*--------*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING")
-                sample.${member.name}(${member.defaultValue});
-    #*--------*##elseif(${member.tcKind} == "RTI_XCDR_TK_ENUM")
+#*--------*##if(${member.tcKind} == "RTI_XCDR_TK_ENUM")
+#*------------*##if($envMap.legacyMapping || $node.constructKind.equals("union"))
                 sample.${member.name}($member.defaultEnumMemberName);
+#*------------*##else
+                sample.${member.name} = $member.defaultEnumMemberName;
+#*------------*##end
 #*--------*##else
+#*----------*##if($node.constructKind.equals("union")
+                        && $member.labelList[0].equals("default")
+                        && !$envMap.legacyMapping)
+#*------------*##if($node.hasAllCaseCovered && $node.hasADefaultCaseLabel)
+                sample.${member.name}(${member.defaultValue}, static_cast< ${node.unionDiscriminatorMap.specTypeName} >(${node.unusedDiscriminatorValue}));
+#*------------*##else
+                sample.${member.name}(${member.defaultValue}, ${node.nativeFQName}::default_discriminator());
+#*------------*##end
+#*----------*##elseif ($node.useSettersAndGetters)
                 sample.${member.name}($member.defaultValue);
+#*----------*##else
+                sample.${member.name} = ${member.defaultValue};
+#*----------*##end
 #*--------*##end
 #*------*##else
-            ::rti::topic::reset_sample(sample.${member.name}());
+            ::rti::topic::reset_sample(sample.${member.name}#parenthesisIfNeeded($node));
 #*------*##end
 #*----*##end
 #*--*##end
 #*--*##if($node.constructKind.equals("union"))
 
+#*----*##if($envMap.legacyMapping)
 sample._d() = ${node.nativeFQName}::default_discriminator();
+#*----*##else
+sample._d(${node.nativeFQName}::default_discriminator());
+#*----*##end
 #*--*##end
 ## We only need to call RTIOsapiUtility_unusedParameter if baseTypeFQName is
 ## null, the map contains any member that are not directives and the node is
@@ -684,18 +813,30 @@ topic_type_support< ${node.baseTypeFQName} >::allocate_sample(sample, -1, -1);
 #set($noAllocationNeeded = false)
 #*------*##if($node.constructKind.equals("union"))
 #*--------*##if(!$member.labelList[0].equals("default"))
+#*----------*##if($envMap.legacyMapping)
 sample._d() = ${member.labelList[0]};
+#*----------*##else
+sample._d(${member.labelList[0]});
+#*----------*##end
 #*--------*##else
+#*----------*##if($envMap.legacyMapping)
 sample._d() = ${node.nativeFQName}::default_discriminator();
+#*----------*##else
+sample._d(${node.nativeFQName}::default_discriminator());
+#*----------*##end
 #*--------*##end
 #*------*##end
-::rti::topic::allocate_sample(sample.${member.name}(), #if($member.seqSize) $member.seqSize#else -1#end,#if($member.strSize) $member.strSize#else -1#end);
+::rti::topic::allocate_sample(sample.${member.name}#parenthesisIfNeeded($node), #if($member.seqSize) $member.seqSize#else -1#end,#if($member.strSize) $member.strSize#else -1#end);
 #*------*##end
 #*----*##end
 #*--*##end
 #*--*##if($node.constructKind.equals("union"))
 
+#*----*##if($envMap.legacyMapping)
 sample._d() = ${node.nativeFQName}::default_discriminator();
+#*----*##else
+sample._d(${node.nativeFQName}::default_discriminator());
+#*----*##end
 #*--*##end
 ## We only need to call RTIOsapiUtility_unusedParameter if baseTypeFQName is
 ## null, the map needs to allocate memory for one of its member and the node is
@@ -713,19 +854,20 @@ ${node.baseTypeFQName}(other_)#end
 #*----*##if((!$member.directive))
 #*------*##if(!$firstInitialized) :#set($firstInitialized="true")#else,#end
 
-#copyMember($member)#*
+#copyMember($member $node)#*
 -----*##end#*
 --*##end
 #*--*##set($firstInitialized = false)
 #end
 
-#macro (copyMember $member)
-${member.cName} (#if(!$node.constructKind.equals("union"))other_.${member.name}() #else other_.${member.cName} #end)#* 
+#macro (copyMember $member__ $node__)
+${member__.cName} (#*
+#*--*##if(!$node__.constructKind.equals("union"))
+other_.${member__.name}#parenthesisIfNeeded($node__)#*
+#*--*##else
+other_.${member__.cName}#*
+#*--*##end)#*
 *##end
-
-#macro (assignMember $member)
-${member.name}() = other_.${member.name}(); 
-*#end
 
 #macro (move $node)
 #if($node.baseTypeFQName)#set($firstInitialized="true") : 
@@ -760,7 +902,7 @@ switch(::rti::topic::cdr::integer_case(_d())){
 #*----*##copyDirectiveNoDeclaration($member)
 #*----*##else
 #*------*##initCases($member)
-#*--------*#${member.name}( std::move(other_.${member.name}()));
+#*------*#${member.name}( std::move(other_.${member.name}#parenthesisIfNeeded($node)));
 #*----*##if($node.constructKind.equals("union"))
 #*----*#        } #if($member.labelList.get(0)!="default")break#end;
 #*----*##end
@@ -794,34 +936,40 @@ switch(::rti::topic::cdr::integer_case(_d())){
 
 #macro (paramConstructorHeaderMember $member $suffix )
 #*--*##if($member.complexType)
-const ${member.completeSpecTypeName}& ${member.name}$suffix#*
+const ${member.completeSpecTypeName}& ${member.name}${suffix}_#*
 ----*##else
-${member.completeSpecTypeName} ${member.name}$suffix#*
+${member.completeSpecTypeName} ${member.name}${suffix}_#*
 ----*##end
 #end
 
 #macro (paramConstructorBody $node)
 #*--*##set($firstInitialized = false)
-#if($node.baseTypeMembers)
+#*--*##if($node.baseTypeMembers)
  :
 ${node.baseTypeFQName}(#*
----*##foreach($member in $node.baseTypeMembers)
-#*----*##if(!$member.directive)
-#*------*##if(!$firstInitialized)#set($firstInitialized="true")#else,#end
-${member.name}#*--*##end
-#*--*##end )#end
-#*--*##foreach($member in $node.memberFieldMapList)
-#*----*##if(!$member.directive)
-#*------*##if(!$firstInitialized):#set($firstInitialized="true")#else,#end
-
-${member.cName}(#if($node.baseTypeMembersName.contains($member.name))${member.name}_2#*
-*##else ${member.name}#end )#end
+#*----*##foreach($member in $node.baseTypeMembers)
+#*------*##if(!$member.directive)
+#*--------*##if(!$firstInitialized)#set($firstInitialized="true")#else, #end
+${member.name}_#*
 #*------*##end
-#*--*##set($firstInitialized = false)
+#*----*##end)#*
+#*--*##end
+#*--*##if($envMap.legacyMapping
+        || !$envMap.legacyMapping && $node.constructKind.equals("union"))
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if(!$member.directive)
+#*--------*##if(!$firstInitialized):#set($firstInitialized="true")#else, #end
+
+${member.cName}(#if($node.baseTypeMembersName.contains($member.name))${member.name}_2_#*
+#*---------*##else${member.name}_#end)#*
+#*------*##end
+#*----*##end
+#*----*##set($firstInitialized = false)
+#*--*##end
 #end
 
 #macro (noExcept $node)
-#if(!$node.constructKind.equals("union"))OMG_NOEXCEPT#end
+#if(!$node.constructKind.equals("union"))noexcept#end
 #end
 
 #macro (getDynamicType $node)
@@ -1070,22 +1218,22 @@ private:
 };
 #end
 
-#macro(generateClientBodyMethod $member $isAsync)
-#*----*##if($member.hasOutArguments && !$isAsync)
-        auto output_value_ = receive_${member.nativeFQNameInModule}(request_id);
-#*------*##foreach($param in $member.memberFieldMapList)
+#macro(generateClientBodyMethod $member__ $isAsync__ $node__)
+#*----*##if($member__.hasOutArguments && !$isAsync__)
+        auto output_value_ = receive_${member__.nativeFQNameInModule}(request_id);
+#*------*##foreach($param in $member__.memberFieldMapList)
 #*----------*##if( $param.parameterType.equals("out") || $param.parameterType.equals("inout") )
-            $param.typecodeName = std::move(output_value_.${param.typecodeName}());
+            $param.typecodeName = std::move(output_value_.${param.typecodeName}#parenthesisIfNeeded($node__));
 #*----------*##end
 #*------*##end
-#*------*##if(!$member.specTypeName.equals("void"))
+#*------*##if(!$member__.specTypeName.equals("void"))
         return std::move(output_value_.return_());
 #*------*##end
 #*----*##else
-#*------*##if($member.specTypeName.equals("void") && !$isAsync)
-        receive_${member.nativeFQNameInModule}(request_id);
+#*------*##if($member__.specTypeName.equals("void") && !$isAsync__)
+        receive_${member__.nativeFQNameInModule}(request_id);
 #*------*##else
-        return #if($isAsync)service.#{end}receive_${member.nativeFQNameInModule}(request_id);
+        return #if($isAsync__)service.#{end}receive_${member__.nativeFQNameInModule}(request_id);
 #*------*##end
 #*----*##end
 #end
@@ -1109,7 +1257,7 @@ ${node.nativeFQNameInModule}Client::${node.nativeFQNameInModule}Client(const dds
         auto request_id = send_${member.nativeFQNameInModule}(
             #addOperationParametersNames($member));
 ##Check if we have any out variable to declare in the capture list
-#generateClientBodyMethod($member)
+#generateClientBodyMethod($member false $node)
 
     }
 #*-*##end
@@ -1131,7 +1279,7 @@ ${node.nativeFQNameInModule}_${member.nativeFQNameInModule}_Out#*
             #addOperationParametersNames($member));
         auto service = *this;
         return std::async(std::launch::deferred, [service, request_id]() mutable {
-#generateClientBodyMethod($member true)
+#generateClientBodyMethod($member true $node)
         });
     }
 #*-*##end
@@ -1227,8 +1375,8 @@ void ${node.nativeFQNameInModule}Dispatcher::dispatch_${member.nativeFQNameInMod
 
 #*------*##foreach($param in $member.memberFieldMapList)
 #*-------*##if($param.parameterType.equals("inout"))
-        result.${member.nativeFQNameInModule}().result().${param.typecodeName}() =
-            request.${member.nativeFQNameInModule}().${param.typecodeName}();
+        result.${member.nativeFQNameInModule}().result().${param.typecodeName}#parenthesisIfNeeded($node) =
+            request.${member.nativeFQNameInModule}().${param.typecodeName}#parenthesisIfNeeded($node);
 #*-------*##end
 #*-----*##end
 
@@ -1238,9 +1386,9 @@ void ${node.nativeFQNameInModule}Dispatcher::dispatch_${member.nativeFQNameInMod
             service_impl->${member.nativeFQNameInModule}(
 #*------*##foreach($param in $member.memberFieldMapList)
 #*-------*##if($param.parameterType.equals("out") || $param.parameterType.equals("inout"))
-                result.${member.nativeFQNameInModule}().result().${param.typecodeName}()#*
+                result.${member.nativeFQNameInModule}().result().${param.typecodeName}#parenthesisIfNeeded($node)#*
 #*-------*##else
-                request.${member.nativeFQNameInModule}().${param.typecodeName}()#*
+                request.${member.nativeFQNameInModule}().${param.typecodeName}#parenthesisIfNeeded($node)#*
 #*-------*##end
 #*--------*##if($foreach.hasNext)
 ,
@@ -1308,4 +1456,45 @@ pd.programs = ::rti::topic::interpreter::get_cdr_serialization_programs<
 #*------*##end
 #*----*##end
 #*--*##end
+#end
+
+#macro (operatorNewMappingBody $node__)
+#equalsOperatorNewMappingBody($node__)
+
+#notEqualsOperatorNewMappingBody($node__)
+#end
+
+#macro (equalsOperatorNewMappingBody $node__)
+bool operator == (const ${node__.name}& a, const ${node__.name}& b) {
+#*--*##if($node__.baseTypeFQName)
+if (!operator == (($node__.baseTypeFQName) a, ($node__.baseTypeFQName) b)){
+    return false;
+}
+#*--*##end
+
+#*--*##foreach($member in $node__.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##equalsOperatorComparison($member "${member.cName}" "a." "b")
+#*----*##end
+#*--*##end
+
+return true;
+}
+#end
+
+#macro (notEqualsOperatorNewMappingBody $node__)
+bool operator != (const ${node__.name}& a, const ${node__.name}& b) {
+        return !operator ==(a, b);
+}
+#end
+
+#macro (swapNewMapping $node__)
+
+#*--*##if($node__.baseTypeFQName)
+swap((${node.baseTypeFQName}&) a, (${node.baseTypeFQName}&) b);
+#*----*##end
+#swapMembers($node "a." "b")
+
 #end

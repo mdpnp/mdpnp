@@ -76,15 +76,17 @@ ${envMap.POUND_CHAR}define printf Android_printf
 
 static int Android_printf(const char *format, ...) {
 
-    int len;
+    int len = 0;
     va_list ap;
     va_start(ap, format);
 
+    /* Send message back to Java env. and print on the app's UI */
     if (subscriber_onPrintf!= NULL) {
-	len = subscriber_onPrintf(format, ap);
-    } else {
-	len = __android_log_vprint(ANDROID_LOG_INFO, "RTIConnextLog", format, ap);
+	    len = subscriber_onPrintf(format, ap);
     }
+
+    /* Print to logcat as well */
+	__android_log_print(ANDROID_LOG_INFO, "RTIConnextLog", format, ap);
 
     va_end(ap);
 

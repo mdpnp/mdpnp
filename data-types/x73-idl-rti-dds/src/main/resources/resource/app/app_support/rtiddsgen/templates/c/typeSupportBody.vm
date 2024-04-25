@@ -122,13 +122,13 @@ ${envMap.POUND_CHAR}define FLAT_DATA_TYPE_FINAL
 #*--*##end
 #end
 
-${envMap.POUND_CHAR}define ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
+${envMap.POUND_CHAR}define RTI_ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
 #if($envMap.language.equals("Cpp"))
 ${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_data_TDataWriter.gen"
 #else
 ${envMap.POUND_CHAR}include "dds_c/generic/dds_c_data_TDataWriter.gen"
 #end
-${envMap.POUND_CHAR}undef ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
+${envMap.POUND_CHAR}undef RTI_ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
 
 #if($node.languageBinding.equals("FLAT_DATA"))
 ${envMap.POUND_CHAR}undef FLAT_DATA_TYPE
@@ -163,13 +163,13 @@ ${envMap.POUND_CHAR}define TData       ${node.nativeFQName}
 ${envMap.POUND_CHAR}define FLAT_DATA_TYPE
 #end
 
-${envMap.POUND_CHAR}define ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
+${envMap.POUND_CHAR}define RTI_ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
 #if($envMap.language.equals("Cpp"))
 ${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_data_TDataReader.gen"
 #else
 ${envMap.POUND_CHAR}include "dds_c/generic/dds_c_data_TDataReader.gen"
 #end
-${envMap.POUND_CHAR}undef ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
+${envMap.POUND_CHAR}undef RTI_ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
 
 #if($node.languageBinding.equals("FLAT_DATA"))
 ${envMap.POUND_CHAR}undef FLAT_DATA_TYPE

@@ -311,6 +311,8 @@ struct default_primitive_value< ${node.nativeFQName} > {
         return default_enumerator;
     }
 };
+
+RTI_FLAT_DATA_DEFINE_ENUM_TRAITS(${node.nativeFQName})
 } // namespace detail
 #*--*##end
 
@@ -953,9 +955,8 @@ RTIBool ${node.nativeFQNameInModule}Plugin_get_buffer_w_params(
                 endpointData, buffer, allocatorParams->encapsulationId, user_data);
     } else {
 #*--------*##end
-    if ((allocatorParams->sampleKind == NDDS_WRITERHISTORY_DATA_SAMPLE) 
-            && !PRESTypePluginDefaultEndpointData_isSecurityEnabled(endpointData)
-            && !PRESTypePluginDefaultEndpointData_isCompressionEnabled(endpointData)) {
+    if ((allocatorParams->sampleKind == NDDS_WRITERHISTORY_DATA_SAMPLE)
+            && !allocatorParams->forceUseWHPoolWithFlatData) {
         buffer->pointer = (char *) user_data; // FLAT_DATA: the sample is the buffer
 #*----------*##if(!$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))        
         buffer->length = static_cast<int>(RTIOsapiAlignment_alignUInt32Up(
@@ -993,15 +994,13 @@ void ${node.nativeFQNameInModule}Plugin_return_buffer_w_params(
     }
 #*--------*##end
     if ((allocatorParams->sampleKind != NDDS_WRITERHISTORY_DATA_SAMPLE)
-            || PRESTypePluginDefaultEndpointData_isSecurityEnabled(endpointData)
-            || PRESTypePluginDefaultEndpointData_isCompressionEnabled(endpointData)) {
+            || allocatorParams->forceUseWHPoolWithFlatData) {
         return PRESTypePluginDefaultEndpointData_returnBuffer(
                 endpointData, buffer, allocatorParams->encapsulationId);
     }
 
     // FLAT_DATA : nothing to do for NDDS_WRITERHISTORY_DATA_SAMPLE
 }
-
 
 ${node.nativeFQNameInModule}*
 ${node.nativeFQNameInModule}Plugin_create_flat_data_sentinel(void)
@@ -1046,7 +1045,7 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
 
 ## FooPlugin_serialize
 #macro (flatPluginSerializeBody $node $standAlone)
-    RTIXCdrStream *xcdrStream = RTICdrStream_asXCdrStream(stream);
+    RTIXCdrStream *xcdrStream = RTICdrStream_asXCdrStream(cdrStream);
     RTIXCdrUnsignedLong sampleSize = 0;
 
 #*--*##if($standAlone)
@@ -1056,7 +1055,7 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
 
     RTIOsapiUtility_unusedParameter(endpoint_data);
     RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
-    
+
     if (RTIXCdrFlatSample_getEncapsulation(
             reinterpret_cast<const char *>(sample)) != encapsulation_id) {
         return RTI_FALSE;
@@ -1070,26 +1069,17 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
                 reinterpret_cast<const unsigned char *>(sample),
                 RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
 #*--*##end
-        if (reinterpret_cast<const char *>(sample) != RTIXCdrStream_getBuffer(xcdrStream)) {
-            if (!RTIXCdrStream_serializeNByte(
-                    xcdrStream,
-                    sample + RTI_XCDR_ENCAPSULATION_HEADER_SIZE,
-                    1,
-                    sampleSize)) {
-                return RTI_FALSE;
-            }
-        } else {
-            if (!RTIXCdrStream_skipNByte(
-                    xcdrStream,
-                    1,
-                    sampleSize)) {
-                return RTI_FALSE;
-            }
+        if (!RTIXCdrStream_skipNByte(
+                xcdrStream,
+                1,
+                sampleSize)) {
+            return RTI_FALSE;
         }
+
     }
 #*--*##if($standAlone)    
     if (serialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream, rti_position);
+        RTICdrStream_restoreAlignment(cdrStream, rti_position);
     }
     return RTI_TRUE;
 #*--*##end
@@ -1098,7 +1088,7 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
 
 ## FooPlugin_deserialize
 #macro (flatPluginDeserializeBody $node)
-    RTIXCdrStream *xcdrStream = RTICdrStream_asXCdrStream(stream);
+    RTIXCdrStream *xcdrStream = RTICdrStream_asXCdrStream(cdrStream);
     RTIXCdrUnsignedLong sampleSize = 0;
     
     RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
@@ -1279,7 +1269,7 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
         result = PRESTypePlugin_interpretedSerializeKey(
                 endpoint_data,
                 plainSample,
-                stream,
+                cdrStream,
                 serialize_encapsulation,
                 encapsulation_id,
                 serialize_key,
@@ -1326,7 +1316,7 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
         result = PRESTypePlugin_interpretedSerializeKeyForKeyhash(
                 endpoint_data,
                 plainSample,
-                stream,
+                cdrStream,
                 encapsulation_id,
                 endpoint_plugin_qos);
     }
@@ -1346,7 +1336,7 @@ ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
     if (!PRESTypePlugin_interpretedDeserializeKey(
                 endpoint_data,
                 plainSample,
-                stream,
+                cdrStream,
                 deserialize_encapsulation,
                 deserialize_key,
                 endpoint_plugin_qos)) {

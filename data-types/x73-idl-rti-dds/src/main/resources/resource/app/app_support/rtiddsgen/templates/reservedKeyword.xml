@@ -274,4 +274,165 @@
 <word>with</word>
 <word>yield</word>
 </language>
+<language name="Idl">
+<!--Idl keywords must be added in lower case. We will not 
+    process them before adding them to the collection -->
+<word>abstract</word>
+<word>any</word>
+<word>alias</word>
+<word>attribute</word>
+<word>bitfield</word>
+<word>bitmask</word>
+<word>bitset</word>
+<word>boolean</word>
+<word>case</word>
+<word>char</word>
+<word>component</word>
+<word>connector</word>
+<word>const</word>
+<word>consumes</word>
+<word>context</word>
+<word>custom</word>
+<word>default</word>
+<word>double</word>
+<word>exception</word>
+<word>emits</word>
+<word>enum</word>
+<word>eventtype</word>
+<word>factory</word>
+<word>false</word>
+<word>finder</word>
+<word>fixed</word>
+<word>float</word>
+<word>getraises</word>
+<word>home</word>
+<word>import</word>
+<word>in</word>
+<word>inout</word>
+<word>interface</word>
+<word>local</word>
+<word>long</word>
+<word>manages</word>
+<word>map</word>
+<word>mirrorport</word>
+<word>module</word>
+<word>multiple</word>
+<word>native</word>
+<word>object</word>
+<word>octet</word>
+<word>oneway</word>
+<word>out</word>
+<word>primarykey</word>
+<word>private</word>
+<word>port</word>
+<word>porttype</word>
+<word>provides</word>
+<word>public</word>
+<word>publishes</word>
+<word>raises</word>
+<word>readonly</word>
+<word>setraises</word>
+<word>sequence</word>
+<word>short</word>
+<word>string</word>
+<word>struct</word>
+<word>supports</word>
+<word>switch</word>
+<word>true</word>
+<word>truncatable</word>
+<word>typedef</word>
+<word>typeid</word>
+<word>typename</word>
+<word>typeprefix</word>
+<word>unsigned</word>
+<word>union</word>
+<word>uses</word>
+<word>valuebase</word>
+<word>valuetype</word>
+<word>void</word>
+<word>wchar</word>
+<word>wstring</word>
+<word>int8</word>
+<word>uint8</word>
+<word>int16</word>
+<word>int32</word>
+<word>int64</word>
+<word>uint16</word>
+<word>uint32</word>
+<word>uint64</word>
+</language>
+<language name="Ada" inherits="C">
+    <word>abort</word>
+    <word>abs</word>
+    <word>abstract</word>
+    <word>accept</word>
+    <word>access</word>
+    <word>aliased</word>
+    <word>all</word>
+    <word>and</word>
+    <word>array</word>
+    <word>at</word>
+    <word>begin</word>
+    <word>body</word>
+    <word>case</word>
+    <word>constant</word>
+    <word>declare</word>
+    <word>delay</word>
+    <word>delta</word>
+    <word>digits</word>
+    <word>do</word>
+    <word>else</word>
+    <word>elsif</word>
+    <word>end</word>
+    <word>entry</word>
+    <word>exception</word>
+    <word>exit</word>
+    <word>for</word>
+    <word>function</word>
+    <word>generic</word>
+    <word>goto</word>
+    <word>if</word>
+    <word>in</word>
+    <word>interface</word>
+    <word>is</word>
+    <word>limited</word>
+    <word>loop</word>
+    <word>mod</word>
+    <word>new</word>
+    <word>not</word>
+    <word>null</word>
+    <word>of</word>
+    <word>or</word>
+    <word>others</word>
+    <word>out</word>
+    <word>overriding</word>
+    <word>package</word>
+    <word>pragma</word>
+    <word>private</word>
+    <word>procedure</word>
+    <word>protected</word>
+    <word>raise</word>
+    <word>range</word>
+    <word>record</word>
+    <word>rem</word>
+    <word>renames</word>
+    <word>requeue</word>
+    <word>return</word>
+    <word>reverse</word>
+    <word>select</word>
+    <word>separate</word>
+    <word>subtype</word>
+    <word>synchronized</word>
+    <word>tagged</word>
+    <word>task</word>
+    <word>terminate</word>
+    <word>then</word>
+    <word>type</word>
+    <word>until</word>
+    <word>use</word>
+    <word>when</word>
+    <word>while</word>
+    <word>with</word>
+    <word>xor</word>
+</language>
 </keywords>

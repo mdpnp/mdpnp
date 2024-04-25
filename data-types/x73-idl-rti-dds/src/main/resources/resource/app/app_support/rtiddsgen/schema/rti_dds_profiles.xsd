@@ -39,7 +39,7 @@
             <xs:attribute name="version"
                           type="xs:string"
                           use="optional"
-                          default="7.1.0">
+                          default="7.3.0">
                 <xs:annotation>
                     <xs:documentation>
                         <![CDATA[

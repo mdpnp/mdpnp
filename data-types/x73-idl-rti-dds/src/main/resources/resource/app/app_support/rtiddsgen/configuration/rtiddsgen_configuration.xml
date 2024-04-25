@@ -559,6 +559,15 @@ xsi:noNamespaceSchemaLocation="../schema/rtiddsgen_configuration.xsd">
         <hidden>false</hidden>
     </command_line_option>
     <command_line_option>
+        <name>typeSizes</name>
+        <help_msg>
+        Displays the maximum serialized size, minimum serialized size, and maximum
+        key serialized size of all the complex types of an idl.
+        </help_msg>
+        <supported>true</supported>
+        <hidden>false</hidden>
+    </command_line_option>
+    <command_line_option>
         <name>U</name>
         <param>&lt;name&gt;</param>
         <help_msg>
@@ -705,7 +714,63 @@ xsi:noNamespaceSchemaLocation="../schema/rtiddsgen_configuration.xsd">
         <supported>true</supported>
         <hidden>false</hidden>
     </command_line_option>
-
+    <command_line_option>
+        <name>exampleFACEConfig</name>
+        <help_msg>
+        Generate an example configuration for FACE C.
+        </help_msg>
+        <supported>false</supported>
+        <hidden>false</hidden>
+    </command_line_option>
+    <command_line_option>
+        <name>allowedDataRepresentation</name>
+        <param>&lt;xcdr1, xcdr2&gt;</param>
+        <help_msg>
+        Generate code for only one data representation. This option may improve
+        performance because the generated code will not check the data
+        representation during the serialization/deserialization.
+        </help_msg>
+        <supported>true</supported>
+        <hidden>false</hidden>
+    </command_line_option>
+    <command_line_option>
+        <name>allowedEndian</name>
+        <param>&lt;bigEndian, littleEndian&gt;</param>
+        <help_msg>
+        Generate code for an specific endian. This option may improve
+        performance because the generated code will not check endian during
+        the serialization/deserialization.
+        </help_msg>
+        <supported>true</supported>
+        <hidden>false</hidden>
+    </command_line_option>
+    <command_line_option>
+        <name>noTypeFilesGeneration</name>
+        <help_msg>
+        Rtiddsgen will not generate non essential type files for FACE TSS. 
+        </help_msg>
+        <supported>true</supported>
+        <hidden>false</hidden>
+    </command_line_option>
+    <command_line_option>
+        <name>noTypePluginFilesGeneration</name>
+        <help_msg>
+        Rtiddsgen will not generate type files plugin for FACE TSS. 
+        </help_msg>
+        <supported>true</supported>
+        <hidden>false</hidden>
+    </command_line_option>
+    <command_line_option>
+        <name>standard</name>
+        <param>&lt;DDS_PSM_Cxx, IDL4_CPP&gt;</param>
+        <help_msg>
+        Define the mapping for an specific standard. This flag is only supported
+        in C++11. The options are DDS_PSM_Cxx for the default mapping in connextdds 7.x
+        an earlier. Use IDL4_CPP for the new standard mapping defined by the OMG in 2023.
+        </help_msg>
+        <supported>true</supported>
+        <hidden>false</hidden>
+    </command_line_option>
 <!--
 The following arguments are for RTI internal use.
 The use of these arguments won't have RTI Support,
@@ -1238,6 +1303,14 @@ change without further notice.
     </annotation>
     <annotation>
         <name>verbatim</name>
+        <status>Warning</status>
+    </annotation>
+    <annotation>
+        <name>metric_name</name>
+        <status>Supported</status>
+    </annotation>
+    <annotation>
+        <name>metric</name>
         <status>Supported</status>
     </annotation>
 </annotations>
