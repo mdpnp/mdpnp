@@ -30,7 +30,8 @@ buildscript {
 }
 
 plugins {
-  id 'org.openjfx.javafxplugin' version '0.0.13'
+  id 'org.openjfx.javafxplugin' version '0.1.0'
+  id 'org.javamodularity.moduleplugin' version '1.8.12'
 }
 
 dependencies {
@@ -50,8 +51,12 @@ apply plugin: 'application'
 
 defaultTasks 'build'
 
+java {
+  modularity.inferModulePath.set(false)
+}
+
 javafx {
-  version = "17"
+  version = "17.0.11"
   modules = [ 'javafx.base', 'javafx.controls' , 'javafx.fxml' , 'javafx.swing' , 'javafx.web' ]
 }
 
