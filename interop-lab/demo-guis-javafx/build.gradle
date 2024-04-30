@@ -21,7 +21,7 @@ targetCompatibility = JAVA_VERSION_CLASSES
 
 
 javafx {
-  version = "17"
+  version = "17.0.11"
   modules = [ 'javafx.controls' , 'javafx.fxml', 'javafx.base' ]
 }
 
