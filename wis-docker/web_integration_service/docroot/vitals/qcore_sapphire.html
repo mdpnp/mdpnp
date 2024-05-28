@@ -1,0 +1,78 @@
+<div class="col col-md-12">
+            	<h4>Infusion Pump Remote Control</h4>
+            	<div class="row">
+           			 <div class="col"><label class="form-label">Device</label><input type="text" id="pump_device" readonly=""></div>
+       			</div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead">
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Current</th>
+                                <th>Target</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Drug Name</td>
+                                <td id="drug_name"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Concentration (mcg/L)</td>
+                                <td id="drug_concentration"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Infusion Rate (ml/hr)</td>
+                                <td class="numeric" id="infusion_rate"></td>
+                                <td><input id="target_infusion_rate" type="number"/></td>
+                            </tr>
+                            <tr>
+                                <td>Volume Infused (ml)</td>
+                                <td class="numeric" id="volume_infused"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Remaining Volume to be Infused (ml)</td>
+                                <td class="numeric" id="volume_remaining"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>VTBI (ml)</td>
+                                <td class="numeric" id="vtbi"></td>
+                                <td></td>
+                            </tr>
+                       		<tr>
+	                            <td>Total Bolus Volume Infused (ml)</td>
+	                            <td class="numeric" id="total_bolus_volume"></td>
+	                            <td></td>
+	                        </tr>
+	                        <tr>
+	                            <td>Current Bolus Volume Infused (ml)</td>
+	                            <td class="numeric" id="current_bolus_volume"></td>
+	                            <td></td>
+    	                    </tr>
+	                        <tr>
+	                            <td>New Bolus Volume (ml)</td>
+	                            <td></td>
+	                            <td></td>
+            	            </tr>
+                	        <tr>
+	                            <td>New Bolus Rate (ml/h)</td>
+	                            <td class="numeric" id="bolus_rate"></td>
+	                            <td></td>
+                        	</tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col col-md-12"><button type="button" onclick="executePumpProgramQCore()">Program</button>
+            <!--<div class="col col-md-12"><label class="form-label">Target Infusion Rate (ml/hr)</label><input type="number" id="target_infusion_rate">-->
+                <!--<div class="btn-group" role="group"><button class="btn btn-primary" type="button" onclick="setFlowRate()">Confirm</button><button class="btn btn-primary" onClick="clearFlowRate()" type="button">Cancel</button></div>-->
+				<!--<div><button class="btn btn-primary" type="button" onclick="setFlowRate()">Confirm</button>&nbsp;&nbsp;&nbsp;<button class="btn btn-primary" onClick="clearFlowRate()" type="button">Cancel</button></div> -->
+            <!--</div>-->
+        </div>
+                </div>
+            </div>
+        </div>

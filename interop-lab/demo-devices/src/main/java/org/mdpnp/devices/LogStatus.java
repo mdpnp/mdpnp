@@ -27,6 +27,8 @@ import com.rti.dds.publication.PublicationMatchedStatus;
 import com.rti.dds.publication.ReliableReaderActivityChangedStatus;
 import com.rti.dds.publication.ReliableWriterCacheChangedStatus;
 
+import com.rti.dds.publication.ServiceRequestAcceptedStatus;
+
 /**
  * @author Jeff Plourde
  *
@@ -97,6 +99,9 @@ public class LogStatus implements DataWriterListener {
     @Override
     public void on_sample_removed(DataWriter arg0, Cookie_t arg1) {
         log.debug("on_sample_removed:" + arg1);
+    }
+    public void on_service_request_accepted(DataWriter arg0, ServiceRequestAcceptedStatus arg1) {
+        log.debug("on_service_request_accepted:" + arg1);
     }
 
 }

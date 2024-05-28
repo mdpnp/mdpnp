@@ -1,0 +1,37 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.2,9jun14,vmg created
+##========================================================================
+Kernel
+	Filename			DynamicDownload
+EndKernel
+
+AddressSpace
+	Filename			#buildProjectName()dd_as1
+	MemoryPoolsize			0x4000000
+#if($global.language.equals("C++98"))	
+	Language			C++
+#else
+    Language            ${global.language}
+#end
+#foreach($lib in ${archMap.C_intLIBS})
+        Library                         $lib
+#end
+#if($global.language.equals("C++98"))
+#foreach($lib in ${archMap.Cxx_intLIBS})
+        Library                         $lib
+#end
+#end
+	Task Initial
+		StackLength		0xF000
+	EndTask
+EndAddressSpace

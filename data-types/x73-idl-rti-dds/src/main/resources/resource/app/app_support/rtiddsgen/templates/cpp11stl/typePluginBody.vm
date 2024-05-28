@@ -1,0 +1,3014 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.3,02feb16, ajm CODEGENII-462 Warning when using -Wunused-parameter
+##2.0,13nov15,ajm CODEGENII-501 Setting the option to disable must understand for interlanguage
+## iteroperability 
+##2.0,24mar15, CODEGENII-433 Incorrect code generation for a mutable struct that inherits
+## from a struct with key
+##2.0,25feb15,acr CORE-6269: Use PRES_TYPEPLUGIN_CPP_LANG for C++ plugins
+##2.0,05feb15,ajm CODEGENII-426 Fixing warning
+##2.0,18sep14,ajm CODEGENII-364 and CODEGENII-365 Unbounded sequence and string in C/C++
+##2.2.0,08sep14,ajm CODEGENII-359 Add APIs to serialize a sample to a CDR buffer and to 
+## deserialize from a CDR buffer##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##2.0,29oct13,ajm CODEGENII-143 fixing nddsgen1 issues CODEGEN-620 CODEGEN-624
+##2.0,12sep13,ajm CODEGENII-143 and CODEGEN-622 Enum as last field of a type
+##2.0,12sep13,ajm CODEGENII-92: Support for optional members
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,25mar13,ajm Adding support for enums and inheritance in .Net. We do check now
+## it we are working with namespaces because we introduce always the module in the list of nodes
+##10a,08mar13, ajm CODEGENII-30: Code reviews
+##10a,01mar13, ajm CODEGENII-59: Updating to generate XTypes Mutable as in IN-Branch
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,13dec12, ajm RRTIDDSGEN-53 Support for XTypes (extensible and final)
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,04ene11, ajm Upgrading to Lola (code in C)
+##10a,07nov11, ajm Refactoring code
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,17oct11,ajm Fixing a bug with enums and c++ namespaces
+##10a,10oct11,ajm Adding union support
+##10a,30sep11,ajm Adding noTypeCode option support
+##10a,29sep11,ajm adding forward declaration and namespace support 
+##10a,26sep11,ajm adding enum support 
+##10a,22sep11,ajm Fixing a bug
+##10a,22sep11,ajm adding valuetypes support
+##10a,15sep11,ajm Fixing more typedef issues
+##10a,14sep11,ajm Refactor typedef
+##10a,2sep11,ajm Refactoring using a unique list for all elements(typedefs, structs and const)
+##10a,2sep11,jmt Adding typedef support for sequences and arrays of sequences
+##10a,01se11,jmt Adding typedef support for primitive types and typedef arrays
+##10a,29ag11,ajm Fixing macros consistency by adding the missing parameters
+##10a,29ag11,ajm Refactor of variables and cleaning loops 
+##10a,19ag11,ajm Refactorizing and cleaning the templates code.
+##10a,17ag11,ajm Adding //@key
+##10a,12ag11,jmt Adding functionality for C++
+##10a,11ag11,ajm Refactorizing the templates code.
+##           ajm Adding variable $nativeFQName
+##10a,10ag11,ajm Adding functionality for arrays
+##10a,09ag11,jmt Fixing tabulations and length of the lines
+##10a,08ag11,ajm Fixing an error in the template (it includes now the plugin file header intead the type file header file)
+##10a,08ag11,ajm Fixing the bug for a struct without a module
+##10a,05ag11,jmt Adding all the basic type and testing them
+##10a,04ag11,ajm adding modification history header 
+##10a,03ag11,ajm created 
+##-----------------------------------------------------------------
+##               
+##             Template for the TypePluginBody C file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Structure:
+##
+## 
+## To use this template, the structure provided from the main program
+## to the context of the Velocity template must be as indicated here:
+##
+## The context will be feed by a list of the structs ($constructMapList) defined in the 
+## IDL file. Each of the structs will have the following mandatory fields:
+##
+## $packageName (the path of all the modules separated by a .)
+## $nodeName (the name of the struct)
+## $memberFieldMapList (will be a list of all the members inside the struct)
+## $memberFieldMapList must contain the followin fields:
+##   name (the name of the field)
+##   typeFQName (the IDL type of the variable)
+##   basic (boolean, it indicates if it is a basic or non basic type)
+##---------------------------------------------------------------------
+##---------------------------------------------------------------------
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+
+${envMap.POUND_CHAR}include <string.h>
+
+#*----*##if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}ifndef ndds_cpp_h
+  ${envMap.POUND_CHAR}include "ndds/ndds_cpp.h"
+${envMap.POUND_CHAR}endif
+#else
+${envMap.POUND_CHAR}ifndef ndds_c_h
+  ${envMap.POUND_CHAR}include "ndds/ndds_c.h"
+${envMap.POUND_CHAR}endif
+#end
+
+${envMap.POUND_CHAR}ifndef osapi_type_h
+  ${envMap.POUND_CHAR}include "osapi/osapi_type.h"
+${envMap.POUND_CHAR}endif
+${envMap.POUND_CHAR}ifndef osapi_heap_h
+  ${envMap.POUND_CHAR}include "osapi/osapi_heap.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef osapi_utility_h
+  ${envMap.POUND_CHAR}include "osapi/osapi_utility.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef cdr_log_h
+  ${envMap.POUND_CHAR}include "cdr/cdr_log.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef cdr_type_h
+  ${envMap.POUND_CHAR}include "cdr/cdr_type.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef cdr_type_object_h
+  ${envMap.POUND_CHAR}include "cdr/cdr_typeObject.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef cdr_encapsulation_h
+  ${envMap.POUND_CHAR}include "cdr/cdr_encapsulation.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef cdr_stream_h
+  ${envMap.POUND_CHAR}include "cdr/cdr_stream.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef cdr_log_h
+  ${envMap.POUND_CHAR}include "cdr/cdr_log.h"
+${envMap.POUND_CHAR}endif
+
+
+${envMap.POUND_CHAR}ifndef pres_typePlugin_h
+  ${envMap.POUND_CHAR}include "pres/pres_typePlugin.h"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}include "dds_c/dds_c_typecode_impl.h"
+
+${envMap.POUND_CHAR}include "rti/topic/cdr/Serialization.hpp"
+
+${envMap.POUND_CHAR}define RTI_CDR_CURRENT_SUBMODULE RTI_CDR_SUBMODULE_MASK_STREAM
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Plugin.hpp"
+
+#*--*##if($userVarList.testSupport)
+${envMap.POUND_CHAR}include "rti/xcdr/Interpreter.hpp"
+#*--*##end
+
+#*--*##foreach($node in $constructMapList)
+##if it is a directive we print its value
+#*----*##if($node.constructKind=="directive") 
+##we avoid to copy the declaration directives
+#*------*##if($node.directiveKind=="copy-c"||$node.directiveKind=="copy") 
+$node.value
+#*------*##end
+#*----*##elseif($node.constructKind=="module" && ${envMap.namespace})
+namespace $node.name {
+#*----*##elseif($node.constructKind=="moduleClose" && ${envMap.namespace}) 
+} /* namespace $node.name  */
+#*----*##elseif(($node.constructKind=="alias" && !$node.languageBinding.equals("FLAT_DATA"))
+           ||($node.isAggregationType))
+
+/* ----------------------------------------------------------------------------
+ *  Type ${node.nativeFQNameInModule}
+ * -------------------------------------------------------------------------- */
+
+/* -----------------------------------------------------------------------------
+    Support functions:
+ * -------------------------------------------------------------------------- */
+
+#*-****************************************************************-*#
+
+${node.nativeFQNameInModule} *
+${node.nativeFQNameInModule}PluginSupport_create_data(void)
+{
+#*------*##if(!$node.languageBinding.equals("FLAT_DATA"))
+    try {
+    ${node.nativeFQNameInModule} *sample = new ${node.nativeFQNameInModule}();
+#*--------*##if($node.constructKind=="alias"  && $node.firstMember.resolvedTypeEnum)
+    #if( $node.firstMember.isPointer)*#end*sample = $node.firstMember.defaultEnumMemberName;
+#*--------*##end
+    ::rti::topic::allocate_sample(*sample);
+    return sample;
+    } catch (...) {
+        return NULL;
+    }
+#*------*##else
+    return ${node.nativeFQNameInModule}::create_data();
+#*------*##end
+}
+
+
+#*-****************************************************************-*#
+void 
+${node.nativeFQNameInModule}PluginSupport_destroy_data(
+    ${node.nativeFQNameInModule} *sample) 
+{
+#*------*##if(!$node.languageBinding.equals("FLAT_DATA"))
+    delete sample;
+#*------*##else
+    ${node.nativeFQNameInModule}::delete_data(sample);
+#*------*##end
+}
+
+
+#*-****************************************************************-*#
+RTIBool 
+${node.nativeFQNameInModule}PluginSupport_copy_data(
+    ${node.nativeFQNameInModule} *dst,
+    const ${node.nativeFQNameInModule} *src)
+{
+#*------*##if(!$node.languageBinding.equals("FLAT_DATA"))
+    try {
+        *dst = *src;
+    } catch (...) {
+        return RTI_FALSE;
+    }
+
+    return RTI_TRUE;
+#*------*##else
+    RTIOsapiUtility_unusedParameter(dst);
+    RTIOsapiUtility_unusedParameter(src);
+
+    return RTI_FALSE;
+#*------*##end
+}
+
+##----------------------------------------------------
+## This code is only generated if the struct has a key
+##----------------------------------------------------
+#*------*##if($node.hasKey ||  $node.hasKeyBaseType)
+
+${node.nativeFQNameInModule} *
+${node.nativeFQNameInModule}PluginSupport_create_key(void)
+{
+    return ${node.nativeFQNameInModule}PluginSupport_create_data();
+}
+
+#*-****************************************************************-*#
+
+void 
+${node.nativeFQNameInModule}PluginSupport_destroy_key(
+   ${node.nativeFQNameInModule}KeyHolder *key) 
+{
+    ${node.nativeFQNameInModule}PluginSupport_destroy_data(key);
+}
+#*------*##end ##if struct.hasKey
+
+/* ----------------------------------------------------------------------------
+    Callback functions:
+ * ---------------------------------------------------------------------------- */
+
+#*------*##if (($node.isAggregationType)
+                  &&($node.topLevel=="true"))
+
+#*--------*##if($node.isMetpType)
+${node.nativeFQNameInModule}*
+${node.nativeFQNameInModule}Plugin_create_metp_data(void)
+{
+    return (${node.nativeFQNameInModule}*)PRES_TYPE_PLUGIN_INVALID_SAMPLE_ADDRESS;
+}
+
+void
+${node.nativeFQNameInModule}Plugin_destroy_metp_data(void* )
+{
+}
+#*--------*##end
+
+#*--------*##if($node.isMetpType || $node.languageBinding.equals("FLAT_DATA"))
+RTI_UINT32
+${node.nativeFQNameInModule}Plugin_get_deserialized_sample_max_size(
+    PRESTypePluginEndpointData epd)
+{
+#*------*##if(!($node.languageBinding.equals("FLAT_DATA")
+        && $node.extensibility.equals("MUTABLE_EXTENSIBILITY"))) 
+    RTIOsapiUtility_unusedParameter(epd);
+#*------*##end
+#*------*##if($node.languageBinding.equals("FLAT_DATA"))
+#*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    return RTIOsapiAlignment_alignUInt32Up(
+            PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(epd),
+            MIG_RTPS_SUBMESSAGE_ALIGNMENT);
+#*--------*##else
+    return RTI_XCDR_ENCAPSULATION_HEADER_SIZE
+            + RTIOsapiAlignment_alignUInt32Up(
+                    ${node.nativeFQNameInModule}Offset::serialized_size(0),
+                    MIG_RTPS_SUBMESSAGE_ALIGNMENT);
+#*--------*##end
+#*------*##else
+    return static_cast<RTI_UINT32>(sizeof(${node.nativeFQNameInModule}));
+#*------*##end
+}
+#*--------*##end
+
+#*------*##if($node.languageBinding.equals("FLAT_DATA"))
+#flatPluginTopLevelSupportFunctions($node)
+#*------*##end
+
+PRESTypePluginParticipantData 
+${node.nativeFQNameInModule}Plugin_on_participant_attached(
+    void *registration_data,
+    const struct PRESTypePluginParticipantInfo *participant_info,
+    RTIBool top_level_registration,
+    void *container_plugin_context,
+    RTICdrTypeCode *type_code)
+{
+    try {
+#if($node.isMetpType && !$node.interpreted=="true")
+    PRESTypePluginParticipantData epd;
+#end
+#if($node.interpreted=="true")
+    struct RTIXCdrInterpreterPrograms *programs = NULL;
+    struct PRESTypePluginDefaultParticipantData *pd = NULL;
+    struct RTIXCdrInterpreterProgramsGenProperty programProperty =
+        RTIXCdrInterpreterProgramsGenProperty_INITIALIZER;
+#end
+#if(!$node.isMetpType)
+    if (registration_data) {} /* To avoid warnings */
+    if (participant_info) {} /* To avoid warnings */
+    if (top_level_registration) {} /* To avoid warnings */
+    if (container_plugin_context) {} /* To avoid warnings */
+    if (type_code) {} /* To avoid warnings */
+#end
+#set($node.allowXcdr=true)
+#if($node.interpreted=="true")
+    pd = (struct PRESTypePluginDefaultParticipantData *)
+            PRESTypePluginDefaultParticipantData_new(participant_info);
+ 
+    #initializeProgramProperties($node)
+
+    programProperty.externalReferenceSize = 
+            (RTIXCdrUnsignedShort) sizeof(::dds::core::external<char>);
+    programProperty.getExternalRefPointerFcn = 
+            ::rti::topic::interpreter::get_external_value_pointer;
+
+    programs = DDS_TypeCodeFactory_assert_programs_in_global_list(
+            DDS_TypeCodeFactory_get_instance(),
+#*--*##if($node.languageBinding.equals("FLAT_DATA"))
+(DDS_TypeCode *)&::rti::topic::dynamic_type< ${node.nativeFQNameInModule}PlainHelper>::get().native(),
+#*--*##else
+(DDS_TypeCode *) #getTypeCode($node),
+#*--*##end
+            &programProperty,
+            RTI_XCDR_PROGRAM_MASK_TYPEPLUGIN);
+
+    if (programs == NULL) {
+        PRESTypePluginDefaultParticipantData_delete(
+            (PRESTypePluginParticipantData)pd);
+        return NULL;
+    }
+
+    pd->programs = programs;
+#*--*##if(!$node.isMetpType)
+    return (PRESTypePluginParticipantData)pd;
+#*--*##else
+    return METypePlugin_on_participant_attached(
+            pd,
+            registration_data,
+            participant_info,
+            top_level_registration,
+            container_plugin_context,
+            type_code);
+#*--*##end 
+#else
+#*--*##if($node.isMetpType)
+        epd = PRESTypePluginDefaultParticipantData_new(participant_info);
+        return METypePlugin_on_participant_attached(
+                epd,
+                registration_data,
+                participant_info,
+                top_level_registration,
+                container_plugin_context,
+                type_code);
+#*--*##else
+    return PRESTypePluginDefaultParticipantData_new(participant_info);
+#*--*##end
+#end
+    } catch (...) {
+        return NULL;
+    }
+}
+#*-****************************************************************-*#
+
+void 
+${node.nativeFQNameInModule}Plugin_on_participant_detached(
+    PRESTypePluginParticipantData participant_data)
+{
+    if (participant_data != NULL) {
+#*----*##if($node.interpreted=="true")
+        struct PRESTypePluginDefaultParticipantData *pd = 
+                (struct PRESTypePluginDefaultParticipantData *)participant_data;
+
+        if (pd->programs != NULL) {
+            DDS_TypeCodeFactory_remove_programs_from_global_list(
+                    DDS_TypeCodeFactory_get_instance(),
+                    pd->programs);
+            pd->programs = NULL;
+        }
+#*--------*##if($node.isMetpType)
+        METypePlugin_on_participant_detached(participant_data);
+#*--------*##end
+  	    PRESTypePluginDefaultParticipantData_delete(participant_data);
+#*----*##else
+#*--------*##if($node.isMetpType)
+        METypePlugin_on_participant_detached(participant_data);
+#*--------*##end
+        PRESTypePluginDefaultParticipantData_delete(participant_data);
+#*----*##end
+    }
+}
+
+#*-****************************************************************-*#
+PRESTypePluginEndpointData
+${node.nativeFQNameInModule}Plugin_on_endpoint_attached(
+    PRESTypePluginParticipantData participant_data,
+    const struct PRESTypePluginEndpointInfo *endpoint_info,
+    RTIBool top_level_registration, 
+    void *containerPluginContext)
+{
+    try {
+    PRESTypePluginEndpointData epd = NULL;
+#*--------*##if($node.isMetpType)    
+    void *plugin = NULL;
+#*--------*##end         
+    unsigned int serializedSampleMaxSize = 0;
+
+##----------------------------------------------------
+## This code is only generated if the struct has a key 
+##----------------------------------------------------
+
+#*--------*##if($node.hasKey || $node.hasKeyBaseType)
+    unsigned int serializedKeyMaxSize = 0;
+    unsigned int serializedKeyMaxSizeV2 = 0;
+#*--------*##end 
+
+#*--------*##if(!$node.isMetpType)
+    if (top_level_registration) {} /* To avoid warnings */
+    if (containerPluginContext) {} /* To avoid warnings */
+#*--------*##end
+
+#*--------*##if($node.interpreted=="true")
+    if (participant_data == NULL) {
+        return NULL;
+    } 
+#*--------*##end
+
+#*--------*##if($node.isMetpType)     
+   if (endpoint_info->endpointKind == PRES_TYPEPLUGIN_ENDPOINT_WRITER) {
+        plugin = DDS_Entity_get_reserved_dataI(
+                DDS_DataWriter_as_entity(endpoint_info->reserved));
+    } else {
+        plugin = DDS_Entity_get_reserved_dataI(
+                DDS_DataReader_as_entity(endpoint_info->reserved));
+    }
+    if (plugin != NULL) {
+        epd = PRESTypePluginDefaultEndpointData_new(
+            participant_data,
+            endpoint_info,
+            (PRESTypePluginDefaultEndpointDataCreateSampleFunction)
+            ${node.nativeFQNameInModule}Plugin_create_metp_data,
+            (PRESTypePluginDefaultEndpointDataDestroySampleFunction)
+            ${node.nativeFQNameInModule}Plugin_destroy_metp_data,
+            NULL, NULL);
+    } else {
+        epd = PRESTypePluginDefaultEndpointData_new(
+            participant_data,
+            endpoint_info,
+            (PRESTypePluginDefaultEndpointDataCreateSampleFunction)
+            ${node.nativeFQName}PluginSupport_create_data,
+            (PRESTypePluginDefaultEndpointDataDestroySampleFunction)
+            ${node.nativeFQName}PluginSupport_destroy_data,
+            #if($node.hasKey || $node.hasKeyBaseType)(PRESTypePluginDefaultEndpointDataCreateKeyFunction)
+            ${node.nativeFQName}PluginSupport_create_key #else NULL #end,#*
+            *##if($node.hasKey || $node.hasKeyBaseType)
+            (PRESTypePluginDefaultEndpointDataDestroyKeyFunction)
+            ${node.nativeFQName}PluginSupport_destroy_key#else NULL #end);
+    }
+#*--------*##else
+#*----------*##if($node.languageBinding.equals("FLAT_DATA"))
+        if (endpoint_info->usesFstSampleDataPool) {
+            epd = PRESTypePluginDefaultEndpointData_new(
+                participant_data,
+                endpoint_info,
+                (PRESTypePluginDefaultEndpointDataCreateSampleFunction)
+                ${node.nativeFQNameInModule}Plugin_create_flat_data_sentinel,
+                (PRESTypePluginDefaultEndpointDataDestroySampleFunction)
+                ${node.nativeFQNameInModule}Plugin_destroy_flat_data_sentinel,
+                #if($node.hasKey || $node.hasKeyBaseType)(PRESTypePluginDefaultEndpointDataCreateKeyFunction)
+                ${node.nativeFQName}PluginSupport_create_key #else NULL #end,#*
+                *##if($node.hasKey || $node.hasKeyBaseType)
+                (PRESTypePluginDefaultEndpointDataDestroyKeyFunction)
+                ${node.nativeFQName}PluginSupport_destroy_key#else NULL #end);       
+        } else {
+#*----------*##end
+            epd = PRESTypePluginDefaultEndpointData_new(
+                participant_data,
+                endpoint_info,
+                (PRESTypePluginDefaultEndpointDataCreateSampleFunction)
+                ${node.nativeFQNameInModule}PluginSupport_create_data,
+                (PRESTypePluginDefaultEndpointDataDestroySampleFunction)
+                ${node.nativeFQNameInModule}PluginSupport_destroy_data,
+                #if($node.hasKey || $node.hasKeyBaseType)(PRESTypePluginDefaultEndpointDataCreateKeyFunction)
+                ${node.nativeFQName}PluginSupport_create_key #else NULL #end,#*
+                *##if($node.hasKey || $node.hasKeyBaseType)
+                (PRESTypePluginDefaultEndpointDataDestroyKeyFunction)
+                ${node.nativeFQName}PluginSupport_destroy_key#else NULL #end);
+#*----------*##if($node.languageBinding.equals("FLAT_DATA"))
+        }
+#*----------*##end
+#*--------*##end
+
+    if (epd == NULL) {
+        return NULL;
+    } 
+    
+##----------------------------------------------------
+## This code is only generated if the struct has a key
+##----------------------------------------------------    
+#*--------*##if($node.hasKey || $node.hasKeyBaseType)
+#*------------*##if ($node.allowXcdr)
+    serializedKeyMaxSize =  ${node.nativeFQName}Plugin_get_serialized_key_max_size(
+        epd,RTI_FALSE,RTI_CDR_ENCAPSULATION_ID_CDR_BE,0);
+#*------------*##end
+#*----------*##if($node.interpreted=="true")
+#*------------*##if ($node.allowXcdr2)
+    serializedKeyMaxSizeV2 = ${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_for_keyhash(
+            epd,
+            RTI_CDR_ENCAPSULATION_ID_CDR2_BE,
+            0);
+#*------------*##end            
+#*----------*##end
+    
+    if(!PRESTypePluginDefaultEndpointData_createMD5StreamWithInfo(
+            epd,
+            endpoint_info,
+            serializedKeyMaxSize,
+            serializedKeyMaxSizeV2))  
+    {
+        PRESTypePluginDefaultEndpointData_delete(epd);
+        return NULL;
+    }
+#*----------*##if($node.languageBinding.equals("FLAT_DATA"))
+#flatPluginCreatePlainHelperSample($node)  
+#*----------*##end          
+#*--------*##end ##if struct.hasKey
+
+#*--------*##if(($node.isAggregationType))
+#*----------*##if($node.languageBinding.equals("FLAT_DATA"))
+    serializedSampleMaxSize = ${node.nativeFQName}Plugin_get_serialized_sample_max_size(
+            epd,RTI_TRUE,RTI_XCDR_ENCAPSULATION_ID_PL_CDR2_BE,0);
+            
+    PRESTypePluginDefaultEndpointData_setMaxSizeSerializedSample(epd, serializedSampleMaxSize);   
+#*----------*##end
+#*--------*##end
+  
+    if (endpoint_info->endpointKind == PRES_TYPEPLUGIN_ENDPOINT_WRITER) {
+#*--------*##if(($node.isAggregationType))
+#*----------*##if(!($node.languageBinding.equals("FLAT_DATA")))
+#*------------*##if($node.allowXcdr)
+        serializedSampleMaxSize = ${node.nativeFQName}Plugin_get_serialized_sample_max_size(
+            epd,RTI_FALSE,RTI_CDR_ENCAPSULATION_ID_CDR_BE,0);
+#*------------*##end  
+        PRESTypePluginDefaultEndpointData_setMaxSizeSerializedSample(epd, serializedSampleMaxSize);
+#*----------*##end
+#*--------*##end    
+    
+        if (PRESTypePluginDefaultEndpointData_createWriterPool(
+                epd,
+                endpoint_info,
+            (PRESTypePluginGetSerializedSampleMaxSizeFunction)
+                ${node.nativeFQName}Plugin_get_serialized_sample_max_size, epd,
+            (PRESTypePluginGetSerializedSampleSizeFunction)
+            #getSerializedSampleSizeFncName($node),
+            epd) == RTI_FALSE) {
+            PRESTypePluginDefaultEndpointData_delete(epd);
+            return NULL;
+        }
+    }
+#*--------*##if($node.isMetpType)
+    if (!METypePlugin_on_endpoint_attached(
+    	participant_data,
+    	epd,
+    	endpoint_info,
+    	top_level_registration,
+    	containerPluginContext,
+        ${node.nativeFQNameInModule}Plugin_get_deserialized_sample_max_size(epd),
+        ::dds::topic::topic_type_support< ${node.nativeFQNameInModule}>::native_initialize_sample)) {
+        PRESTypePluginDefaultEndpointData_delete(epd);
+        return NULL;
+    }
+#*--------*##end     
+
+    return epd;
+    } catch (...) {
+        return NULL;
+    }
+}
+
+#*-****************************************************************-*#
+void 
+${node.nativeFQNameInModule}Plugin_on_endpoint_detached(
+    PRESTypePluginEndpointData endpoint_data)
+{  
+#*--------*##if($node.isMetpType)  
+    METypePlugin_on_endpoint_detached(endpoint_data);
+#*--------*##end
+#*--------*##if($node.languageBinding.equals("FLAT_DATA"))
+#flatPluginDeletePlainHelperSample($node)
+#*--------*##end
+    PRESTypePluginDefaultEndpointData_delete(endpoint_data);
+}
+
+#*-****************************************************************-*#
+void    
+${node.nativeFQNameInModule}Plugin_return_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample,
+    void *handle)
+{
+    try {
+        ::rti::topic::reset_sample(*sample);
+    } catch(const std::exception& ex) {
+        RTICdrLog_logWithFunctionName(
+            RTI_LOG_BIT_EXCEPTION,
+            "${node.nativeFQNameInModule}Plugin_return_sample",
+            &RTI_LOG_ANY_FAILURE_ss,
+            "exception: ",
+            ex.what());
+    }
+           
+    PRESTypePluginDefaultEndpointData_returnSample(
+        endpoint_data, sample, handle);
+}
+ 
+#*-****************************************************************-*#
+#*------*##end
+
+RTIBool 
+${node.nativeFQNameInModule}Plugin_copy_sample(
+    PRESTypePluginEndpointData,
+    ${node.nativeFQNameInModule} *dst,
+    const ${node.nativeFQNameInModule} *src)
+{
+    return ${node.nativeFQName}PluginSupport_copy_data(dst,src);
+}
+#*----*##end
+#*----*##if(($node.constructKind=="alias" && !$node.languageBinding.equals("FLAT_DATA"))
+            || ($node.constructKind=="enum") 
+            ||($node.isAggregationType))
+           
+
+/* ----------------------------------------------------------------------------
+    (De)Serialize functions:
+ * ------------------------------------------------------------------------- */
+#*------*##if (($node.isAggregationType)
+                ||($node.constructKind=="alias")) 
+unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment);
+#*------*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool 
+${node.nativeFQNameInModule}Plugin_serialize(
+	    PRESTypePluginEndpointData endpoint_data,
+	    const ${node.nativeFQNameInModule} *sample, 
+	    struct RTICdrStream *cdrStream,    
+	    RTIBool serialize_encapsulation,
+	    RTIEncapsulationId encapsulation_id,
+	    RTIBool serialize_sample, 
+	    void *endpoint_plugin_qos)
+{
+#*--*##if ($node.languageBinding.equals("FLAT_DATA") && !$node.isMetpType)    
+#flatPluginSerializeBody($node true)
+#*--*##elseif ($node.interpreted=="true")
+    RTIBool retval = RTI_TRUE;
+#*----*##if($node.isMetpType)
+    RTIBool metp = RTI_FALSE;
+    char * rti_position = NULL;
+    RTIBool serialize_encapsulation_requested = serialize_encapsulation;
+#*----*##serializeEncapsulation($node)
+    if(metp && serialize_sample) {
+        if (!METypePlugin_serialize(
+                endpoint_data,
+                sample,
+                cdrStream,
+                serialize_encapsulation,
+                encapsulation_id,
+                serialize_sample,
+                endpoint_plugin_qos)) {
+            return RTI_FALSE;
+        }
+        return RTI_TRUE; 
+    } else if (!metp && METypePlugin_cdrEnabled(endpoint_data) && serialize_sample) {
+        serialize_encapsulation = RTI_FALSE;
+#*------*##if ($node.languageBinding.equals("FLAT_DATA"))
+#*--------*##flatPluginSerializeBody($node false)
+#*------*##end 
+#*----*##end ## isMetpType
+#*------*##if (!$node.languageBinding.equals("FLAT_DATA"))          
+    retval = PRESTypePlugin_interpretedSerialize(
+    	endpoint_data,
+    	sample, 
+    	cdrStream,    
+    	serialize_encapsulation,
+    	encapsulation_id,
+    	serialize_sample, 
+    	endpoint_plugin_qos);
+#*------*##end
+#*----*##if($node.isMetpType)
+    } else if (serialize_sample) {
+        return RTI_FALSE;
+    }
+    if (serialize_encapsulation_requested) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+#*----*##end
+    return retval;
+#*--*##else#*--not interpreted--*#
+   try {
+   char * rti_position = NULL;
+   #*------*##if($node.isMetpType)   
+   RTIBool metp = RTI_FALSE;
+#*------*##end
+#*------*##if(($node.isMetpType) || ($node.constructKind!="enum"))
+    RTIBool retval = RTI_TRUE;
+#*------*##end   
+#*------*##if($node.constructKind!="enum")   
+#*--------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+|| ($node.hasOptionalMember))
+    DDS_UnsignedLong memberId = 0;
+    char *memberLengthPosition = NULL;
+    RTIBool extended;
+    struct RTICdrStreamState state;
+#*--------*##end
+#*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    RTIBool ignoreListEndId = RTI_FALSE;
+#*--------*##end
+#*------*##end
+
+#*------*##if(!$node.baseTypeFQName) 
+#*--------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") 
+                 || $node.hasOptionalMember)
+                 && $node.constructKind!="enum")
+    if (endpoint_data == NULL) {
+        return RTI_FALSE;
+    }
+#*------*##else
+    if (endpoint_data) {} /* To avoid warnings */
+#*------*##end
+    if (endpoint_plugin_qos) {} /* To avoid warnings */
+#*------*##end  
+ 
+#*------*##serializeEncapsulation($node)
+  
+#*------*##if($node.isMetpType)
+  if(metp && serialize_sample) {
+#*------*##else
+  if(serialize_sample) {
+#*------*##end
+#if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || $node.hasOptionalMember)
+     &&$node.constructKind!="enum")
+      if (RTICdrStream_isDirty(cdrStream)) {
+#*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+            ignoreListEndId = cdrStream->_xTypesState.skipListEndId;
+#*--------*##end
+      } else {
+            /* Top level */
+            RTICdrStream_setDirtyBit(cdrStream,RTI_TRUE);
+
+
+#*------------*##if ($envMap.mutExtCode)
+                cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
+#*------------*##else
+                if (PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(endpoint_data) > 65535) {
+                    cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
+                } else {
+                    cdrStream->_xTypesState.useExtendedId = RTI_FALSE;
+                }
+#*------------*##end
+       }
+#*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+        cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
+#*--------*##end
+
+
+#*------*##end
+#*------*##if($node.isMetpType)
+        if (!METypePlugin_serialize(
+        	endpoint_data,
+        	sample,
+        	cdrStream,
+        	serialize_encapsulation,
+        	encapsulation_id,
+        	serialize_sample,
+                endpoint_plugin_qos)) {
+            return RTI_FALSE;
+        }
+    } else if(!metp && METypePlugin_cdrEnabled(endpoint_data) && serialize_sample) {
+        if (serialize_encapsulation) {
+            METypePlugin_set_sample_serialized((const void*)sample);
+        }
+        
+#*------*##end
+
+#*--------*##if ($node.constructKind=="enum")
+if (
+#*----------*##foreach($element in $node.memberFieldMapList)
+*sample != $element.nativeFQNameInModule
+#*------------*##if($foreach.count <$node.memberFieldMapList.size()) && #end   
+#*------------*##end
+){
+    RTICdrLog_exception(
+               &RTI_CDR_LOG_SERIALIZE_INVALID_ENUMERATOR_ds,
+               sample,
+               "${node.nativeFQNameInModule}");
+        return RTI_FALSE;       
+    }
+
+    if (!RTICdrStream_serializeLong(cdrStream, sample))
+    {
+       return RTI_FALSE;
+    }
+  
+#*--------*##else  
+#*----------*##if($node.baseTypeFQName)  
+#*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    cdrStream->_xTypesState.skipListEndId = RTI_TRUE;
+#*------------*##end
+    if (!${node.baseTypeFQName}Plugin_serialize(endpoint_data,
+             (const ${node.baseTypeFQName}*)sample,cdrStream,RTI_FALSE,encapsulation_id,
+             RTI_TRUE,endpoint_plugin_qos)) {
+        return RTI_FALSE;
+    }
+#*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
+#*------------*##end    
+#*----------*##end  
+#*----------*##if($node.constructKind=="union")
+#*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+        memberId = $node.unionDiscriminatorMap.id;
+#*--------------*##if($node.unionDiscriminatorMap.needExtendedId=="yes" )       
+        extended = RTI_TRUE;
+#*--------------*##elseif($node.unionDiscriminatorMap.needExtendedId=="no")
+        extended = RTI_FALSE;
+#*--------------*##else
+        extended = cdrStream->_xTypesState.useExtendedId;
+#*--------------*##end                                   
+        memberLengthPosition = RTICdrStream_serializeParameterHeader(
+                                   cdrStream, &state, extended, memberId, RTI_FALSE);
+        if (memberLengthPosition == NULL) {
+            return RTI_FALSE;
+        }
+#*------------*##end                                   
+#*------------*##serializeMember($node.unionDiscriminatorMap "")
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    if (!RTICdrStream_serializeParameterLength(
+             cdrStream, &state, extended, memberLengthPosition)) {
+        return RTI_FALSE;
+    } 
+#end    
+    switch(::rti::topic::cdr::integer_case(sample->_d())) {
+#*----------*##end 
+
+#*----------*##serialize( $node.memberFieldMapList "serialize")
+#*--------*##end
+
+#*--------*##if($node.needsDefaultCase.equals("true"))
+#*----------*##generateDefaultCase($node)
+#*--------*##end
+
+#*--------*##if($node.constructKind=="union")
+    }
+#*--------*##end  
+#*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&$node.constructKind!="enum") 
+#*--------*##serializeEndMutable()
+#*--------*##end
+}
+#*------*##if($node.isMetpType)
+else if (serialize_sample) {
+    retval = RTI_FALSE;
+}
+#*------*##end
+
+  if(serialize_encapsulation) {
+    RTICdrStream_restoreAlignment(cdrStream,rti_position);
+  }
+
+#*------*##if((!$node.isMetpType) && ($node.constructKind=="enum"))
+  return RTI_TRUE;
+#*------*##else
+  return retval;
+#*------*##end
+
+  } catch (...) {
+      return RTI_FALSE;
+  }
+#*--*##end#*--if interpreted--*#
+}
+#*--*##end
+
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool 
+${node.nativeFQNameInModule}Plugin_deserialize_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample,
+    struct RTICdrStream *cdrStream,   
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_sample, 
+    void *endpoint_plugin_qos)
+{
+#*--*##if ($node.languageBinding.equals("FLAT_DATA"))
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+    RTIOsapiUtility_unusedParameter(sample);
+    RTIOsapiUtility_unusedParameter(cdrStream);
+    RTIOsapiUtility_unusedParameter(deserialize_encapsulation);
+    RTIOsapiUtility_unusedParameter(deserialize_sample);
+    RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
+
+    return RTI_FALSE;
+#*--*##elseif ($node.interpreted=="true")
+	return PRESTypePlugin_interpretedDeserialize(
+    	endpoint_data,
+    	sample,
+    	cdrStream,   
+    	deserialize_encapsulation,
+    	deserialize_sample, 
+    	endpoint_plugin_qos);
+
+#*--*##else#*--not interpreted--*#
+    char * rti_position = NULL;
+#*------*##if($node.isMetpType)
+    RTIBool metp = RTI_FALSE;
+#*------*##end     
+#*------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType" ) 
+                 && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")))
+                                                                   
+    RTIBool done = RTI_FALSE;
+#*------*##elseif(($node.constructKind=="enum") 
+                    && (!$node.extensibility.equals("FINAL_EXTENSIBILITY")))
+    DDS_Enum enum_tmp;
+#*------*##end
+
+#*------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&$node.constructKind!="enum")
+|| $node.hasOptionalMember)
+    DDS_UnsignedLong memberId = 0;
+    DDS_UnsignedLong length = 0;
+    RTIBool mustUnderstand = RTI_FALSE;
+    struct RTICdrStreamState state;
+    RTIBool extended;
+#*--------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+ RTIBool end = RTI_FALSE;
+#*--------*##end
+#*------*##end
+
+#*--*##if(!$node.baseTypeFQName) 
+#*------*##if (($node.constructKind=="enum") 
+                 && (!$node.extensibility.equals("FINAL_EXTENSIBILITY")))
+    if (endpoint_data == NULL) {
+        return RTI_FALSE;
+    }
+#*------*##else
+    if (endpoint_data) {} /* To avoid warnings */
+#*------*##end
+    if (endpoint_plugin_qos) {} /* To avoid warnings */
+#*--*##end    
+#*--*##deserializeEncapsulation ($node)
+    if(deserialize_sample) {
+    
+
+#*------*##if (($node.constructKind=="enum") 
+                 && (!$node.extensibility.equals("FINAL_EXTENSIBILITY")))
+    if (!RTICdrStream_deserializeLong(cdrStream, &enum_tmp))
+    {
+     return RTI_FALSE;
+    }
+    switch (static_cast< ${node.nativeFQNameInModule}>(enum_tmp)) {
+#*--------*##foreach($element in $node.memberFieldMapList)
+#*----------*##if(!$element.duplicated)
+        case $element.nativeFQNameInModule:
+            *sample=$element.nativeFQNameInModule;
+             break;
+#*----------*##end   
+#*--------*##end             
+        default:
+            {
+                struct PRESTypePluginDefaultEndpointData * epd =
+                        (struct PRESTypePluginDefaultEndpointData *)
+                                endpoint_data;
+                const PRESTypePluginSampleAssignabilityProperty * ap =
+                        PRESTypePluginDefaultEndpointData_getAssignabilityProperty(epd);
+
+                                
+                if (ap->acceptUnknownEnumValue) {
+                    ::rti::topic::reset_sample(*sample);
+                } else {
+                    cdrStream->_xTypesState.unassignable = RTI_TRUE;
+                    RTICdrLog_exception(
+                       &RTI_CDR_LOG_DESERIALIZE_INVALID_ENUMERATOR_ds, 
+                       enum_tmp, 
+                       "${node.nativeFQNameInModule}");
+                    return RTI_FALSE;
+                }
+            }
+    }
+      
+#*------*##elseif ($node.constructKind=="enum")
+if (!RTICdrStream_deserializeLong(cdrStream, sample))
+    {
+     return RTI_FALSE;
+    }
+#*------*##else
+#*--------*##if($node.baseTypeFQName) 
+#*----------*##if (($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) )
+    {
+        char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+        RTICdrStream_pushState(cdrStream, &state, -1);
+#*----------*##end        
+        if (!${node.baseTypeFQName}Plugin_deserialize_sample(endpoint_data,
+                  (${node.baseTypeFQName} *)sample,cdrStream,RTI_FALSE,RTI_TRUE,
+                  endpoint_plugin_qos)) {
+              return RTI_FALSE;
+        }
+#*----------*##if (($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) )        
+        RTICdrStream_popState(
+                cdrStream, &state);
+            RTICdrStream_setCurrentPosition(cdrStream, begin);
+        }     
+#*----------*##end
+#*--------*##end
+
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))   
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
+#*--------*##mutableDeserializeHeader()
+#*--------*##deserializeMutableType($node "deserialize_sample")
+        }
+#*------*##else
+#*----------*##if($node.constructKind=="union")
+#*------------*##deserializeMember( $node.unionDiscriminatorMap "deserialize_sample")
+    switch(::rti::topic::cdr::integer_case(sample->_d())) {
+#*----------*##end 
+#*------------*##deserialize( $node.memberFieldMapList "deserialize_sample")
+#*----------*##if($node.constructKind=="union")
+#*------*##if($node.needsDefaultCase.equals("true"))
+#*--------*##generateDefaultCase($node)
+#*------*##end
+    }
+#*----------*##end
+#*--------*##end
+#*------*##end  
+     }
+
+
+#*------*##if(($node.constructKind=="struct" || $node.constructKind=="valueType")
+                && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY"))) 
+done = RTI_TRUE;
+#*------*##if($envMap.ignoreAlignment || $node.memberCount == 0)
+    goto fin;  /* To avoid unused label warning */
+#*------*##end
+fin:
+    /* Coverity reports a dead_error_line. with some types. Depending on the 
+    idl code that we are generating, the coditional block may be dead
+    code. */
+    /* coverity[dead_error_line] */
+    if (done != RTI_TRUE && 
+        RTICdrStream_getRemainder(cdrStream) >=
+           RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
+        return RTI_FALSE;   
+    }
+#*------*##end
+    if(deserialize_encapsulation) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+
+    return RTI_TRUE;
+#*--*##end#*--if interpreted--*#    
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+ #*-****************************************************************-*#
+#*------*##if($node.isAggregationType)
+
+RTIBool
+${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer(
+    char * buffer,
+    unsigned int * length,
+    const ${node.nativeFQNameInModule} *sample,
+    ::dds::core::policy::DataRepresentationId representation)
+{
+#*--*##if ($node.languageBinding.equals("FLAT_DATA"))
+    if (representation == ::dds::core::policy::DataRepresentation::xcdr()) {
+        // Flat Data only supports XCDR2
+        RTICdrLog_logWithFunctionName(
+               RTI_LOG_BIT_EXCEPTION,
+               "${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer", 
+               &RTI_CDR_LOG_SERIALIZE_FAILURE_s, 
+               "representation id parameter must be XCDR2");        
+        return RTI_FALSE;
+    }
+#flatPluginSerializeToCdrBufferBody($node)
+#*--*##else
+    using namespace ::dds::core::policy;
+
+    try{
+    RTIEncapsulationId encapsulationId = RTI_CDR_ENCAPSULATION_ID_INVALID;
+    struct RTICdrStream cdrStream;
+    struct PRESTypePluginDefaultEndpointData epd;
+    RTIBool result;
+  #if($node.interpreted=="true")
+    struct PRESTypePluginDefaultParticipantData pd;
+    struct RTIXCdrTypePluginProgramContext defaultProgramContext =
+	    RTIXCdrTypePluginProgramContext_INTIALIZER;
+    struct PRESTypePlugin plugin = PRES_TYPEPLUGIN_DEFAULT;
+  #end
+    
+    if (length == NULL) {
+        return RTI_FALSE;
+    }
+
+
+    RTIOsapiMemory_zero(&epd, sizeof(struct PRESTypePluginDefaultEndpointData));
+  #if($node.interpreted=="true")
+	epd.programContext = defaultProgramContext;
+    epd._participantData = &pd;
+	epd.typePlugin = &plugin;
+	epd.programContext.endpointPluginData = &epd;
+    try {
+        plugin.typeCode = (struct RTICdrTypeCode *)
+                #getTypeCode($node);
+    } catch (...) {
+        return RTI_FALSE;
+    }
+	pd.programs = ::rti::topic::interpreter::get_cdr_serialization_programs<
+	    ${node.nativeFQNameInModule}, 
+    #if ($node.optimizationLevel == 0)
+		false, false, false>();
+    #else
+      #if ($node.optimizationLevel == 1)
+        true, false, false>();
+      #else
+        true, true, true>();
+      #end
+    #end
+
+    encapsulationId = DDS_TypeCode_get_native_encapsulation(
+            (DDS_TypeCode *) plugin.typeCode,
+            representation);
+  #else ## !interpreted
+    encapsulationId = DDS_DataRepresentationQosPolicy_getNativeEncapsulationWithRepresentationMask(
+            representation,
+            DDS_XCDR_DATA_REPRESENTATION_BIT);
+  #end
+
+    if (encapsulationId == RTI_CDR_ENCAPSULATION_ID_INVALID) {
+        return RTI_FALSE;
+    }
+
+    epd._maxSizeSerializedSample =
+        ${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size(
+            (PRESTypePluginEndpointData)&epd, 
+            RTI_TRUE, 
+            encapsulationId,
+            0);
+      
+    if (buffer == NULL) {
+        *length = 
+            #getSerializedSampleSizeFncName($node)(
+                (PRESTypePluginEndpointData)&epd,
+                RTI_TRUE,
+                encapsulationId,
+                0,
+                sample);
+        
+        if (*length == 0) {
+            return RTI_FALSE;
+        }
+        
+        return RTI_TRUE;
+    }    
+    
+    RTICdrStream_init(&cdrStream);
+    RTICdrStream_set(&cdrStream, buffer, *length);
+    
+    result = #serializeFncName($node)(
+            (PRESTypePluginEndpointData)&epd, 
+            sample, 
+            &cdrStream, 
+            RTI_TRUE, 
+            encapsulationId,
+            RTI_TRUE, 
+            NULL);  
+
+    *length = (unsigned int) RTICdrStream_getCurrentPositionOffset(&cdrStream);
+    return result;
+    } catch (...) {
+        return RTI_FALSE;
+    }
+#*--*##end ## FLAT_DATA
+}
+
+RTIBool
+${node.nativeFQNameInModule}Plugin_deserialize_from_cdr_buffer(
+    ${node.nativeFQNameInModule} *sample,
+    const char * buffer,
+    unsigned int length)
+{
+    struct RTICdrStream cdrStream;
+  #if($node.interpreted=="true")
+    struct PRESTypePluginDefaultParticipantData pd;
+    struct RTIXCdrTypePluginProgramContext defaultProgramContext =
+	    RTIXCdrTypePluginProgramContext_INTIALIZER;
+    struct PRESTypePlugin plugin;
+  #end
+    struct PRESTypePluginDefaultEndpointData epd;
+
+    RTICdrStream_init(&cdrStream);
+    /*
+     * The buffer is constant because this is a deserialization function
+     * (the buffer is an input parameter, not an output parameter).
+     * However, the buffer member in the stream is a (char *) so coverity
+     * complains in case something else modifies the buffer's contents later.
+     *
+     * We don't currently have a stream type with a constant buffer.
+     * Therefore, we suppress the warning after making sure that this function
+     * doesn't modify the contents of the stream's buffer.
+     */
+    /* coverity[cert_exp40_c_violation : FALSE] */
+    RTICdrStream_set(&cdrStream, (char *) buffer, length);
+    
+  #if($node.interpreted=="true")
+	epd.programContext = defaultProgramContext;
+	epd._participantData = &pd;
+	epd.typePlugin = &plugin;
+	epd.programContext.endpointPluginData = &epd;
+	try {
+        plugin.typeCode = (struct RTICdrTypeCode *)
+                #getTypeCode($node);
+    } catch (...) {
+        return RTI_FALSE;
+    }
+	pd.programs = ::rti::topic::interpreter::get_cdr_serialization_programs<
+	    ${node.nativeFQNameInModule}, 
+    #if ($node.optimizationLevel == 0)
+		false, false, false>();
+    #else
+      #if ($node.optimizationLevel == 1)
+        true, false, false>();
+      #else
+        true, true, true>();
+      #end
+    #end
+  #end
+    
+    epd._assignabilityProperty.acceptUnknownEnumValue = RTI_XCDR_TRUE;
+    epd._assignabilityProperty.acceptUnknownUnionDiscriminator = 
+            RTI_XCDR_ACCEPT_UNKNOWN_DISCRIMINATOR_AND_SELECT_DEFAULT;
+    
+    ::rti::topic::reset_sample(*sample);
+    return #deserializeSampleFncName($node)( 
+        (PRESTypePluginEndpointData)&epd,
+        sample,
+        &cdrStream,
+        RTI_TRUE, 
+        RTI_TRUE, 
+        NULL);
+}
+
+#*--*##if (!$node.skipTypePluginCodeGen) 
+RTIBool 
+${node.nativeFQNameInModule}Plugin_deserialize(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} **sample,
+    RTIBool * drop_sample,
+    struct RTICdrStream *cdrStream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_sample, 
+    void *endpoint_plugin_qos)
+{
+    try {
+    RTIBool result = RTI_FALSE;
+#*------*##if($node.isMetpType)
+    RTIBool metp = RTI_FALSE;
+    char * rti_position = NULL;
+    RTIBool deserialize_encapsulation_requested = deserialize_encapsulation;
+#*------*##end    
+    if (drop_sample) {} /* To avoid warnings */
+
+    cdrStream->_xTypesState.unassignable = RTI_FALSE;
+
+#*------*##if($node.isMetpType)
+#*------*##deserializeEncapsulation ($node)
+    deserialize_encapsulation = RTI_FALSE;
+    if (metp && deserialize_sample) {
+        result = METypePlugin_deserialize(
+		endpoint_data,
+		(void**)sample,
+        	drop_sample,
+            cdrStream,
+        	deserialize_encapsulation,
+        	deserialize_sample,
+        	endpoint_plugin_qos);
+    } else if (!metp && METypePlugin_cdrEnabled(endpoint_data)
+            && deserialize_sample) {
+        if (*sample == (void*)PRES_TYPE_PLUGIN_INVALID_SAMPLE_ADDRESS) {
+             *sample = (${node.nativeFQNameInModule} *)
+                                    METypePlugin_get_sample(endpoint_data);
+#*--------*##if ($node.languageBinding.equals("FLAT_DATA"))
+            RTIXCdrFlatSample_initializeEncapsulation(
+                    *(char **)sample,
+                    RTICdrStream_getEncapsulationKind(cdrStream));
+        }
+#*----------*##flatPluginDeserializeBody($node)
+#*--------*##else
+        }
+#*--------*##end        	
+#*------*##end ## isMetpType
+#*------*##if ($node.languageBinding.equals("FLAT_DATA") && !$node.isMetpType)    
+#*--------*##flatPluginDeserializeBody($node)
+#*------*##elseif (!$node.languageBinding.equals("FLAT_DATA"))
+    result= #deserializeSampleFncName($node)( 
+        endpoint_data, (sample != NULL)?*sample:NULL,
+        cdrStream, deserialize_encapsulation, deserialize_sample, 
+        endpoint_plugin_qos);
+#*------*##end        
+        if (result) {
+             if (cdrStream->_xTypesState.unassignable) {
+                 result = RTI_FALSE;
+             }
+        }
+        if (!result && cdrStream->_xTypesState.unassignable ) {
+        
+            RTICdrLog_exception(
+               &RTI_CDR_LOG_UNASSIGNABLE_SAMPLE_OF_TYPE_s, 
+               "${node.nativeFQNameInModule}");
+            
+        }
+#*------*##if($node.isMetpType)
+    } else if (deserialize_sample) {
+        *drop_sample = RTI_TRUE;
+        result = RTI_TRUE;    	
+    } else {
+        result = RTI_TRUE;
+    }
+    if (deserialize_encapsulation_requested) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+#*------*##end  
+        return result;
+ 
+    } catch (...) {
+        return RTI_FALSE;
+    }
+}
+#*--*##end
+
+#*------*##end
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool ${node.nativeFQNameInModule}Plugin_skip(
+    PRESTypePluginEndpointData endpoint_data,
+    struct RTICdrStream *cdrStream,   
+    RTIBool skip_encapsulation,
+    RTIBool skip_sample, 
+    void *endpoint_plugin_qos)
+#*--*##if ($node.interpreted=="true")
+{
+	return PRESTypePlugin_interpretedSkip(
+    		endpoint_data,
+    		cdrStream,   
+    		skip_encapsulation,
+    		skip_sample, 
+    		endpoint_plugin_qos);
+}
+#*--*##else#*--not interpreted--*#
+{
+try    
+{
+    char * rti_position = NULL;
+    
+#*------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType" )
+                   && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")))
+    RTIBool done = RTI_FALSE;
+#*------*##end
+#*------*##if((($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) && ($node.constructKind!="enum"))
+               || ($node.hasOptionalMember))
+    DDS_UnsignedLong memberId = 0;
+    DDS_UnsignedLong length = 0;
+    RTIBool mustUnderstand = RTI_FALSE;
+    struct RTICdrStreamState state;
+    RTIBool extended;
+#*------*##end 
+
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && (!$node.constructKind.equals("enum")))
+ RTIBool end = RTI_FALSE;
+#*------*##end
+
+#*------*##if(!$node.baseTypeFQName) 
+    if (endpoint_data) {} /* To avoid warnings */
+    if (endpoint_plugin_qos) {} /* To avoid warnings */
+#*------*##end
+
+    if(skip_encapsulation) {
+        if (!RTICdrStream_skipEncapsulation(cdrStream)) {
+            return RTI_FALSE;
+        }
+
+        rti_position = RTICdrStream_resetAlignment(cdrStream);
+    }
+
+    if (skip_sample) {
+    
+#*-------*##if($node.constructKind=="union" && $node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+     $node.unionDiscriminatorMap.completeSpecTypeName disc;
+#*----------*##elseif($node.baseTypeFQName) 
+#*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))       
+    {
+        char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+        RTICdrStream_pushState(cdrStream, &state, -1);
+#*------------*##end
+        if (!${node.baseTypeFQName}Plugin_skip(endpoint_data,
+                  cdrStream,RTI_FALSE,RTI_TRUE,
+                  endpoint_plugin_qos)) {
+              return RTI_FALSE;
+        }
+#*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))      
+        
+        RTICdrStream_popState(
+                cdrStream, &state);
+            RTICdrStream_setCurrentPosition(cdrStream, begin);
+        }     
+#*------------*##end
+#*------*##end   
+#if($node.extensibility.equals("MUTABLE_EXTENSIBILITY")  && (!$node.constructKind.equals("enum")))       
+        while (end != RTI_TRUE && RTICdrStream_getRemainder(cdrStream) > 0) {
+#*--------*##mutableDeserializeHeader()
+#*------*##end   
+
+
+#*------*##if($node.constructKind=="enum")   
+        if (!RTICdrStream_skipEnum(cdrStream)) {
+            return RTI_FALSE;
+        }
+#*------*##else   
+    
+#*--------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))  
+                && ($node.constructKind!="enum"))
+#*----------*##skipMutable($node.memberFieldMapList)
+        }
+#*--------*##else     
+#*----------*##if($node.constructKind=="union")
+        $node.unionDiscriminatorMap.completeSpecTypeName disc;
+
+#*------------*##if(($node.unionDiscriminatorMap.typeKind=="user")
+                    ||($node.unionDiscriminatorMap.typeKind=="enum"))   
+        if (!${node.unionDiscriminatorMap.nativeTypeFQName}Plugin_deserialize_sample(
+            endpoint_data,
+            &disc,
+            cdrStream, 
+            RTI_FALSE, RTI_TRUE, 
+            endpoint_plugin_qos)) {
+                return RTI_FALSE;
+        }
+#*------------*##else
+        if (!${node.unionDiscriminatorMap.elementDeserializeMethod}(
+            cdrStream, &disc)) {
+                return RTI_FALSE;
+        }
+
+#*------------*##end   
+ 
+        switch(::rti::topic::cdr::integer_case(disc)) {
+#*----------*##end 
+   
+#*----------*##skip($node.memberFieldMapList)
+#*----------*##if($node.constructKind=="union")
+#*------*##if($node.needsDefaultCase.equals("true"))
+#*--------*##generateDefaultCase($node)
+#*------*##end
+        }
+#*----------*##end
+#*--------*##end
+#*--------*##end
+    }
+
+#*------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType") 
+                    && ($node.extensibility=="EXTENSIBLE_EXTENSIBILITY"))
+    done = RTI_TRUE;
+#*------*##if($node.memberCount == 0)
+    goto fin;
+#*------*##end
+fin:
+    /* Coverity reports a dead_error_line. with some types. Depending on the 
+    idl code that we are generating, the coditional block may be dead
+    code. */
+    /* coverity[dead_error_line] */
+    if (done != RTI_TRUE && 
+        RTICdrStream_getRemainder(cdrStream) >=
+           RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
+        return RTI_FALSE;   
+    }
+#*------*##end
+    if(skip_encapsulation) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+
+    return RTI_TRUE;
+}
+catch (...) {
+    return RTI_FALSE;
+}
+}
+#*--*##end#*--if interpreted--*#
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size_ex(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool *overflow,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+#*—————-*##if($node.isMetpType)
+    RTIBool metp = RTI_FALSE;
+#*—————-*##end
+#*--*##if ($node.languageBinding.equals("FLAT_DATA")
+        && !$node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    RTIOsapiUtility_unusedParameter(overflow);
+#*--*##end
+#if($node.xcdr1_maxSize)
+return $node.xcdr1_maxSize;
+#else
+#*--*##if($node.languageBinding.equals("FLAT_DATA") && $node.isMetpType)
+    unsigned int initial_alignment = current_alignment;
+    unsigned int encapsulation_size = current_alignment;
+    #*--------*##getEncapsulation ($node "false")
+    current_alignment += METypePlugin_get_serialized_sample_max_size(
+                    endpoint_data,
+                    include_encapsulation,
+                    encapsulation_id,
+                    current_alignment,
+                    &metp);
+    if (!metp) {
+    #*--------*##flatPluginGetSerializedSampleMaxSizeBody ($node)
+    }
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+    return  current_alignment - initial_alignment;
+#*--*##elseif ($node.languageBinding.equals("FLAT_DATA"))
+#flatPluginGetSerializedSampleMaxSizeBody($node)
+#*--*##elseif ($node.interpreted=="true")
+#*--*##if($node.isMetpType)
+    unsigned int initial_alignment = current_alignment;
+    unsigned int encapsulation_size = current_alignment;
+    #*--------*##getEncapsulation ($node "false")
+    current_alignment += METypePlugin_get_serialized_sample_max_size(
+                    endpoint_data,
+                    include_encapsulation,
+                    encapsulation_id,
+                    current_alignment,
+                    &metp);
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+    if (metp) {
+        return current_alignment - initial_alignment;
+    } else {
+        current_alignment = initial_alignment;
+#*--*##end
+    return PRESTypePlugin_interpretedGetSerializedSampleMaxSize(
+    	endpoint_data,
+    	overflow,
+   	 	include_encapsulation,
+    	encapsulation_id,
+    	current_alignment);
+#*--*##if($node.isMetpType)
+    }
+#*--*##end
+#*--*##else#*--not interpreted--*#
+#if($node.hasUnboundedMember && $envMap.unboundedSupport)
+  if (endpoint_data) {} /* To avoid warnings */
+    if (include_encapsulation) {}
+    if (encapsulation_id) {}
+    if (current_alignment) {}
+    
+    if (overflow != NULL) {
+        *overflow = RTI_TRUE;
+    }
+    
+    return RTI_CDR_MAX_SERIALIZED_SIZE;
+
+#else
+
+#*------*##if($node.constructKind=="union")
+    unsigned int union_max_size_serialized = 0;
+#*------*##end
+
+    unsigned int initial_alignment = current_alignment;
+    unsigned int encapsulation_size = current_alignment;
+ 
+#*------*##if(!$node.baseTypeFQName && !$node.hasNonBasicMember)  
+    if (endpoint_data) {} /* To avoid warnings */ 
+    if (overflow) {} /* To avoid warnings */
+#*------*##end   
+#*--------*##getEncapsulation ($node "false")
+#*--------*##if($node.isMetpType)
+        current_alignment += METypePlugin_get_serialized_sample_max_size(
+                    endpoint_data,
+                    include_encapsulation,
+                    encapsulation_id,
+                    current_alignment,
+                    &metp);
+	if (!metp) {
+#*--------*##end
+#*------*##if($node.constructKind=="enum")
+    current_alignment += RTICdrType_getEnumMaxSizeSerialized(current_alignment);
+#*------*##else
+
+#*--------*##if(${node.baseTypeFQName})  
+    current_alignment += ${node.baseTypeFQName}Plugin_get_serialized_sample_max_size_ex(
+                              endpoint_data,overflow,RTI_FALSE,encapsulation_id,current_alignment);
+#*--------*##end
+    
+#*--------*##if($node.constructKind=="union")
+#*----------*##alignmentMaxSizeExUnion($node) 
+#*--------*##else
+#*----------*##alignmentMaxSizeEx($node) 
+#*--------*##end    
+#*------*##end
+
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    /* Sentinel */
+
+#*--------*##if($node.constructKind=="union")
+    union_max_size_serialized += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(union_max_size_serialized);
+#*--------*##else
+    current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#*--------*##end
+#*------*##end
+#*--------*##if($node.isMetpType)
+}
+#*--------*##end
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+    return #if($node.constructKind=="union")union_max_size_serialized +#*
+----------*##end current_alignment - initial_alignment;
+#*------*##end
+#*--*##end#*--if interpreted--*#
+#end
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+
+#*-****************************************************************-*#
+
+
+#*------*##if($node.constructKind=="enum")
+
+unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+    try {
+    unsigned int initial_alignment = current_alignment;
+
+    current_alignment += #getSerializedSampleMaxSizeExFncName($node)(
+        endpoint_data,
+        NULL,
+        include_encapsulation,
+        encapsulation_id, current_alignment);
+
+    return current_alignment - initial_alignment;
+    } catch (...) {
+        return 0;
+    }    
+}
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+unsigned int ${node.nativeFQNameInModule}Plugin_get_serialized_sample_min_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{  
+#if($node.xcdr1_minSize)
+return $node.xcdr1_minSize;
+#else
+#*--*##if ($node.languageBinding.equals("FLAT_DATA"))
+#flatPluginGetSerializedSampleMinSizeBody($node)
+#*--*##elseif ($node.interpreted=="true")
+	return PRESTypePlugin_interpretedGetSerializedSampleMinSize(
+        	endpoint_data,
+        	include_encapsulation,
+        	encapsulation_id,
+        	current_alignment);
+
+#*--*##else#*--not interpreted--*#
+    try {
+    unsigned int initial_alignment = current_alignment;
+
+    current_alignment += ${node.nativeFQName}Plugin_get_serialized_sample_max_size(
+        endpoint_data,include_encapsulation,
+        encapsulation_id, current_alignment);
+
+    return current_alignment - initial_alignment;
+    } catch (...) {
+        return 0;
+    }
+#*--*##end#*--if interpreted--*#    
+#end         
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*------*##else
+
+unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+    try {
+    unsigned int size;
+    RTIBool overflow = RTI_FALSE;
+    
+    size = #getSerializedSampleMaxSizeExFncName($node)(
+            endpoint_data,&overflow,include_encapsulation,encapsulation_id,current_alignment);
+    
+    if (overflow) {
+        size = RTI_CDR_MAX_SERIALIZED_SIZE;
+    }
+    
+    return size;
+    } catch (...) {
+        return 0;
+    }
+}
+
+#*----*##if ($userVarList.testSupport && $node.isAggregationType)
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size_test_only(
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment)
+{
+#*------*##createEndpointData($node, false)
+
+    return ${node.nativeFQNameInModule}Plugin_get_serialized_sample_max_size(
+            (PRESTypePluginEndpointData) &epd,
+            include_encapsulation,
+            encapsulation_id,
+            current_alignment);
+}
+#*----*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_min_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+#if($node.xcdr1_minSize)
+return $node.xcdr1_minSize;
+#else
+#*--*##if ($node.interpreted=="true")
+#*----*##if($node.isMetpType)
+    RTIBool metp = RTI_FALSE;
+    unsigned int initial_alignment = current_alignment;
+    unsigned int encapsulation_size = current_alignment;
+#*----*##getEncapsulation ($node "false")
+    current_alignment += METypePlugin_get_serialized_sample_min_size(
+                    endpoint_data,
+                    include_encapsulation,
+                    encapsulation_id,
+                    current_alignment,
+                    &metp);
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+    if (metp) {
+        return current_alignment - initial_alignment;
+    } else {
+        current_alignment = initial_alignment; 
+#*----*##end 
+	return PRESTypePlugin_interpretedGetSerializedSampleMinSize(
+        	endpoint_data,
+        	include_encapsulation,
+        	encapsulation_id,
+        	current_alignment);
+#*----*##if($node.isMetpType)
+    }
+#*----*##end
+#*--*##else#*--not interpreted--*#
+    try {
+#*--------*##if($node.isMetpType)
+    RTIBool metp = RTI_FALSE;
+#*--------*##end    
+#*--------*##if(${node.constructKind}=="union")  
+    unsigned int union_min_size_serialized = 0xffffffff;
+#*--------*##end
+
+    unsigned int initial_alignment = current_alignment;
+
+    unsigned int encapsulation_size = current_alignment;
+ 
+#*--------*##if(!$node.baseTypeFQName)  
+    if (endpoint_data) {} /* To avoid warnings */ 
+#*--------*##end   
+#*--------*##getEncapsulation ($node "false")
+#*--------*##if(${node.baseTypeFQName})  
+    current_alignment += ${node.baseTypeFQName}Plugin_get_serialized_sample_min_size(
+                              endpoint_data,RTI_FALSE,encapsulation_id,current_alignment);
+#*--------*##end
+#*--------*##if($node.isMetpType)
+        current_alignment += METypePlugin_get_serialized_sample_min_size(
+                    endpoint_data,
+                    include_encapsulation,
+                    encapsulation_id,
+                    current_alignment,
+                    &metp);
+    if (!metp) {
+#*--------*##end
+#*--------*##if($node.constructKind=="union")
+#*----------*##alignmentMinSizeUnion($node) 
+#*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    /* Sentinel */   
+    union_min_size_serialized += RTICdrStream_getParameterHeaderMaxSizeSerialized(union_min_size_serialized);
+#*----------*##end 
+#*--------*##else
+#*----------*##alignmentMinSize($node)
+#*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    /* Sentinel */   
+    current_alignment += RTICdrStream_getParameterHeaderMaxSizeSerialized(current_alignment);
+#*----------*##end 
+#*--------*##end  
+#*--------*##if($node.isMetpType)
+}
+#*--------*##end
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+    return #if($node.constructKind=="union")#*
+--------*# union_min_size_serialized +#end current_alignment - initial_alignment;
+    } catch (...) {
+        return 0;
+    }
+#*--*##end#*--if interpreted--*#    
+#end    
+}
+
+#*----*##if ($userVarList.testSupport && $node.isAggregationType)
+unsigned int 
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_min_size_test_only(
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment)
+{
+#*------*##createEndpointData($node, true)
+
+    return ${node.nativeFQNameInModule}Plugin_get_serialized_sample_min_size(
+        (PRESTypePluginEndpointData) &epd,
+        include_encapsulation,
+        encapsulation_id,
+        current_alignment);
+}
+#*----*##end
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*--------*##end
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+/* Returns the size of the sample in its serialized form (in bytes).
+ * It can also be an estimation in excess of the real buffer needed 
+ * during a call to the serialize() function.
+ * The value reported does not have to include the space for the
+ * encapsulation flags.
+ */
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_sample_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment,
+    const ${node.nativeFQNameInModule} * sample) 
+{
+#*--*##if ($node.languageBinding.equals("FLAT_DATA") && !$node.isMetpType)
+#flatPluginGetSerializedSampleSizeBody($node)
+#*--*##elseif ($node.interpreted=="true")
+#*----*##if($node.isMetpType) 
+    RTIBool metp = RTI_FALSE;
+    unsigned int encapsulation_size = current_alignment;
+    unsigned int initial_alignment = current_alignment;
+#*----*##getEncapsulation ($node, "true") 
+    current_alignment += METypePlugin_get_serialized_sample_size(
+                endpoint_data,
+                include_encapsulation,
+                encapsulation_id,
+                current_alignment,
+                &metp);
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }    
+    if (metp) {
+        return current_alignment - initial_alignment;
+    } else {
+        current_alignment = initial_alignment;
+#*------*##if($node.languageBinding.equals("FLAT_DATA"))
+#*--------*##flatPluginGetSerializedSampleSizeBody($node)
+#*------*##else
+    return PRESTypePlugin_interpretedGetSerializedSampleSize(
+            endpoint_data,
+            include_encapsulation,
+            encapsulation_id,
+            current_alignment,
+            sample);
+#*------*##end
+    }
+#*----*##else
+    return PRESTypePlugin_interpretedGetSerializedSampleSize(
+            endpoint_data,
+            include_encapsulation,
+            encapsulation_id,
+            current_alignment,
+            sample);
+#*----*##end
+#*--*##else#*--not interpreted--*#
+    try {  
+#*------*##if(($node.isMetpType) && ($node.constructKind!="enum"))
+      RTIBool metp = RTI_FALSE;
+#*------*##end 
+#*------*##if($node.constructKind=="enum")
+
+    unsigned int initial_alignment = current_alignment;
+  
+    if (sample==NULL) {
+        return 0;
+    }
+
+    current_alignment += ${node.nativeFQName}Plugin_get_serialized_sample_max_size(
+        endpoint_data,include_encapsulation,
+        encapsulation_id,
+        PRESTypePluginDefaultEndpointData_getAlignment(
+                    endpoint_data,
+                    current_alignment));
+    
+#*------*##else
+    unsigned int initial_alignment = current_alignment;
+
+    unsigned int encapsulation_size = current_alignment;
+    struct PRESTypePluginDefaultEndpointData epd;   
+ 
+#*------*##if(!$node.baseTypeFQName)  
+    if (sample==NULL) {
+        return 0;
+    }
+#*--------*##end
+    if (endpoint_data == NULL) {
+        endpoint_data = (PRESTypePluginEndpointData) &epd;
+        PRESTypePluginDefaultEndpointData_setBaseAlignment(
+                endpoint_data,
+                current_alignment);        
+    }
+
+#*--------*##getEncapsulation ($node, "true")
+  
+#*--------*##if($node.isMetpType)
+        current_alignment += METypePlugin_get_serialized_sample_size(
+                    endpoint_data,
+                    include_encapsulation,
+                    encapsulation_id,
+                    current_alignment,
+                    &metp);
+    if (!metp) {
+#*--------*##end
+#*--------*##if(${node.baseTypeFQName})  
+    current_alignment += ${node.baseTypeFQName}Plugin_get_serialized_sample_size(endpoint_data,RTI_FALSE,encapsulation_id,current_alignment,(const ${node.baseTypeFQName}*)sample);   
+#*--------*##end
+#*--------*##if($node.constructKind=="union")
+#*----------*##alignmentSampleUnion($node)   
+#*--------*##else
+#*----------*##alignmentSample($node) 
+#*--------*##end      
+#*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    /* Sentinel */   
+    current_alignment += RTICdrStream_getParameterHeaderMaxSizeSerialized(
+            PRESTypePluginDefaultEndpointData_getAlignment(
+                    endpoint_data,
+                    current_alignment));
+    PRESTypePluginDefaultEndpointData_setBaseAlignment(
+                endpoint_data,
+                current_alignment);    
+#*----------*##end
+#*--------*##if($node.isMetpType)
+}
+#*--------*##end
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+#*------*##end
+    return current_alignment - initial_alignment;
+    } catch (...) {
+        return RTI_FALSE;
+    }
+#*--*##end#*--if interpreted--*#    
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+/* --------------------------------------------------------------------------------------
+    Key Management functions:
+ * -------------------------------------------------------------------------------------- */
+
+#*------*##if($node.constructKind!="enum")
+PRESTypePluginKeyKind 
+${node.nativeFQNameInModule}Plugin_get_key_kind(void)
+{
+#*--------*##if($node.hasKey || $node.hasKeyBaseType)
+    return PRES_TYPEPLUGIN_USER_KEY;
+#*--------*##else    
+    return PRES_TYPEPLUGIN_NO_KEY;
+#*--------*##end     
+}
+#*------*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool 
+${node.nativeFQNameInModule}Plugin_serialize_key_for_keyhash(
+    PRESTypePluginEndpointData endpoint_data,
+    const ${node.nativeFQNameInModule} *sample, 
+    struct RTICdrStream *cdrStream,    
+    RTIEncapsulationId encapsulation_id,
+    void *endpoint_plugin_qos)
+{
+#*--*##if ($node.languageBinding.equals("FLAT_DATA"))
+     #flatPluginSerializeKeyForKeyhashBody($node)
+#*--*##elseif ($node.interpreted=="true")
+    return PRESTypePlugin_interpretedSerializeKeyForKeyhash(
+            endpoint_data,
+            sample, 
+            cdrStream,    
+            encapsulation_id,
+            endpoint_plugin_qos);
+#*--*##else
+    return ${node.nativeFQName}Plugin_serialize_key(endpoint_data,
+            sample, 
+            cdrStream,    
+            RTI_FALSE,
+            encapsulation_id,
+            RTI_TRUE,
+            endpoint_plugin_qos);
+#*--*##end
+}
+#*--*##end
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool 
+${node.nativeFQNameInModule}Plugin_serialize_key(
+    PRESTypePluginEndpointData endpoint_data,
+    const ${node.nativeFQNameInModule} *sample, 
+    struct RTICdrStream *cdrStream,    
+    RTIBool serialize_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    RTIBool serialize_key,
+    void *endpoint_plugin_qos)
+{
+#*--*##if($node.interpreted=="true")
+#*--*##if($node.isMetpType)
+    if (METypePlugin_validShmemEncapsulationId(encapsulation_id)) {
+        encapsulation_id = DDS_DataRepresentationQosPolicy_getNativeEncapsulation(
+                METypePlugin_getDataRepresentationId(endpoint_data));
+    }
+#*--*##end
+#*--*##if($node.languageBinding.equals("FLAT_DATA"))
+    #flatPluginSerializeKeyBody($node)
+#*--*##else    
+    return PRESTypePlugin_interpretedSerializeKey(
+        	endpoint_data,
+        	sample, 
+        	cdrStream,    
+        	serialize_encapsulation,
+        	encapsulation_id,
+        	serialize_key,
+        	endpoint_plugin_qos);
+#*--*##end        	
+#*--*##else#*--not interpreted--*#
+    try {
+#*------*##if($node.constructKind=="enum")
+    return  ${node.nativeFQName}Plugin_serialize(
+            endpoint_data, sample, cdrStream, 
+            serialize_encapsulation, encapsulation_id, 
+            serialize_key, endpoint_plugin_qos);
+
+#*------*##else
+    char * rti_position = NULL;
+#*--------*##if($node.isMetpType)
+    RTIBool metp;
+#*--------*##end
+    RTIOsapiUtility_unusedParameter(endpoint_plugin_qos);
+#* If is an alias of nonbasic type or
+   it has a key but it is not a complex member key and it does not have a key in the parent*#
+#*--------*##if(($node.constructKind.equals("alias") && $node.firstMember.typeKind.equals("builtin"))
+                || ($node.hasKey && !$node.hasNonBasicKeyMember && !$node.hasKeyBaseType))
+#*----------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+            && ($node.hasKeyBaseType || $node.hasKey))
+    if (endpoint_data == NULL) {
+        return RTI_FALSE;
+    }
+#*----------*##else
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+#*----------*##end
+#*--------*##else
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+#*--------*##end  
+    
+#*--------*##serializeEncapsulation ($node)
+
+    if(serialize_key) {
+    
+#*----------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+            && ($node.hasKeyBaseType || $node.hasKey))
+        { 
+            RTIBool ignoreListEndId = RTI_FALSE;
+#*------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $node.hasKey)
+            DDS_UnsignedLong memberId = 0;
+            char *memberLengthPosition = NULL;
+            RTIBool extended=RTI_FALSE;
+#*------------*##end
+#*------------*##if($node.hasKey)           
+            struct RTICdrStreamState state;
+#*------------*##end            
+    
+            if (RTICdrStream_isDirty(cdrStream)) {
+                ignoreListEndId = cdrStream->_xTypesState.skipListEndId; 
+            } else {
+                /* Top level */
+                RTICdrStream_setDirtyBit(cdrStream,RTI_TRUE);
+
+#*------------*##if ($envMap.mutExtCode)
+                cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
+#*------------*##else
+                if (PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(endpoint_data) > 65535) {
+                    cdrStream->_xTypesState.useExtendedId = RTI_TRUE;
+                } else {
+                    cdrStream->_xTypesState.useExtendedId = RTI_FALSE;
+                }
+#*------------*##end
+            }
+
+#*------------*##if(!$node.hasKeyBaseType || $envMap.serializeSentinelOnBase)
+            cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
+#*------------*##end  
+#*----------*##end  
+
+#*------------*##if($node.hasKeyBaseType)  
+#*--------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+#*----------------*##if(!$envMap.serializeSentinelOnBase)
+            cdrStream->_xTypesState.skipListEndId = RTI_TRUE;
+#*----------------*##else
+            cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
+#*----------------*##end
+#*--------------*##end
+		    if (!${node.baseTypeFQName}Plugin_serialize_key(endpoint_data, 
+		             (const ${node.baseTypeFQName}*)sample, cdrStream, RTI_FALSE, 
+		             encapsulation_id,RTI_TRUE, endpoint_plugin_qos)) {
+		        return RTI_FALSE;
+		    }
+#*--------------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
+                           !$envMap.serializeSentinelOnBase)
+            cdrStream->_xTypesState.skipListEndId = RTI_FALSE;
+#*--------------*##end
+#*------------*##end
+
+#*--------*##serialize_key($node)
+#*----------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+                  && ($node.hasKeyBaseType || $node.hasKey))
+                  #serializeEndMutable()
+        }
+#*----------*##end     
+       
+    }
+
+    if(serialize_encapsulation) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+
+    return RTI_TRUE;
+#*------*##end
+    } catch (...) {
+        return RTI_FALSE;
+    }
+#*--*##end#*--if interpreted--*#    
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key_sample(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample, 
+    struct RTICdrStream *cdrStream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_key,
+    void *endpoint_plugin_qos)
+{
+#*--*##if ($node.languageBinding.equals("FLAT_DATA"))
+       #flatPluginDeSerializeKeySampleBody($node)
+#*--*##elseif ($node.interpreted=="true")
+	return PRESTypePlugin_interpretedDeserializeKey(
+        	endpoint_data,
+        	sample,
+        	cdrStream,
+        	deserialize_encapsulation,
+        	deserialize_key,
+        	endpoint_plugin_qos);
+
+#*--*##else#*--not interpreted--*#
+    try {
+#*------*##if(($node.isMetpType) && ($node.constructKind!="enum"))
+    RTIBool metp;
+#*------*##end    
+#*------*##if($node.constructKind=="enum")
+    return  ${node.nativeFQName}Plugin_deserialize_sample(
+            endpoint_data, sample, cdrStream, deserialize_encapsulation, 
+            deserialize_key, endpoint_plugin_qos);
+#*------*##else
+    char * rti_position = NULL;
+    
+#*--*##if(!$node.hasKeyBaseType||!$node.baseTypeFQName) 
+    if (endpoint_data) {} /* To avoid warnings */
+    if (endpoint_plugin_qos) {} /* To avoid warnings */
+#*--*##end    
+    
+#*--*##deserializeEncapsulation ($node)
+    if (deserialize_key) {
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&$node.hasKey )
+        DDS_UnsignedLong memberId = 0;
+        DDS_UnsignedLong length = 0;
+        RTIBool mustUnderstand = RTI_FALSE;
+        RTIBool end = RTI_FALSE;
+        RTIBool extended;
+#*------*##end
+
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
+                   ($node.hasKey || $node.hasKeyBaseType))
+        struct RTICdrStreamState state;
+#*------*##end
+    
+#*--------*##if($node.hasKeyBaseType)  
+#*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
+                       !$envMap.serializeSentinelOnBase)
+    {
+        char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+        RTICdrStream_pushState(cdrStream, &state, -1);
+#*----------*##end
+   
+        if (!${node.baseTypeFQName}Plugin_deserialize_key_sample(endpoint_data,
+                (${node.baseTypeFQName}*)sample,cdrStream,RTI_FALSE,RTI_TRUE,endpoint_plugin_qos)) {
+            return RTI_FALSE;
+        }    
+
+#*----------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") &&
+                       !$envMap.serializeSentinelOnBase)
+        RTICdrStream_popState(
+                cdrStream, &state);
+            RTICdrStream_setCurrentPosition(cdrStream, begin);
+    }     
+#*----------*##end    
+#*--------*##end        
+
+#*--------*##deserialize_key_sample($node)
+    }
+
+    if(deserialize_encapsulation) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+
+    return RTI_TRUE;
+#*------*##end    
+    } catch (...) {
+        return RTI_FALSE;
+    }
+#*--*##end#*--if interpreted--*#    
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*-****************************************************************-*#
+#*------*##if($node.isAggregationType) 
+RTIBool ${node.nativeFQNameInModule}Plugin_deserialize_key(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} **sample, 
+    RTIBool * drop_sample,
+    struct RTICdrStream *cdrStream,
+    RTIBool deserialize_encapsulation,
+    RTIBool deserialize_key,
+    void *endpoint_plugin_qos)
+{
+    try {
+    RTIBool result;
+#*--------*##if ($node.languageBinding.equals("FLAT_DATA"))
+    void* return_loaned_buffer = 
+            (*reinterpret_cast<char **>(sample) == RTICdrStream_getBuffer(cdrStream)) ? 
+                    *reinterpret_cast<void **>(sample) : NULL;        
+#*--------*##end
+    if (drop_sample) {} /* To avoid warnings */
+    cdrStream->_xTypesState.unassignable = RTI_FALSE;
+#*--------*##if($node.isMetpType)
+    if (deserialize_key) {
+        *sample = (${node.nativeFQNameInModule} *)
+                METypePlugin_get_sample(endpoint_data);
+    }
+#*--------*##elseif ($node.languageBinding.equals("FLAT_DATA"))
+    if (deserialize_key) {
+#*----------*##if(!($node.extensibility.equals("MUTABLE_EXTENSIBILITY")))
+        *sample = reinterpret_cast< ${node.nativeFQNameInModule} *>(PRESTypePluginDefaultEndpointData_getFstSampleWithSize(
+            endpoint_data, static_cast<int>(
+                    RTI_XCDR_ENCAPSULATION_HEADER_SIZE + 
+                        ${node.nativeFQNameInModule}Offset::serialized_size(0))));
+#*----------*##else
+        *sample = reinterpret_cast< ${node.nativeFQNameInModule} *>(PRESTypePluginDefaultEndpointData_getFstSampleWithSize(
+            endpoint_data,
+            PRESTypePluginDefaultEndpointData_getMaxSizeSerializedSample(endpoint_data)));
+#*----------*##end
+    }
+#*--------*##end
+#*--------*##if ($node.languageBinding.equals("FLAT_DATA"))
+    if (deserialize_encapsulation && deserialize_key) {
+        RTIOsapiMemory_copy(
+                (void *) *sample,
+                RTICdrStream_getBuffer(cdrStream),
+                RTI_XCDR_ENCAPSULATION_HEADER_SIZE);
+    } else if (deserialize_key) {
+        RTIXCdrFlatSample_initializeEncapsulation(
+                *reinterpret_cast<char **>(sample),
+                RTICdrStream_getEncapsulationKind(cdrStream));
+    }
+#*--------*##end
+    result= #deserializeKeySampleFncName($node)( 
+        endpoint_data, (sample != NULL)?*sample:NULL, cdrStream,
+        deserialize_encapsulation, deserialize_key, endpoint_plugin_qos);
+    if (result) {
+        if (cdrStream->_xTypesState.unassignable) {
+                 result = RTI_FALSE;
+        }
+    }
+#*--------*##if ($node.languageBinding.equals("FLAT_DATA"))
+    if (return_loaned_buffer != NULL) {
+        REDAFastBufferPool_returnBuffer(
+                PRESTypePluginDefaultEndpointData_getFstSampleDataPool(
+                        endpoint_data),
+                RTICdrStream_getBuffer(cdrStream));
+    }        
+#*--------*##end  
+    return result;    
+    } catch (...) {
+        return RTI_FALSE;
+    }     
+}
+#*------*##end
+
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_ex(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool * overflow,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+#if($node.xcdr1_keyMaxSize)
+return $node.xcdr1_keyMaxSize;
+#else
+#*--*##if ($node.interpreted=="true")
+    return PRESTypePlugin_interpretedGetSerializedKeyMaxSize(
+        	endpoint_data,
+        	overflow,
+        	include_encapsulation,
+        	encapsulation_id,
+        	current_alignment);
+        	
+#*--*##else#*--not interpreted--*#
+#if($node.hasUnboundedKeyMember && $envMap.unboundedSupport)
+  if (endpoint_data) {} /* To avoid warnings */
+    if (include_encapsulation) {}
+    if (encapsulation_id) {}
+    if (current_alignment) {}
+    
+    if (overflow != NULL) {
+        *overflow = RTI_TRUE;
+    }
+    
+    return RTI_CDR_MAX_SERIALIZED_SIZE;
+
+#else
+
+#*------*##if($node.constructKind=="enum")
+    unsigned int initial_alignment = current_alignment;
+
+    current_alignment +=  ${node.nativeFQName}Plugin_get_serialized_sample_max_size_ex(
+        endpoint_data, overflow, include_encapsulation,
+        encapsulation_id, current_alignment);
+
+#*------*##else
+    unsigned int initial_alignment = current_alignment;
+
+    unsigned int encapsulation_size = current_alignment;
+ 
+#*--------*##if(!$node.hasKeyBaseType)
+    RTIOsapiUtility_unusedParameter(endpoint_data);
+    RTIOsapiUtility_unusedParameter(overflow);
+#*--------*##end   
+#*--------*##getEncapsulation ($node, "false")
+
+#*--------*##if($node.hasKeyBaseType)    
+    current_alignment += ${node.baseTypeFQName}Plugin_get_serialized_key_max_size_ex(
+        endpoint_data,
+        overflow,
+        RTI_FALSE, encapsulation_id,
+        current_alignment);
+#*--------*##end        
+
+#*--------*##get_serialized_key_max_size($node) 
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY") && $node.hasKey)
+    /* Sentinel */
+    current_alignment += RTICdrStream_getExtendedParameterHeaderMaxSizeSerialized(current_alignment);
+#*------*##end
+       
+    if (include_encapsulation) {
+        current_alignment += encapsulation_size;
+    }
+#*------*##end
+    return current_alignment - initial_alignment;
+#*------*##end
+#*--*##end#*--if interpreted--*#
+#end     
+}
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_for_keyhash_ex(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool * overflow,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+#*--*##if ($node.interpreted=="true")
+    return PRESTypePlugin_interpretedGetSerializedKeyMaxSizeForKeyhash(
+        endpoint_data,
+        overflow,
+        encapsulation_id,
+        current_alignment);
+#*--*##else
+    return ${node.nativeFQName}Plugin_get_serialized_key_max_size_ex(
+        endpoint_data,
+        overflow,
+        RTI_FALSE,
+        encapsulation_id,
+        current_alignment);
+#*--*##end
+}
+
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*-****************************************************************-*#
+
+#*------*##if($node.constructKind!="enum")
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIBool include_encapsulation,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+    try {
+    unsigned int size;
+    RTIBool overflow = RTI_FALSE;
+ 
+#*--*##if($node.isMetpType && $node.interpreted=="true")
+    if (METypePlugin_validShmemEncapsulationId(encapsulation_id)) {
+        encapsulation_id = DDS_DataRepresentationQosPolicy_getNativeEncapsulation(
+                METypePlugin_getDataRepresentationId(endpoint_data));
+    }
+#*--*##end
+#*--------*##if($node.languageBinding.equals("FLAT_DATA"))
+    size = PRESTypePlugin_interpretedGetSerializedKeyMaxSize(
+            endpoint_data,&overflow,include_encapsulation,encapsulation_id,current_alignment);
+#*--------*##else    
+    size = #getSerializedKeyMaxSizeExFncName($node)(
+            endpoint_data,&overflow,include_encapsulation,encapsulation_id,current_alignment);
+#*--------*##end    
+    if (overflow) {
+        size = RTI_CDR_MAX_SERIALIZED_SIZE;
+    }
+    
+    return size;
+    } catch (...) {
+        return RTI_FALSE;
+    }    
+}
+
+#*--*##if($userVarList.testSupport && $node.isAggregationType)
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_test_only(
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment)
+{
+#*----*##createEndpointData($node, false)
+
+    return ${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size(
+            (PRESTypePluginEndpointData) &epd,
+            include_encapsulation,
+            encapsulation_id,
+            current_alignment);
+}
+#*--*##end
+
+unsigned int
+${node.nativeFQNameInModule}Plugin_get_serialized_key_max_size_for_keyhash(
+    PRESTypePluginEndpointData endpoint_data,
+    RTIEncapsulationId encapsulation_id,
+    unsigned int current_alignment)
+{
+    unsigned int size;
+    RTIBool overflow = RTI_FALSE;
+
+#*--*##if($node.languageBinding.equals("FLAT_DATA"))
+    size = PRESTypePlugin_interpretedGetSerializedKeyMaxSizeForKeyhash(
+            endpoint_data,
+            &overflow,
+            encapsulation_id,
+            current_alignment);
+#*--*##else    
+    size = #getSerializedKeyMaxSizeExForKeyhashFncName($node)(
+            endpoint_data,
+            &overflow,
+            encapsulation_id,
+            current_alignment);
+#*--*##end    
+    if (overflow) {
+        size = RTI_CDR_MAX_SERIALIZED_SIZE;
+    }
+    
+    return size;
+}
+#end
+
+#*-****************************************************************-*#
+
+#*--*##if (!$node.skipTypePluginCodeGen)
+RTIBool 
+${node.nativeFQNameInModule}Plugin_serialized_sample_to_key(
+    PRESTypePluginEndpointData endpoint_data,
+    ${node.nativeFQNameInModule} *sample,
+    struct RTICdrStream *cdrStream, 
+    RTIBool deserialize_encapsulation,  
+    RTIBool deserialize_key, 
+    void *endpoint_plugin_qos)
+#*--*##if ($node.interpreted=="true")
+{
+	return PRESTypePlugin_interpretedSerializedSampleToKey(
+        	endpoint_data,
+        	sample,
+        	cdrStream, 
+        	deserialize_encapsulation,  
+        	deserialize_key, 
+        	endpoint_plugin_qos);
+        	
+}
+#*--*##else#*--not interpreted--*#
+{
+try    
+{
+#*------*##if($node.constructKind=="enum")
+
+    return  ${node.nativeFQName}Plugin_deserialize_sample(
+            endpoint_data, sample, cdrStream, deserialize_encapsulation, 
+            deserialize_key, endpoint_plugin_qos);
+
+#*------*##else
+    char * rti_position = NULL;
+
+#*--------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType") 
+                && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")))
+      RTIBool done = RTI_FALSE;
+      RTIBool error = RTI_FALSE;
+#*--------*##end
+#if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || $node.hasOptionalMember)&&($node.hasKey ||  $node.hasKeyBaseType))
+    DDS_UnsignedLong memberId = 0;
+    DDS_UnsignedLong length = 0;
+    RTIBool extended;
+    RTIBool mustUnderstand = RTI_FALSE;
+    struct RTICdrStreamState state;
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    RTIBool end = RTI_FALSE;
+#*------*##end
+#*--------*##end
+
+#*--------*##if(($node.hasKey) 
+               || ($node.constructKind=="alias") ||($node.hasKeyBaseType )) 
+
+   if (endpoint_data) {} /* To avoid warnings */
+   if (endpoint_plugin_qos) {} /* To avoid warnings */
+   
+#*--------*##end
+#*----------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType") 
+                 && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")))
+   if (cdrStream == NULL) {
+       error = RTI_TRUE;
+       goto fin;
+   }
+#*----------*##end
+   if(deserialize_encapsulation) {
+        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(cdrStream)) {
+            return RTI_FALSE;
+        }
+        rti_position = RTICdrStream_resetAlignment(cdrStream);
+    }
+
+    if (deserialize_key) {
+
+#*----------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+                  &&((${node.hasKeyBaseType})||($node.hasKey && $node.baseTypeFQName)))
+              
+  {
+                    char *begin = RTICdrStream_getCurrentPosition(cdrStream);
+                    RTICdrStream_pushState(
+                        cdrStream, &state, -1);
+#*----------*##end      
+#*----------*##if(${node.hasKeyBaseType})       
+        if (!${node.baseTypeFQName}Plugin_serialized_sample_to_key(endpoint_data,
+                (${node.baseTypeFQName} *)sample,
+                cdrStream, RTI_FALSE, RTI_TRUE,
+                endpoint_plugin_qos)) {
+            return RTI_FALSE;
+        }
+#*----------*##elseif($node.hasKey && $node.baseTypeFQName) 
+        if (!${node.baseTypeFQName}Plugin_skip(endpoint_data, cdrStream,
+                RTI_FALSE, RTI_TRUE,
+                endpoint_plugin_qos)) {
+            return RTI_FALSE;
+        }
+        
+#*----------*##end  
+#*----------*##if(($node.extensibility.equals("MUTABLE_EXTENSIBILITY")) 
+                  &&((${node.hasKeyBaseType})||($node.hasKey && $node.baseTypeFQName)))
+        RTICdrStream_popState(
+                        cdrStream, &state);
+                    RTICdrStream_setCurrentPosition(cdrStream, begin);
+                    }
+#*----------*##end  
+      
+#*----------*##deserialize_key_and_skip($node)
+
+     }
+     
+#*----------*##if(($node.constructKind=="struct" ||$node.constructKind=="valueType") 
+                   && ($node.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")))
+      done = RTI_TRUE;
+fin:
+    if(!error) {
+        /* Coverity reports a dead_error_line. with some types. Depending on the 
+        idl code that we are generating, the coditional block may be dead
+        code. */
+        /* coverity[dead_error_line] */
+        if (done != RTI_TRUE && 
+            RTICdrStream_getRemainder(cdrStream) >=
+                RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
+            return RTI_FALSE;   
+        }
+    } else {
+        return RTI_FALSE;
+    }       
+#*----------*##end                
+
+     if(deserialize_encapsulation) {
+        RTICdrStream_restoreAlignment(cdrStream,rti_position);
+    }
+                
+                
+    return RTI_TRUE;
+#*--------*##end    
+} catch (...) {
+    return RTI_FALSE;
+} 
+}
+#*--*##end#*--if interpreted--*#
+#*--*##end #* $node.skipTypePluginCodeGen *#
+
+#*--------*##keyCode($node) ##The code with funtions relative to serialized/deserialized key is in this macro
+
+#*------*##if($node.constructKind=="enum")
+/* ----------------------------------------------------------------------------
+    Support functions:
+ * ---------------------------------------------------------------------------- */
+
+
+void ${node.nativeFQNameInModule}PluginSupport_print_data(
+    const ${node.nativeFQNameInModule} *sample,
+    const char *description,
+    unsigned int indent_level)
+{
+    if (description != NULL) {
+        RTICdrType_printIndent(indent_level);
+        RTILogParamString_printPlain("%s:\n", description);
+    }
+
+    if (sample == NULL) {
+        RTICdrType_printIndent(indent_level+1);
+        RTILogParamString_printPlain("NULL\n");
+        return;
+    }
+
+    RTICdrType_printEnum((RTICdrEnum *)sample, "${node.nativeFQNameInModule}", indent_level + 1);
+}
+
+#*------*##end
+#*------*##if($node.isMetpType)
+void*
+${node.nativeFQNameInModule}Plugin_get_sample_metp(
+    PRESTypePluginEndpointData endpointData,
+    void **handle)
+{
+    return PRESTypePluginDefaultEndpointData_getSample(endpointData, handle);
+}
+
+void
+${node.nativeFQNameInModule}Plugin_return_sample_metp(
+    PRESTypePluginEndpointData endpointData,
+    void *sample, 
+    void *handle)
+{
+#*--------*##if($node.languageBinding.equals("FLAT_DATA")) 
+    if ((handle != NULL)
+        && (*reinterpret_cast<void **>(handle)
+            == reinterpret_cast<void *>(PRES_TYPE_PLUGIN_INVALID_REASSEMBLED_SAMPLE_ADDRESS))) {
+        ${node.nativeFQNameInModule}Plugin_return_sample_flat_data(
+            endpointData, sample, handle);
+    } else {
+#*--------*##end
+        METypePlugin_return_sample(endpointData, sample, handle);
+        /*
+        * A NULL handle indicates that the sample did not come from the 
+        * TypePlugin sample pool. Hence we do not return it to the pool.
+        */
+        if (handle != NULL) {
+            PRESTypePluginDefaultEndpointData_returnSample(
+                    endpointData,
+                    sample,
+                    handle);
+        }
+#*--------*##if($node.languageBinding.equals("FLAT_DATA"))
+    }
+#*--------*##end
+}
+#*------*##end
+
+
+/* ------------------------------------------------------------------------
+ * Plug-in Installation Methods
+ * ------------------------------------------------------------------------ */
+#*------*##if (($node.isAggregationType)
+                 && ($node.topLevel=="true")) 
+struct PRESTypePlugin *${node.nativeFQNameInModule}Plugin_new(void) 
+{ 
+    struct PRESTypePlugin *plugin = NULL;
+    const struct PRESTypePluginVersion PLUGIN_VERSION = 
+        PRES_TYPE_PLUGIN_VERSION_2_0;
+
+    RTIOsapiHeap_allocateStructure(
+        &plugin, struct PRESTypePlugin);
+    if (plugin == NULL) {
+       return NULL;
+    }
+
+    plugin->version = PLUGIN_VERSION;
+
+    /* set up parent's function pointers */
+    plugin->onParticipantAttached =
+        (PRESTypePluginOnParticipantAttachedCallback)
+        ${node.nativeFQName}Plugin_on_participant_attached;
+    plugin->onParticipantDetached =
+        (PRESTypePluginOnParticipantDetachedCallback)
+        ${node.nativeFQName}Plugin_on_participant_detached;
+    plugin->onEndpointAttached =
+        (PRESTypePluginOnEndpointAttachedCallback)
+        ${node.nativeFQName}Plugin_on_endpoint_attached;
+    plugin->onEndpointDetached =
+        (PRESTypePluginOnEndpointDetachedCallback)
+        ${node.nativeFQName}Plugin_on_endpoint_detached;
+
+    plugin->copySampleFnc =
+        (PRESTypePluginCopySampleFunction)
+        ${node.nativeFQName}Plugin_copy_sample;
+    plugin->createSampleFnc =
+        (PRESTypePluginCreateSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_create_sample;
+    plugin->destroySampleFnc =
+        (PRESTypePluginDestroySampleFunction)
+        ${node.nativeFQNameInModule}Plugin_destroy_sample;
+
+    plugin->serializeFnc = 
+        (PRESTypePluginSerializeFunction) #serializeFncName($node);
+    plugin->deserializeFnc =
+        (PRESTypePluginDeserializeFunction) #deserializeFncName($node);
+    plugin->getSerializedSampleMaxSizeFnc =
+        (PRESTypePluginGetSerializedSampleMaxSizeFunction)
+        ${node.nativeFQName}Plugin_get_serialized_sample_max_size;
+    plugin->getSerializedSampleMinSizeFnc =
+        (PRESTypePluginGetSerializedSampleMinSizeFunction)
+        #getSerializedSampleMinSizeFncName($node);
+#*------*##if($node.isMetpType || $node.languageBinding.equals("FLAT_DATA"))
+    plugin->getDeserializedSampleMaxSizeFnc = 
+        (PRESTypePluginGetDeserializedSampleMaxSizeFunction)
+        ${node.nativeFQNameInModule}Plugin_get_deserialized_sample_max_size;
+#*------*##else
+    plugin->getDeserializedSampleMaxSizeFnc = NULL; 
+#*------*##end
+#*------*##if($node.isMetpType)
+    plugin->getSampleFnc =
+        (PRESTypePluginGetSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_get_sample_metp;
+    plugin->returnSampleFnc =
+        (PRESTypePluginReturnSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_return_sample_metp;
+#*------*##elseif($node.languageBinding.equals("FLAT_DATA"))
+    plugin->getSampleFnc =
+        (PRESTypePluginGetSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_get_sample_flat_data;
+    plugin->returnSampleFnc =
+        (PRESTypePluginReturnSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_return_sample_flat_data;
+#*------*##else
+    plugin->getSampleFnc =
+        (PRESTypePluginGetSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_get_sample;
+    plugin->returnSampleFnc =
+        (PRESTypePluginReturnSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_return_sample;
+#*------*##end
+    plugin->getKeyKindFnc =
+        (PRESTypePluginGetKeyKindFunction)
+        ${node.nativeFQName}Plugin_get_key_kind;
+        
+#if($node.hasKey || $node.hasKeyBaseType)
+    plugin->getSerializedKeyMaxSizeFnc =   
+        (PRESTypePluginGetSerializedKeyMaxSizeFunction)
+       ${node.nativeFQName}Plugin_get_serialized_key_max_size;
+    plugin->serializeKeyFnc =
+        (PRESTypePluginSerializeKeyFunction)
+        #serializeKeyFncName($node);
+    plugin->deserializeKeyFnc =
+        (PRESTypePluginDeserializeKeyFunction)
+        ${node.nativeFQName}Plugin_deserialize_key;
+    plugin->deserializeKeySampleFnc =
+        (PRESTypePluginDeserializeKeySampleFunction)
+        #deserializeKeySampleFncName($node);
+
+    plugin-> instanceToKeyHashFnc = 
+        (PRESTypePluginInstanceToKeyHashFunction)
+        #instanceToKeyHashFncName($node);
+    plugin->serializedSampleToKeyHashFnc = 
+        (PRESTypePluginSerializedSampleToKeyHashFunction)
+        ${node.nativeFQName}Plugin_serialized_sample_to_keyhash;
+
+    plugin->getKeyFnc =
+        (PRESTypePluginGetKeyFunction)
+       ${node.nativeFQNameInModule}Plugin_get_key;
+    plugin->returnKeyFnc =
+        (PRESTypePluginReturnKeyFunction)
+        ${node.nativeFQNameInModule}Plugin_return_key;
+
+    plugin->instanceToKeyFnc =
+        (PRESTypePluginInstanceToKeyFunction)
+       ${node.nativeFQName}Plugin_instance_to_key;
+    plugin->keyToInstanceFnc =
+        (PRESTypePluginKeyToInstanceFunction)
+        ${node.nativeFQName}Plugin_key_to_instance;
+    plugin->serializedKeyToKeyHashFnc = NULL; /* Not supported yet */
+#*------*##else
+    /* These functions are only used for keyed types. As this is not a keyed
+    type they are all set to NULL
+    */
+    plugin->serializeKeyFnc = NULL ;    
+    plugin->deserializeKeyFnc = NULL;  
+    plugin->getKeyFnc = NULL;
+    plugin->returnKeyFnc = NULL;
+    plugin->instanceToKeyFnc = NULL;
+    plugin->keyToInstanceFnc = NULL;
+    plugin->getSerializedKeyMaxSizeFnc = NULL;
+    plugin->instanceToKeyHashFnc = NULL;
+    plugin->serializedSampleToKeyHashFnc = NULL;
+    plugin->serializedKeyToKeyHashFnc = NULL;    
+#*------*##end
+  ${envMap.POUND_CHAR}ifdef NDDS_STANDALONE_TYPE
+    plugin->typeCode = NULL; 
+  ${envMap.POUND_CHAR}else
+    try {
+        plugin->typeCode = (struct RTICdrTypeCode *)
+            &::rti::topic::dynamic_type< ${node.nativeFQName} >::get().native();
+    } catch (...) {
+        ${node.nativeFQName}Plugin_delete(plugin);
+        return NULL;
+    }
+  ${envMap.POUND_CHAR}endif
+#*--------*##if($node.languageBinding.equals("FLAT_DATA"))
+    plugin->languageKind = PRES_TYPEPLUGIN_FLATDATA_TYPE;
+#*--------*##else
+    plugin->languageKind = PRES_TYPEPLUGIN_CPPSTL_LANG;
+#*--------*##end
+
+    /* Serialized buffer */
+#*--------*##if($node.languageBinding.equals("FLAT_DATA"))
+    plugin->getBufferWithParams = 
+        (NDDS_WriterHistory_Allocator_getBufferWithParams_fn)
+        ${node.nativeFQNameInModule}Plugin_get_buffer_w_params;
+    plugin->returnBufferWithParams = 
+        (NDDS_WriterHistory_Allocator_returnBufferWithParams_fn)
+        ${node.nativeFQNameInModule}Plugin_return_buffer_w_params;
+    plugin->getBuffer = NULL;
+    plugin->returnBuffer = NULL;
+#*--------*##else
+    plugin->getBuffer = 
+        (PRESTypePluginGetBufferFunction)
+        ${node.nativeFQNameInModule}Plugin_get_buffer;
+    plugin->returnBuffer = 
+        (PRESTypePluginReturnBufferFunction)
+        ${node.nativeFQNameInModule}Plugin_return_buffer;
+    plugin->getBufferWithParams = NULL;
+    plugin->returnBufferWithParams = NULL;
+#*--------*##end
+    plugin->getSerializedSampleSizeFnc =
+        (PRESTypePluginGetSerializedSampleSizeFunction)
+        #getSerializedSampleSizeFncName($node);
+
+#*--------*##if($node.languageBinding.equals("FLAT_DATA") && (!$node.isMetpType))
+    /* writer loaned sample pool */
+    plugin->getWriterLoanedSampleFnc = 
+        (PRESTypePluginGetWriterLoanedSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_get_writer_loaned_sample;
+    plugin->returnWriterLoanedSampleFnc = 
+        (PRESTypePluginReturnWriterLoanedSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_return_writer_loaned_sample;
+    plugin->returnWriterLoanedSampleFromCookieFnc = 
+        (PRESTypePluginReturnWriterLoanedSampleFromCookieFunction)
+        ${node.nativeFQNameInModule}Plugin_return_writer_loaned_sample_from_cookie;
+    plugin->validateWriterLoanedSampleFnc = 
+        (PRESTypePluginValidateWriterLoanedSampleFunction)
+        ${node.nativeFQNameInModule}Plugin_validate_writer_loaned_sample;
+    plugin->setWriterLoanedSampleSerializedStateFnc = 
+        (PRESTypePluginSetWriterLoanedSampleSerializedStateFunction)
+        ${node.nativeFQNameInModule}Plugin_set_writer_loaned_sample_serialized_state;
+#*--------*##else
+    plugin->getWriterLoanedSampleFnc = NULL; 
+    plugin->returnWriterLoanedSampleFnc = NULL;
+    plugin->returnWriterLoanedSampleFromCookieFnc = NULL;
+    plugin->validateWriterLoanedSampleFnc = NULL;
+    plugin->setWriterLoanedSampleSerializedStateFnc = NULL;
+#*--------*##end
+
+    static const char * TYPE_NAME = "${node.FQName}";
+    plugin->endpointTypeName = TYPE_NAME;
+#*------*##if($node.isMetpType)
+    plugin->isMetpType = RTI_TRUE;
+#*------*##else
+    plugin->isMetpType = RTI_FALSE;
+#*------*##end
+    return plugin;
+}
+
+void
+${node.nativeFQNameInModule}Plugin_delete(struct PRESTypePlugin *plugin)
+{
+    RTIOsapiHeap_freeStructure(plugin);
+} 
+#*------*##end
+#*----*##end
+#*--*##end 
+${envMap.POUND_CHAR}undef RTI_CDR_CURRENT_SUBMODULE 

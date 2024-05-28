@@ -1,0 +1,29 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,12mar03,ajm CODEGENII-262 Setting the same nddshome that in the .classpath file
+## 2.2,11sep14,vmg created
+##========================================================================
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+	<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+		<listEntry value="1"/>
+	</listAttribute>
+	<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+		<mapEntry key="${pathVariable}" value="${nddsHome}/lib/${global.architectureName}"/>
+	</mapAttribute>
+	<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+		<listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+		<listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
+	</listAttribute>
+	<booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
+	<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="${mainType}"/>
+	<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="${exampleType} Example"/>
+</launchConfiguration>

@@ -91,7 +91,12 @@ public class PulseOximeterPanel extends DevicePanel {
         Label lbl;
         heartratePanel.setTop(lbl = new Label("Pulse Rate"));
         FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(lbl.getFont());
-        float w = fm.computeStringWidth("RespiratoryRate");
+        char chars[]=new String("RespiratoryRate").toCharArray();
+        float w=0;
+        for(char achar : chars) {
+        	w+=fm.getCharWidth(achar);
+        }
+        //float w = fm.computeStringWidth("RespiratoryRate");
         lbl.setMinWidth(w);
         lbl.setPrefWidth(w);
         heartratePanel.setCenter(heartrate = new Label("----"));

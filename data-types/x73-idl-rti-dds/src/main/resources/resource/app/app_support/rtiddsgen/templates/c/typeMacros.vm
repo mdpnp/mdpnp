@@ -1,0 +1,2360 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,04jun16,fmm Casting to (const ${member.nativeTypeFQName}*) to avoid compilation 
+##                 warnings when using arrays. 
+##2.2,20jan15,ajm CODEGENII-415: Fixing fwd declarations
+##2.0,18sep14,ajm CODEGENII-364 and CODEGENII-365 Unbounded sequence and string in C/C++
+##2.0,06mar14,ajm CODEGENII-154: Fixed memory leak.
+##2.2,01sep14,ajm CODEGENII-112 Adding option -dllExportMacroSuffix
+##2.2,10jun14,ajm CODEGENII-166 Adding variable to generateCcodeforCpp03 to use real inheritance
+##            in the C++PSM 
+##2.2,23apr14,ajm CODEGENII-213 Fixing arrays to pointer to sequence case
+##2.2,23apr14,ajm CODEGENII-213 Adding missing brackets, and avoiding finalize_optional for arrays of basic types
+##2.2,22apr14,ajm CODEGENII-213 Fixing memory leak in finalize_optional_members for an array of pointers
+##2.2,10mar14,ajm CODEGENII-196 & CODEGENII-165 Add a variable to have Enums
+##with FQName
+##2.2,11feb14,ajm CODEGENII-181 Change the generated code to avoid the #ifdef __cplusplus
+##2.0,24sept13,ajm CODEGENII-92: Code review typedef of strings
+##2.0,24sept13,ajm CODEGENII-92: Code review finalize method
+##2.0,24sept13,ajm CODEGENII-92 Support for optional members.typedef of a string optional
+##2.0,12sep13,ajm CODEGENII-92: Support for optional members
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,01mar13, ajm CODEGENII-59: Updating to generate XTypes Mutable as in IN-Branch
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,13dec12, ajm RRTIDDSGEN-53 Support for XTypes (extensible and final)
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##10a,23nov12, ajm RRTIDDSGEN-35 Adding support for pointers
+##10a,8nov12, ajm  RTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,04ene11, ajm Upgrading to Lola (code in C)
+##             ajm Fixing a bug: declaration of constants with an alias type 
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,07nov11, ajm Refactoring code
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,11oct11, Fixing issues and adding union support for C++
+##10a,10oct11,ajm Adding union support
+##10a,30sep11,ajm Adding noenvMap.typeCode option support
+##10a,29sep11,ajm adding forward declaration and namespace support 
+##10a,26sep11,ajm adding enum support 
+##10a,22sep11,ajm adding valuetypes support
+##10a,19sep11,ajm Fixing const string and wstring  declaration in C++
+##10a,15sep11,ajm Fixing more typedef issues
+##10a,14sep11,ajm Refactor typedef
+##10a,6sep11,ajm Fixing an error when declaring constants outside a module
+##10a,2sep11,ajm Refactoring using a unique list for all elements(typedefs, structs and const)
+##10a,1sep11,ajm Adding typedef support for primitive types and typedef arrays
+##10a,29ag11,ajm Fixing macros consistency by adding the missing parameters
+##10a,29ag11,ajm Refactor of variables and cleaning loops
+##10a,25ag11,ajm adding support for arrays of sequences
+##10a,22ag11,ajm adding support for sequences
+##10a,19ag11,ajm Refactorizing and cleaning the templates code.
+##10a,17ag11,ajm Adding //@key
+##10a,12ag11,jmt Adding functionality for C++
+##10a,11ag11,ajm Refactorizing the templates code.
+##           ajm Adding variable $nativeFQName
+##10a,10ag11,ajm Adding functionality for arrays
+##10a,09ag11,jmt Fixing tabulations and length of the lines 
+##10a,09ag11,ajm Fixing the bug for a struct when without a module
+##10a,05ag11,jmt Adding all the basic type and testing them
+##10a,04ag11,ajm adding modification history header 
+##10a,03ag11,ajm created 
+##-----------------------------------------------------------------
+##               
+##             Macros for TypeBody and TypeHeader
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Structure:
+##
+## 
+## To use this template, the structure provided from the main program
+## to the context of the Velocity template must be as indicated here:
+##
+## The context will be feed by a list of the structs ($structList) defined in the 
+## IDL file. Each of the structs will have the following mandatory fields:
+##
+## $packageName (the path of all the modules separated by a .)
+## $structName (the name of the struct)
+## $memberFieldMapList (will be a list of all the members inside the struct)
+## $memberFieldMapList must contain the followin fields:
+##   name (the name of the field)
+##   nativeTypeFQName (the IDL type of the variable)
+##   basic (boolean, it indicates if it is a basic or non basic type)
+##---------------------------------------------------------------------
+##---------------------------------------------------------------------
+
+
+
+##******************************************************************************
+## Declare macros
+##******************************************************************************
+
+
+##------------------------------------------------------------------------------
+## Macro headInit
+##------------------------------------------------------------------------------
+
+#macro(headerInit  $node)
+#*--*##if($node.baseTypeFQName && $envMap.language=="C")
+$node.baseTypeFQName parent;
+#*--*##end
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyAllDirectives($member)
+#*----*##else
+#*----*##declareMember($node $member)
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Auxiliar macros
+##------------------------------------------------------------------------------
+
+#macro(declareMember $node $member)
+#*--*##checkFwdDeclartion($member)#*
+#*--*##declareTypedef($member)#*
+#*--*##declareMemberType($member)#*
+#*--*##if($member.isOptionalArray)
+(#*
+#*--*##end
+#*--*##declarePointer($member)#*
+#*--*##if($member.name.equals(""))
+$node.nativeFQNameInModule#*
+#*--*##else
+$member.name#*
+#*--*##end
+#*--*##if($member.isOptionalArray)
+) #*
+#*--*##end
+#*--*##declareArraydimensionListsIfNeeded($member);
+#end
+
+##In C when we the member is a fwd declaration we need to add struct 
+#macro (checkFwdDeclartion $member)
+#*--*##if($member.isFwdDeclared && $envMap.language.equals("C") && !$member.seqSize) struct #end
+#end
+
+#macro(declarePointer $member)
+#*--*##if($member.isPointer
+        || ($member.isOptional
+                && ($member.seqSize
+                        || $member.isOptionalArray
+                        || (!$member.strSize || ($envMap.stringIsObject && !$member.typeName.equals("wstring"))))))
+ *#*
+#*--*##end
+#end
+
+#macro (declareTypedef $member)
+#*--*##if($member.name.equals("")) typedef #end
+#end
+
+
+#macro(declareMemberType $member)
+#*--*##if($member.seqSize && $envMap.language=="C")
+struct #*
+#*--*##end
+#*--*##if($member.seqSize)
+$member.nativeTypeSeqFQName #*
+#*--*##else
+$member.nativeTypeFQName #*
+#*--*##end
+#end
+
+#macro(declareArraydimensionListsIfNeeded $member)#if(${member.dimensionList})#*
+*##foreach($s in ${member.dimensionList})[$s]#end#end#*
+*##end
+
+
+##------------------------------------------------------------------------------
+## Macro to define alias
+##------------------------------------------------------------------------------
+
+#macro(declareAlias  $node)
+#*--*##declareMember($node $node.firstMember)
+#if(!$node.languageBinding.equals("FLAT_DATA"))
+#*--*##declareTypeFunctions ($node)
+#end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to define constanst
+##------------------------------------------------------------------------------
+#macro(declareConstant $member)
+#*--*##if($envMap.language=="C")
+${envMap.POUND_CHAR}define ${member.nativeFQNameInModule} (${member.value})
+#*--*##elseif($envMap.language.equals("Cpp"))
+#*----*##if($member.nativeTypeFQName == "DDS_Char *")
+static const $member.nativeTypeFQName const ${member.nativeFQNameInModule}= ${member.value};
+#*----*##elseif($member.nativeTypeFQName == "DDS_Wchar *")
+static const DDS_Wchar ${member.nativeFQNameInModule}[] = ${member.value};
+#*----*##else
+static const $member.nativeTypeFQName ${member.nativeFQNameInModule}= ${member.value};
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to define enum
+##------------------------------------------------------------------------------
+#macro (declareEnum $node)
+typedef enum $node.nativeFQNameInModule
+{
+#set( $nonDirectiveChildren = 0 )
+#foreach($member in $node.memberFieldMapList)
+#*----*##if(!$member.directive)
+#set( $nonDirectiveChildren = $nonDirectiveChildren + 1 )
+    $member.nativeFQNameInModule #if($member.autoOrdinal=="false") = $member.ordinal#end#*
+*----*##commaIfNeeded($nonDirectiveChildren $node.memberCount)
+
+#*--*##else
+    #copyAllDirectives($member)
+#*--*##end
+#end
+} $node.nativeFQNameInModule;
+#end
+
+#macro(declareTypeFunctions $node)
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+  /* If the code is building on Windows, start exporting symbols.
+   */
+  ${envMap.POUND_CHAR}undef NDDSUSERDllExport
+  ${envMap.POUND_CHAR}define NDDSUSERDllExport __declspec(dllexport)
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+NDDSUSERDllExport DDS_TypeCode * ${node.nativeFQNameInModule}_get_typecode(void); /* Type code */
+#*--*##if($node.isResource && $envMap.generateMonitoringCode)
+#*----*##declareGetMetricGroupInfo($node)
+#*----*##declareGetMetricInfo($node)
+#*----*##declareGetResourceInfo($node)
+#*--*##end
+#*--*##if($node.interpreted=="true" && !($node.languageBinding.equals("FLAT_DATA") 
+        && ($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || ($node.constructKind=="alias"))))
+NDDSUSERDllExport RTIXCdrTypePlugin *${node.nativeFQNameInModule}_get_type_plugin_info(void);
+NDDSUSERDllExport RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_access_info(void);
+#*----*##if ($envMap.language.equals("Cpp") && $envMap.allocateWithNew && !$node.languageBinding.equals("FLAT_DATA"))
+NDDSUSERDllExport RTIXCdrSampleAccessInfo *${node.nativeFQNameInModule}_get_sample_seq_access_info(void);
+#*----*##end
+#*--*##end
+${envMap.POUND_CHAR}endif
+#*--*##if(!$node.implementFwdDeclaredType)
+#defineTypeSeq($node
+            ${node.nativeFQNameInModule}
+            ${node.nativeSeqFQNameInModule})
+#*--*##end
+        
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_initialize(
+        ${node.nativeFQNameInModule}* self);
+        
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_initialize_ex(
+        ${node.nativeFQNameInModule}* self,RTIBool allocatePointers,RTIBool allocateMemory);
+        
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_initialize_w_params(
+        ${node.nativeFQNameInModule}* self,
+        const struct DDS_TypeAllocationParams_t * allocParams);  
+
+#if($envMap.generateMonitoringCode)
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_initialize_w_params_w_memory_manager(
+        ${node.nativeFQNameInModule} *sample,
+        struct REDAInlineMemory **memoryManager,
+        const struct DDS_TypeAllocationParams_t *allocParams);
+
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_initialize_w_memory_manager(
+        ${node.nativeFQNameInModule} *sample,
+        struct REDAInlineMemory **memoryManager);
+
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_initialize_ex_w_memory_manager(
+        ${node.nativeFQNameInModule}* self,
+        struct REDAInlineMemory **memoryManager,
+        RTIBool allocatePointers,
+        RTIBool allocateMemory);
+#end
+        
+#if($node.constructKind=="alias" && $envMap.generateCppConstructor)
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_construct_w_params(
+        ${node.nativeFQNameInModule}* self,
+        const struct DDS_TypeAllocationParams_t * allocParams);  
+#end
+
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_finalize_w_return(
+        ${node.nativeFQNameInModule}* self);
+
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize(
+        ${node.nativeFQNameInModule}* self);
+                        
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize_ex(
+        ${node.nativeFQNameInModule}* self,RTIBool deletePointers);
+        
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize_w_params(
+        ${node.nativeFQNameInModule}* self,
+        const struct DDS_TypeDeallocationParams_t * deallocParams);
+        
+#*--*##if($envMap.generateMonitoringCode)
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize_w_memory_manager(
+        ${node.nativeFQNameInModule} *self);
+                        
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize_ex_w_memory_manager(
+        ${node.nativeFQNameInModule} *self,
+        RTIBool deletePointers);
+        
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize_w_params_w_memory_manager(
+        ${node.nativeFQNameInModule} *self,
+        const struct DDS_TypeDeallocationParams_t * deallocParams);
+#*--*##end
+
+NDDSUSERDllExport
+void ${node.nativeFQNameInModule}_finalize_optional_members(
+        ${node.nativeFQNameInModule}* self, RTIBool deletePointers);  
+
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_copy(
+        ${node.nativeFQNameInModule}* dst,
+        const ${node.nativeFQNameInModule}* src);
+
+#*--*##if($envMap.generateMonitoringCode)
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_copy_w_memory_manager(
+        ${node.nativeFQNameInModule}* dst,
+        struct REDAInlineMemory **memoryManager,
+        const ${node.nativeFQNameInModule}* src);
+#*--*##end
+
+#if($node.constructKind=="union")
+NDDSUSERDllExport
+DDS_LongLong ${node.nativeFQNameInModule}_getDefaultDiscriminator(void);
+#end
+
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+  /* If the code is building on Windows, stop exporting symbols.
+   */
+  ${envMap.POUND_CHAR}undef NDDSUSERDllExport
+  ${envMap.POUND_CHAR}define NDDSUSERDllExport
+  ${envMap.POUND_CHAR}endif
+#end
+
+##*****************************************************************************
+## Macro to initialize all the members
+##*****************************************************************************
+
+#macro(initializeWParams $node $cppConstructor $memoryManager)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##initializeWParamsMember($member $node $cppConstructor $memoryManager)
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to initialize a members
+##------------------------------------------------------------------------------
+
+#macro(initializeWParamsMember $member $node $cppConstructor $memoryManager)
+#*--*##if ($member.isOptional)
+if (!allocParams->allocate_optional_members) {
+#if(($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && $member.typeKind.equals("user"))
+        $member.sample=NULL;
+#else
+        $member.sampleRef=NULL;
+#end        
+    } else {   
+#*--*##end
+#*--*##if($member.dimensionList && $member.seqSize) ##array of sequences
+#*----*##initArrayofSeq($member $cppConstructor $memoryManager)
+#*--*##elseif($member.dimensionList)
+#*----*##if($member.isOptionalArray)
+#*------*##initOptionalArray($member $cppConstructor $memoryManager)
+#*----*##else
+#*------*##initArray($member $cppConstructor $memoryManager)
+#*----*##end
+#*--*##elseif($member.seqSize)
+#*----*##initSeq($member $cppConstructor $memoryManager ${member.sampleRef})
+#*--*##elseif($member.typeKind=="user")
+#*----*##initUser($member $cppConstructor $memoryManager)
+#*--*##else
+#*----*##initBuiltin($member $cppConstructor $memoryManager)
+#*--*##end
+#if ($member.isOptional)
+}
+#end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to intialize a member not builtin
+##------------------------------------------------------------------------------
+
+#macro (callToInitWParams $member $memberRef $cppConstructor $memoryManager)
+#*--*##if ($memoryManager)
+if (!${member.nativeTypeFQName}_initialize_w_params_w_memory_manager(
+        $memberRef,
+        memoryManager,
+        allocParams)) {
+#*--*##else
+if (!${member.nativeTypeFQName}_initialize_w_params(
+        $memberRef,
+        allocParams)) {
+#*--*##end
+#*--*##returnInit($cppConstructor)
+}
+#end
+
+#macro (initUser $member $cppConstructor $memoryManager)
+#*----*##if($member.isPointer || ($member.isOptional && (!$member.strSize || ($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring"))))))
+if (allocParams->allocate_memory) {
+#*------*##if($member.isPointer)
+    if (allocParams->allocate_pointers) {
+#*------*##end
+#*------*##allocPointerObject (
+                  "${member.sampleRef}"
+                  "#declareMemberType(${member})"
+                  $member.isAliasOfArray 
+                  $cppConstructor 
+                  $memoryManager
+                  $member)
+#*----*##end
+#*----*##if(!$cppConstructor || $member.isEnum)
+#*------*##if(${member.resolvedTypeEnum} && !${member.resolvedTypePointer} && !${member.resolvedTypeOptional})
+            ${member.sample} = ${member.defaultEnumMemberName};
+#*------*##elseif(${member.tcKind} != "RTI_XCDR_TK_NULL" && !${member.resolvedTypePointer} && !${member.resolvedTypeOptional})
+            #initBuiltin($member $cppConstructor $memoryManager)
+#*------*##else
+#*--------*##callToInitWParams(
+                    $member 
+                    "${member.sampleRef}" 
+                    $cppConstructor 
+                    $memoryManager)
+#*------*##end
+#*----*##elseif ($cppConstructor && $member.isAlias)
+if (!${member.nativeTypeFQName}_construct_w_params(${member.sampleRef},
+       allocParams)) {
+#*------*##returnInit($cppConstructor)
+       }
+#*----*##end
+#*----*##if($member.isPointer)                      
+    } else {
+        ${member.sampleRef} = NULL;
+    }
+#*----*##end    
+#*----*##if($member.isPointer || ($member.isOptional && (!$member.strSize || ($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring"))))))
+} else {
+    if (${member.sampleRef}!=NULL) {
+#*------*##callToInitWParams(
+                  $member 
+                  "${member.sampleRef}" 
+                  $cppConstructor 
+                  $memoryManager)       
+    }   
+}
+#*----*##end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to intialize arrays or sequences
+##------------------------------------------------------------------------------
+#macro (initArrayofSeq $member $cppConstructor $memoryManager)
+#*--*##if($member.isPointer)
+#*----*##initArrayofSeqPointer ($member $cppConstructor $memoryManager)
+#*--*##else
+{
+    int i;
+    #declareMemberType($member)* elem;
+#*----*##if($member.isOptionalArray)
+    if (allocParams->allocate_memory) {
+#*------*##allocPointerObject ("${member.sampleRef}" "#declareMemberType($member)" ${member.isAliasArray} $cppConstructor $memoryManager $member)
+    }
+#*----*##end
+
+    elem = (#declareMemberType($member)*) (${member.sampleRef}[0]);
+    for (i = 0; i < (int) ($member.arrayTotalSize) ; i++, elem++) {
+#*----*##initSeq($member $cppConstructor $memoryManager "elem")
+    }
+}
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to intialize sequences
+##------------------------------------------------------------------------------
+
+#macro (callToSetSeqMaximum
+        $member__
+        $seqRef__
+        $useArrayIndex__
+        $cppConstructor__
+        $memoryManager__
+        $addSuppression__)
+#*--*##if ($memoryManager__)
+if (!${member__.nativeTypeSeqFQName}_new_buffer_and_loan_w_memory_manager(
+        $seqRef__
+#*----*##if ($useArrayIndex__ && $member__.dimensionList)[i]#end,
+        memoryManager,
+        #getSeqSize($member__ "init"))) {
+#*--*##else
+    if (!${member__.nativeTypeSeqFQName}_set_maximum(
+        $seqRef__
+#*----*##if ($useArrayIndex__ && $member__.dimensionList)[i]#end,
+        #getSeqSize($member__ "init"))) {
+#*--*##end
+#*--*##if ($addSuppression__
+            && $member__.isOptionalArray
+            && $member__.strSize && (!$envMap.stringIsObject || $member__.typeName.equals("wstring")))
+/**
+ * Coverity may report that memory is being leaked here, because we are not freeing
+ * the memory pointed "buffer". This is a false positive, no memory is being leaked.
+ * The memory pointed by "buffer" is self-contained in $member__.dstRef, and it is
+ * the responsability of the user to finalize "dst" as he iniatialized it.
+ */
+/* coverity[leaked_storage : FALSE] */
+#*--*##end
+#*--*##returnInit($cppConstructor__)
+}
+#end
+
+#macro(callToInitStrArray
+        $member__
+        $arrayRef__
+        $isSeq__
+        $cppConstructor__
+        $memoryManager__
+        $addSuppression__)
+#*--*##if ($memoryManager__)
+if (!RTICdrType_initStringArrayWMemoryManager(
+        $arrayRef__,
+        memoryManager,
+#*----*##if ($isSeq__)
+#*------*##getSeqSize($member__ "init"),
+#*----*##else
+        $member__.arrayTotalSize,
+#*----*##end
+#*----*##getStrSize($member__ "init") + 1,
+        $member__.typeEnum)) {
+#*--*##else
+if (!RTICdrType_initStringArray(
+        $arrayRef__,
+#*----*##if ($isSeq__)
+#*------*##getSeqSize($member__ "init"),
+#*----*##else
+        $member__.arrayTotalSize,
+#*----*##end
+#*----*##getStrSize($member__ "init") + 1,
+        $member__.typeEnum)) {
+#*--*##end
+#*--*##if ($addSuppression__
+            && $isSeq__
+            && $member__.isOptionalArray
+            && $member__.strSize && (!$envMap.stringIsObject || $member__.typeName.equals("wstring")))
+/**
+ * Coverity may report that memory is being leaked here, because we are not freeing
+ * the memory pointed "buffer". This is a false positive, no memory is being leaked.
+ * The memory pointed by "buffer" is self-contained in $member__.dstRef, and it is
+ * the responsability of the user to finalize "dst" as he iniatialized it.
+ */
+/* coverity[leaked_storage : FALSE] */
+#*--*##end
+#*----*##returnInit($cppConstructor__)
+}
+#end
+
+##-----------------------------------------------------------------------------
+## Macro to initialize sequences
+## - $member: the member to initialize
+## - $cppConstructor: true if we are generating C++98 with constructors
+## - $memoryManager: Whether memory manager is enabled or not
+## - $seqRef: Reference to the sequence we want to initialize
+##-----------------------------------------------------------------------------
+#macro(initSeq $member $cppConstructor $memoryManager $seqRef__)
+#*--*##if ($member.isPointer || ($member.isOptional && !$member.isOptionalArray))
+#*----*##initSeqPointer($member $cppConstructor $memoryManager)
+#*--*##else
+if (allocParams->allocate_memory) {
+#*----*##if($member.typeKind=="user")
+    if(!${member.nativeTypeSeqFQName}_initialize($seqRef__)){
+#*------*##returnInit($cppConstructor)
+    }
+    if(!${member.nativeTypeSeqFQName}_set_element_allocation_params(
+            $seqRef__,
+            allocParams)){
+#*------*##returnInit($cppConstructor)
+    }
+    if(!${member.nativeTypeSeqFQName}_set_absolute_maximum(
+            $seqRef__,
+            #getSeqSize($member "init_abs_max"))){
+#*------*##returnInit($cppConstructor)
+    }
+#*--*##callToSetSeqMaximum(
+              $member
+              $seqRef__
+              false
+              $cppConstructor
+              $memoryManager
+              false)
+#*----*##else
+    if(!${member.nativeTypeSeqFQName}_initialize($seqRef__)){
+#*------*##returnInit($cppConstructor)
+    }
+    if(!${member.nativeTypeSeqFQName}_set_absolute_maximum(
+            $seqRef__,
+            #getSeqSize($member "init_abs_max"))){
+#*------*##returnInit($cppConstructor)
+    }
+#*--*##callToSetSeqMaximum(
+              $member
+              $seqRef__
+              false
+              $cppConstructor
+              $memoryManager
+              false)
+#*------*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
+    buffer = ${member.nativeTypeSeqFQName}_get_contiguous_bufferI($seqRef__);
+    if (buffer != NULL) {
+#*--------*##callToInitStrArray(
+                    $member
+                    "buffer"
+                    true
+                    $cppConstructor
+                    $memoryManager
+                    false)
+    }
+#*------*##end
+#*----*##end
+} else {
+    if(!${member.nativeTypeSeqFQName}_set_length($seqRef__, 0)){
+#*------*##returnInit($cppConstructor)
+    }
+}
+#*--*##end
+#end
+
+
+
+##------------------------------------------------------------------------------
+## Macro to intialize sequences of pointers or optional members
+##------------------------------------------------------------------------------
+
+#macro(initSeqPointer $member $cppConstructor $memoryManager)
+if (allocParams->allocate_memory) {
+#*--*##if($member.isPointer)
+    if (allocParams->allocate_pointers) {
+#*--*##end    
+
+#*--*##allocPointerObject ("${member.sampleRef}" "#declareMemberType($member)" ${member.isAliasArray} $cppConstructor $memoryManager $member)
+       
+#*--*##if($member.typeKind=="user")
+        if(!${member.nativeTypeSeqFQName}_initialize(${member.sampleRef} #if($member.dimensionList)[i] #end)){
+#*----*##returnInit($cppConstructor)       
+        }
+        if(!${member.nativeTypeSeqFQName}_set_element_allocation_params(${member.sampleRef}#*
+----*# #if($member.dimensionList)[i] #end,allocParams)){
+#*----*##returnInit($cppConstructor)   
+        }
+        if(!${member.nativeTypeSeqFQName}_set_absolute_maximum(${member.sampleRef} #*
+--*##if($member.dimensionList)[i] #end, #getSeqSize($member "init_abs_max"))){
+#*----*##returnInit($cppConstructor)
+        }
+#*----*##callToSetSeqMaximum(
+                 $member
+                 ${member.sampleRef}
+                 true
+                 $cppConstructor
+                 $memoryManager
+                 false)
+
+#*--*##else
+        if(!${member.nativeTypeSeqFQName}_initialize(${member.sampleRef}#*
+----*# #if($member.dimensionList)[i] #end)){
+#*----*##returnInit($cppConstructor)
+        }
+        if(!${member.nativeTypeSeqFQName}_set_absolute_maximum(${member.sampleRef} #*
+--*##if($member.dimensionList)[i] #end, #getSeqSize($member "init_abs_max"))){
+#*----*##returnInit($cppConstructor)
+        }
+#*----*##callToSetSeqMaximum(
+                $member
+                ${member.sampleRef}
+                true
+                $cppConstructor
+                $memoryManager
+                false)
+#*------*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
+        buffer = ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(
+                     ${member.sampleRef} #if($member.dimensionList)[i] #end);
+        if (buffer != NULL) {
+#*--------*##callToInitStrArray(
+                    $member
+                    "buffer"
+                    true
+                    $cppConstructor
+                    $memoryManager
+                    false)
+        }
+#*----*##end
+#*--*##end
+#*--*##if($member.isPointer)
+    } else {
+        ${member.sampleRef} = NULL;
+    }
+#*--*##end    
+} else {
+    if (${member.sampleRef} != NULL) {
+        if(!${member.nativeTypeSeqFQName}_set_length(${member.sampleRef}#*
+------*# #if($member.dimensionList)[i] #end, 0)){
+#*------*##returnInit($cppConstructor)
+        }
+    }
+}
+#end
+##------------------------------------------------------------------------------
+## Macro to intialize array
+##------------------------------------------------------------------------------
+
+#macro(initArray $member $cppConstructor $memoryManager)
+#*--*##if($member.isPointer)
+#*----*##initArrayPointer ($member $cppConstructor $memoryManager)
+#*--*##else
+#*----*##if($member.typeKind=="user")
+#*------*##if(!$cppConstructor || $member.isEnum || $member.isAlias)
+{
+    int i = 0;
+    $member.nativeTypeFQName* elem =
+    ($member.nativeTypeFQName*) (${member.sampleRef}[0]);
+
+    for (i = 0; i < (int) ($member.arrayTotalSize); ++i, ++elem) {
+#*--------*##if($cppConstructor && $member.isAlias)
+        if (!${member.nativeTypeFQName}_construct_w_params(elem,allocParams)) {
+    #*----------*##returnInit($cppConstructor)
+        }
+#*--------*##else
+#*----------*##callToInitWParams($member  "elem" $cppConstructor $memoryManager)
+#*--------*##end
+    }
+}
+#*------*##end
+#*----*##elseif($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring")))
+#*------*##initArrayStringObject($member)
+#*----*##elseif($member.strSize)
+if (allocParams->allocate_memory) {
+#*------*##if($member.isOptionalArray)
+/**
+ * Coverity may report this as a dead_error_line. It is true, that depending on the
+ * type complexity this may not be executed. This is intentional because it doesn't
+ * affect the performance of the generated code, but it will increase codegen
+ * complexity and make generated code more difficult to maintain.
+ */
+/* coverity[dead_error_line] */
+#*------*##end
+#*------*##callToInitStrArray(
+                  $member
+                  ${member.sample}
+                  false
+                  $cppConstructor
+                  $memoryManager
+                  false)
+} else {
+    int i;    
+    ${member.nativeTypeFQName}* elem =
+    (${member.nativeTypeFQName}*)  ${member.sampleRef};
+    for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+        if (*elem != NULL) {
+            *elem[0]   = '\0';
+        }
+    }
+}    
+
+#*----*##else
+RTICdrType_initArrayUnsafe(${member.sample},
+        $member.arrayTotalSize,
+        $member.elementSize);
+#*----*##end
+#*--*##end
+#end
+
+#macro (initOptionalArray $member__ $cppConstructor__ $memoryManager__)
+if (allocParams->allocate_memory) {
+#*--*##allocPointerObject (
+        "$member__.sampleRef"
+        "#declareMemberType(${member__})"
+        $member__.isAliasOfArray
+        $cppConstructor__
+        $memoryManager__
+        $member__)
+#*--*##initArray($member__ $cppConstructor__ $memoryManager__)
+} else {
+    if ($member__.sampleRef != NULL) {
+#*----*##initArray($member__ $cppConstructor__ $memoryManager__)
+    }
+}
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to intialize array of pointers
+##------------------------------------------------------------------------------
+
+#macro (initArrayPointer $member $cppConstructor $memoryManager)
+{
+
+    int i=0;    
+    $member.nativeTypeFQName** elem =
+    ($member.nativeTypeFQName**) $member.sampleRef;        
+    if (allocParams->allocate_memory){
+        if (allocParams->allocate_pointers) {
+            for (i=0;i < (int)($member.arrayTotalSize);++i,++elem) {
+                /* Coverity reports a possible overwrite_var that won't happen since, after 
+                each allocation, elem points to the next value of the array. The allocated
+                objects will be pointed by the pointers of the array, so we won't lose them */
+        		/* coverity[overwrite_var : FALSE] */
+#*--*##allocPointerObject ("*elem" "#declareMemberType(${member})" $member.isAliasOfArray $cppConstructor $memoryManager $member)
+                
+#*--*##if($member.typeKind=="user")
+#*------*##if(!$cppConstructor || $member.isEnum || $member.isAlias)
+#*--------*##if ($cppConstructor && $member.isAlias)
+                if (!${member.nativeTypeFQName}_construct_w_params(*elem,allocParams)) {
+#*----------*##returnInit($cppConstructor)
+                }
+#*--------*##else
+#*----------*##callToInitWParams($member "*elem" $cppConstructor $memoryManager)
+#*--------*##end   
+#*------*##end
+#*--*##elseif ($member.strSize)
+#*----*##if (!$envMap.stringIsObject || $member.typeName.equals("wstring"))
+                **elem = $member.allocMethod (#getStrSize($member "init"));
+                if (**elem == NULL) {
+#*----*##returnInit($cppConstructor)
+                }
+#*----*##end    
+#*--*##else                  
+                memset((void *)*elem,0,sizeof($member.nativeTypeFQName));
+#*--*##end                  
+            }        
+        } else {
+            for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+                *elem = NULL;
+            }
+        }
+    } else {
+        
+       
+#*--*##if($member.strSize)
+       for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+#*----*##if ($envMap.stringIsObject && !$member.typeName.equals("wstring"))
+#*------*##initStringObjectReferenceIfNotNull()
+#*----*##else
+            if (*elem != NULL && **elem != NULL) {
+                **elem[0] = '\0';
+            }
+#*----*##end
+        }
+#*--*##else
+        for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+            if (*elem != NULL) {
+#*----*##if($member.typeKind=="user")
+#*------*##callToInitWParams($member "*elem" $cppConstructor $memoryManager)
+#*----*##else
+                memset((void *)*elem,0,sizeof($member.nativeTypeFQName));
+#*----*##end
+            }
+        }
+#*--*##end
+    }
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro to intialize array of sequence of pointers
+##------------------------------------------------------------------------------
+
+#macro (initArrayofSeqPointer $member $cppConstructor $memoryManager)
+{
+int i;
+#declareMemberType($member)** elem =
+    (#declareMemberType($member)**) $member.sampleRef;
+            
+if (allocParams->allocate_memory){
+    if (allocParams->allocate_pointers) {
+        for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+
+#*--*##allocPointerObject (
+              "*elem" 
+              "#declareMemberType($member)"
+              $member.isAliasOfArray 
+              $cppConstructor 
+              $memoryManager
+              $member)
+            if(!${member.nativeTypeSeqFQName}_initialize(*elem)){
+#*--*##returnInit($cppConstructor)             
+            }   
+
+#*--*##if($member.typeKind=="user")
+            if(!${member.nativeTypeSeqFQName}_set_element_allocation_params(*elem,allocParams)){
+#*----*##returnInit($cppConstructor)         
+            }
+            if(!${member.nativeTypeSeqFQName}_set_absolute_maximum(*elem, #getSeqSize($member "init_abs_max"))){
+#*----*##returnInit($cppConstructor)              
+            }
+#*----*##callToSetSeqMaximum(
+              $member
+              "*elem"
+              false
+              $cppConstructor
+              $memoryManager
+              false)
+        }
+    } else {
+       for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+           *elem=NULL;
+       }
+    }
+} else { 
+    if (*elem != 0) {
+       if(!${member.nativeTypeSeqFQName}_set_length(*elem,0)){
+#*------*##returnInit($cppConstructor)
+       }
+    }
+}
+}
+
+#*--*##else
+            if (!${member.nativeTypeSeqFQName}_set_absolute_maximum(*elem, #getSeqSize($member "init_abs_max"))){
+#*----*##returnInit($cppConstructor)            
+            }
+#*----*##callToSetSeqMaximum(
+              $member
+              "*elem"
+              false
+              $cppConstructor
+              $memoryManager
+              false)
+#*----*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
+            buffer = ${member.nativeTypeSeqFQName}_get_contiguous_bufferI(*elem);
+            if (buffer != NULL) {
+#*------*##callToInitStrArray(
+                  $member
+                  "buffer"
+                  false
+                  $cppConstructor
+                  $memoryManager
+                  false)
+            }
+#*----*##end              
+       }    
+    } else {
+        for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+            *elem=NULL;
+        }
+    }
+} else {
+    if (*elem != NULL) {
+        if(!${member.nativeTypeSeqFQName}_set_length(*elem,0)){
+#*------*##returnInit($cppConstructor)
+         }
+    }
+}
+}
+
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to intialize basic
+##------------------------------------------------------------------------------
+
+#macro(initBuiltin $member  $cppConstructor $memoryManager)
+#*--*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
+#*----*##if($member.isPointer)
+if (allocParams->allocate_memory){
+    if (allocParams->allocate_pointers) {
+#*-----*##allocPointerObject (
+                 "${member.sampleRef}" 
+                 "#declareMemberType(${member})" 
+                 $member.isAliasOfArray 
+                 $cppConstructor 
+                 $memoryManager
+                 $member)
+#*-----*##allocStringOrWStringObject($member.sample $member $memoryManager)
+        if ($member.sample == NULL) {
+#*------*##returnInit($cppConstructor)
+        }        
+    } else {
+        $member.sampleRef = NULL;
+    }
+} else {
+    if ($member.sampleRef != NULL && 
+           $member.sample != NULL )   {
+           ${member.sample}[0] = '\0';
+    }
+}
+#*----*##else
+#*------*##if(${member.isAlias})
+#*--------*##set(${member.basicStringSampleRef}=${member.sample})
+#*------*##else
+#*--------*##set(${member.basicStringSampleRef}=${member.sampleRef})
+#*------*##end
+
+if (allocParams->allocate_memory) {
+#*------*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING")
+    #allocAndCopyDefaultWStringObjectReference($member, $memoryManager)
+#*------*##else
+    #allocAndCopyDefaultStringObjectReference($member, $memoryManager)
+#*------*##end
+    if ($member.basicStringSampleRef == NULL) {
+#*------*##returnInit($cppConstructor)
+    }
+} else {
+    if ($member.basicStringSampleRef != NULL) {
+#*------*##if(${member.tcKind} == "RTI_XCDR_TK_WSTRING")
+        #replaceWStringObjectReferenceWithDefault($member $memoryManager)
+#*------*##else
+        #replaceStringObjectReferenceWithDefault($member $memoryManager)
+#*------*##end
+        if ($member.basicStringSampleRef == NULL) {
+#*------*##returnInit($cppConstructor)
+        }
+    }
+}
+#*----*##end
+#*--*##elseif($member.isPointer || $member.isOptional)
+if (allocParams->allocate_memory){
+#*----*##if($member.isPointer)
+    if (allocParams->allocate_pointers) {
+#*----*##end    
+#*----*##allocPointerObject (
+                "${member.sampleRef}" 
+                "#declareMemberType(${member})" 
+                $member.isAliasOfArray 
+                $cppConstructor 
+                $memoryManager
+                $member)
+#*----*##if ($member.strSize)
+            $member.sample = "";
+#*----*##else
+        if (!${member.elementInitMethod}($member.sampleRef)) {
+#*------*##returnInit($cppConstructor)
+        }
+#*----*##end
+
+#*----*##if($member.isPointer)        
+    } else {
+        $member.sampleRef = NULL;
+    }
+#*----*##end    
+} else {
+
+#*----*##if ($member.strSize)
+#*------*##if($member.tcKind == "RTI_XCDR_TK_STRING"  && !${member.resolvedTypePointer} && !${member.resolvedTypeOptional})
+            $member.sample = ${member.defaultValue};
+#*------*##else
+            $member.sample = "";
+#*------*##end
+#*----*##else
+    if ($member.sampleRef != NULL) {
+        if (!${member.elementInitMethod}($member.sampleRef)) {
+#*------*##returnInit($cppConstructor)
+        }
+    }
+#*----*##end
+
+}
+
+#*--*##else
+#*----*##if($member.strSize)
+            #initStringObjectReferenceToDefault($member)
+#*----*##elseif($member.tcKind != "RTI_XCDR_TK_NULL"  && !${member.resolvedTypePointer} && !${member.resolvedTypeOptional})
+            ${member.sample} = ${member.defaultValue};
+#*----*##else
+            if (!${member.elementInitMethod}(${member.sampleRef})) {
+                /* Coverity reports a dead_error_line because ${member.elementInitMethod}
+                   returns false if ${member.sampleRef} is NULL, but if that is the case, we
+                   would already detected it when checking if sample == NULL, this is intentional,
+                   for security reasons, in case ${member.elementInitMethod} behavior is changed */
+        	    /* coverity[dead_error_line] */
+#*--------*##returnInit($cppConstructor)
+            }
+#*----*##end
+#*--*##end
+
+#end
+
+##******************************************************************************
+## Macro finalize
+##******************************************************************************
+#macro(finalize $memberFieldMapList $memoryManager__)
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if ($member.isOptional)
+if (deallocParams->delete_optional_members) {
+#*------*##end      
+#*--------*##finalizeMember($member $memoryManager__)
+#*------*##if ($member.isOptional)
+}
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalizeMember
+##------------------------------------------------------------------------------
+
+#macro (finalizeMember $member $memoryManager__)
+#*--*##if($member.isPointer)
+if (deallocParams->delete_pointers) {
+#*--*##end
+#*--*##if(($member.isPointerOrOptional && !($member.isOptional && $member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")) && !$member.seqSize  && $member.typeKind.equals("user"))
+          || (($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && !$member.seqSize  && !$member.typeKind.equals("user")))
+          && (!$member.dimensionList || $member.isOptionalArray))
+if ($member.sampleRef != NULL) {
+#*--*##end
+#*--*##if($member.dimensionList && $member.seqSize)
+#*----*##finalizeArrayofSequences($member $memoryManager__ ${member.sampleRef})
+#*--*##elseif($member.dimensionList)
+#*----*##finalizeArray($member $memoryManager__)
+#*--*##elseif($member.seqSize)
+#*----*##finalizeSeq($member $memoryManager__ ${member.sampleRef})
+#*--*##elseif($member.typeKind=="user")
+#*----*##finalizeUser($member $memoryManager__)
+#*--*##else
+#*----*##if($member.strSize)
+#*----*##finalizeString($member $memoryManager__)
+#*----*##end
+#*--*##end
+#*-CODEGENII-154 Pointer to a typedef of a to string pointer-*#
+#*--*##if(($member.isPointerOrOptional)
+        && (!$member.dimensionList || $member.isOptionalArray)
+        && (!$member.strSize ||
+              ($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring"))) || 
+              ($member.isPointer && $member.typeKind=="user") ||
+              $member.seqSize))
+         #deletePointerObject ("$member.sampleRef" $member.isAliasOfArray true $memoryManager__ $member)
+#*--*##end
+#*--*##if(($member.isPointerOrOptional && !($member.isOptional && $member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")) && !$member.seqSize  && $member.typeKind.equals("user"))
+          || (($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && !$member.seqSize  && !$member.typeKind.equals("user")))
+          && (!$member.dimensionList || $member.isOptionalArray))
+}
+#*--*##end
+#*--*##if($member.isPointer)
+}
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalizeString
+##------------------------------------------------------------------------------
+#macro (finalizeString $member $memoryManager__)
+#*--*##if (!$envMap.stringIsObject || $member.typeName.equals("wstring"))
+#*----*##if($memoryManager__)
+RTIOsapiUtility_unusedReturnValue(
+        REDAInlineMemBuffer_release(
+                #if($member.isPointer)*#end$member.sampleRef),
+        RTIBool);
+#*----*##else
+${member.finalizeMethod}(#if($member.isPointer)*#end$member.sampleRef);
+#*----*##end
+#*--*##elseif($envMap.stringIsObject)
+#deleteStringObject($member)
+#*--*##end
+#*--*##if($member.isPointer)
+#deletePointerObject (
+        "$member.sampleRef" 
+        $member.isAliasOfArray 
+        false 
+        $memoryManager__
+        $member)
+#*--*##end
+#*--*##if (!$envMap.stringIsObject || $member.typeName.equals("wstring") || $member.isPointer)
+$member.sampleRef=NULL;
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalizeUser
+##------------------------------------------------------------------------------
+#macro (finalizeUser $member $memoryManager__)
+#*--*##if($memoryManager__)
+${member.nativeTypeFQName}_finalize_w_params_w_memory_manager(
+#*--*##else
+${member.nativeTypeFQName}_finalize_w_params(
+#*--*##end
+        ${member.sampleRef},
+        deallocParams);
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalizeArrayofSequences
+## - $member__: The member to finalize
+## - $memoryManager__: Whether memory manager is enabled or not
+## - $arrayRef__: Reference to the array of sequences to finalize
+##------------------------------------------------------------------------------
+#macro(finalizeArrayofSequences $member__ $memoryManager__ $arrayRef__)
+#*--*##if($member__.isPointer)
+#*----*##finalizeArrayOfPointers ($member__ $memoryManager__)
+#*--*##else
+{
+    int i;
+    #declareMemberType($member__)* elem = (#declareMemberType($member__)*) (${arrayRef__}[0]);
+    for (i = 0; i < (int) ($member__.arrayTotalSize); i++, elem++) {
+#*----*##finalizeSeq($member__ $memoryManager__ "elem")
+    }
+}
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalizeArray
+##------------------------------------------------------------------------------
+#macro(finalizeArray $member $memoryManager__)
+#*--*##if($member.isPointer)
+#*----*##finalizeArrayOfPointers ($member $memoryManager__)
+#*--*##elseif($member.typeKind=="user")
+{
+    int i = 0;
+    $member.nativeTypeFQName* elem =
+        ($member.nativeTypeFQName*) (${member.sampleRef}[0]);
+
+    for (i = 0; i < (int) ($member.arrayTotalSize); ++i, ++elem) {
+#*----*##if($memoryManager__)
+        ${member.nativeTypeFQName}_finalize_w_params_w_memory_manager(
+#*----*##else
+        ${member.nativeTypeFQName}_finalize_w_params(
+#*----*##end
+                elem, 
+                deallocParams);
+    }
+}
+
+#*--*##elseif($member.strSize)
+#*----*##if(!$envMap.stringIsObject || $member.typeName.equals("wstring"))
+#*------*##if($memoryManager__)
+RTICdrType_finalizeStringArrayWMemoryManager(
+#*------*##else
+RTICdrType_finalizeStringArray(
+#*------*##end
+        $member.sample,
+        $member.arrayTotalSize,
+        $member.typeEnum);
+#*--------*##if($member.isOptionalArray)
+#*----------*##deletePointerObject ("$member.sampleRef" $member.isAliasOfArray true $memoryManager__ $member)
+#*--------*##end
+#*----*##else
+#*------*##deleteArrayOfStringObject($member)
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalizeArray
+##------------------------------------------------------------------------------
+#macro(finalizeArrayOfPointers $member $memoryManager__)
+int i=0;
+#declareMemberType($member)** elem =
+        (#declareMemberType($member) **) $member.sampleRef;
+    
+for (i=0;i < (int)($member.arrayTotalSize);++i,++elem) {
+    if (*elem != NULL) {
+#*--*##if($member.seqSize)
+#*----*##if($member.typeKind=="user")
+        RTIOsapiUtility_unusedReturnValue (
+                ${member.nativeTypeSeqFQName}_set_element_deallocation_params(
+                *elem,
+                deallocParams),
+                DDS_Boolean);
+#*----*##end
+
+#*----*##if($memoryManager__)
+        RTIOsapiUtility_unusedReturnValue(
+                ${member.nativeTypeSeqFQName}_unloan_and_finalize_w_memory_manager(*elem),
+                DDS_Boolean);
+#*----*##else
+        RTIOsapiUtility_unusedReturnValue(
+                ${member.nativeTypeSeqFQName}_finalize(*elem),
+                DDS_Boolean);
+#*----*##end
+          
+#*--*##elseif($member.typeKind=="user")
+#*----*##if($memoryManager__)
+        ${member.nativeTypeFQName}_finalize_w_params_w_memory_manager(
+#*----*##else
+        ${member.nativeTypeFQName}_finalize_w_params(
+#*----*##end
+                *elem,
+                deallocParams);
+#*--*##elseif($member.strSize)
+#*----*##if (!$envMap.stringIsObject || $member.typeName.equals("wstring"))
+#*------*##if($memoryManager__)
+        RTIOsapiUtility_unusedReturnValue(
+                REDAInlineMemBuffer_release(**elem),
+                DDS_Boolean);
+#*------*##else
+        ${member.finalizeMethod}(**elem);
+#*------*##end
+#*----*##end
+#*--*##end
+#*--*##deletePointerObject ( "*elem" $member.isAliasOfArray true $memoryManager__ $member)
+    }
+}                
+#end
+
+##------------------------------------------------------------------------------
+## Macro finalize sequences
+## - $member__: The sequence member to finalize
+## - $memoryManager__: Whether memory manager is enabled or not
+## - $seqRef__: Reference to the sequence to finalize
+##------------------------------------------------------------------------------
+#macro(finalizeSeq $member__ $memoryManager__ $seqRef__)
+#*--*##if($member__.typeKind=="user")
+RTIOsapiUtility_unusedReturnValue(${member__.nativeTypeSeqFQName}_set_element_deallocation_params(
+        $seqRef__,deallocParams),
+        DDS_Boolean);
+#*--*##end
+RTIOsapiUtility_unusedReturnValue(
+#*--*##if($memoryManager__)
+        ${member__.nativeTypeSeqFQName}_unloan_and_finalize_w_memory_manager(
+#*--*##else
+        ${member__.nativeTypeSeqFQName}_finalize(
+#*--*##end
+                $seqRef__),
+        DDS_Boolean);
+#end
+
+
+##******************************************************************************
+## Macro finalize
+##******************************************************************************
+#macro(finalizeOptional $memberFieldMapList)
+#*--*##foreach($member in $memberFieldMapList)
+#*----*##if($member.directive)
+#*----*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if($node.needsSwitchCode)
+#*--------*##initCases($member)
+#*------*##end
+#*------*##finalizeOptionalMember($member)
+#*------*##if($node.needsSwitchCode)
+} #if($member.labelList.get(0)!="(default)")break #end;
+#*------*##end
+#*----*##end
+#*--*##end
+#end 
+
+##------------------------------------------------------------------------------
+## Macro finalizeMember
+##------------------------------------------------------------------------------
+
+#macro (finalizeOptionalMember $member)
+#*--*##if ($member.isOptional)
+#finalizeMember($member false)
+#*--*##elseif(!$member.hasNestedOptionalMember)
+#*--*##elseif($member.isPointer && $member.dimensionList  && !$member.seqSize && $member.typeKind=="user")
+#*----*##finalizeOptionalArrayOfPointers ($member)
+#*--*##elseif(($member.seqSize) && ($member.dimensionList) && ($member.typeKind=="user"))
+{
+        int i;
+        DDS_Long j, length;
+
+        for (i = 0; i < (int)($member.arrayTotalSize); i++) {
+            length = ${member.nativeTypeSeqFQName}_get_length(
+                ${member.sampleRef}[i]);
+    
+            for (j = 0; j < length; j++) {
+                ${member.nativeTypeFQName}_finalize_optional_members(
+                    ${member.nativeTypeSeqFQName}_get_reference(
+                      ${member.sampleRef}[i], j), deallocParams->delete_pointers);
+            }
+        }
+    }
+#*--*##elseif(($member.seqSize) &&($member.typeKind=="user"))
+{
+        DDS_Long i, length;
+        length = ${member.nativeTypeSeqFQName}_get_length(
+            ${member.sampleRef});
+
+        for (i = 0; i < length; i++) {
+             ${member.nativeTypeFQName}_finalize_optional_members(
+                ${member.nativeTypeSeqFQName}_get_reference(
+                    ${member.sampleRef}, i), deallocParams->delete_pointers);
+        }
+}  
+#*--*##elseif(($member.dimensionList) &&($member.typeKind=="user"))
+ {
+       int i = 0;
+    $member.nativeTypeFQName* elem =
+        ($member.nativeTypeFQName*) (${member.sampleRef}[0]);
+
+    for (i = 0; i < (int) ($member.arrayTotalSize); ++i, ++elem) {
+        ${member.nativeTypeFQName}_finalize_optional_members(elem, deallocParams->delete_pointers);
+        }
+    }
+#*--*##elseif($member.typeKind=="user")
+${member.nativeTypeFQName}_finalize_optional_members(${member.sampleRef}, deallocParams->delete_pointers);
+#*--*##end 
+#end
+
+
+
+#macro(finalizeOptionalArrayOfPointers $member)
+{
+    int i=0;
+    #declareMemberType($member)** elem =
+        (#declareMemberType($member) **) $member.sampleRef;
+    
+        for (i=0;i < (int)($member.arrayTotalSize);++i,++elem) {
+            if (*elem != NULL) {
+                ${member.nativeTypeFQName}_finalize_optional_members(*elem, deallocParams->delete_pointers);
+            }
+    }   
+}
+                
+#end
+
+##******************************************************************************
+## Macro copy
+##******************************************************************************
+
+#macro(copy $node $memoryManager)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##copyDirectiveNoDeclaration($member)
+#*----*##else
+#*------*##if($node.needsSwitchCode)
+#*--------*##initCases($member)
+#*------*##end
+#*------*##copyMember($member $memoryManager)
+#*------*##if($node.needsSwitchCode)
+} #if($member.labelList.get(0)!="(default)")break #end;
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro copyMember
+##------------------------------------------------------------------------------
+
+#macro(copyMember $member $memoryManager)
+#*--*##if ($member.isOptional)
+#*----*##copyInitOptionalMember($member $memoryManager)
+#*--*##end
+#*--*##if($member.isPointer && !$member.dimensionList)
+if ($member.srcRef == NULL || $member.dstRef==NULL) {
+        return RTI_FALSE;
+}
+#*--*##end
+#*--*##if($member.dimensionList && $member.seqSize)
+#*----*##copyArrayofSeq($member $memoryManager)
+#*--*##elseif($member.dimensionList)
+#*----*##copyArray($member $memoryManager)
+#*--*##elseif($member.seqSize)
+#*----*##copySeq($member $memoryManager $member.dstRef $member.srcRef)
+#*--*##elseif($member.typeKind=="user")
+#*----*##copyUser($member $memoryManager)
+#*--*##else
+#*----*##copyBuiltin($member $memoryManager)
+#*--*##end
+#*--*##if ($member.isOptional )
+#*----*##copyFinishOptionalMember($member $memoryManager)
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to copy User
+##------------------------------------------------------------------------------
+#macro(copyUser $member $memoryManager)
+#*--*##if($memoryManager)
+if (!${member.nativeTypeFQName}_copy_w_memory_manager(
+       $member.dstRef,
+       memoryManager,
+       (const ${member.nativeTypeFQName}*)$member.srcRef)) {
+#*--*##else
+if (!${member.nativeTypeFQName}_copy(
+       $member.dstRef,
+       (const ${member.nativeTypeFQName}*)$member.srcRef)) {
+#*--*##end
+    return RTI_FALSE;
+} 
+#end    
+
+##------------------------------------------------------------------------------
+## Macro to copy Basic types NonCollection
+##------------------------------------------------------------------------------
+#macro(copyBuiltin $member $memoryManager)
+#*--*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
+#*----*##if($memoryManager)
+#*------*##set( $memoryManagerParam = ", memoryManager" )
+#*------*##set( $copyMethod = $member.elementCopyMethod + "WMemoryManager" )
+#*----*##else
+#*------*##set( $memoryManagerParam = "")
+#*------*##set( $copyMethod = $member.elementCopyMethod )
+#*----*##end
+if (!$copyMethod (
+       #if(!$member.isPointer)&#end$member.dstRef
+       $memoryManagerParam,
+       #if($member.isPointer)*#end$member.srcRef, 
+       #getStrSize($member "copy") + 1,
+       #reallocateString($member))){
+    return RTI_FALSE;
+}
+#*--*##else
+#*----*##if($member.strSize)
+#copyStringObjectReference($member)
+#*----*##else
+if (!$member.elementCopyMethod (
+        $member.dstRef, 
+        $member.srcRef)) { 
+    return RTI_FALSE;
+}
+#*----*##end
+#*--*##end
+#end
+
+##------------------------------------------------------------------------------
+## Macro to copy Array of sequences
+##------------------------------------------------------------------------------
+#macro(copyArrayofSeq $member $memoryManager)
+    {
+        int i;
+#*--*##if($member.isOptionalArray)
+        #declareMemberType($member)* elemDst = (#declareMemberType($member)*) (${member.dstRef}[0]);
+        #declareMemberType($member)* elemSrc = (#declareMemberType($member)*) (${member.srcRef}[0]);
+
+        for (i = 0; i < (int) ($member.arrayTotalSize); i++, elemDst++, elemSrc++) {
+#*----*##copySeq($member $memoryManager "elemDst", "elemSrc")
+        }
+#*--*##else
+        for (i = 0; i < (int) ($member.arrayTotalSize); i++) {
+#*----*##copySeq($member $memoryManager "$member.dstRef #if($member.dimensionList)[i]#end" "$member.srcRef #if($member.dimensionList)[i]#end")
+        }
+#*--*##end
+    }
+#end
+
+##------------------------------------------------------------------------------
+## Macro to copy Arrays of basic types
+##------------------------------------------------------------------------------
+#macro(copyArray $member $memoryManager)
+#*--*##if($memoryManager)
+#set( $memoryManagerParam = ", memoryManager" )
+#*--*##else
+#set( $memoryManagerParam = "")
+#*--*##end
+#*--*##set( $copyMethod = $member.elementCopyMethod)
+#*--*##if($member.isPointer)
+#*----*##copyArrayPointers($member)
+#*--*##elseif($member.typeKind=="user")
+#*----*##if($memoryManager)
+#*------*##set( $copyMethod = $member.elementCopyMethod + "_w_memory_manager" )
+#*----*##end
+{
+    int i = 0;
+    ${member.nativeTypeFQName}* elemOut = (${member.nativeTypeFQName}*) (${member.dstRef}[0]);
+    const ${member.nativeTypeFQName}* elemIn = (const ${member.nativeTypeFQName}*) (${member.srcRef}[0]);
+    for (i = 0; i < (int) ($member.arrayTotalSize);++i, ++elemOut, ++elemIn) {
+        if (!$copyMethod(
+                elemOut
+                $memoryManagerParam,
+                (const ${member.nativeTypeFQName}*)elemIn)) {
+                return RTI_FALSE;
+        }
+    }
+}
+#*--*##elseif($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring")))
+#copyStringObjectArray($member)
+#*--*##elseif($member.strSize)
+#*----*##if($memoryManager)
+if (!RTICdrType_copyStringArrayExWMemoryManager(
+#*----*##else
+if (!RTICdrType_copyStringArrayEx(
+#*----*##end
+        $member.dstSample
+        $memoryManagerParam,
+        $member.srcSample,
+        $member.arrayTotalSize,
+        #getStrSize($member "copy") + 1 ,
+        $member.typeEnum,
+        #reallocateString($member))) {
+    return RTI_FALSE;
+}
+#*--*##else
+if (!RTICdrType_copyArray(
+        $member.dstSample,
+        $member.srcSample,
+        $member.arrayTotalSize,
+        $member.elementSize)) {
+   return RTI_FALSE;
+}
+#*--*##end 
+#end  
+
+##------------------------------------------------------------------------------
+## Macro to copy Arrays Pointers of basic types
+##------------------------------------------------------------------------------
+
+#macro (copyArrayPointers $member $memoryManager)
+#*--*##if($memoryManager)
+#set( $memoryManagerParam = ", memoryManager" )
+#*--*##else
+#set( $memoryManagerParam = "")
+#*--*##end
+#*--*##set( $copyMethod = $member.elementCopyMethod)
+{
+    int i = 0;
+    ${member.nativeTypeFQName}** elemOut = (${member.nativeTypeFQName}**) $member.dstRef;
+    ${member.nativeTypeFQName}** elemIn = (${member.nativeTypeFQName}**) $member.srcRef;
+
+    for (i = 0; i < (int)($member.arrayTotalSize);
+         ++i, ++elemOut, ++elemIn) {
+#*--*##if($member.typeKind=="user") 
+#*----*##if($memoryManager)
+#*------*##set( $copyMethod = $member.elementCopyMethod + "_w_memory_manager" )
+#*----*##end
+        if (*elemIn==NULL || *elemOut==NULL) {
+            return RTI_FALSE;
+        }            
+        if (!$copyMethod (
+                *elemOut 
+                $memoryManagerParam,
+                (const ${member.nativeTypeFQName}*) *elemIn)) {
+            return RTI_FALSE;
+        } 
+#*--*##elseif($member.strSize)
+        if (*elemIn==NULL || *elemOut==NULL) {
+            return RTI_FALSE;
+        }
+#*----*##if($envMap.stringIsObject && !$member.typeName.equals("wstring"))
+        **elemOut = **elemIn;
+#*----*##else
+#*----*##if($memoryManager)
+#*------*##set( $copyMethod = $member.elementCopyMethod + "WMemoryManager" )
+#*----*##end
+        if (!$copyMethod (
+                *elemOut
+                $memoryManagerParam,
+                (const ${member.nativeTypeFQName}) **elemIn,
+                #getStrSize($member "copy") + 1,
+                #reallocateString($member))){
+            return RTI_FALSE;
+        }
+#*----*##end
+#*--*##else 
+        if (!$member.elementCopyMethod (
+                *elemOut,
+                (const ${member.nativeTypeFQName}*) *elemIn)) {
+             return RTI_FALSE;
+        }
+#*--*##end
+    }
+}     
+#end
+
+##------------------------------------------------------------------------------
+## Macro to copy Sequences
+## - $member__: Sequence member to copy
+## - $memoryManager__: Whether memory manager is enabled or not
+## - $leftSeqRef__: Reference to the destination sequence
+## - $rightSeqRef__: Reference to the source sequence
+##------------------------------------------------------------------------------
+#macro (copySeq
+        $member__
+        $memoryManager__
+        $leftSeqRef__
+        $rightSeqRef__)
+#*--*##if ($memoryManager__)
+if (!${member__.nativeTypeSeqFQName}_copy_w_memory_manager(
+        $leftSeqRef__,
+        memoryManager,
+        $rightSeqRef__)) {
+#*--*##else
+if (!${member__.nativeTypeSeqFQName}_copy(
+        $leftSeqRef__,
+        $rightSeqRef__)) {
+#*--*##end
+    return RTI_FALSE;
+}
+#end
+
+
+##------------------------------------------------------------------------------
+## Macro to init copy Optional
+## - $member__: Member to copy
+## - $memoryManager__: Whether memory manager is enabled or not
+## - $dstRef__: Reference to the destination member
+##------------------------------------------------------------------------------
+#macro (callToInitializeEx
+        $member__
+        $memoryManager__
+        $dstRef__)
+#*--*##if($memoryManager__)
+if (!${member__.nativeTypeFQName}_initialize_ex_w_memory_manager(
+        $dstRef__,
+        memoryManager,
+        RTI_TRUE,
+        RTI_TRUE)) {
+#*--*##else
+if (!${member__.nativeTypeFQName}_initialize_ex(
+        $dstRef__,
+        RTI_TRUE,
+        RTI_TRUE)) {
+#*--*##end
+    return RTI_FALSE;
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro initialize optional sequences before copy
+## - $member__: Member sequence to initialize
+## - $memoryManager__: Whether memory manager is enabled or not
+## - $dstRef__: Reference to the destination sequence member
+##------------------------------------------------------------------------------
+#macro (copyInitOptionalSequenceMember $member__ $memoryManager__ $dstRef__)
+
+    if(!${member__.nativeTypeSeqFQName}_initialize($dstRef__)){
+        return RTI_FALSE;
+    }
+#*--*##if($member__.typeKind.equals("user"))
+    if(!${member__.nativeTypeSeqFQName}_set_element_pointers_allocation($dstRef__, RTI_TRUE)){
+        return RTI_FALSE;
+    }
+#*--*##end
+#*----*##callToSetSeqMaximum(
+                $member__
+                $dstRef__
+                false
+                $cppConstructor
+                $memoryManager__
+                true)
+#*--*##if($member__.strSize && (!$envMap.stringIsObject || $member__.typeName.equals("wstring")))
+#*----*##if($member__.isOptionalArray)
+    /**
+     * Coverity may report that "buffer" is being overwrited and we are leaking
+     * the memory pointed by "buffer". This is a false positive, no memory is being
+     * leaked. The memory pointed by "buffer" is self-contained in $member__.dstRef,
+     * and it is the responsability of the user to finalize "dst" as he iniatialized it.
+     */
+    /* coverity[overwrite_var : FALSE] */
+#*----*##end
+    buffer = ${member__.nativeTypeSeqFQName}_get_contiguous_bufferI($dstRef__);
+    if (buffer != NULL) {
+#*----*##callToInitStrArray(
+                    $member__
+                    "buffer"
+                    true
+                    $cppConstructor
+                    $memoryManager__
+                    true)
+    }
+}
+#*--*##end
+#end
+
+#macro (copyInitOptionalMember $member $memoryManager)
+#*--*##if (($member.strSize && ($envMap.stringIsObject && !$member.typeName.equals("wstring"))) && !$member.seqSize)
+if ($member.srcRef!=NULL) {
+    if ($member.dstRef==NULL) {
+#*----*##allocateString($member.dstRef $member "alloc" $memoryManager);
+        if ($member.dstRef == NULL) {
+            return RTI_FALSE;
+        }
+    }
+#*--*##else
+#*----*##if(($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && $member.typeKind=="user")
+if ($member.srcSample!=NULL) {
+    if ($member.dstSample==NULL) {
+#*----*##else
+if ($member.srcRef!=NULL) {
+## If it is an unbounded string (not sequences) or it is for Cpp03 we don't need to allocate memory)
+#*------*##if (!$member.strSize || $member.seqSize || $member.strSize!="-1")
+    if ($member.dstRef==NULL) {
+#*------*##end
+#*----*##end
+#*----*##if(($member.strSize && (!$envMap.stringIsObject|| $member.typeName.equals("wstring"))) && $member.typeKind.equals("user"))
+#*------*##callToInitializeEx(
+                  $member
+                  $memoryManager
+                  $member.dstRef)
+    }
+#*----*##elseif($member.seqSize)
+#*------*##if($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring")))
+        {
+            void * buffer;
+#*------*##end
+#*------*##if($member.dimensionList)
+    int i = 0;
+    #declareMemberType($member)* elem;
+#*------*##end
+#*------*##allocPointerObject (
+                  "$member.dstRef"
+                  "#declareMemberType(${member})"
+                  $member.isAliasOfArray
+                  false
+                  $memoryManager
+                  $member)
+
+#*------*##if($member.dimensionList)
+        elem = (#declareMemberType($member)*) (${member.dstRef}[0]);
+        for (i = 0; i < (int) ($member.arrayTotalSize); i++, elem++) {
+#*--------*##copyInitOptionalSequenceMember($member $memoryManager "elem")
+        }
+#*------*##else
+#*--------*##copyInitOptionalSequenceMember($member $memoryManager $member.dstRef)
+#*------*##end
+    }
+##For unbounded optional strings and the  we don't need to alloc as we reallocate in the copy
+##(we pass RTI_TRUE to the last parameter of the copyStringEx method)
+#*----*##elseif (($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && $member.strSize!="-1")
+#*------*##if($member.isOptionalArray)
+#*--------*##allocPointerObject (
+                "$member.dstRef"
+                "#declareMemberType(${member})"
+                $member.isAliasOfArray
+                $cppConstructor
+                $memoryManager
+                $member)
+## We will probably need to init the array of strings
+#*--------*##callToInitStrArray(
+                    $member
+                    "$member.dstSample"
+                    false
+                    $cppConstructor
+                    $memoryManager
+                    false)
+#*------*##else
+#*------*##allocateString($member.dstRef $member "copy" $memoryManager);
+          if ($member.dstRef == NULL) {
+              return RTI_FALSE;
+          }
+#*------*##end
+      }
+#*----*##elseif(!$member.strSize)
+#*--------*##allocPointerObject (
+                  "$member.dstRef"
+                  "#declareMemberType(${member})"
+                  $member.isAliasOfArray
+                  false
+                  $memoryManager
+                  $member)
+#*--------*##if($member.typeKind.equals("user"))
+#*----------*##if($member.isOptionalArray)
+#*------------*##if(!$cppConstructor || $member.isEnum || $member.isAlias)
+{
+    int i = 0;
+    $member.nativeTypeFQName* elem =
+    ($member.nativeTypeFQName*) (${member.dstRef}[0]);
+
+    for (i = 0; i < (int) ($member.arrayTotalSize); ++i, ++elem) {
+#*--------------*##if($cppConstructor && $member.isAlias)
+        if (!${member.nativeTypeFQName}_construct_w_params(elem,allocParams)) {
+#*----------------*##returnInit($cppConstructor)
+        }
+#*--------------*##else
+#*----------------*##callToInitializeEx(
+                            $member
+                            $memoryManager
+                            "elem")
+#*--------------*##end
+    }
+}
+#*------------*##end
+#*----------*##else
+#*----------*##callToInitializeEx(
+                      $member
+                      $memoryManager
+                      $member.dstRef)
+#*----------*##end
+#*--------*##end
+      }
+#*----*##end
+#*--*##end
+#end
+
+#macro (copyFinishOptionalMember $member $memoryManager)
+} else {
+#*--*##if($memoryManager)
+## With memory manager we are not freeing memory of optional member
+#*----*##if(($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && $member.typeKind=="user")
+    $member.dstSample = NULL;
+#*----*##else
+    $member.dstRef = NULL;
+#*----*##end
+#*--*##else
+#*----*##if(($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && $member.typeKind=="user")
+    if ($member.dstSample != NULL) {
+#*----*##else
+    if ($member.dstRef != NULL) {
+#*----*##end
+#*----*##if(($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && $member.typeKind.equals("user"))      
+       ${member.nativeTypeFQName}_finalize_w_params($member.dstRef, deallocParams);
+#*----*##elseif($member.seqSize)
+#*------*##if($member.dimensionList) ## Optional Array of sequences
+#*--------*##finalizeArrayofSequences($member $memoryManager $member.dstRef)
+#*------*##else ## Optional Sequence
+#*--------*##if($member.typeKind.equals("user"))
+        if (!${member.nativeTypeSeqFQName}_set_element_deallocation_params($member.dstRef,deallocParams)){
+            return RTI_FALSE;
+        };
+#*--------*##end
+        if(!${member.nativeTypeSeqFQName}_finalize($member.dstRef)){
+            return RTI_FALSE;
+        }
+#*------*##end
+#*------*##deletePointerObject ("$member.dstRef" $member.isAliasOfArray true $memoryManager $member)
+#*----*##elseif(($member.strSize && (!$envMap.stringIsObject || $member.typeName.equals("wstring"))) && !$member.typeKind.equals("user"))    
+#*------*##if($member.isOptionalArray)
+#*--------*##if($memoryManager)
+        RTICdrType_finalizeStringArrayWMemoryManager(
+#*--------*##else
+        RTICdrType_finalizeStringArray(
+#*--------*##end
+                $member.dstSample,
+                $member.arrayTotalSize,
+                $member.typeEnum);
+#*------*##deletePointerObject ("$member.dstRef" $member.isAliasOfArray true $memoryManager $member)
+#*------*##else
+        ${member.finalizeMethod}($member.dstRef);
+        $member.dstRef = NULL;
+#*------*##end
+#*----*##else
+#*------*##if($member.typeKind.equals("user"))
+#*--------*##if($member.isOptionalArray)
+{
+    int i = 0;
+    $member.nativeTypeFQName* elem =
+        ($member.nativeTypeFQName*) (${member.dstRef}[0]);
+
+    for (i = 0; i < (int) ($member.arrayTotalSize); ++i, ++elem) {
+#*----------*##if($memoryManager)
+        ${member.nativeTypeFQName}_finalize_w_params_w_memory_manager(
+#*----------*##else
+        ${member.nativeTypeFQName}_finalize_w_params(
+#*----------*##end
+                elem,
+                deallocParams);
+    }
+}
+#*--------*##else
+        ${member.nativeTypeFQName}_finalize_w_params($member.dstRef, deallocParams);
+#*--------*##end
+#*------*##end
+#*------*##deletePointerObject ("$member.dstRef" $member.isAliasOfArray true false $member)
+#*----*##end
+    }
+#*--*##end
+}
+#end
+
+#macro (defineInitializeWParams $node $memoryManager)
+#*--*##if($memoryManager)
+RTIBool ${node.nativeFQNameInModule}_initialize_w_params_w_memory_manager(
+        ${node.nativeFQNameInModule} *sample,
+        struct REDAInlineMemory **memoryManager,
+        const struct DDS_TypeAllocationParams_t *allocParams)
+#*--*##else
+RTIBool ${node.nativeFQNameInModule}_initialize_w_params(
+        ${node.nativeFQNameInModule} *sample,
+        const struct DDS_TypeAllocationParams_t *allocParams)
+#*--*##end
+{
+#*--*##if($node.constructKind=="enum")   
+#*--*##if($memoryManager)
+    if (memoryManager == NULL) {
+        return RTI_FALSE;
+    }
+#*--*##end
+
+    if (sample == NULL) {
+        return RTI_FALSE;
+    }
+    if (allocParams == NULL) {
+        return RTI_FALSE;
+    }
+    *sample = $node.defaultLiteralMember.nativeFQNameInModule;
+    return RTI_TRUE;
+#*--*##else 
+#*----*##if($node.hasSeq)
+    void* buffer = NULL;
+    if (buffer) {} /* To avoid warnings */
+#*----*##end
+
+#*--*##if($memoryManager)
+    if (memoryManager == NULL) {
+        return RTI_FALSE;
+    }
+#*--*##end
+
+    if (sample == NULL) {
+        return RTI_FALSE;
+    }
+    if (allocParams == NULL) {
+        return RTI_FALSE;
+    }
+#*----*##if($node.baseTypeFQName)
+#*------*##if($memoryManager)
+    if (!${node.baseTypeFQName}_initialize_w_params_w_memory_manager(
+            (${node.baseTypeFQName}*) sample,
+            memoryManager,
+            allocParams)) {
+#*------*##else
+    if (!${node.baseTypeFQName}_initialize_w_params(
+            (${node.baseTypeFQName}*) sample,
+            allocParams)) {
+#*------*##end
+        return RTI_FALSE;
+    }
+#*----*##end
+
+#*----*##if($node.constructKind=="union") 
+    sample->_d = ($node.unionDiscriminatorMap.nativeTypeFQName)#*
+----*#${node.nativeFQNameInModule}_getDefaultDiscriminator();
+#*------*##end
+#*------*##initializeWParams($node, false, $memoryManager)
+    return RTI_TRUE;
+#*----*##end    
+}
+#end
+
+#macro (defineInitializeEx $node $memoryManager)
+#*--*##if($memoryManager)
+RTIBool ${node.nativeFQNameInModule}_initialize_ex_w_memory_manager(
+        ${node.nativeFQNameInModule} *sample,
+        struct REDAInlineMemory **memoryManager,
+        RTIBool allocatePointers, 
+        RTIBool allocateMemory)
+#*--*##else
+RTIBool ${node.nativeFQNameInModule}_initialize_ex(
+        ${node.nativeFQNameInModule} *sample,
+        RTIBool allocatePointers, 
+        RTIBool allocateMemory)
+#*--*##end
+{
+
+    struct DDS_TypeAllocationParams_t allocParams =
+        DDS_TYPE_ALLOCATION_PARAMS_DEFAULT;
+        
+    allocParams.allocate_pointers =  (DDS_Boolean)allocatePointers;
+    allocParams.allocate_memory = (DDS_Boolean)allocateMemory;
+    
+#*--*##if($memoryManager)
+    return ${node.nativeFQName}_initialize_w_params_w_memory_manager(
+            sample,
+            memoryManager,
+            &allocParams);
+#*--*##else
+    return ${node.nativeFQName}_initialize_w_params(
+            sample,
+            &allocParams);
+#*--*##end
+}
+#end
+
+#macro (callToReturnInitializeEx  
+        $node 
+        $memoryManager
+        $allocatePointer
+        $allocateMemory)
+#*--*##if($memoryManager)
+return ${node.nativeFQName}_initialize_ex_w_memory_manager(
+        sample,
+        memoryManager,
+        $allocatePointer,
+        $allocateMemory);
+#*--*##else
+return ${node.nativeFQName}_initialize_ex(
+        sample, 
+        $allocatePointer, 
+        $allocateMemory);
+#*--*##end
+#end
+
+#macro (defineInitialize $node $memoryManager)
+#*--*##if($memoryManager)
+RTIBool ${node.nativeFQNameInModule}_initialize_w_memory_manager(
+        ${node.nativeFQNameInModule}* sample,
+        struct REDAInlineMemory **memoryManager) 
+#*--*##else
+RTIBool ${node.nativeFQNameInModule}_initialize(
+        ${node.nativeFQNameInModule}* sample)
+#*--*##end
+{
+#*--*##if($node.constructKind=="enum")
+#*--*##if($memoryManager)
+    if (memoryManager == NULL) {
+        return RTI_FALSE;
+    }
+#*--*##end
+
+    *sample = $node.defaultLiteralMember.nativeFQNameInModule;
+    return RTI_TRUE;
+#*--*##else    
+#*----*##if($node.hasCycle)
+#*------*##callToReturnInitializeEx(
+                  $node 
+                  $memoryManager
+                  "RTI_FALSE"
+                  "RTI_TRUE")
+#*----*##else
+#*------*##callToReturnInitializeEx(
+                  $node 
+                  $memoryManager
+                  "RTI_TRUE"
+                  "RTI_TRUE")
+#*----*##end
+#*--*##end
+}
+#end
+
+#macro (defineCopy $node $memoryManager)
+#*--*##if($memoryManager)
+RTIBool ${node.nativeFQNameInModule}_copy_w_memory_manager(
+        ${node.nativeFQNameInModule}* dst,
+        struct REDAInlineMemory **memoryManager,
+        const ${node.nativeFQNameInModule}* src)
+{
+#*--*##else
+RTIBool ${node.nativeFQNameInModule}_copy(
+        ${node.nativeFQNameInModule}* dst,
+        const ${node.nativeFQNameInModule}* src)
+{
+#*--*##end
+#*--*##if($envMap.allocateWithNew)
+    try {
+#*--*##end
+
+#*--*##if($node.hasOptionalMember)
+    struct DDS_TypeDeallocationParams_t deallocParamsTmp =
+        DDS_TYPE_DEALLOCATION_PARAMS_DEFAULT;
+    struct DDS_TypeDeallocationParams_t * deallocParams =
+        &deallocParamsTmp;
+        
+    if (deallocParams) {} /* To avoid warnings */
+        
+    deallocParamsTmp.delete_pointers = DDS_BOOLEAN_TRUE;
+    deallocParamsTmp.delete_optional_members = DDS_BOOLEAN_TRUE;    
+#*--*##end    
+
+#*--*##if($memoryManager)
+    if (memoryManager == NULL) {
+        return RTI_FALSE;
+    }
+#*--*##end
+
+#*
+Alias copy function calls the copy function of its associated type 'T'.
+In this case, it is not necessary to check for dst and src equal NULL because
+this check will be done in 'T' copy function.
+
+In addition, checking for dst and src equal NULL was leading to dead_error_line 
+errors in Coverity for alias of primitive values.
+*#
+#*--*##if(!$node.constructKind.equals("alias"))
+    if (dst == NULL || src == NULL) {
+        return RTI_FALSE;
+    }
+#*--*##end
+
+#*--*##if($node.constructKind=="enum")
+    return RTICdrType_copyEnum((RTICdrEnum *)dst, (RTICdrEnum *)src);
+
+#*--*##else
+#*----*##if($node.baseTypeFQName)
+#*------*##if($memoryManager)
+    if(!${node.baseTypeFQName}_copy_w_memory_manager(
+            (${node.baseTypeFQName}*)dst,
+            memoryManager,
+            (const ${node.baseTypeFQName}*)src)) {
+#*------*##else
+    if(!${node.baseTypeFQName}_copy(
+            (${node.baseTypeFQName}*)dst,
+            (const ${node.baseTypeFQName}*)src)) {
+#*------*##end
+        return RTI_FALSE;
+    }
+#*----*##end
+
+#*----*##if($node.constructKind=="union")
+#*------*##copyMember($node.unionDiscriminatorMap $memoryManager)
+#*------*##if($node.needsSwitchCode)
+    switch(src->_d) {
+#*------*##end
+#*----*##end
+
+#*----*##copy($node $memoryManager)  ## Call to a macro to copy the members
+
+#*----*##if($node.needsSwitchCode)
+#*------*##if($node.needsDefaultCase)
+    default: 
+	{
+        /* 
+         * Prevents compiler warnings when discriminator is an enum
+         * and unionType does not specify all enumeration members.
+         */ 
+	}
+#*------*##end
+    }
+#*----*##end     
+    return RTI_TRUE;
+#*--*##end    
+#*--*##if($envMap.allocateWithNew)
+    } catch (const std::bad_alloc&) {
+        return RTI_FALSE;
+    }
+#*--*##end
+}
+#end
+
+#macro (defineFinalizeWParams $node__ $memoryManager__)
+#*--*##if($memoryManager__)
+#set( $memoryManagerSuffix = "_w_memory_manager" )
+#*--*##else
+#set( $memoryManagerSuffix = "" )
+#*--*##end
+
+void ${node__.nativeFQNameInModule}_finalize_w_params${memoryManagerSuffix}(
+        ${node__.nativeFQNameInModule} *sample,
+        const struct DDS_TypeDeallocationParams_t *deallocParams)
+{
+    if (sample==NULL) {
+        return;
+    }
+
+    if (deallocParams == NULL) {
+        return;
+    }
+
+#*--*##if($node__.baseTypeFQName)
+    ${node__.baseTypeFQName}_finalize_w_params${memoryManagerSuffix}(
+            (${node__.baseTypeFQName}*) sample,
+            deallocParams);
+#*--*##end
+   
+#*--*##finalize($node__.memberFieldMapList $memoryManager__)
+}
+#end
+
+#macro (defineFinalizeEx $node__ $memoryManager__)
+#*--*##if($memoryManager__)
+#set( $memoryManagerSuffix = "_w_memory_manager" )
+#*--*##else
+#set( $memoryManagerSuffix = "" )
+#*--*##end
+
+void ${node__.nativeFQNameInModule}_finalize_ex${memoryManagerSuffix}(
+        ${node__.nativeFQNameInModule} *sample,
+        RTIBool deletePointers)
+{
+    struct DDS_TypeDeallocationParams_t deallocParams =
+            DDS_TYPE_DEALLOCATION_PARAMS_DEFAULT;
+
+    if (sample==NULL) {
+        return;
+    } 
+    
+    deallocParams.delete_pointers = (DDS_Boolean)deletePointers;
+
+    ${node__.nativeFQName}_finalize_w_params${memoryManagerSuffix}(
+            sample,
+            &deallocParams);
+}
+#end
+
+#macro (defineFinalize $node__ $memoryManager__)
+#*--*##if($memoryManager__)
+#set( $memoryManagerSuffix = "_w_memory_manager" )
+#*--*##else
+#set( $memoryManagerSuffix = "" )
+#*--*##end
+
+void ${node__.nativeFQNameInModule}_finalize${memoryManagerSuffix}(
+    ${node__.nativeFQNameInModule}* sample)
+{  
+#*--*##if($node__.constructKind!="enum")
+    ${node__.nativeFQName}_finalize_ex${memoryManagerSuffix}(
+            sample, 
+            RTI_TRUE);
+#*--*##else
+    if (sample==NULL) {
+        return;
+    }
+#*--*##end
+}
+#end
+
+##------------------------------------------------------------------------------
+## Macro to generate a PRESTypePluginDefaultEndpointData
+##------------------------------------------------------------------------------
+
+#macro(createEndpointData $node)
+struct PRESTypePluginDefaultEndpointData epd;
+struct PRESTypePluginDefaultParticipantData pd;
+struct PRESTypePlugin plugin;
+struct RTIXCdrTypePluginProgramContext defaultProgramContext =
+        RTIXCdrTypePluginProgramContext_INTIALIZER;
+
+RTIOsapiMemory_zero(&epd, sizeof(struct PRESTypePluginDefaultEndpointData));
+epd.programContext = defaultProgramContext;
+epd._participantData = &pd;
+epd.typePlugin = &plugin;
+epd.programContext.endpointPluginData = &epd;
+plugin.typeCode = (struct RTICdrTypeCode *)
+        ${node.nativeFQNameInModule}_get_typecode();
+pd.programs = ${node.nativeFQNameInModule}Plugin_get_programs();
+#end
+
+##*****************************************************************************
+## Macro to define the sequence of a type
+##*****************************************************************************
+
+#macro(defineTypeSeq 
+            $node__
+            $typeNativeFQNameInModule__
+            $typeSeq__)
+#*--*##if($node__.constructKind=="alias" && $node__.isBaseArray)
+#*----*##if($envMap.generateMonitoringCode)
+DDS_SEQUENCE_NO_GET_W_MEMORY_MANAGER(
+        ${typeSeq__}, 
+        ${typeNativeFQNameInModule__});
+#*----*##else
+DDS_SEQUENCE_NO_GET(${typeSeq__}, ${typeNativeFQNameInModule__});
+#*----*##end
+#*--*##else
+#*----*##if($node__.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp"))
+DDS_SEQUENCE_FLAT_DATA(${typeSeq__}, ${typeNativeFQNameInModule__});
+#*----*##else
+#*------*##if (!$node__.isAggregationType || $node__.generateSequenceCode)
+#*--------*##if($envMap.generateMonitoringCode)
+DDS_SEQUENCE_W_MEMORY_MANAGER(
+         ${typeSeq__}, 
+         ${typeNativeFQNameInModule__});
+#*--------*##else
+DDS_SEQUENCE(${typeSeq__}, ${typeNativeFQNameInModule__});
+#*--------*##end
+#*------*##end
+#*----*##end
+#*--*##end
+#end

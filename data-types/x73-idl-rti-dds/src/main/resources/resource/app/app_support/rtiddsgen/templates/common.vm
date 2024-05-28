@@ -1,0 +1,64 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##========================================================================
+
+## This method evaluates the Velocity template laguage string argument and trims
+## the whitespace from the result.
+## NOTE: The trailing carriage return is also trimmed.
+#macro( evaluateAndTrim $vtl )
+#set($output=$vtl)
+#evaluate($output.trim())
+#end
+
+## This method logs error messages
+#macro( error $message )
+$envMap.logger.error($message)
+#end
+
+## This method logs error messages
+#macro( warn $message )
+$envMap.logger.warn($message)
+#end
+
+## This method logs info messages
+#macro( info $message )
+#if($envMap.logger.isInfoEnabled())
+$envMap.logger.info($message)
+#end ## if
+#end
+
+## This method logs debug messages
+#macro( debug $message )
+#if($envMap.logger.isDebugEnabled())
+$envMap.logger.debug($message)
+#end ## if
+#end
+
+## This method logs trace messages
+#macro( trace $message )
+#if($envMap.logger.isTraceEnabled())
+$envMap.logger.trace($message)
+#end ## if
+#end
+
+#macro (buildProjectName)
+#if(${global.idlFileName})
+${global.idlFileName}_${projectName}#else 
+${global.execNames}#end
+#end
+##
+#macro (buildArchitectureMakefileName)
+#if(${global.idlFileName})
+${global.idlFileName}_${global.architectureName}#else 
+${global.execNames}_${global.architectureName}#end
+#end

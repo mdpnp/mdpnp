@@ -32,10 +32,12 @@ ear {
 }
 
 dependencies {
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-  compile group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
-  compile group: 'org.connectopensource', name: 'CONNECTCommonTypesLib', version: '4.0.0'
-  compile group: 'org.connectopensource', name: 'DocumentSubmissionCore', version: '4.0.0'
+  implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  implementation group: 'org.apache.cxf', name: 'cxf-bundle', version: '2.7.1'
+  implementation group: 'org.connectopensource', name: 'CONNECTCommonTypesLib', version: '4.0.0'
+  implementation group: 'org.connectopensource', name: 'DocumentSubmissionCore', version: '4.0.0'
+  testImplementation("junit:junit:4.13.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
 
   // earlib dependencies
   earlib group: 'org.springframework', name: 'spring-web', version: '3.0.7.RELEASE'
@@ -48,5 +50,8 @@ dependencies {
   // include the war in the deployment of the ear
   deploy files(war.archivePath)
 
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+test {
+	useJUnitPlatform()
 }

@@ -1,8 +1,13 @@
+/**
+ * 
+ */
 package org.mdpnp.apps.testapp.vital;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.sun.javafx.util.Utils;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -11,6 +16,7 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.CssMetaData;
 import javafx.css.PseudoClass;
 import javafx.css.StyleOrigin;
@@ -20,156 +26,28 @@ import javafx.css.StyleableDoubleProperty;
 import javafx.css.StyleableIntegerProperty;
 import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleableProperty;
+import javafx.css.converter.BooleanConverter;
+import javafx.css.converter.EnumConverter;
+import javafx.css.converter.SizeConverter;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.control.Slider;
-
-import com.sun.javafx.css.converters.BooleanConverter;
-import com.sun.javafx.css.converters.EnumConverter;
-import com.sun.javafx.css.converters.SizeConverter;
-import com.sun.javafx.util.Utils;
+import javafx.util.StringConverter;
 
 /**
- * The RangeSlider control is simply a JavaFX {@link Slider} control with support
- * for two 'thumbs', rather than one. A thumb is the non-technical name for the
- * draggable area inside the Slider / RangeSlider that allows for a value to be
- * set. 
- * 
- * <p>Because the RangeSlider has two thumbs, it also has a few additional rules
- * and user interactions:
- * 
- * <ol>
- *   <li>The 'lower value' thumb can not move past the 'higher value' thumb.
- *   <li>Whereas the {@link Slider} control only has one 
- *       {@link Slider#valueProperty() value} property, the RangeSlider has a 
- *       {@link #lowValueProperty() low value} and a 
- *       {@link #highValueProperty() high value} property, not surprisingly 
- *       represented by the 'low value' and 'high value' thumbs.
- *   <li>The area between the low and high values represents the allowable range.
- *       For example, if the low value is 2 and the high value is 8, then the
- *       allowable range is between 2 and 8. 
- *   <li>The allowable range area is rendered differently. This area is able to 
- *       be dragged with mouse / touch input to allow for the entire range to
- *       be modified. For example, following on from the previous example of the
- *       allowable range being between 2 and 8, if the user drags the range bar
- *       to the right, the low value will adjust to 3, and the high value 9, and
- *       so on until the user stops adjusting. 
- * </ol>
- * 
- * <h3>Screenshots</h3>
- * Because the RangeSlider supports both horizontal and vertical 
- * {@link #orientationProperty() orientation}, there are two screenshots below:
- * 
- * <table border="0">
- *   <tr>
- *     <td width="75" valign="center"><strong>Horizontal:</strong></td>
- *     <td><img src="rangeSlider-horizontal.png"></td>
- *   </tr>
- *   <tr>
- *     <td width="75" valign="top"><strong>Vertical:</strong></td>
- *     <td><img src="rangeSlider-vertical.png"></td>
- *   </tr>
- * </table>
- * 
- * <h3>Code Samples</h3>
- * Instantiating a RangeSlider is simple. The first decision is to decide whether
- * a horizontal or a vertical track is more appropriate. By default RangeSlider
- * instances are horizontal, but this can be changed by setting the 
- * {@link #orientationProperty() orientation} property.
- * 
- * <p>Once the orientation is determined, the next most important decision is
- * to determine what the {@link #minProperty() min} / {@link #maxProperty() max}
- * and default {@link #lowValueProperty() low} / {@link #highValueProperty() high}
- * values are. The min / max values represent the smallest and largest legal
- * values for the thumbs to be set to, whereas the low / high values represent
- * where the thumbs are currently, within the bounds of the min / max values.
- * Because all four values are required in all circumstances, they are all
- * required parameters to instantiate a RangeSlider: the constructor takes
- * four doubles, representing min, max, lowValue and highValue (in that order).
- * 
- * <p>For example, here is a simple horizontal RangeSlider that has a minimum
- * value of 0, a maximum value of 100, a low value of 10 and a high value of 90: 
- * 
- * <pre>{@code final RangeSlider hSlider = new RangeSlider(0, 100, 10, 90);}</pre>
- * 
- * <p>To configure the hSlider to look like the RangeSlider in the horizontal
- * RangeSlider screenshot above only requires a few additional properties to be 
- * set:
- * 
- * <pre>
- * {@code
- * final RangeSlider hSlider = new RangeSlider(0, 100, 10, 90);
- * hSlider.setShowTickMarks(true);
- * hSlider.setShowTickLabels(true);
- * hSlider.setBlockIncrement(10);}</pre>
- * 
- * <p>To create a vertical slider, simply do the following:
- * 
- * <pre>
- * {@code
- * final RangeSlider vSlider = new RangeSlider(0, 200, 30, 150);
- * vSlider.setOrientation(Orientation.VERTICAL);}</pre>
- * 
- * <p>This code creates a RangeSlider with a min value of 0, a max value of 200,
- * a low value of 30, and a high value of 150.
- * 
- * @see Slider
+ * @author simon
+ *
  */
 public class MultiRangeSlider extends Control {
-    
-    /***************************************************************************
-     *                                                                         *
-     * Constructors                                                            *
-     *                                                                         *
-     **************************************************************************/
-    
-    /**
-     * Creates a new RangeSlider instance using default values of 0.0, 0.25, 0.75
-     * and 1.0 for min/lowValue/highValue/max, respectively. 
-     */
-    public MultiRangeSlider() {
-        this(0, 1.0, 0.20, 0.40, 0.60, 0.80);
-    }
 
-    /**
-     * Instantiates a default, horizontal RangeSlider with the specified 
-     * min/max/low/high values.
-     * 
-     * @param min The minimum allowable value that the RangeSlider will allow.
-     * @param max The maximum allowable value that the RangeSlider will allow.
-     * @param lowValue The initial value for the low value in the RangeSlider.
-     * @param highValue The initial value for the high value in the RangeSlider.
-     */
-    public MultiRangeSlider(double min, double max, double lowestValue, double lowerValue, double higherValue, double highestValue) {
-        getStyleClass().setAll(DEFAULT_STYLE_CLASS);
-        
-        setMax(max);
-        setMin(min);
-        adjustValues();
-        setLowerValue(lowerValue);
-        setLowestValue(lowestValue);
-        setHigherValue(higherValue);
-        setHighestValue(highestValue);
-    }
-    
-//    /**
-//     * {@inheritDoc}
-//     */
-//    @Override protected String getUserAgentStylesheet() {
-//        return RangeSlider.class.getResource("rangeslider.css").toExternalForm(); //$NON-NLS-1$
-//    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override protected Skin<?> createDefaultSkin() {
-        return new MultiRangeSliderSkin(this);
-    }
-  
-    
-    
-    /***************************************************************************
+	/**
+	 * 
+	 */
+	public MultiRangeSlider() {
+		// TODO Auto-generated constructor stub
+	}
+	
+	/***************************************************************************
      *                                                                         *
      * New properties (over and above what is in Slider)                       *
      *                                                                         *
@@ -421,8 +299,325 @@ public class MultiRangeSlider extends Control {
         return highestValueChanging == null ? false : highestValueChanging.get();
     }
     
+    /**
+     * 
+     */
+    private DoubleProperty majorTickUnit;
+    
+    /**
+     * Sets the unit distance between major tick marks.
+     * @param value 
+     * @see #majorTickUnitProperty() 
+     */
+    public final void setMajorTickUnit(double value) {
+        if (value <= 0) {
+            throw new IllegalArgumentException("MajorTickUnit cannot be less than or equal to 0."); //$NON-NLS-1$
+        }
+        majorTickUnitProperty().set(value);
+    }
+
+    /**
+     * @see #majorTickUnitProperty() 
+     * @return The unit distance between major tick marks.
+     */
+    public final double getMajorTickUnit() {
+        return majorTickUnit == null ? 25 : majorTickUnit.get();
+    }
+
+    /**
+     * The unit distance between major tick marks. For example, if
+     * the {@link #minProperty() min} is 0 and the {@link #maxProperty() max} is 100 and the
+     * {@link #majorTickUnitProperty() majorTickUnit} is 25, then there would be 5 tick marks: one at
+     * position 0, one at position 25, one at position 50, one at position
+     * 75, and a final one at position 100.
+     * <p>
+     * This value should be positive and should be a value less than the
+     * span. Out of range values are essentially the same as disabling
+     * tick marks.
+     * 
+     * @return A DoubleProperty
+     */
+    public final DoubleProperty majorTickUnitProperty() {
+        if (majorTickUnit == null) {
+            majorTickUnit = new StyleableDoubleProperty(25) {
+                @Override public void invalidated() {
+                    if (get() <= 0) {
+                        throw new IllegalArgumentException("MajorTickUnit cannot be less than or equal to 0."); //$NON-NLS-1$
+                    }
+                }
+                
+                @Override public CssMetaData<? extends Styleable, Number> getCssMetaData() {
+                    return StyleableProperties.MAJOR_TICK_UNIT;
+                }
+
+                @Override public Object getBean() {
+                    return MultiRangeSlider.this;
+                }
+
+                @Override public String getName() {
+                    return "majorTickUnit"; //$NON-NLS-1$
+                }
+            };
+        }
+        return majorTickUnit;
+    }
+    /**
+     * 
+     */
+    private IntegerProperty minorTickCount;
+    
+    /**
+     * Sets the number of minor ticks to place between any two major ticks.
+     * @param value 
+     * @see #minorTickCountProperty() 
+     */
+    public final void setMinorTickCount(int value) {
+        minorTickCountProperty().set(value);
+    }
+
+    /**
+     * @see #minorTickCountProperty() 
+     * @return The number of minor ticks to place between any two major ticks.
+     */
+    public final int getMinorTickCount() {
+        return minorTickCount == null ? 3 : minorTickCount.get();
+    }
+
+    /**
+     * The number of minor ticks to place between any two major ticks. This
+     * number should be positive or zero. Out of range values will disable
+     * disable minor ticks, as will a value of zero.
+     * @return An InterProperty
+     */
+    public final IntegerProperty minorTickCountProperty() {
+        if (minorTickCount == null) {
+            minorTickCount = new StyleableIntegerProperty(3) {
+                @Override public CssMetaData<? extends Styleable, Number> getCssMetaData() {
+                    return MultiRangeSlider.StyleableProperties.MINOR_TICK_COUNT;
+                }
+
+                @Override public Object getBean() {
+                    return MultiRangeSlider.this;
+                }
+
+                @Override public String getName() {
+                    return "minorTickCount"; //$NON-NLS-1$
+                }
+            };
+        }
+        return minorTickCount;
+    }
+    
+    /**
+     * A function for formatting the label for a major tick. The number
+     * representing the major tick will be passed to the function. If this
+     * function is not specified, then a default function will be used by
+     * the {@link Skin} implementation.
+     */
+    private ObjectProperty<StringConverter<Double>> labelFormatter;
+
+    public final void setLabelFormatter(StringConverter<Double> value) {
+        labelFormatterProperty().set(value);
+    }
+
+    public final StringConverter<Double> getLabelFormatter() {
+        return labelFormatter == null ? null : labelFormatter.get();
+    }
+
+    public final ObjectProperty<StringConverter<Double>> labelFormatterProperty() {
+        if (labelFormatter == null) {
+            labelFormatter = new SimpleObjectProperty<StringConverter<Double>>(this, "labelFormatter");
+        }
+        return labelFormatter;
+    }
     
     
+    /**
+    *
+    */
+   private DoubleProperty blockIncrement;
+   
+   /**
+    * Sets the amount by which to adjust the slider if the track of the slider is
+    * clicked.
+    * @param value 
+    * @see #blockIncrementProperty() 
+    */
+   public final void setBlockIncrement(double value) {
+       blockIncrementProperty().set(value);
+   }
+
+   /**
+    * @see #blockIncrementProperty() 
+    * @return The amount by which to adjust the slider if the track of the slider is
+    * clicked.
+    */
+   public final double getBlockIncrement() {
+       return blockIncrement == null ? 10 : blockIncrement.get();
+   }
+
+   /**
+    *  The amount by which to adjust the slider if the track of the slider is
+    * clicked. This is used when manipulating the slider position using keys. If
+    * {@link #snapToTicksProperty() snapToTicks} is true then the nearest tick mark to the adjusted
+    * value will be used.
+    * @return A DoubleProperty
+    */
+   public final DoubleProperty blockIncrementProperty() {
+       if (blockIncrement == null) {
+           blockIncrement = new StyleableDoubleProperty(10) {
+               @Override public CssMetaData<? extends Styleable, Number> getCssMetaData() {
+                   return MultiRangeSlider.StyleableProperties.BLOCK_INCREMENT;
+               }
+
+               @Override public Object getBean() {
+                   return MultiRangeSlider.this;
+               }
+
+               @Override public String getName() {
+                   return "blockIncrement"; //$NON-NLS-1$
+               }
+           };
+       }
+       return blockIncrement;
+   }
+   
+   /**
+    * 
+    */
+   private ObjectProperty<Orientation> orientation;
+   
+   /**
+    * Sets the orientation of the Slider.
+    * @param value 
+    */
+   public final void setOrientation(Orientation value) {
+       orientationProperty().set(value);
+   }
+
+   /**
+    * 
+    * @return The orientation of the Slider. {@link Orientation#HORIZONTAL} is 
+    * returned by default.
+    */
+   public final Orientation getOrientation() {
+       return orientation == null ? Orientation.HORIZONTAL : orientation.get();
+   }
+
+   /**
+    * The orientation of the {@code Slider} can either be horizontal
+    * or vertical.
+    * @return An Objectproperty representing the orientation of the Slider.
+    */
+   public final ObjectProperty<Orientation> orientationProperty() {
+       if (orientation == null) {
+           orientation = new StyleableObjectProperty<Orientation>(Orientation.HORIZONTAL) {
+               @Override protected void invalidated() {
+                   final boolean vertical = (get() == Orientation.VERTICAL);
+                   pseudoClassStateChanged(VERTICAL_PSEUDOCLASS_STATE, vertical);
+                   pseudoClassStateChanged(HORIZONTAL_PSEUDOCLASS_STATE, ! vertical);
+               }
+               
+               @Override public CssMetaData<? extends Styleable, Orientation> getCssMetaData() {
+                   return MultiRangeSlider.StyleableProperties.ORIENTATION;
+               }
+
+               @Override public Object getBean() {
+                   return MultiRangeSlider.this;
+               }
+
+               @Override public String getName() {
+                   return "orientation"; //$NON-NLS-1$
+               }
+           };
+       }
+       return orientation;
+   }
+   
+   private BooleanProperty showTickLabels;
+   
+   /**
+    * Sets whether labels of tick marks should be shown or not.
+    * @param value 
+    */
+   public final void setShowTickLabels(boolean value) {
+       showTickLabelsProperty().set(value);
+   }
+
+   /**
+    * @return whether labels of tick marks are being shown.
+    */
+   public final boolean isShowTickLabels() {
+       return showTickLabels == null ? false : showTickLabels.get();
+   }
+
+   /**
+    * Indicates that the labels for tick marks should be shown. Typically a
+    * {@link Skin} implementation will only show labels if
+    * {@link #showTickMarksProperty() showTickMarks} is also true.
+    * @return A BooleanProperty
+    */
+   public final BooleanProperty showTickLabelsProperty() {
+       if (showTickLabels == null) {
+           showTickLabels = new StyleableBooleanProperty(false) {
+               @Override public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
+                   return MultiRangeSlider.StyleableProperties.SHOW_TICK_LABELS;
+               }
+
+               @Override public Object getBean() {
+                   return MultiRangeSlider.this;
+               }
+
+               @Override public String getName() {
+                   return "showTickLabels"; //$NON-NLS-1$
+               }
+           };
+       }
+       return showTickLabels;
+   }
+   /**
+    * 
+    */
+   private BooleanProperty showTickMarks;
+   
+   /**
+    * Specifies whether the {@link Skin} implementation should show tick marks.
+    * @param value 
+    */
+   public final void setShowTickMarks(boolean value) {
+       showTickMarksProperty().set(value);
+   }
+
+   /**
+    * 
+    * @return whether the {@link Skin} implementation should show tick marks.
+    */
+   public final boolean isShowTickMarks() {
+       return showTickMarks == null ? false : showTickMarks.get();
+   }
+
+   /**
+    * @return A BooleanProperty that specifies whether the {@link Skin} 
+    * implementation should show tick marks.
+    */
+   public final BooleanProperty showTickMarksProperty() {
+       if (showTickMarks == null) {
+           showTickMarks = new StyleableBooleanProperty(false) {
+               @Override public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
+                   return MultiRangeSlider.StyleableProperties.SHOW_TICK_MARKS;
+               }
+
+               @Override public Object getBean() {
+                   return MultiRangeSlider.this;
+               }
+
+               @Override public String getName() {
+                   return "showTickMarks"; //$NON-NLS-1$
+               }
+           };
+       }
+       return showTickMarks;
+   }
     
     
     /***************************************************************************
@@ -538,17 +733,9 @@ public class MultiRangeSlider extends Control {
             newValue = newValue <= d2 ? newValue : d2;
             setHighestValue(snapValueToTicks(newValue));
         }
-    }    
-
-    
-    
-    /***************************************************************************
-     *                                                                         *
-     * Properties copied from Slider (and slightly edited)                     *
-     *                                                                         *
-     **************************************************************************/
-    
-    private DoubleProperty max;
+    }
+	
+	private DoubleProperty max;
     
     /**
      * Sets the maximum value for this Slider.
@@ -687,308 +874,6 @@ public class MultiRangeSlider extends Control {
         }
         return snapToTicks;
     }
-    /**
-     * 
-     */
-    private DoubleProperty majorTickUnit;
-    
-    /**
-     * Sets the unit distance between major tick marks.
-     * @param value 
-     * @see #majorTickUnitProperty() 
-     */
-    public final void setMajorTickUnit(double value) {
-        if (value <= 0) {
-            throw new IllegalArgumentException("MajorTickUnit cannot be less than or equal to 0."); //$NON-NLS-1$
-        }
-        majorTickUnitProperty().set(value);
-    }
-
-    /**
-     * @see #majorTickUnitProperty() 
-     * @return The unit distance between major tick marks.
-     */
-    public final double getMajorTickUnit() {
-        return majorTickUnit == null ? 25 : majorTickUnit.get();
-    }
-
-    /**
-     * The unit distance between major tick marks. For example, if
-     * the {@link #minProperty() min} is 0 and the {@link #maxProperty() max} is 100 and the
-     * {@link #majorTickUnitProperty() majorTickUnit} is 25, then there would be 5 tick marks: one at
-     * position 0, one at position 25, one at position 50, one at position
-     * 75, and a final one at position 100.
-     * <p>
-     * This value should be positive and should be a value less than the
-     * span. Out of range values are essentially the same as disabling
-     * tick marks.
-     * 
-     * @return A DoubleProperty
-     */
-    public final DoubleProperty majorTickUnitProperty() {
-        if (majorTickUnit == null) {
-            majorTickUnit = new StyleableDoubleProperty(25) {
-                @Override public void invalidated() {
-                    if (get() <= 0) {
-                        throw new IllegalArgumentException("MajorTickUnit cannot be less than or equal to 0."); //$NON-NLS-1$
-                    }
-                }
-                
-                @Override public CssMetaData<? extends Styleable, Number> getCssMetaData() {
-                    return StyleableProperties.MAJOR_TICK_UNIT;
-                }
-
-                @Override public Object getBean() {
-                    return MultiRangeSlider.this;
-                }
-
-                @Override public String getName() {
-                    return "majorTickUnit"; //$NON-NLS-1$
-                }
-            };
-        }
-        return majorTickUnit;
-    }
-    /**
-     * 
-     */
-    private IntegerProperty minorTickCount;
-    
-    /**
-     * Sets the number of minor ticks to place between any two major ticks.
-     * @param value 
-     * @see #minorTickCountProperty() 
-     */
-    public final void setMinorTickCount(int value) {
-        minorTickCountProperty().set(value);
-    }
-
-    /**
-     * @see #minorTickCountProperty() 
-     * @return The number of minor ticks to place between any two major ticks.
-     */
-    public final int getMinorTickCount() {
-        return minorTickCount == null ? 3 : minorTickCount.get();
-    }
-
-    /**
-     * The number of minor ticks to place between any two major ticks. This
-     * number should be positive or zero. Out of range values will disable
-     * disable minor ticks, as will a value of zero.
-     * @return An InterProperty
-     */
-    public final IntegerProperty minorTickCountProperty() {
-        if (minorTickCount == null) {
-            minorTickCount = new StyleableIntegerProperty(3) {
-                @Override public CssMetaData<? extends Styleable, Number> getCssMetaData() {
-                    return MultiRangeSlider.StyleableProperties.MINOR_TICK_COUNT;
-                }
-
-                @Override public Object getBean() {
-                    return MultiRangeSlider.this;
-                }
-
-                @Override public String getName() {
-                    return "minorTickCount"; //$NON-NLS-1$
-                }
-            };
-        }
-        return minorTickCount;
-    }
-    /**
-     *
-     */
-    private DoubleProperty blockIncrement;
-    
-    /**
-     * Sets the amount by which to adjust the slider if the track of the slider is
-     * clicked.
-     * @param value 
-     * @see #blockIncrementProperty() 
-     */
-    public final void setBlockIncrement(double value) {
-        blockIncrementProperty().set(value);
-    }
-
-    /**
-     * @see #blockIncrementProperty() 
-     * @return The amount by which to adjust the slider if the track of the slider is
-     * clicked.
-     */
-    public final double getBlockIncrement() {
-        return blockIncrement == null ? 10 : blockIncrement.get();
-    }
-
-    /**
-     *  The amount by which to adjust the slider if the track of the slider is
-     * clicked. This is used when manipulating the slider position using keys. If
-     * {@link #snapToTicksProperty() snapToTicks} is true then the nearest tick mark to the adjusted
-     * value will be used.
-     * @return A DoubleProperty
-     */
-    public final DoubleProperty blockIncrementProperty() {
-        if (blockIncrement == null) {
-            blockIncrement = new StyleableDoubleProperty(10) {
-                @Override public CssMetaData<? extends Styleable, Number> getCssMetaData() {
-                    return MultiRangeSlider.StyleableProperties.BLOCK_INCREMENT;
-                }
-
-                @Override public Object getBean() {
-                    return MultiRangeSlider.this;
-                }
-
-                @Override public String getName() {
-                    return "blockIncrement"; //$NON-NLS-1$
-                }
-            };
-        }
-        return blockIncrement;
-    }
-    
-    /**
-     * 
-     */
-    private ObjectProperty<Orientation> orientation;
-    
-    /**
-     * Sets the orientation of the Slider.
-     * @param value 
-     */
-    public final void setOrientation(Orientation value) {
-        orientationProperty().set(value);
-    }
-
-    /**
-     * 
-     * @return The orientation of the Slider. {@link Orientation#HORIZONTAL} is 
-     * returned by default.
-     */
-    public final Orientation getOrientation() {
-        return orientation == null ? Orientation.HORIZONTAL : orientation.get();
-    }
-
-    /**
-     * The orientation of the {@code Slider} can either be horizontal
-     * or vertical.
-     * @return An Objectproperty representing the orientation of the Slider.
-     */
-    public final ObjectProperty<Orientation> orientationProperty() {
-        if (orientation == null) {
-            orientation = new StyleableObjectProperty<Orientation>(Orientation.HORIZONTAL) {
-                @Override protected void invalidated() {
-                    final boolean vertical = (get() == Orientation.VERTICAL);
-                    pseudoClassStateChanged(VERTICAL_PSEUDOCLASS_STATE, vertical);
-                    pseudoClassStateChanged(HORIZONTAL_PSEUDOCLASS_STATE, ! vertical);
-                }
-                
-                @Override public CssMetaData<? extends Styleable, Orientation> getCssMetaData() {
-                    return MultiRangeSlider.StyleableProperties.ORIENTATION;
-                }
-
-                @Override public Object getBean() {
-                    return MultiRangeSlider.this;
-                }
-
-                @Override public String getName() {
-                    return "orientation"; //$NON-NLS-1$
-                }
-            };
-        }
-        return orientation;
-    }
-    
-    private BooleanProperty showTickLabels;
-    
-    /**
-     * Sets whether labels of tick marks should be shown or not.
-     * @param value 
-     */
-    public final void setShowTickLabels(boolean value) {
-        showTickLabelsProperty().set(value);
-    }
-
-    /**
-     * @return whether labels of tick marks are being shown.
-     */
-    public final boolean isShowTickLabels() {
-        return showTickLabels == null ? false : showTickLabels.get();
-    }
-
-    /**
-     * Indicates that the labels for tick marks should be shown. Typically a
-     * {@link Skin} implementation will only show labels if
-     * {@link #showTickMarksProperty() showTickMarks} is also true.
-     * @return A BooleanProperty
-     */
-    public final BooleanProperty showTickLabelsProperty() {
-        if (showTickLabels == null) {
-            showTickLabels = new StyleableBooleanProperty(false) {
-                @Override public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
-                    return MultiRangeSlider.StyleableProperties.SHOW_TICK_LABELS;
-                }
-
-                @Override public Object getBean() {
-                    return MultiRangeSlider.this;
-                }
-
-                @Override public String getName() {
-                    return "showTickLabels"; //$NON-NLS-1$
-                }
-            };
-        }
-        return showTickLabels;
-    }
-    /**
-     * 
-     */
-    private BooleanProperty showTickMarks;
-    
-    /**
-     * Specifies whether the {@link Skin} implementation should show tick marks.
-     * @param value 
-     */
-    public final void setShowTickMarks(boolean value) {
-        showTickMarksProperty().set(value);
-    }
-
-    /**
-     * 
-     * @return whether the {@link Skin} implementation should show tick marks.
-     */
-    public final boolean isShowTickMarks() {
-        return showTickMarks == null ? false : showTickMarks.get();
-    }
-
-    /**
-     * @return A BooleanProperty that specifies whether the {@link Skin} 
-     * implementation should show tick marks.
-     */
-    public final BooleanProperty showTickMarksProperty() {
-        if (showTickMarks == null) {
-            showTickMarks = new StyleableBooleanProperty(false) {
-                @Override public CssMetaData<? extends Styleable, Boolean> getCssMetaData() {
-                    return MultiRangeSlider.StyleableProperties.SHOW_TICK_MARKS;
-                }
-
-                @Override public Object getBean() {
-                    return MultiRangeSlider.this;
-                }
-
-                @Override public String getName() {
-                    return "showTickMarks"; //$NON-NLS-1$
-                }
-            };
-        }
-        return showTickMarks;
-    }
-    
-
-    
-     /***************************************************************************
-     *                                                                         *
-     * Private methods                                                         *
-     *                                                                         *
-     **************************************************************************/    
     
     /**
      * Ensures that min is always < max, that value is always
@@ -1078,164 +963,171 @@ public class MultiRangeSlider extends Control {
         } else if (getHighestValue() < getHigherValue() && (getHigherValue() >= getMin() && getHigherValue() <= getMax())) {
             setHighestValue(Utils.clamp(getHigherValue(), getHighestValue(), getMax()));
         }
-    }    
-
-    
+    }
     
     /**************************************************************************
-    *                                                                         *
-    * Stylesheet Handling                                                     *
-    *                                                                         *
-    **************************************************************************/
-    
-    private static final String DEFAULT_STYLE_CLASS = "multirange-slider"; //$NON-NLS-1$
-    
-    private static class StyleableProperties {
-        private static final CssMetaData<MultiRangeSlider,Number> BLOCK_INCREMENT =
-            new CssMetaData<MultiRangeSlider,Number>("-fx-block-increment", //$NON-NLS-1$
-                SizeConverter.getInstance(), 10.0) {
+     *                                                                         *
+     * Stylesheet Handling                                                     *
+     *                                                                         *
+     **************************************************************************/
+     
+     private static final String DEFAULT_STYLE_CLASS = "multirange-slider"; //$NON-NLS-1$
+     
+     private static class StyleableProperties {
+         private static final CssMetaData<MultiRangeSlider,Number> BLOCK_INCREMENT =
+             new CssMetaData<MultiRangeSlider,Number>("-fx-block-increment", //$NON-NLS-1$
+                 SizeConverter.getInstance(), 10.0) {
 
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.blockIncrement == null || !n.blockIncrement.isBound();
-            }
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.blockIncrement == null || !n.blockIncrement.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Number> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Number>)n.blockIncrementProperty();
-            }
-        };
-        
-        private static final CssMetaData<MultiRangeSlider,Boolean> SHOW_TICK_LABELS =
-            new CssMetaData<MultiRangeSlider,Boolean>("-fx-show-tick-labels", //$NON-NLS-1$
-                BooleanConverter.getInstance(), Boolean.FALSE) {
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Number> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Number>)n.blockIncrementProperty();
+             }
+         };
+         
+         private static final CssMetaData<MultiRangeSlider,Boolean> SHOW_TICK_LABELS =
+             new CssMetaData<MultiRangeSlider,Boolean>("-fx-show-tick-labels", //$NON-NLS-1$
+                 BooleanConverter.getInstance(), Boolean.FALSE) {
 
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.showTickLabels == null || !n.showTickLabels.isBound();
-            }
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.showTickLabels == null || !n.showTickLabels.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Boolean> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Boolean>)n.showTickLabelsProperty();
-            }
-        };
-                    
-        private static final CssMetaData<MultiRangeSlider,Boolean> SHOW_TICK_MARKS =
-            new CssMetaData<MultiRangeSlider,Boolean>("-fx-show-tick-marks", //$NON-NLS-1$
-                BooleanConverter.getInstance(), Boolean.FALSE) {
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Boolean> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Boolean>)n.showTickLabelsProperty();
+             }
+         };
+                     
+         private static final CssMetaData<MultiRangeSlider,Boolean> SHOW_TICK_MARKS =
+             new CssMetaData<MultiRangeSlider,Boolean>("-fx-show-tick-marks", //$NON-NLS-1$
+                 BooleanConverter.getInstance(), Boolean.FALSE) {
 
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.showTickMarks == null || !n.showTickMarks.isBound();
-            }
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.showTickMarks == null || !n.showTickMarks.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Boolean> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Boolean>)n.showTickMarksProperty();
-            }
-        };
-            
-        private static final CssMetaData<MultiRangeSlider,Boolean> SNAP_TO_TICKS =
-            new CssMetaData<MultiRangeSlider,Boolean>("-fx-snap-to-ticks", //$NON-NLS-1$
-                BooleanConverter.getInstance(), Boolean.FALSE) {
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Boolean> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Boolean>)n.showTickMarksProperty();
+             }
+         };
+             
+         private static final CssMetaData<MultiRangeSlider,Boolean> SNAP_TO_TICKS =
+             new CssMetaData<MultiRangeSlider,Boolean>("-fx-snap-to-ticks", //$NON-NLS-1$
+                 BooleanConverter.getInstance(), Boolean.FALSE) {
 
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.snapToTicks == null || !n.snapToTicks.isBound();
-            }
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.snapToTicks == null || !n.snapToTicks.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Boolean> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Boolean>)n.snapToTicksProperty();
-            }
-        };
-        
-        private static final CssMetaData<MultiRangeSlider,Number> MAJOR_TICK_UNIT =
-            new CssMetaData<MultiRangeSlider,Number>("-fx-major-tick-unit", //$NON-NLS-1$
-                SizeConverter.getInstance(), 25.0) {
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Boolean> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Boolean>)n.snapToTicksProperty();
+             }
+         };
+         
+         private static final CssMetaData<MultiRangeSlider,Number> MAJOR_TICK_UNIT =
+             new CssMetaData<MultiRangeSlider,Number>("-fx-major-tick-unit", //$NON-NLS-1$
+                 SizeConverter.getInstance(), 25.0) {
 
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.majorTickUnit == null || !n.majorTickUnit.isBound();
-            }
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.majorTickUnit == null || !n.majorTickUnit.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Number> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Number>)n.majorTickUnitProperty();
-            }
-        };
-        
-        private static final CssMetaData<MultiRangeSlider,Number> MINOR_TICK_COUNT =
-            new CssMetaData<MultiRangeSlider,Number>("-fx-minor-tick-count", //$NON-NLS-1$
-                SizeConverter.getInstance(), 3.0) {
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Number> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Number>)n.majorTickUnitProperty();
+             }
+         };
+         
+         private static final CssMetaData<MultiRangeSlider,Number> MINOR_TICK_COUNT =
+             new CssMetaData<MultiRangeSlider,Number>("-fx-minor-tick-count", //$NON-NLS-1$
+                 SizeConverter.getInstance(), 3.0) {
 
-            @SuppressWarnings("deprecation")
-            @Override public void set(MultiRangeSlider node, Number value, StyleOrigin origin) {
-                super.set(node, value.intValue(), origin);
-            } 
-            
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.minorTickCount == null || !n.minorTickCount.isBound();
-            }
+             @SuppressWarnings("deprecation")
+             @Override public void set(MultiRangeSlider node, Number value, StyleOrigin origin) {
+                 super.set(node, value.intValue(), origin);
+             } 
+             
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.minorTickCount == null || !n.minorTickCount.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Number> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Number>)n.minorTickCountProperty();
-            }
-        };
-        
-        private static final CssMetaData<MultiRangeSlider,Orientation> ORIENTATION =
-            new CssMetaData<MultiRangeSlider,Orientation>("-fx-orientation", //$NON-NLS-1$
-                new EnumConverter<>(Orientation.class), 
-                Orientation.HORIZONTAL) {
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Number> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Number>)n.minorTickCountProperty();
+             }
+         };
+         
+         private static final CssMetaData<MultiRangeSlider,Orientation> ORIENTATION =
+             new CssMetaData<MultiRangeSlider,Orientation>("-fx-orientation", //$NON-NLS-1$
+                 new EnumConverter<>(Orientation.class), 
+                 Orientation.HORIZONTAL) {
 
-            @Override public Orientation getInitialValue(MultiRangeSlider node) {
-                // A vertical Slider should remain vertical 
-                return node.getOrientation();
-            }
+             @Override public Orientation getInitialValue(MultiRangeSlider node) {
+                 // A vertical Slider should remain vertical 
+                 return node.getOrientation();
+             }
 
-            @Override public boolean isSettable(MultiRangeSlider n) {
-                return n.orientation == null || !n.orientation.isBound();
-            }
+             @Override public boolean isSettable(MultiRangeSlider n) {
+                 return n.orientation == null || !n.orientation.isBound();
+             }
 
-            @SuppressWarnings("unchecked")
-            @Override public StyleableProperty<Orientation> getStyleableProperty(MultiRangeSlider n) {
-                return (StyleableProperty<Orientation>)n.orientationProperty();
-            }
-        };
+             @SuppressWarnings("unchecked")
+             @Override public StyleableProperty<Orientation> getStyleableProperty(MultiRangeSlider n) {
+                 return (StyleableProperty<Orientation>)n.orientationProperty();
+             }
+         };
 
-        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-        static {
-            final List<CssMetaData<? extends Styleable, ?>> styleables = 
-                    new ArrayList<>(Control.getClassCssMetaData());
-            styleables.add(BLOCK_INCREMENT);
-            styleables.add(SHOW_TICK_LABELS);
-            styleables.add(SHOW_TICK_MARKS);
-            styleables.add(SNAP_TO_TICKS);
-            styleables.add(MAJOR_TICK_UNIT);
-            styleables.add(MINOR_TICK_COUNT);
-            styleables.add(ORIENTATION);
+         private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+         static {
+             final List<CssMetaData<? extends Styleable, ?>> styleables = 
+                     new ArrayList<>(Control.getClassCssMetaData());
+             styleables.add(BLOCK_INCREMENT);
+             styleables.add(SHOW_TICK_LABELS);
+             styleables.add(SHOW_TICK_MARKS);
+             styleables.add(SNAP_TO_TICKS);
+             styleables.add(MAJOR_TICK_UNIT);
+             styleables.add(MINOR_TICK_COUNT);
+             styleables.add(ORIENTATION);
 
-            STYLEABLES = Collections.unmodifiableList(styleables);
-        }
-    }
-    
+             STYLEABLES = Collections.unmodifiableList(styleables);
+         }
+     }
+     
 
-    /**
-     * @return The CssMetaData associated with this class, which may include the
-     * CssMetaData of its super classes.
-     */
-    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.STYLEABLES;
-    }
+     /**
+      * @return The CssMetaData associated with this class, which may include the
+      * CssMetaData of its super classes.
+      */
+     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+         return StyleableProperties.STYLEABLES;
+     }
 
-    /**
-     * RT-19263
-     * @deprecated This is an experimental API that is not intended for general use and is subject to change in future versions
-     */
-    @Deprecated
-    @Override protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
-        return getClassCssMetaData();
-    }
+     /**
+      * RT-19263
+      * @deprecated This is an experimental API that is not intended for general use and is subject to change in future versions
+      */
+     @Deprecated
+     @Override protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+         return getClassCssMetaData();
+     }
 
-    private static final PseudoClass VERTICAL_PSEUDOCLASS_STATE =
-            PseudoClass.getPseudoClass("vertical"); //$NON-NLS-1$
-    private static final PseudoClass HORIZONTAL_PSEUDOCLASS_STATE =
-            PseudoClass.getPseudoClass("horizontal"); //$NON-NLS-1$
+     private static final PseudoClass VERTICAL_PSEUDOCLASS_STATE =
+             PseudoClass.getPseudoClass("vertical"); //$NON-NLS-1$
+     private static final PseudoClass HORIZONTAL_PSEUDOCLASS_STATE =
+             PseudoClass.getPseudoClass("horizontal"); //$NON-NLS-1$
+
+	@Override
+	protected Skin<?> createDefaultSkin() {
+		return new MultiRangeSliderSkin(this);
+	}
+
+     
+     
+     
 }

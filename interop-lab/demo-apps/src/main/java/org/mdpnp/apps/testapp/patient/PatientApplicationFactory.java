@@ -108,7 +108,7 @@ public class PatientApplicationFactory implements IceApplicationProvider {
 
         @Override
         public void destroy() throws Exception {
-            ctx.destroy();
+            ctx.close();
         }
 
     }

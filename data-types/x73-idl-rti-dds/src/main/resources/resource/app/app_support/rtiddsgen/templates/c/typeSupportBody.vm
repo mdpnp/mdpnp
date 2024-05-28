@@ -1,0 +1,250 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##5.2.0 26jan14,ajm CODEGENII-245 Adding getTypeCode method to TypeSupport
+##2.2.0,08sep14,ajm CODEGENII-359 Add APIs to serialize a sample to a CDR buffer and to 
+## deserialize from a CDR buffer
+##2.2,11feb14,ajm CODEGENII-181 Change the generated code to avoid the #ifdef __cplusplus
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,25mar13,ajm Adding support for enums and inheritance in .Net. We do check now
+## it we are working with namespaces because we introduce always the module in the list of nodes
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,10oct11,ajm Adding union support
+##10a,29sep11,ajm adding forward declaration and namespace support 
+##10a,22sep11,ajm adding valuetypes support
+##10a,2sep11,ajm Refactoring using a unique list for all elements(typedefs, structs and const)
+##10a,19ag11,ajm Adding support for @top-level 
+##10a,11ag11,ajm Refactorizing the templates code.
+##           ajm Adding variable $nativeFQNameInModule
+##10a,09ag11,jmt Fixing tabulations and length of the lines
+##10a,09ag11,jmt Fixing the bug for a struct without a module
+##10a,05ag11,ajm fixing bug, now using the structName name instead of the envMap.idlFileName
+##10a,04ag11,ajm adding modification history header
+##10a,03ag11,ajm created   
+##----------------------------------------------------------------
+##-----------------------------------------------------------------
+##               
+##             Template for the typeSupport C file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Structure:
+##
+## 
+## To use this template, the structure provided from the main program
+## to the context of the Velocity template must be as indicated here:
+##
+## The context will be feed by a list of the structs($structurList) defined in the 
+## IDL file. Each of the structs will have the following mandatory fields:
+##
+## $packageName (the path of all the modules separated by a .)
+## $structName (the name of the struct)
+## ##---------------------------------------------------------------------
+##---------------------------------------------------------------------
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Support.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Plugin.h"
+
+
+
+#if($envMap.language.equals("Cpp"))
+    ${envMap.POUND_CHAR}ifndef dds_c_log_impl_h              
+        ${envMap.POUND_CHAR}include "dds_c/dds_c_log_impl.h"                                
+    ${envMap.POUND_CHAR}endif        
+#end        
+
+#foreach($node in $constructMapList)
+#*--*##if($node.constructKind=="directive") ##if it is a directive we print its value
+#*----*##if($node.directiveKind=="copy-c"||$node.directiveKind=="copy") ##we avoid to copy the declaration directives
+$node.value
+#*----*##end
+#*--*##elseif($node.constructKind=="module" && ${envMap.namespace})
+namespace $node.name {
+#*--*##elseif($node.constructKind=="moduleClose"&& ${envMap.namespace}) 
+} /* namespace $node.name  */
+#*--*##elseif($node.constructKind=="struct" || $node.constructKind=="valueType" || $node.constructKind=="union")
+#*----*##if($node.topLevel!="false")
+
+/* ========================================================================= */
+/**
+   <<IMPLEMENTATION>>
+
+   Defines:   TData,
+              TDataWriter,
+              TDataReader,
+              TTypeSupport
+
+   Configure and implement '${node.nativeFQNameInModule}' support classes.
+
+   Note: Only the ${envMap.POUND_CHAR}defined classes get defined
+*/
+
+/* ----------------------------------------------------------------- */
+/* DDSDataWriter
+*/
+
+/**
+  <<IMPLEMENTATION >>
+
+   Defines:   TDataWriter, TData
+*/
+
+/* Requires */
+${envMap.POUND_CHAR}define TTYPENAME   ${node.nativeFQNameInModule}TYPENAME
+
+/* Defines */
+${envMap.POUND_CHAR}define TDataWriter ${node.nativeFQNameInModule}DataWriter
+${envMap.POUND_CHAR}define TData       ${node.nativeFQName}
+#if($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}define FLAT_DATA_TYPE
+#*--*##if($node.extensibility.equals("FINAL_EXTENSIBILITY"))
+${envMap.POUND_CHAR}define FLAT_DATA_TYPE_FINAL
+#*--*##end
+#end
+
+${envMap.POUND_CHAR}define RTI_ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
+#if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_data_TDataWriter.gen"
+#else
+${envMap.POUND_CHAR}include "dds_c/generic/dds_c_data_TDataWriter.gen"
+#end
+${envMap.POUND_CHAR}undef RTI_ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
+
+#if($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}undef FLAT_DATA_TYPE
+#*--*##if($node.extensibility.equals("FINAL_EXTENSIBILITY"))
+${envMap.POUND_CHAR}undef FLAT_DATA_TYPE_FINAL
+#*--*##end
+#end
+${envMap.POUND_CHAR}undef TDataWriter
+${envMap.POUND_CHAR}undef TData
+
+${envMap.POUND_CHAR}undef TTYPENAME
+
+/* ----------------------------------------------------------------- */
+/* DDSDataReader
+*/
+
+/**
+  <<IMPLEMENTATION >>
+
+   Defines:   TDataReader, TDataSeq, TData
+*/
+
+/* Requires */
+${envMap.POUND_CHAR}define TTYPENAME   ${node.nativeFQNameInModule}TYPENAME
+
+/* Defines */
+${envMap.POUND_CHAR}define TDataReader ${node.nativeFQNameInModule}DataReader
+${envMap.POUND_CHAR}define TDataSeq    ${node.nativeSeqFQNameInModule}
+${envMap.POUND_CHAR}define TData       ${node.nativeFQName}
+
+#if($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}define FLAT_DATA_TYPE
+#end
+
+${envMap.POUND_CHAR}define RTI_ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
+#if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_data_TDataReader.gen"
+#else
+${envMap.POUND_CHAR}include "dds_c/generic/dds_c_data_TDataReader.gen"
+#end
+${envMap.POUND_CHAR}undef RTI_ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
+
+#if($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}undef FLAT_DATA_TYPE
+#end
+
+${envMap.POUND_CHAR}undef TDataReader
+${envMap.POUND_CHAR}undef TDataSeq
+${envMap.POUND_CHAR}undef TData
+
+${envMap.POUND_CHAR}undef TTYPENAME
+
+/* ----------------------------------------------------------------- */
+/* TypeSupport
+
+  <<IMPLEMENTATION >>
+
+   Requires:  TTYPENAME,
+              TPlugin_new
+              TPlugin_delete
+   Defines:   TTypeSupport, TData, TDataReader, TDataWriter
+*/
+
+/* Requires */
+${envMap.POUND_CHAR}define TTYPENAME    ${node.nativeFQNameInModule}TYPENAME
+${envMap.POUND_CHAR}define TPlugin_new  ${node.nativeFQName}Plugin_new
+${envMap.POUND_CHAR}define TPlugin_delete  ${node.nativeFQName}Plugin_delete
+
+/* Defines */
+${envMap.POUND_CHAR}define TTypeSupport ${node.nativeFQNameInModule}TypeSupport
+${envMap.POUND_CHAR}define TData        ${node.nativeFQName}
+${envMap.POUND_CHAR}define TDataReader  ${node.nativeFQNameInModule}DataReader
+${envMap.POUND_CHAR}define TDataWriter  ${node.nativeFQNameInModule}DataWriter
+${envMap.POUND_CHAR}define TGENERATE_SER_CODE
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+  ${envMap.POUND_CHAR}define TGENERATE_TYPECODE
+${envMap.POUND_CHAR}endif
+
+#if($envMap.language.equals("Cpp"))
+#if($node.constructKind=="valueType")
+${envMap.POUND_CHAR}define RTI_VALUETYPE
+#end
+#if($envMap.generateCppConstructor)
+${envMap.POUND_CHAR}define TSUPPRESS_DATA_CONSTRUCTOR_METHODS
+#end
+#if($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}define FLAT_DATA_TYPE
+#end
+${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_data_TTypeSupport.gen"
+#if($node.constructKind=="valueType")
+${envMap.POUND_CHAR}undef RTI_VALUETYPE
+#end
+#if($envMap.generateCppConstructor)
+${envMap.POUND_CHAR}undef TSUPPRESS_DATA_CONSTRUCTOR_METHODS
+#end
+#if($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}undef FLAT_DATA_TYPE
+#end
+#else
+${envMap.POUND_CHAR}include "dds_c/generic/dds_c_data_TTypeSupport.gen"
+#end
+
+${envMap.POUND_CHAR}undef TTypeSupport
+${envMap.POUND_CHAR}undef TData
+${envMap.POUND_CHAR}undef TDataReader
+${envMap.POUND_CHAR}undef TDataWriter
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+  ${envMap.POUND_CHAR}undef TGENERATE_TYPECODE
+${envMap.POUND_CHAR}endif
+${envMap.POUND_CHAR}undef TGENERATE_SER_CODE
+${envMap.POUND_CHAR}undef TTYPENAME
+${envMap.POUND_CHAR}undef TPlugin_new
+${envMap.POUND_CHAR}undef TPlugin_delete
+
+#end
+#end
+#end
+
+

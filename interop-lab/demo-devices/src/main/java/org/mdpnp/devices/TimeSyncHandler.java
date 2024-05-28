@@ -75,9 +75,9 @@ abstract class TimeSyncHandler {
 	}
 
 	void fill(SampleInfo sampleInfo, TimeSyncHolder holder) {
-		holder.timeSync.source_source_timestamp.sec = sampleInfo.source_timestamp.sec;
+		holder.timeSync.source_source_timestamp.sec = (int)sampleInfo.source_timestamp.sec;
 		holder.timeSync.source_source_timestamp.nanosec = sampleInfo.source_timestamp.nanosec;
-		holder.timeSync.recipient_receipt_timestamp.sec = sampleInfo.reception_timestamp.sec;
+		holder.timeSync.recipient_receipt_timestamp.sec = (int)sampleInfo.reception_timestamp.sec;
 		holder.timeSync.recipient_receipt_timestamp.nanosec = sampleInfo.reception_timestamp.nanosec;
 	}
 

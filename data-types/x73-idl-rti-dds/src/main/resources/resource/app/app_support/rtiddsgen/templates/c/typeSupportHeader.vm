@@ -1,0 +1,163 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,01sep14,ajm CODEGENII-112 Adding option -dllExportMacroSuffix
+##2.2,11feb14,ajm CODEGENII-181 Change the generated code to avoid the #ifdef __cplusplus
+##10a, 02oct13 ajm CODEGENII-143 and CODEGEN-349 and CODGEN-499 Filenames with periods or hypthens
+##2.0,12sep13,ajm CODEGENII-92: Support for optional members
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,25mar13,ajm Adding support for enums and inheritance in .Net. We do check now
+## it we are working with namespaces because we introduce always the module in the list of nodes
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,10oct11,ajm Adding union support 
+##10a,29sep11,ajm adding forward declaration and namespace support 
+##10a,22sep11,ajm adding valuetypes support
+##10a,2sep11,ajm Refactoring using a unique list for all elements(typedefs, structs and const)
+##10a,19ag11,ajm Adding support for @top-level 
+##10a,11ag11,ajm Refactorizing the templates code.
+##           ajm Adding variable $nativeFQNameInModule
+##10a,09ag11,jmt Fixing tabulations and length of the lines
+##10a,09ag11,ajm Fixing the bug for a struct without a module
+##10a,05ag11,ajm fixing bug, now using the structName name instead of the envMap.idlFileName 
+##10a,04ag11,ajm adding modificatin history header
+##10a,03ag11,ajm created 
+##----------------------------------------------------------------
+##-----------------------------------------------------------------
+##               
+##             Template for the typeSupport header file
+## 
+##------------------------------------------------------------------
+##---------------------------------------------------------------------
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+${envMap.POUND_CHAR}ifndef ${envMap.inputFileNameMacro}Support_${envMap.executionID}_h
+${envMap.POUND_CHAR}define ${envMap.inputFileNameMacro}Support_${envMap.executionID}_h
+
+/* Uses */
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.h"
+
+#if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}ifndef ndds_cpp_h
+  ${envMap.POUND_CHAR}include "ndds/ndds_cpp.h"
+${envMap.POUND_CHAR}endif
+#else
+${envMap.POUND_CHAR}ifndef ndds_c_h
+  ${envMap.POUND_CHAR}include "ndds/ndds_c.h"
+${envMap.POUND_CHAR}endif
+#end
+
+#if($envMap.language.equals("C"))
+${envMap.POUND_CHAR}ifdef __cplusplus
+extern "C" {
+${envMap.POUND_CHAR}endif
+#end
+
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+
+#if($envMap.language.equals("Cpp"))
+  class __declspec(dllimport) DDSTypeSupport;
+  class __declspec(dllimport) DDSDataWriter;
+  class __declspec(dllimport) DDSDataReader;
+#end
+
+${envMap.POUND_CHAR}endif
+
+#foreach($node in $constructMapList)
+#*--*##if($node.constructKind=="directive") ##if it is a directive we print its value
+#*----*##if($node.directiveKind=="copy-c"||$node.directiveKind=="copy") ##we avoid to copy the declaration directives
+$node.value
+#*----*##end
+#*--*##elseif($node.constructKind=="module" && ${envMap.namespace}) 
+namespace $node.name {
+#*--*##elseif($node.constructKind=="moduleClose" && ${envMap.namespace})
+} /* namespace $node.name  */
+#*--*##elseif($node.constructKind=="struct" || $node.constructKind=="valueType" || $node.constructKind=="union")
+#*----*##if($node.topLevel!="false")
+/* ========================================================================= */
+/**
+   Uses:     T
+
+   Defines:  TTypeSupport, TDataWriter, TDataReader
+
+   Organized using the well-documented "Generics Pattern" for
+   implementing generics in C and C++.
+*/
+
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+  /* If the code is building on Windows, start exporting symbols.
+   */
+  ${envMap.POUND_CHAR}undef NDDSUSERDllExport
+  ${envMap.POUND_CHAR}define NDDSUSERDllExport __declspec(dllexport)
+
+${envMap.POUND_CHAR}endif
+
+#if($envMap.language.equals("Cpp"))
+
+#*------*##if($node.constructKind=="valueType")
+${envMap.POUND_CHAR}define RTI_VALUETYPE
+#*------*##end
+
+#*------*##if($envMap.generateCppConstructor)
+DDS_TYPESUPPORT_CPP_WO_DATA_CONSTRUCTOR_METHODS(
+    ${node.nativeFQNameInModule}TypeSupport, 
+    ${node.nativeFQNameInModule});
+#*------*##else
+DDS_TYPESUPPORT_CPP(
+    ${node.nativeFQNameInModule}TypeSupport, 
+    ${node.nativeFQNameInModule});
+#*------*##end
+
+${envMap.POUND_CHAR}define RTI_ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
+DDS_DATAWRITER_WITH_DATA_CONSTRUCTOR_METHODS_CPP(${node.nativeFQNameInModule}DataWriter, ${node.nativeFQNameInModule});
+${envMap.POUND_CHAR}undef RTI_ENABLE_TDATAWRITER_DATA_CONSTRUCTOR_METHODS
+${envMap.POUND_CHAR}define RTI_ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
+DDS_DATAREADER_W_DATA_CONSISTENCY_CHECK(${node.nativeFQNameInModule}DataReader, ${node.nativeSeqFQNameInModule}, ${node.nativeFQNameInModule});
+${envMap.POUND_CHAR}undef RTI_ENABLE_TDATAREADER_DATA_CONSISTENCY_CHECK_METHOD
+#*------*##if($node.constructKind=="valueType")
+${envMap.POUND_CHAR}undef RTI_VALUETYPE
+#*------*##end
+
+#else
+
+DDS_TYPESUPPORT_C(${node.nativeFQNameInModule}TypeSupport, ${node.nativeFQNameInModule});
+DDS_DATAWRITER_WITH_DATA_CONSTRUCTOR_METHODS_C(${node.nativeFQNameInModule}DataWriter, ${node.nativeFQNameInModule});
+DDS_DATAREADER_C(${node.nativeFQNameInModule}DataReader, ${node.nativeSeqFQNameInModule}, ${node.nativeFQNameInModule});
+
+#end
+
+${envMap.POUND_CHAR}if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT${envMap.dllExportMacroSuffix})
+  /* If the code is building on Windows, stop exporting symbols.
+   */
+  ${envMap.POUND_CHAR}undef NDDSUSERDllExport
+  ${envMap.POUND_CHAR}define NDDSUSERDllExport
+${envMap.POUND_CHAR}endif
+#*----*##end
+#*--*##end
+#end
+
+#if($envMap.language.equals("C"))
+${envMap.POUND_CHAR}ifdef __cplusplus
+}
+${envMap.POUND_CHAR}endif
+#end
+
+${envMap.POUND_CHAR}endif  /* ${envMap.inputFileNameMacro}Support_${envMap.executionID}_h */
+

@@ -1,0 +1,546 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,26aug14,ajm CODEGENII-185 Generated finalize_ex crashes on NULL sample
+##2.2,10mar14,ajm CODEGENII-196 & CODEGENII-165 Add a variable to have Enums
+##with FQName
+##2.2,11feb14,ajm CODEGENII-181 Change the generated code to avoid the #ifdef __cplusplus
+##2.0,29oct13,ajm CODEGENII-143 fixing nddsgen1 issues CODEGEN-620 CODEGEN-624
+##2.0,12sep13,ajm CODEGENII-92: Support for optional members
+##10a,10jun13,ajm CODEGENII-109 adding envMap and constructMapList variables
+##10a,25mar13,ajm Adding support for enums and inheritance in .Net. We do check now
+## it we are working with namespaces because we introduce always the module in the list of nodes
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,13dec12, ajm RRTIDDSGEN-53 Support for XTypes (extensible and final)
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##10a,23nov12, ajm RRTIDDSGEN-35 Adding support for pointers
+##10a,8nov12, ajm  RTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,04ene11, ajm Upgrading to Lola (code in C)
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,07nov11, ajm Refactoring code
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,12oct11,ajm Fixing a bug in the copy function
+##10a,10oct11,ajm Adding union support
+##10a,30sep11,ajm Adding noenvMap.typeCode option support
+##10a,29sep11,ajm adding forward declaration and namespace support 
+##10a,26sep11,ajm adding enum support 
+##10a,22sep11,ajm adding valuetypes support
+##10a,14sep11,ajm Refactor typedef
+##10a,6sep11,ajm Fixing an error when declaring constants outside a module
+##10a,2sep11,ajm Refactoring using a unique list for all elements(typedefs, structs and const)
+##10a,1sep11,ajm Adding typedef support for primitive types and typedef arrays
+##10a,29ag11,ajm Fixing macros consistency by adding the missing parameters
+##10a,29ag11,ajm Refactor of variables and cleaning loops
+##10a,22ag11,ajm adding support for sequences
+##10a,19ag11,ajm Refactorizing and cleaning the templates code.
+##10a,11ag11,ajm Refactorizing the templates code.
+##           ajm Adding variable $nativeFQName
+##10a,10ag11,ajm Adding functionality for arrays
+##10a,09ag11,jmt Fixing tabulations and length of the lines
+##10a,09ag11,ajm Fixing the bug for a struct without a module
+##10a,05ag11,jmt Adding all the basic type and testing them 
+##10a,04ag11,ajm adding modification history header
+##10a,03ag11,ajm created 
+##
+##========================================================================*/
+##-----------------------------------------------------------------
+##               
+##             Template for the main C body file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Structure:
+##
+## 
+## To use this template, the structure provided from the main program
+## to the context of the Velocity template must be as indicated here:
+##
+## The context will be feed by a list of the structs ($structList) defined in the 
+## IDL file. Each of the structs will have the following mandatory fields:
+##
+##---------------------------------------------------------------------
+##---------------------------------------------------------------------
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl 
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+
+#if (!$userVarList.noEndpointBuild)
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+#end
+#if($envMap.language.equals("Cpp"))
+        ${envMap.POUND_CHAR}ifndef ndds_cpp_h
+            ${envMap.POUND_CHAR}include "ndds/ndds_cpp.h"
+        ${envMap.POUND_CHAR}endif
+        ${envMap.POUND_CHAR}ifndef dds_c_log_impl_h              
+            ${envMap.POUND_CHAR}include "dds_c/dds_c_log_impl.h"                                
+        ${envMap.POUND_CHAR}endif 
+#else
+#*--*##if (!$userVarList.noEndpointBuild)
+        ${envMap.POUND_CHAR}ifndef ndds_c_h
+            ${envMap.POUND_CHAR}include "ndds/ndds_c.h"
+        ${envMap.POUND_CHAR}endif
+#*--*##end
+#end
+
+#if (!$userVarList.noEndpointBuild)
+    ${envMap.POUND_CHAR}ifndef dds_c_log_infrastructure_h
+        ${envMap.POUND_CHAR}include "dds_c/dds_c_infrastructure_impl.h"       
+    ${envMap.POUND_CHAR}endif 
+    
+    ${envMap.POUND_CHAR}ifndef cdr_type_h
+        ${envMap.POUND_CHAR}include "cdr/cdr_type.h"
+    ${envMap.POUND_CHAR}endif    
+#end
+
+    ${envMap.POUND_CHAR}ifndef osapi_heap_h
+        ${envMap.POUND_CHAR}include "osapi/osapi_heap.h" 
+    ${envMap.POUND_CHAR}endif
+#if (!$userVarList.noEndpointBuild)
+${envMap.POUND_CHAR}else
+    ${envMap.POUND_CHAR}include "ndds_standalone_type.h"
+${envMap.POUND_CHAR}endif
+#end
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.h"
+
+#if (!$userVarList.noEndpointBuild)
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+#*--*##if($envMap.generateMonitoringCode)
+${envMap.POUND_CHAR}include "reda/reda_inlineMemory.h"
+#*----*##if($envMap.hasResources)
+${envMap.POUND_CHAR}include "${envMap.idlFileName}_distribution.h"
+#*----*##end
+#*--*##end
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Plugin.h"
+${envMap.POUND_CHAR}endif
+#end
+
+#if($envMap.allocateWithNew)
+${envMap.POUND_CHAR}include <new>
+#end
+
+#foreach($node in $constructMapList)
+#*--*##if($node.constructKind=="directive") ##if it is a directive we print its value
+#*----*##if($node.directiveKind=="copy-c"||$node.directiveKind=="copy") ##we avoid to copy the declaration directives
+$node.value
+#*----*##end
+#*--*##elseif($node.constructKind=="module" && ${envMap.namespace}) 
+namespace $node.name {
+#*--*##elseif($node.constructKind=="moduleClose" && ${envMap.namespace}) 
+} /* namespace $node.name  */
+#*--*##elseif(($node.constructKind=="alias")
+         ||($node.constructKind=="enum")
+         ||($node.isAggregationType))
+
+/* ========================================================================= */
+#*----*##if($node.constructKind!="alias")
+const char *${node.nativeFQNameInModule}TYPENAME = "${node.FQName}";
+#*----*##end
+
+
+#****************************typeCode DECLARATION*****************************#
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+#typeCodeDeclaration($node $envMap.language)
+#*------*##if($node.interpreted=="true" 
+    && !($node.languageBinding.equals("FLAT_DATA") 
+            && ($node.extensibility.equals("MUTABLE_EXTENSIBILITY") || ($node.constructKind=="alias"))))
+#sampleAccessInfoDeclaration($node $envMap.language)
+#typePluginInfoDeclaration($node $envMap.language)
+#*------*##end
+${envMap.POUND_CHAR}endif
+#**********************END OF typeCode DECLARATION**************************#
+
+#************************** metricGroupInfo DECLARATION************************#
+#*----*##if($node.isResource && $envMap.generateMonitoringCode)
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+#*------*##defineAppMetricGroupToDistMetricGroup($node)
+#*------*##defineDeleteDistrMetricGroup($node)
+#*------*##defineSetDistributionMetricGroupIntoSample($node)
+#*------*##defineGetMetricGroupInfo($node)
+#*------*##defineGetMetricInfo($node)
+#*------*##defineGetResourceInfo($node)
+${envMap.POUND_CHAR}endif
+#*----*##end
+#****************** END OF metricGroupInfo DECLARATION ************************#
+
+#*---*##if ($node.languageBinding.equals("FLAT_DATA") && $envMap.language.equals("Cpp"))
+#if ($node.constructKind!="alias")
+#flatTypeImplementation($node)
+
+void ${node.nativeFQNameInModule}_finalize_optional_members(
+    ${node.nativeFQNameInModule}* sample, RTIBool deletePointers)
+{
+    RTIOsapiUtility_unusedParameter(sample);
+    RTIOsapiUtility_unusedParameter(deletePointers);
+}
+
+RTIBool ${node.nativeFQNameInModule}_initialize(
+    ${node.nativeFQNameInModule}* sample)
+{
+    RTIOsapiUtility_unusedParameter(sample);
+
+    return RTI_FALSE;
+}
+
+RTIBool ${node.nativeFQNameInModule}_initialize_w_params(
+    ${node.nativeFQNameInModule}* sample, const struct DDS_TypeAllocationParams_t * allocParams)
+{
+    RTIOsapiUtility_unusedParameter(sample);
+    RTIOsapiUtility_unusedParameter(allocParams);
+
+    return RTI_FALSE;
+}
+#end
+#*---*##else
+
+#*----*##if($node.constructKind=="union")
+DDS_LongLong ${node.nativeFQNameInModule}_getDefaultDiscriminator(void)
+{
+    return $node.unionDiscriminatorMap.defaultDiscriminatorValue;
+}
+#*----*##end
+       
+#*------*##if($envMap.generateMonitoringCode)
+## Generate initialize method with memory manager
+#*--------*##defineInitialize($node true)
+#*--------*##defineInitializeWParams($node true)
+#*--------*##defineInitializeEx($node, true)
+#*------*##end
+## Generate initialize method without memory manager
+#*--------*##defineInitialize($node false)
+#*--------*##defineInitializeWParams($node false)
+#*--------*##defineInitializeEx($node, false)
+
+#*----*##if($node.constructKind=="alias" && $envMap.generateCppConstructor)
+## Since aliases are not classes we have to generate an artifical constructor
+## so that we dont have to change the code generation logic that much
+NDDSUSERDllExport
+RTIBool ${node.nativeFQNameInModule}_construct_w_params(
+            ${node.nativeFQNameInModule}* sample,
+            const struct DDS_TypeAllocationParams_t * allocParams) {
+#*------*##if($node.hasSeq)
+    void* buffer = NULL;
+
+    RTIOsapiUtility_unusedParameter(buffer);
+#*------*##end
+    RTIOsapiUtility_unusedParameter(sample);
+
+    if (allocParams == NULL) {
+        return RTI_FALSE;
+    }
+
+#*------*##initializeWParams($node, true, false)
+    return RTI_TRUE;
+}
+#*----*##end
+
+#******************************************************************************#
+
+RTIBool ${node.nativeFQNameInModule}_finalize_w_return(
+    ${node.nativeFQNameInModule}* sample)
+{
+#*----*##if($node.constructKind!="enum")
+    ${node.nativeFQName}_finalize_ex(sample, RTI_TRUE);
+#*----*##else
+    if (sample) {} /* To avoid warnings */
+#*----*##end
+
+   return RTI_TRUE;
+}
+
+#*----*##if($envMap.generateMonitoringCode)
+## Generate initialize method with memory manager
+#*------*##defineFinalize($node true)
+#*------*##defineFinalizeEx($node, true)
+#*------*##defineFinalizeWParams($node true)
+#*----*##end
+## Generate initialize method without memory manager
+#*----*##defineFinalize($node false)
+#*----*##defineFinalizeEx($node false)
+#*----*##defineFinalizeWParams($node false)
+
+void ${node.nativeFQNameInModule}_finalize_optional_members(
+    ${node.nativeFQNameInModule}* sample, RTIBool deletePointers)
+{
+    struct DDS_TypeDeallocationParams_t deallocParamsTmp =
+        DDS_TYPE_DEALLOCATION_PARAMS_DEFAULT;
+    struct DDS_TypeDeallocationParams_t * deallocParams =
+        &deallocParamsTmp;
+    
+    if (sample==NULL) {
+        return;
+    } 
+    if (deallocParams) {} /* To avoid warnings */
+
+#*----*##if($node.baseTypeFQName)
+    ${node.baseTypeFQName}_finalize_optional_members((${node.baseTypeFQName}*)sample,deletePointers);
+
+#*----*##end
+    deallocParamsTmp.delete_pointers = (DDS_Boolean)deletePointers;
+    deallocParamsTmp.delete_optional_members = DDS_BOOLEAN_TRUE;
+
+#*----*##if($node.needsSwitchCode)
+ switch(sample->_d) {
+#*----*##end 
+    #finalizeOptional($node.memberFieldMapList)
+#*----*##if($node.needsSwitchCode)
+#*------*##if($node.needsDefaultCase)
+    default: 
+    {
+        /* 
+         * Prevents compiler warnings when discriminator is an enum
+         * and unionType does not specify all enumeration members.
+         */ 
+    }
+#*------*##end
+}
+#*----*##end 
+}
+
+#*****************************************************************************#
+
+#*------*##if($envMap.generateMonitoringCode)
+## Generate copy method with memory manager
+#*--------*##defineCopy($node true)
+#*------*##end
+## Generate copy method without memory manager
+#*--------*##defineCopy($node false)
+
+#*****************************************************************************#
+#*----*##if($node.isAggregationType)
+#*------*##if($envMap.generateCppConstructor)
+
+void ${node.nativeFQNameInModule}_initialize_for_constructor(
+        ${node.nativeFQNameInModule} *sample) 
+{
+    struct DDS_TypeAllocationParams_t allocParamsValue =
+        DDS_TYPE_ALLOCATION_PARAMS_DEFAULT;
+    struct DDS_TypeAllocationParams_t * allocParams =
+        &allocParamsValue;
+#*--------*##if($node.hasSeq)
+    void* buffer = NULL;
+    if (buffer) {} /* To avoid warnings */
+#*--------*##end
+    if (sample == NULL) return; /* To avoid warnings */
+
+#*----------*##if($node.hasCycle)
+    allocParams->allocate_pointers =  DDS_BOOLEAN_FALSE;
+#*----------*##else
+    allocParams->allocate_pointers =  DDS_BOOLEAN_TRUE;
+#*----------*##end
+    allocParams->allocate_memory = DDS_BOOLEAN_TRUE;
+    allocParams->allocate_optional_members = DDS_BOOLEAN_FALSE;
+    
+#*--------*##if($node.constructKind=="union") 
+    sample->_d = ($node.unionDiscriminatorMap.nativeTypeFQName)#*
+----*#${node.nativeFQNameInModule}_getDefaultDiscriminator();
+#*--------*##end
+#*--------*##initializeWParams($node, true, false)
+}
+
+${node.nativeFQNameInModule}::${node.nativeFQNameInModule}() {
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.resolvedTypeOptional ||
+            ($member.resolvedTypePointer && !$member.seqSize && !$member.isSeqAlias) || 
+            ($member.strSize && !$envMap.stringIsObject && !$member.seqSize))
+#*------*##if($member.dimensionList && !$member.isOptionalArray)
+    for (int i = 0; i < (int) ($member.arrayTotalSize); ++i){
+        this->${member.printName}[i] = NULL;
+    }
+#*------*##else
+    this->$member.printName = NULL;
+#*------*##end
+#*----*##end
+#*--*##end
+    try {
+        ${node.nativeFQName}_initialize_for_constructor(this);
+    } catch (...) {
+        ${node.nativeFQName}_finalize(this);
+        throw;
+    }
+}
+
+${node.nativeFQNameInModule}::${node.nativeFQNameInModule}(const ${node.nativeFQNameInModule}& that) 
+#*--*##if($node.baseTypeFQName)
+    : ${node.baseTypeFQName}(that)
+#*--*##end {
+    ${node.nativeFQName}_initialize_for_constructor(this);
+    if (!${node.nativeFQName}_copy(this, &that)) {
+        throw std::bad_alloc();
+    }
+}
+
+${node.nativeFQNameInModule}::~${node.nativeFQNameInModule}() {
+    struct DDS_TypeDeallocationParams_t deallocParamsValue =
+        DDS_TYPE_DEALLOCATION_PARAMS_DEFAULT;
+    struct DDS_TypeDeallocationParams_t * deallocParams =
+        &deallocParamsValue;
+    ${node.nativeFQNameInModule} * sample = this;    
+
+#*--------*##if(!$node.hasSeq
+                && !$node.hasPointerMember
+                && !$node.hasNonBasicMember
+                && !$node.hasOptionalMember)
+    RTIOsapiUtility_unusedParameter(sample);
+#*--------*##end
+
+    deallocParams->delete_pointers =  DDS_BOOLEAN_TRUE;
+    deallocParams->delete_optional_members = DDS_BOOLEAN_TRUE;
+#*--------*##finalize($node.memberFieldMapList false)
+
+}
+
+${node.nativeFQNameInModule}& ${node.nativeFQNameInModule}::operator=(const ${node.nativeFQNameInModule}& that) {
+    if (!${node.nativeFQName}_copy(this, &that)) {
+        throw std::bad_alloc();
+    }
+
+    return *this;
+}
+#*------*##end
+#*----*##end
+#*---*##end ## FLAT_DATA
+
+#*****************************************************************************#
+
+#if (!$node.languageBinding.equals("FLAT_DATA") || $node.constructKind != "alias")
+#*--*##if (!$node.isAggregationType || $node.generateSequenceCode)
+/**
+ * <<IMPLEMENTATION>>
+ *
+ * Defines:  TSeq, T
+ *
+ * Configure and implement '${node.nativeFQNameInModule}' sequence class.
+ */
+${envMap.POUND_CHAR}define T ${node.nativeFQNameInModule}
+${envMap.POUND_CHAR}define TSeq ${node.nativeSeqFQNameInModule}
+
+#*----*##if($envMap.generateMonitoringCode)
+${envMap.POUND_CHAR}define MEMORY_MANAGER
+${envMap.POUND_CHAR}define T_initialize_w_memory_manager ${node.nativeFQName}_initialize_w_params_w_memory_manager
+${envMap.POUND_CHAR}define T_copy_w_memory_manager ${node.nativeFQName}_copy_w_memory_manager
+${envMap.POUND_CHAR}define T_finalize_w_memory_manager ${node.nativeFQName}_finalize_w_params_w_memory_manager
+#*----*##end
+
+#if(!$envMap.generateCppConstructor ||
+    !$node.isAggregationType)
+${envMap.POUND_CHAR}define T_initialize_w_params ${node.nativeFQName}_initialize_w_params
+#end
+
+#if($envMap.generateCppConstructor &&
+    $node.constructKind=="alias")
+${envMap.POUND_CHAR}undef T_initialize_w_params
+${envMap.POUND_CHAR}define T_initialize_w_params ${node.nativeFQName}_construct_w_params
+#end
+
+${envMap.POUND_CHAR}define T_finalize_w_params   ${node.nativeFQName}_finalize_w_params
+${envMap.POUND_CHAR}define T_copy       ${node.nativeFQName}_copy
+
+#if(($node.constructKind=="alias")&&($node.isBaseArray))
+${envMap.POUND_CHAR}define T_no_get  
+#end
+#if ($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}define FLAT_DATA_TYPE
+#end
+#if ($userVarList.noEndpointBuild)
+${envMap.POUND_CHAR}include "dds_c_sequence_TSeq.gen"
+#else
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+${envMap.POUND_CHAR}include "dds_c/generic/dds_c_sequence_TSeq.gen"
+#if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}include "dds_cpp/generic/dds_cpp_sequence_TSeq.gen"
+#end
+${envMap.POUND_CHAR}else
+${envMap.POUND_CHAR}include "dds_c_sequence_TSeq.gen"
+#if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}include "dds_cpp_sequence_TSeq.gen"
+#end
+${envMap.POUND_CHAR}endif
+#end
+
+#if ($node.languageBinding.equals("FLAT_DATA"))
+${envMap.POUND_CHAR}undef FLAT_DATA_TYPE
+#end
+#if(($node.constructKind=="alias")&&($node.isBaseArray))
+${envMap.POUND_CHAR}undef T_no_get  
+#end
+
+${envMap.POUND_CHAR}undef T_copy
+${envMap.POUND_CHAR}undef T_finalize_w_params
+
+#if(!$envMap.generateCppConstructor ||
+    !$node.isAggregationType)
+${envMap.POUND_CHAR}undef T_initialize_w_params
+#end
+
+#*----*##if($envMap.generateMonitoringCode)
+${envMap.POUND_CHAR}undef T_initialize_w_memory_manager
+${envMap.POUND_CHAR}undef T_finalize_w_memory_manager
+${envMap.POUND_CHAR}undef T_copy_w_memory_manager
+${envMap.POUND_CHAR}undef MEMORY_MANAGER
+#*----*##end
+
+${envMap.POUND_CHAR}undef TSeq
+${envMap.POUND_CHAR}undef T
+#*--*##end
+#end
+#end 
+
+#end
+
+##-------------------------------------
+## End of the common code for each structure 
+##-------------------------------------
+
+#if($envMap.language.equals("Cpp"))
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+namespace rti { 
+    namespace xcdr {
+#foreach($node in $constructMapList)
+#*--*##if($node.isAggregationType)
+const RTIXCdrTypeCode * type_code< ${node.nativeFQName}>::get() 
+{
+    return (const RTIXCdrTypeCode *) ${node.nativeFQName}_get_typecode();
+}
+
+#*----*##if($node.languageBinding.equals("FLAT_DATA"))
+RTIXCdrInterpreterPrograms * type_programs< ${node.nativeFQName}::Base>::get() 
+{
+#*------*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    return rti::xcdr::ProgramsSingleton<
+        ${node.nativeFQName}PlainHelper,
+        RTI_XCDR_GET_MAX_SER_SIZE_PROGRAM,
+        true, true, true
+#*------*##else
+    return rti::xcdr::ProgramsSingleton<
+        ${node.nativeFQName},
+        RTI_XCDR_INITIALIZE_SAMPLE_PROGRAM,
+        true, true, true
+#*------*##end
+    >::get_instance();
+}
+
+#*----*##end
+#*--*##end
+#end
+    } 
+}
+${envMap.POUND_CHAR}endif
+#end

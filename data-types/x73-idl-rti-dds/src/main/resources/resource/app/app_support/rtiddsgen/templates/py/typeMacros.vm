@@ -1,0 +1,296 @@
+##   (c) Copyright, Real-Time Innovations, Inc. 2022.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##========================================================================*/
+##-----------------------------------------------------------------
+##
+##             Template for the main Python type file macros
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+#macro (defineTypeDecoratorAnnotation $type__ $decoratorName__)
+#*--*##if($type__.hasBoundedMember
+            || $type__.hasArrayMember
+            || $type__.hasKey
+            || $type__.hasId
+            || $type__.hasWString
+            || !$type__.extensibility.equals("EXTENSIBLE_EXTENSIBILITY")
+            || $type__.explicitDataRepresentationMask
+            || !$type__.modulesName.isEmpty()
+            || !$type__.nativeFQNameInModule.equals($type__.FQName))
+${envMap.AT_SIGN}$decoratorName__(
+#*----*##generateTypeAnnotations($type__)
+#*----*##generateMemberAnnotations($type__)
+)
+#*--*##else
+${envMap.AT_SIGN}$decoratorName__
+#*--*##end
+#end
+
+#macro (defineEnumAnnotation $enum__)
+#*--*##if($enum__.extensibility.equals("EXTENSIBLE_EXTENSIBILITY"))
+${envMap.AT_SIGN}idl.enum
+#*--*##else
+${envMap.AT_SIGN}idl.enum(
+#*--*##generateTypeAnnotations($enum__)
+)
+#*--*##end
+#end
+
+#macro (defineAliasAnnotation $alias__)
+#*--*##if(($alias__.seqSize && !$alias__.seqSize.equals("-1"))
+            || $alias__.arrayTotalSize
+            || $alias__.strSize && !$alias__.strSize.equals("-1"))
+${envMap.AT_SIGN}idl.alias(
+    annotations = [#*
+#*----*##if ($alias__.seqSize && !$alias__.seqSize.equals("-1"))
+## We can have an unbounded sequence of bounded strings
+#*------*##if (!$alias__.seqSize.equals("-1") 
+                || ($alias__.strSize && !$alias__.strSize.equals("-1")))
+#generateSeqDecoratorAnnotation($alias__),#*
+#*------*##end
+#*----*##elseif ($alias__.arrayTotalSize && !$alias__.seqSize)
+#generateArrayDecoratorAnnotation($alias__),#*
+#*----*##elseif ($alias__.strSize && !$alias__.strSize.equals("-1"))
+#generateStrDecoratorAnnotation($alias__)#*
+#*----*##end
+]
+)
+#*--*##else
+${envMap.AT_SIGN}idl.alias
+#*--*##end
+#end
+
+#macro (generateTypeAnnotations $type__)
+#*--*##if ($type__.extensibility.equals("MUTABLE_EXTENSIBILITY")
+            || $type__.extensibility.equals("FINAL_EXTENSIBILITY")
+            || $type__.explicitDataRepresentationMask
+            || !$type__.modulesName.isEmpty()
+            || !$type__.nativeFQNameInModule.equals($type__.FQName))
+    type_annotations = [#*
+#*----*##if ($type__.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+idl.mutable#*
+#*----*##elseif ($type__.extensibility.equals("FINAL_EXTENSIBILITY"))
+idl.final#*
+#*----*##end
+#*----*##if ($type__.explicitDataRepresentationMask 
+			|| !$type__.modulesName.isEmpty()
+			|| !$type__.nativeFQNameInModule.equals($type__.FQName))
+## Check again the extensibility to add comma if needed
+#*------*##if (!$type__.extensibility.equals("EXTENSIBLE_EXTENSIBILITY"))
+, #*
+#*------*##end
+#*----*##end
+#*----*##if ($type__.explicitDataRepresentationMask)
+#*------*##if ($type__.dataRepresentationMask == 5)
+idl.allowed_data_representation(xcdr2=True, xcdr1=True)#*
+#*------*##elseif ($type__.dataRepresentationMask == 4)
+idl.allowed_data_representation(xcdr2=True, xcdr1=False)#*
+#*------*##else
+idl.allowed_data_representation(xcdr2=False, xcdr1=True)#*
+#*------*##end
+#*------*##if (!$type__.modulesName.isEmpty()
+			|| !$type__.nativeFQNameInModule.equals($type__.FQName))
+, #*
+#*------*##end
+#*----*##end
+#*----*##if (!$type__.modulesName.isEmpty() 
+				|| !$type__.nativeFQNameInModule.equals($type__.FQName))
+idl.type_name("$type__.FQName")#*
+#*----*##end
+]#*
+## If there are a member annotations after the type annotation we add ,
+#*----*##if($type__.hasBoundedMember
+            || $type__.hasArrayMember
+            || $type__.hasKey
+            || $type__.hasId
+            || $type__.hasWString)
+,
+#*----*##end
+#*--*##end
+#end
+
+#macro (generateMemberAnnotations $type__)
+#*--*##if($type__.hasBoundedMember
+            || $type__.hasArrayMember
+            || $type__.hasKey
+            || $type__.hasId
+            || $type__.hasWString)
+    member_annotations = {#*
+#*----*##foreach ($member in $type__.memberFieldMapList)
+## Adding members decorator annotations for bounded
+#*------*##if (($member.seqSize && !$member.seqSize.equals("-1"))
+                    || ($member.arrayTotalSize && !$member.seqSize)
+                    || ($member.strSize && !$member.strSize.equals("-1"))
+                    || $member.typeName.equals("wstring")
+                    || $member.isKey
+                    || $member.explicitId)
+
+        '$member.name': [#*
+#*------*##end
+#*------*##if ($member.isKey)
+idl.key, #*
+#*------*##end
+#*------*##if ($member.explicitId)
+idl.id($member.id), #*
+#*------*##end
+#*------*##if ($member.seqSize)
+## We can have an unbounded sequence of bounded strings
+#*--------*##if (!$member.seqSize.equals("-1") 
+                || ($member.strSize 
+                    && (!$member.strSize.equals("-1") || $member.typeName.equals("wstring"))))
+#generateSeqDecoratorAnnotation($member)#*
+#*--------*##end
+#*------*##elseif ($member.arrayTotalSize && !$member.seqSize)
+#generateArrayDecoratorAnnotation($member)#*
+## unbounded wstring has an annaotation always
+#*------*##elseif ($member.strSize
+                && $member.strSize.equals("-1") 
+                && $member.typeName.equals("wstring"))
+idl.utf16#*
+#*------*##elseif ($member.strSize && !$member.strSize.equals("-1"))
+#generateStrDecoratorAnnotation($member)#*
+#*------*##end
+#*------*##if (($member.seqSize && !$member.seqSize.equals("-1"))
+                    || ($member.arrayTotalSize && !$member.seqSize)
+                    || ($member.strSize && !$member.strSize.equals("-1"))
+                    || $member.isKey
+                    || $member.typeName.equals("wstring")
+                    || $member.explicitId)
+],#*
+#*------*##end
+#*----*##end
+
+    }
+#*--*##end
+#end
+
+#macro (generateSeqDecoratorAnnotation $member__)
+#getSeqSize($member__)#if($member__.strSize), idl.element_annotations([#generateStrDecoratorAnnotation($member__)])#end#*
+*##end
+
+#macro (generateStrDecoratorAnnotation $member__)
+#getStrSize($member__)#if($member__.typeName.equals("wstring")), idl.utf16#end#*
+*##end
+
+#macro (generateArrayDecoratorAnnotation $member__)
+#*--*#idl.array([#declareArraydimensionLists($member__)])#if($member__.strSize), idl.element_annotations([#generateStrDecoratorAnnotation($member__)])#end#*
+*##end
+
+#macro(declareArraydimensionLists $member__)
+#*--*##foreach($s in ${member__.dimensionList})
+$s#*
+#*----*##if(!$foreach.isLast()),#end
+#*--*##end
+#end
+
+#macro (declareMember $member__ $memberName__)
+#*--*##if($member__.isOptional)
+    $memberName__: #generateMemberType($member__) = None
+#*--*##elseif($member__.arrayTotalSize && !$member__.seqSize)
+    $memberName__: #generateMemberType($member__) = #declareArray($member__)
+#*--*##elseif($member__.seqSize)
+    $memberName__: #generateMemberType($member__) = #declareSequence($member__)
+#*--*##elseif($member__.isEnum)
+    $memberName__: #generateMemberType($member__) = ${member__.nativeTypeFQName}.${member__.defaultEnumMemberName}
+#*--*##elseif($member__.typeKind.equals("user"))
+    $memberName__: #generateMemberType($member__) = field(default_factory = ${member__.nativeTypeFQName})
+#*--*##elseif($member__.directive)
+    #copyDirective($member__.directive $member__.value)
+#*--*##else
+    $memberName__: #generateMemberType($member__) = $member__.defaultValue
+#*--*##end
+#end
+
+#macro (declareArray $member__)
+#*--*##if($member__.isEnum)
+field(default_factory = idl.list_factory(${member__.nativeTypeFQName}.${member__.defaultLiteralMember.name}, [#declareArraydimensionLists($member__)]))
+#*--*##elseif($member__.typeKind.equals("user") || $member__.strSize)
+field(default_factory = idl.list_factory(${member__.nativeTypeFQName}, [#declareArraydimensionLists($member__)]))
+#*--*##else
+field(default_factory = idl.array_factory(${member__.nativeTypeFQName}, [#declareArraydimensionLists($member__)]))
+#*--*##end
+#end
+
+#macro (declareSequence $member__)
+#*--*##if($member__.typeKind.equals("user") || $member__.strSize)
+field(default_factory = list)
+#*--*##else
+field(default_factory = idl.array_factory(${member__.nativeTypeFQName}))
+#*--*##end
+#end
+
+#macro (generateLabels $member__ $isChar__)
+#*--*##foreach ($label in $member__.labelList)
+#*----*##if ($label.equals("default"))
+is_default=True#*
+#*----*##elseif ($isChar__)
+idl.to_char($label)#*
+#*----*##else
+$label#*
+#*----*##end
+#*----*##if ($foreach.hasNext), #end#*
+#*--*##end
+#end
+
+#macro (generateMemberTypes $type__)
+#*--*##foreach ($member in $type__.memberFieldMapList)
+#*----*##if(!$member.directive)
+#*------*##generateMemberType($member)
+#*------*##if ($foreach.hasNext), #end#*
+#*----*##end
+#*--*##end
+#*--*##if ($type__.memberFieldMapList.size() == 1)
+, type(None)#*
+#*--*##end
+#end
+
+#macro (generateMemberType $member__)
+#*--*##if ($member__.isOptional)
+#*----*##if ($member__.seqSize)
+Optional[Sequence[${member__.nativeTypeFQName}]]#*
+#*----*##else
+Optional[$member__.nativeTypeFQName]#*
+#*----*##end
+#*--*##elseif ($member__.arrayTotalSize || $member__.seqSize)
+Sequence[${member__.nativeTypeFQName}]#*
+#*--*##else
+$member__.nativeTypeFQName#*
+#*--*##end
+#end
+
+#macro (getSelectedBranchDefaultValue $type__ $discriminatorValue__)
+#*--*##foreach ($member in $type__.memberFieldMapList)
+#*----*##if (($member.labelList.contains("$discriminatorValue__") 
+                && (!$type__.hasADefaultCaseLabel || $type__.hasAllCaseCovered))
+            || ($member.labelList.contains("default") && !$type__.hasAllCaseCovered))
+#*------*##if ($member.arrayTotalSize && !$member.seqSize)
+#declareArray($member)
+#*------*##elseif ($member.isOptional)
+None
+#*------*##elseif ($member.seqSize)
+#declareSequence($member)
+#*------*##elseif ($member.isEnum)
+${member.nativeTypeFQName}.${member.defaultEnumMemberName}
+#*------*##elseif ($member.typeKind.equals("user"))
+field(default_factory = ${member.nativeTypeFQName})
+#*------*##else
+$member.defaultValue
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+#macro (copyDirective $directiveKind__ $value__)
+#*--*##if($directiveKind__.equals("copy")
+             || $directiveKind__.equals("copy-py")
+             || $directiveKind__.equals("copy-py-declaration")
+             || $directiveKind__.equals("copy-declaration"))
+$value__
+#*--*##end
+#end
+

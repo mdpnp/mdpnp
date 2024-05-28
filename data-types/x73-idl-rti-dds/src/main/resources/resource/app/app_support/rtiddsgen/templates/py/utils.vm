@@ -1,0 +1,66 @@
+
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##-----------------------------------------------------------------
+##
+##             Utils
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+#macro (assignTypeVariables $type__)
+#*------*##foreach($member in $type__.memberFieldMapList)#*
+#*--------*##assignMemberVariables($type__ $member)#*
+#*------*##end
+#end
+
+#macro (assignMemberVariables $type__ $member__)
+## In Python we do not use defaultValue for enums because we don't use the ordinals 
+#*--*##if(!$member__.isEnum)
+#*----*##if($member__.explicitDefaultValue)
+#*------*##set($member__.defaultValue = $member__.explicitDefaultValue)
+#*----*##else
+#*------*##set($member__.defaultValue = "0")
+#*----*##end
+#*--*##end
+#*--*##if($member__.nativeTypeFQName.equals("bool") && !$member__.explicitDefaultValue)
+#*----*##set($member__.defaultValue = "False")
+#*--*##elseif(($member__.nativeTypeFQName.equals("float") 
+                || $member__.nativeTypeFQName.equals("idl.float32"))
+            && !$member__.explicitDefaultValue)
+#*----*##set($member__.defaultValue = "0.0")
+#*--*##elseif($member__.nativeTypeFQName.equals("str"))
+#*----*##if(!$member__.explicitDefaultValue)
+#*------*##set($member__.defaultValue = """""")
+#*----*##end
+#*----*##if($member__.typeName.equals("wstring"))
+#*------*##set($type__.hasWString = true)
+#*----*##end
+#*--*##elseif($member__.nativeTypeFQName.equals("idl.char")
+            && $member__.explicitDefaultValue)
+#*----*##set($member__.defaultValue = "idl.to_char(${member__.explicitDefaultValue})")
+#*--*##elseif($member__.nativeTypeFQName.equals("idl.wchar")
+            && $member__.explicitDefaultValue)
+#*----*##set($member__.defaultValue = "idl.to_wchar(${member__.explicitDefaultValue})")
+#*--*##end
+#end
+
+#macro(getSeqSize $member__)
+#*--*##if ($member__.seqSize.equals("-1"))
+idl.unbounded#*
+#*--*##else
+idl.bound($member__.seqSize)#*
+#*--*##end
+#end
+
+#macro(getStrSize $member__)
+#*--*##if ($member__.strSize.equals("-1"))
+idl.unbounded#*
+#*--*##else
+idl.bound($member__.strSize)#*
+#*--*##end
+#end

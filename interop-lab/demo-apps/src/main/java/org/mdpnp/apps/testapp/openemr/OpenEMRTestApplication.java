@@ -1,10 +1,8 @@
 package org.mdpnp.apps.testapp.openemr;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -14,13 +12,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.stream.Collectors;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -31,46 +24,40 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
-import javax.json.stream.JsonParser;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.io.DefaultHttpRequestWriterFactory;
 import org.apache.http.util.EntityUtils;
 import org.mdpnp.apps.testapp.patient.EMRFacade;
-import org.mdpnp.apps.testapp.patient.OpenEMRImpl;
-import org.mdpnp.apps.testapp.patient.EMRFacade.EMRFacadeFactory;
 import org.mdpnp.apps.testapp.patient.EMRFacade.EMRType;
-import org.mdpnp.apps.testapp.pumps.PumpControllerTestApplication;
+import org.mdpnp.apps.testapp.patient.OpenEMRImpl;
 import org.mdpnp.devices.MDSHandler;
-import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;
-import org.mdpnp.devices.MDSHandler.Patient.PatientEvent;
-import org.mdpnp.devices.MDSHandler.Patient.PatientListener;
+import org.mdpnp.devices.PartitionAssignmentController;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.mdpnp.sql.SQLLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javafx.fxml.*;
-import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
 
 import com.rti.dds.subscription.Subscriber;
 import com.sun.javafx.collections.ObservableListWrapper;
 
 import ice.MDSConnectivity;
 import ice.Patient;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 public class OpenEMRTestApplication {
 

@@ -84,7 +84,7 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
         da.run();
 
         // will only get here once the controller loop is stopped
-        context.destroy();
+        context.close();
 
         return 0;
     }
@@ -110,7 +110,7 @@ public class DeviceAdapterCommand implements Configuration.HeadlessCommand, Conf
                 super.stop();
                 // at the very end; kill the context that was created here.
                 log.info("Shut down spring context");
-                context.destroy();
+                context.close();
             }
         };
 

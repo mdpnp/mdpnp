@@ -1,0 +1,174 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##--------------------- 
+##10a,13jun13,ajm CODEGENII-109 joining the type variables in the constructMap 
+##10a,8mar13, ajm CODEGENII-30 and CODEGENII-87 Code reviews and Xtypes in Java
+##10a,31oct12, ajm RTIDDSGEN-34 support for the first set of copy directives (java ones)
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,01ag11,jmt created 
+##10a,02ag11,jmt New dessing using auxiliary files for the macros
+##10a,02ag11,jmt adding modification history header
+##10a,04ag11,jmt Adding all the basic type and testing them
+##10a,05ag11,jmt Modification of the history header (a comment missing)
+##           ajm Fixing the bug for a struct without a module
+##========================================================================*/*#
+##-----------------------------------------------------------------
+##               
+##             Template for the Java Data Writer file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+## Variables names
+##
+## $constructMap.packageName : Name of the package where the file will be included
+## $constructMap.name  : Name of the structure related with this file
+## ${constructMap.dataWriterName}: Name of the main class. Also name of the file
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from .idl 
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+    
+#if ($constructMap.packageName)  
+package $constructMap.packageName;
+#end
+      
+        
+import com.rti.dds.infrastructure.Time_t;
+import com.rti.dds.infrastructure.WriteParams_t;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.publication.DataWriterImpl;
+import com.rti.dds.publication.DataWriterListener;
+import com.rti.dds.topic.TypeSupportImpl;
+
+#foreach($element in $constructMap.directives)
+$element.getValue()
+#end
+
+// ===========================================================================
+/**
+ * A writer for the $constructMap.name user type.
+ */
+public class ${constructMap.dataWriterName} extends DataWriterImpl {
+    // -----------------------------------------------------------------------
+    // Public Methods
+    // -----------------------------------------------------------------------
+
+    public InstanceHandle_t register_instance($constructMap.name instance_data) {
+        return register_instance_untyped(instance_data);
+    }
+    
+    
+    public InstanceHandle_t register_instance_w_timestamp($constructMap.name instance_data,
+                                                 Time_t source_timestamp) {
+        return register_instance_w_timestamp_untyped(
+            instance_data, source_timestamp);
+    }
+
+
+    public InstanceHandle_t register_instance_w_params($constructMap.name instance_data,
+                                                 WriteParams_t params) {
+        return register_instance_w_params_untyped(
+            instance_data, params);
+    }
+    
+
+    public void unregister_instance($constructMap.name instance_data,
+                                     InstanceHandle_t handle) {
+        unregister_instance_untyped(instance_data, handle);
+    }
+    
+    
+    public void unregister_instance_w_timestamp($constructMap.name instance_data,
+            InstanceHandle_t handle, Time_t source_timestamp) {
+        
+        unregister_instance_w_timestamp_untyped(
+            instance_data, handle, source_timestamp);
+    }
+
+
+    public void unregister_instance_w_params($constructMap.name instance_data,
+                                             WriteParams_t params) {
+        
+        unregister_instance_w_params_untyped(
+            instance_data, params);
+    }
+    
+    
+    public void write($constructMap.name instance_data, InstanceHandle_t handle) {
+        write_untyped(instance_data, handle);
+    }
+    
+    
+    public void write_w_timestamp($constructMap.name instance_data,
+            InstanceHandle_t handle, Time_t source_timestamp) {
+
+        write_w_timestamp_untyped(instance_data, handle, source_timestamp);
+    }
+
+
+    public void write_w_params($constructMap.name instance_data,
+                               WriteParams_t params) {
+
+        write_w_params_untyped(instance_data, params);
+    }
+    
+    
+    public void dispose($constructMap.name instance_data, InstanceHandle_t instance_handle){
+        dispose_untyped(instance_data, instance_handle);
+    }
+    
+    
+    public void dispose_w_timestamp($constructMap.name instance_data,
+            InstanceHandle_t instance_handle, Time_t source_timestamp) {
+
+        dispose_w_timestamp_untyped(
+            instance_data, instance_handle, source_timestamp);
+    }
+
+    
+    public void dispose_w_params($constructMap.name instance_data,
+                                 WriteParams_t params) {
+
+        dispose_w_params_untyped(instance_data, params);
+    }
+
+       
+    public void get_key_value($constructMap.name key_holder, InstanceHandle_t handle) {
+        get_key_value_untyped(key_holder, handle);
+    }
+    
+
+    public InstanceHandle_t lookup_instance($constructMap.name key_holder) {
+        return lookup_instance_untyped(key_holder);
+    }
+
+    // -----------------------------------------------------------------------
+    // Package Methods
+    // -----------------------------------------------------------------------
+
+    // --- Constructors: -----------------------------------------------------
+    
+    /*package*/ ${constructMap.dataWriterName}(long native_writer, DataWriterListener listener,
+                              int mask, TypeSupportImpl type) {
+        super(native_writer, listener, mask, type);
+    }
+}
+
+

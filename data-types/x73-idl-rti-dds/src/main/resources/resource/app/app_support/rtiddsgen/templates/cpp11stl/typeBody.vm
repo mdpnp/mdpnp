@@ -1,0 +1,417 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,11may16,acr CODEGENII-579: created, based on cpp03/typeBody.vm
+##
+##========================================================================*/
+##-----------------------------------------------------------------
+##               
+##             Template for the main C++ type body file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+
+${envMap.POUND_CHAR}include <iosfwd>
+${envMap.POUND_CHAR}include <iomanip>
+#if(${envMap.addIncludesForDecimals})
+${envMap.POUND_CHAR}include <cmath>
+${envMap.POUND_CHAR}include <limits>
+#end
+
+${envMap.POUND_CHAR}ifndef NDDS_STANDALONE_TYPE
+${envMap.POUND_CHAR}include "rti/topic/cdr/Serialization.hpp"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Plugin.hpp"
+${envMap.POUND_CHAR}else
+${envMap.POUND_CHAR}include "rti/topic/cdr/SerializationHelpers.hpp"
+${envMap.POUND_CHAR}endif
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.hpp"
+
+${envMap.POUND_CHAR}include <rti/util/ostream_operators.hpp>
+
+#foreach($node in $constructMapList)
+#*--*##handleCopyDirective($node, false)
+#*--*##if($node.constructKind.equals("module"))
+namespace $node.name {
+#*--*##elseif($node.constructKind.equals("moduleClose")) 
+} // namespace $node.name  
+#*--*##elseif($node.constructKind.equals("enum"))
+#outOperatorBodyEnum($node)
+#*--*##elseif($node.constructKind.equals("interface"))
+#generateBodyInterface($node)
+#*--*##elseif($node.isAggregationType)
+#*--Constructor--*#
+// ---- $node.name: 
+#*----*##assignTypeVariables($node)
+
+#if ($node.languageBinding.equals("FLAT_DATA"))
+#flatTypeImplementation($node)
+#else
+
+#if(!$node.constructKind.equals("union"))
+
+$node.name::${node.name}() #initialize($node) {
+
+#initializeArraysAndTypedef($node)
+}   
+
+#*--Copy Constructor-- Using default*#
+
+#*--CODEGENII-787 we don't generate param constructor if there are no params*#
+#if($node.memberCount > 0
+    || ($node.baseTypeMembers && $node.baseTypeMembers.size() > 0 ))
+#*--Params Constructor--*#
+$node.name::${node.name} (#paramConstructorHeader($node))#paramConstructorBody($node) {
+#*--*##if(!$envMap.legacyMapping)
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if(!$member.directive)
+${member.cName} = #*
+#*--------*##if($node.baseTypeMembersName.contains($member.name))
+${member.name}_2_;
+#*--------*##else
+${member.cName}_;
+#*--------*##end
+#*------*##end
+#*----*##end
+#*--*##end
+}
+#end
+
+#else
+#*we generate the constructors & destructor for the struct type*#
+$node.name::${node.unionStructName}::${node.unionStructName}() #initialize($node) {
+#initializeArraysAndTypedef($node)
+}
+#* Using default copy constructor *#
+##$node.name::${node.unionStructName}::${node.unionStructName}(const $node.name::${node.unionStructName}& other_) #copy($node) {
+##}
+
+$node.name::${node.unionStructName}::${node.unionStructName}(#paramConstructorHeader($node))#paramConstructorBody($node) {
+}
+
+$node.name::${node.name}() #initializeUnion($node) {
+}
+#end
+
+#*----*##if(!$envMap.legacyMapping && $node.constructKind.equals("struct"))
+#operatorNewMappingBody($node)
+
+void swap($node.name& a, $node.name& b) noexcept 
+{
+    using std::swap;
+    #swapNewMapping($node)
+}  
+#*----*##else
+void $node.name::swap($node.name& #if($node.constructKind.equals("union") || $node.baseTypeFQName || !$node.memberFieldMapList.isEmpty())other_#end)  noexcept 
+{
+    using std::swap;
+    #swap($node)
+}  
+
+#operatorBody($node) 
+
+#getterAndSettersBody($node) ## this is only for memberes with fwd-decl types
+#*----*##end
+#outOperatorBody($node)
+
+#if($node.constructKind.equals("union"))       
+$node.unionDiscriminatorMap.specTypeName ${node.name}::default_discriminator() {
+#if ($node.unionDiscriminatorMap.isEnum)
+return ${node.unionDiscriminatorMap.specTypeName}(static_cast< ${node.unionDiscriminatorMap.specTypeName} >($node.unionDiscriminatorMap.defaultDiscriminatorValue));
+#else
+return $node.unionDiscriminatorMap.defaultDiscriminatorValue;
+#end   
+}  
+#end   
+#end
+#end
+
+#end ## if($node.languageBinding.equals("FLAT_DATA"))
+
+${envMap.POUND_CHAR}ifdef NDDS_STANDALONE_TYPE
+namespace rti {
+    namespace topic {
+#*--*##foreach($node in $constructMapList)
+#*----*##if($node.constructKind=="enum")
+const ${node.nativeFQName} default_enumerator< ${node.nativeFQName}>::value = ${node.nativeFQName}::$node.defaultLiteralMember.name;
+#*----*##end
+#*--*##end
+    }
+}
+
+${envMap.POUND_CHAR}else
+// --- Type traits: -------------------------------------------------
+
+namespace rti { 
+    namespace topic {
+#foreach($node in $constructMapList)
+#*--*##if(($node.constructKind=="enum")
+                || ($node.constructKind=="alias")
+                || ($node.isAggregationType))
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.beforeTypeDirectiveMapList, false)
+#*----*##end
+
+#*----*##if($node.constructKind=="enum")
+const ${node.nativeFQName} default_enumerator< ${node.nativeFQName}>::value = ${node.nativeFQName}::$node.defaultLiteralMember.name;
+#*----*##end
+template<>
+#*----*##if($node.constructKind=="alias")
+struct native_type_code< ${node.nativeFQName}${aliasTag} > {
+#*----*##else
+struct native_type_code< ${node.nativeFQName} > {
+#*----*##end   
+#typeCodeDeclaration($node $envMap.language)
+#*----*##if($node.interpreted=="true" && !($node.languageBinding.equals("FLAT_DATA") 
+        && $node.extensibility.equals("MUTABLE_EXTENSIBILITY")))
+#sampleAccessInfoDeclaration($node $envMap.language)
+#typePluginInfoDeclaration($node $envMap.language)
+#*----*##end
+}; // native_type_code
+
+
+#*----*##if($node.constructKind=="alias")
+    const #getDynamicType($node)& dynamic_type< ${node.nativeFQName}${aliasTag} >::get()
+#*----*##else
+    const #getDynamicType($node)& dynamic_type< ${node.nativeFQName} >::get()
+#*----*##end    
+    {
+        return static_cast<const #getDynamicType($node)&>(
+            ::rti::core::native_conversions::cast_from_native< ::dds::core::xtypes::DynamicType >(
+            #if($node.constructKind=="alias")
+            *(native_type_code< ${node.nativeFQName}${aliasTag} >::get())));
+            #else
+            *(native_type_code< ${node.nativeFQName} >::get())));
+            #end
+    }
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.afterTypeDirectiveMapList, false)
+#*----*##end
+#*--*##end
+#end
+  }
+}
+
+namespace dds { 
+    namespace topic {
+#foreach($node in $constructMapList)
+#*--*##if($node.isAggregationType)
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.beforeTypeDirectiveMapList, false)
+#*----*##end
+#*----*##if($node.topLevel)    
+        void topic_type_support< ${node.nativeFQName} >:: register_type(
+                    ::dds::domain::DomainParticipant& participant,
+                    const std::string& type_name) 
+        {
+            
+            ::rti::domain::register_type_plugin(
+                participant,
+                type_name,
+                ${node.nativeFQName}Plugin_new,
+                ${node.nativeFQName}Plugin_delete);
+        }
+       
+       std::vector<char>& topic_type_support< ${node.nativeFQName} >::to_cdr_buffer(
+                    std::vector<char>& buffer, 
+                    const ${node.nativeFQName}& sample,
+                    ::dds::core::policy::DataRepresentationId representation)
+        {
+            // First get the length of the buffer
+            unsigned int length = 0;
+            RTIBool ok = ${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer(
+                    NULL, 
+                    &length,
+                    &sample,
+                    representation);
+            ::rti::core::check_return_code(
+                ok ? DDS_RETCODE_OK : DDS_RETCODE_ERROR,
+                "Failed to calculate cdr buffer size");
+            
+            // Create a vector with that size and copy the cdr buffer into it
+            buffer.resize(length);
+            ok = ${node.nativeFQNameInModule}Plugin_serialize_to_cdr_buffer(
+                    &buffer[0], 
+                    &length, 
+                    &sample,
+                    representation);
+            ::rti::core::check_return_code(
+                ok ? DDS_RETCODE_OK : DDS_RETCODE_ERROR,
+                "Failed to copy cdr buffer");
+    
+            return buffer;
+        }
+
+
+        void topic_type_support< ${node.nativeFQName} >::from_cdr_buffer(${node.nativeFQName}& sample, 
+            const std::vector<char>& buffer)
+        {
+                   
+            RTIBool ok  = ${node.nativeFQNameInModule}Plugin_deserialize_from_cdr_buffer(
+                    &sample, 
+                    &buffer[0], 
+                    static_cast<unsigned int>(buffer.size()));
+            ::rti::core::check_return_code(ok ? DDS_RETCODE_OK : DDS_RETCODE_ERROR,
+                    "Failed to create ${node.nativeFQName} from cdr buffer");
+        }
+#*------*##if($node.isMetpType)        
+       RTIBool topic_type_support< ${node.nativeFQName} >::native_initialize_sample(void *sample)
+       {
+           try {
+               topic_type_support< ${node.nativeFQName} >::reset_sample(*(${node.nativeFQName} *)sample);
+           } catch (...) {
+               return RTI_FALSE; 
+           }
+           return RTI_TRUE;
+       }
+#*------*##end
+#*----*##end
+
+        void topic_type_support< ${node.nativeFQName} >::reset_sample(${node.nativeFQName}& sample) 
+        {
+#*------*##if ($node.languageBinding.equals("FLAT_DATA"))
+            #flatResetSample($node)
+#*------*##else
+            #resetSample($node)
+#*------*##end
+        }
+        
+        void topic_type_support< ${node.nativeFQName} >::allocate_sample(${node.nativeFQName}& sample, int, int) 
+        {
+#*------*##if ($node.languageBinding.equals("FLAT_DATA"))
+            #flatAllocateSample($node)
+#*------*##else
+            #allocateSample($node)
+#*------*##end
+        }
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.afterTypeDirectiveMapList, false)
+#*----*##end
+#*--*##end
+#end        
+    }
+}  
+
+#if($envMap.useFlatData)
+namespace rti { 
+    namespace xcdr {
+#foreach($node in $constructMapList)
+#*--*##if($node.isAggregationType && $node.languageBinding.equals("FLAT_DATA"))
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.beforeTypeDirectiveMapList, false)
+#*----*##end
+RTIXCdrInterpreterPrograms * type_programs< ${node.nativeFQName} >::get() 
+{
+#*----*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    return ::rti::xcdr::ProgramsSingleton<
+        ${node.nativeFQName}PlainHelper,
+        RTI_XCDR_GET_MAX_SER_SIZE_PROGRAM,
+        true, true, true
+#*----*##else
+    return ::rti::xcdr::ProgramsSingleton<
+        ${node.nativeFQName},
+        RTI_XCDR_INITIALIZE_SAMPLE_PROGRAM,
+        true, true, true
+#*----*##end
+    >::get_instance();
+}
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.afterTypeDirectiveMapList, false)
+#*----*##end
+#*--*##end
+#end
+    } 
+}
+#end
+
+#if(${envMap.generateTestCode})
+
+//
+// Note: code generated with the hidden option -generateTestCode
+//
+
+namespace rti { namespace test {
+#foreach($node in $constructMapList)
+
+#*--*##if($node.isAggregationType)
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.beforeTypeDirectiveMapList, false)
+#*----*##end
+#*----*##if($node.languageBinding.equals("FLAT_DATA"))
+#flatInitializeTestValues($node)
+#*----*##else
+template <>
+void initialize_test_values< ${node.nativeFQName} >(${node.nativeFQName}& sample)
+{
+#*--*##if(!$node.baseTypeFQName && $node.memberFieldMapList.isEmpty())
+RTIOsapiUtility_unusedParameter(sample);
+#*--*##end
+#*--*##if($node.baseTypeFQName)
+// Initialize base
+initialize_test_values< ${node.baseTypeFQName} >(sample);
+
+#*--*##end
+#*--*##if(!$node.constructKind.equals("union"))
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if(!$member.directive)
+initialize_test_values(sample.${member.name}#parenthesisIfNeeded($node));
+#*------*##end
+#*----*##end
+#*--*##else
+#*----*##if($node.memberFieldMapList.size() > 1
+    && !$node.memberFieldMapList[1].labelList[0].equals("default")
+    && !$node.memberFieldMapList[1].directive)
+#*------*##if($envMap.legacyMapping)
+sample._d() = ${node.memberFieldMapList[1].labelList[0]};
+#*------*##else
+sample._d(${node.memberFieldMapList[1].labelList[0]});
+#*------*##end
+initialize_test_values(sample.${node.memberFieldMapList[1].name}#parenthesisIfNeeded($node));
+#*----*##else
+#*------*##if(!$node.memberFieldMapList[0].labelList[0].equals("default"))
+#*--------*##if($envMap.legacyMapping)
+sample._d() = ${node.memberFieldMapList[0].labelList[0]};
+#*--------*##else
+sample._d(${node.memberFieldMapList[0].labelList[0]});
+#*--------*##end
+#*------*##else
+#*--------*##if($envMap.legacyMapping)
+sample._d() = ${node.nativeFQName}::default_discriminator();
+#*--------*##else
+sample._d(${node.nativeFQName}::default_discriminator());
+#*--------*##end
+#*------*##end
+initialize_test_values(sample.${node.memberFieldMapList[0].name}#parenthesisIfNeeded($node));
+#*----*##end
+#*--*##end
+}
+#*----*##end ## FLAT_DATA
+#*----*##if (!$userVarList.suppressDuplicateDirective)
+#*------*##handleTypeCopyDirective($node.afterTypeDirectiveMapList, false)
+#*----*##end
+#*--*##end ## isAggregationType
+#end ## foreach
+
+} }
+
+
+#end
+${envMap.POUND_CHAR}endif // NDDS_STANDALONE_TYPE

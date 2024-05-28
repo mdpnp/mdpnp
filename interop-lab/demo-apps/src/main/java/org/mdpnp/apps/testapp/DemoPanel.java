@@ -177,7 +177,7 @@ public class DemoPanel {
                 
                 if (null != c) {
                     if(c.getDeviceFactory().getDeviceType().getConnectionType()==ConnectionType.Serial && SerialProviderFactory.getDefaultProvider() instanceof TCPSerialProvider) {
-			//Adding serial device after network device.  Reset default provider
+						//Adding serial device after network device.  Reset default provider
                         SerialProviderFactory.setDefaultProvider(new PureJavaCommSerialProvider());
                     }
                     SubscriberQos qos = new SubscriberQos();
@@ -198,7 +198,7 @@ public class DemoPanel {
                                 AbstractDevice d=getDevice();
                                 String udiToKill=d.getUniqueDeviceIdentifier();
                                 super.stop();
-                                context.destroy();
+                                context.close();
                                 try {
                                     Connection c=SQLLogging.getConnection();
                                     PreparedStatement ps=c.prepareStatement("UPDATE devices SET destroyed=? WHERE udi=? AND destroyed IS NULL");
@@ -319,6 +319,10 @@ public class DemoPanel {
     		FileChooser chooser=new FileChooser();
     		chooser.setTitle("Select the file to save the scenario to");
     		File target=chooser.showSaveDialog(content.sceneProperty().get().getWindow());
+    		if(target==null) {
+    			//Cancelled
+    			return;
+    		}
     		int dayOfYear=Calendar.getInstance().get(Calendar.DAY_OF_YEAR);
             File source=new File(System.getProperty("user.home"),"device_creation_"+dayOfYear+".log");
             BufferedOutputStream bos=new BufferedOutputStream(new FileOutputStream(target,false));

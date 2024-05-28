@@ -8,7 +8,7 @@ import com.sun.jna.IntegerType;
 import com.sun.jna.Pointer;
 import ice.ConnectionType;
 import ice.Numeric;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.openjdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.junit.*;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;

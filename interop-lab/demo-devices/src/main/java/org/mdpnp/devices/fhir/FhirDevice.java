@@ -9,6 +9,7 @@ import ca.uhn.fhir.model.primitive.DateTimeDt;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import ice.Numeric;
+
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.connected.AbstractConnectedDevice;
 import org.mdpnp.rtiapi.data.EventLoop;
@@ -45,7 +46,8 @@ public abstract class FhirDevice extends AbstractConnectedDevice {
 
         Observation obs = new Observation();
         obs.setValue(new QuantityDt(value.doubleValue()).setUnits(MDC_DIM_DIMLESS.VALUE).setCode(metricId).setSystem("OpenICE"));
-        obs.setApplies(new DateTimeDt(asOf, TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
+        //SK - for update to hapi-fhir-structures-dstu2 version 6.1.3, updating setApplies to setEffective - that may not be correct
+        obs.setEffective(new DateTimeDt(asOf, TemporalPrecisionEnum.SECOND, TimeZone.getTimeZone("UTC")));
         obs.setStatus(ObservationStatusEnum.PRELIMINARY);
 
         return obs;
@@ -122,7 +124,7 @@ public abstract class FhirDevice extends AbstractConnectedDevice {
 
             log.info("Converting observation:" + code + "=" + value);
 
-            DateTimeDt dt = (DateTimeDt) obs.getApplies();
+            DateTimeDt dt = (DateTimeDt) obs.getEffective();
             Date d = dt.getValue();
             DeviceClock.Reading clockReading = new DeviceClock.ReadingImpl(d.getTime());
 

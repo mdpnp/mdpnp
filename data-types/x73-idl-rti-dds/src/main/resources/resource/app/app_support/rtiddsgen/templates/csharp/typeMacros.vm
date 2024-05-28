@@ -1,0 +1,380 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##-----------------------------------------------------------------
+##
+##             Macros for Type
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+#*
+# This Macro generate the parameter for the header of the parameter ctor.
+# $list the list of members
+# $baseMembers true when is generating the member of the base class, false otherwise
+*#
+#macro (paramConstructor $list $baseMembers)
+#*--*##set($firstInitialized=false)
+#*--*##foreach($member in $list)
+#*----*##if(!$member.directive)
+#*------*##if(!($member.seqSize && $member.hasArray))
+#*--------*##if(!$firstInitialized)#set($firstInitialized="true")#else, #end
+#*--------*##generateMethodParameter($node $member $baseMembers)
+#*------*##end
+#*----*##end
+#*--*##end
+#end
+
+#macro (paramConstructorHeader $node)
+#*--*##if($node.baseTypeMembers && $node.baseTypeMembers.size() > 0)
+#*----*##paramConstructor($node.baseTypeMembers true)#if($node.memberCount > 0), #end#*
+#*--*##end
+#*--*##paramConstructor($node.memberFieldMapList false)#*
+*##end
+
+#macro (paramConstructorBody $node)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##handleCopyDirective($member.directive $member.value false)
+#*----*##else
+        this.${member.privateName} = #generateParamName($node $member false);
+#*----*##end
+#*--*##end
+#end
+
+#*
+# This Macro generate the parameter type and name.
+# $node node processing
+# $member the member we are generating
+# $baseMembers true when is generating the member of the base class, false otherwise
+*#
+#macro(generateMethodParameter $node $member $baseMembers)
+#*--*##if($member.seqSize)
+ISequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>#*
+#*--*##else
+$member.nativeTypeFQName #*
+#*----*##if($member.isOptional && !$member.isOptionalArray && ($member.typeKind.equals("builtin") || $member.isEnum) && !$member.strSize)
+? #*
+#*----*##end
+#declareArraydimensionListsIfNeeded($member false) #*
+#*--*##end
+#*--*##generateParamName($node $member $baseMembers)#*
+*##end
+
+#macro (generateBaseParams $memberNames)
+#*--*##foreach($memberName in $memberNames)
+${memberName}#if($foreach.hasNext), #end#*
+#*--*##end
+#end
+
+#macro (getPropertyAnnotations $member)
+#*--*##if($member.isKey)[Key]
+#*--*##elseif($member.isOptional)[Optional]
+#*--*##end
+#*--*##if($member.seqSize && !$member.seqSize.equals("-1"))[Bound($member.seqSize)]
+#*--*##end
+#*--*##if(!$member.seqSize && $member.strSize && !$member.strSiz.equals("-1"))[Bound($member.strSize)]
+#*--*##end
+#end
+
+#macro (getExtensibilityEnum $node)
+#*-*##if($node.extensibility.equals("MUTABLE_EXTENSIBILITY"))ExtensibilityKind.Mutable#*
+*--*##elseif($node.extensibility.equals("FINAL_EXTENSIBILITY"))ExtensibilityKind.Final#*
+*--*##{else}ExtensibilityKind.Extensible#*
+*--*##end
+#end
+
+#macro(declareArraydimensionListsIfNeeded $member $generateDimensions)#*
+#*--*##if(${member.dimensionList})#*
+*#[#*
+#*----*##foreach($s in ${member.dimensionList})#*
+#*----*##if($generateDimensions)$s#end
+#*----*##if(!$foreach.isLast()),#end
+#*----*##end#*
+*#]#*
+#*--*##end#*
+*##end
+
+#macro(getFirstPositionofArray $member)#*
+#*--*##if(${member.dimensionList})#*
+*#[#*
+#*----*##foreach($s in ${member.dimensionList})#*
+*#0#if(!$foreach.isLast()), #end
+#*----*##end#*
+*#]#*
+#*--*##end#*
+*##end
+
+#macro(initializeArray $member $other $initElements)
+#*--*##if($member.strSize)
+new String#declareArraydimensionListsIfNeeded($member true);
+#*--*##else
+new ${member.nativeTypeFQName}#declareArraydimensionListsIfNeeded($member true);
+#*--*##end
+#*--*##if($initElements)
+#*----*##foreach($s in ${member.dimensionList})
+for( int i${foreach.count} = 0; i${foreach.count} < $s; i${foreach.count}++)
+{
+#*----*##end
+${member.name}[#*
+#*----*##foreach($s in ${member.dimensionList})
+i${foreach.count}#if(${foreach.hasNext}), #end#*
+#*----*##end
+] = #*
+#*----*##if($other)
+#*------*##if($member.typeKind.equals("user") && !$member.isEnum)
+new ${member.nativeTypeFQName}(#*
+#*------*##end
+other.${member.name}[#*
+#*------*##foreach($s in ${member.dimensionList})
+i${foreach.count}#if(${foreach.hasNext}), #end#*
+#*------*##end
+]#*
+#*------*##if($member.typeKind.equals("user") && !$member.isEnum)
+)#*
+#*------*##end
+;
+#*----*##else#*
+#*------*##if($member.strSize && !$member.isAlias)
+String.Empty;
+#*------*##elseif(!$member.typeKind.equals("user") || $member.isEnum)
+#*--------*##if($member.typeName.equals("long double"))
+new LongDouble(${member.defaultValue});#*
+#*--------*##else
+($member.defaultValue);
+#*--------*##end
+#*------*##else
+new ${member.nativeTypeFQName}();
+#*------*##end
+#*----*##end
+#*----*##foreach($s in ${member.dimensionList})
+}#*
+#*----*##end
+#*--*##end
+
+#end
+
+#macro(generateMembers $node $public $prefix)
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##handleCopyDirective($member.directive $member.value true)
+#*----*##else
+#*------*##if($node.baseTypeMembers && $node.baseTypeMembersName.contains($member.name))new#end
+#*------*##if($public)#getPropertyAnnotations($member) public#{else}private#end #*
+#*--------*##declareMember($member $prefix)#*
+#*------*##if($public)
+#generateGetterAndSetter($member)#initializeString($member $public)
+#*------*##else
+#initializeString($member $public);
+#*------*##end
+#*----*##end
+
+#*--*##end
+#end
+
+#macro(generateEqualsAndToString $node)
+        public override bool Equals(object obj) => this.Equals(obj as ${node.name});
+
+        public override string ToString() => ${node.name}Support.Instance.ToString(this);
+#end
+
+#macro(declareMember $member $prefix)
+#*--*##if($member.seqSize)
+ISequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>#*
+#*--*##elseif($member.strSize)
+$member.nativeTypeFQName#declareArraydimensionListsIfNeeded($member false)#*
+#*-------*##else
+$member.nativeTypeFQName#*
+#*---------*##if($member.isOptional && !$member.isOptionalArray && ($member.typeKind.equals("builtin") || $member.isEnum))
+?#*
+#*---------*##end
+#declareArraydimensionListsIfNeeded($member false)#*
+#*------*##end
+ #*--*##if($prefix)_#end${member.name}#*
+*##end
+
+#macro(generateCheckMinMax $member)
+#*--*##if($member.explicitMinValue)
+                if(value < $member.explicitMinValue)
+                {
+                        throw new ArgumentOutOfRangeException(nameof($member.name), $"{value} is lower than the minimum ($member.explicitMinValue)");
+                }
+#*--*##end
+#*--*##if($member.explicitMaxValue)
+                if(value > $member.explicitMaxValue)
+                {
+                        throw new ArgumentOutOfRangeException(nameof($member.name), $"{value} is higher than the maximum ($member.explicitMaxValue)");
+                }
+#*---*##end
+#end
+
+#macro(generateGetterAndSetter $member)
+#*--*##if($member.seqSize && !$member.isOptional)
+ { get; }#*
+#*--*##elseif($member.explicitMaxValue || $member.explicitMinValue)
+{
+        get
+        {
+                return this.$member.privateName;
+        }
+
+        set
+        {
+#*----*##generateCheckMinMax($member)
+                this.${member.privateName} = value;
+        }
+}
+
+private $member.nativeTypeFQName#if($member.isOptional)?#{end} $member.privateName;
+#*--*##else
+ { get; set; }#*
+#*--*##end
+#end
+
+
+#macro(getUnionDiscriminatorDefaultVale $node)
+#*----*##if($node.hasADefaultCaseLabel && !$node.hasAllCaseCovered)
+#*------*##if($node.unionDiscriminatorMap.nativeTypeFQName.equals("bool"))
+#*--------*##if($node.unionDiscriminatorMap.defaultDiscriminatorValue.equals("0"))
+false;
+#*--------*##else
+true;
+#*--------*##end
+#*------*##else
+#*--------*##if($node.unionDiscriminatorMap.isEnum || $node.unionDiscriminatorMap.nativeTypeFQName.equals("char"))
+($node.unionDiscriminatorMap.nativeTypeFQName) #*
+#*--------*##end
+$node.unionDiscriminatorMap.defaultDiscriminatorValue;
+#*------*##end
+#*----*##else
+${node.unionDiscriminatorMap.labelList[0]};
+#*----*##end
+#end
+
+#macro(initializeString $member $public)
+#*--*##if($member.strSize && !$member.arrayTotalSize && !$member.seqSize && !$member.isAlias)
+ = #*
+#*----*##if($member.isOptional)
+null#*
+#*----*##else
+string.Empty#*
+#*----*##end
+#*----*##if($public)
+;#*
+#*----*##end
+#*--*##end
+#end
+
+#macro(initializeMember $member $initArrayElements)
+#*--*##if($member.seqSize)
+new Rti.Types.Sequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>()#*
+#*--*##elseif($member.arrayTotalSize)
+#initializeArray($member false $initArrayElements)
+#*--*##elseif($member.typeKind.equals("user") && !$member.isEnum)
+new ${member.nativeTypeFQName}()#*
+#*--*##else
+($member.nativeTypeFQName) ($member.explicitDefaultValue)#*
+#*--*##end
+#end
+
+#macro(generateLabelConditions $node $member $multiDiscriminator)
+if (#*
+#*--*##if($member.labelList.contains("default"))
+#*----*##foreach($label in $node.unionDiscriminatorMap.labelList)
+#*------*##if(!$member.labelList.contains($label))
+#*--------*##if(!$foreach.first) || #{end}#generateDiscriminatorName($multiDiscriminator) == $label#*
+#*------*##end
+#*----*##end
+)
+#*--*##else
+#*----*##foreach($label in $member.labelList)
+#generateDiscriminatorName($multiDiscriminator) != $label#*
+#*------*##if($foreach.hasNext) && #else) #end
+#*----*##end
+#*--*##end
+#end
+
+#macro(equalsMember $member $alias)
+#*--*##if(($member.seqSize || $member.arrayTotalSize) && $member.isOptional)
+(ReferenceEquals(this.${member.name}, other.${member.name}) || (this.${member.name} != null && other.${member.name} != null && #*
+#*--*##end
+#*--*##if($member.seqSize || ($member.arrayTotalSize && $member.dimensionList.size() == 1))
+this.${member.name}.SequenceEqual(other.${member.name})#*
+#*--*##elseif($member.arrayTotalSize)
+#*----*##if($alias)
+_temporary.Rank == other.${member.name}.Rank && Enumerable.Range(0, _temporary.Rank).All(dimension => _temporary.GetLength(dimension) == other.${member.name}.GetLength(dimension)) && _temporary.Cast<$member.nativeTypeFQName>().SequenceEqual(other.${member.name}.Cast<$member.nativeTypeFQName>())#*
+#*----*##else
+this.${member.name}.Rank == other.${member.name}.Rank && Enumerable.Range(0,this.${member.name}.Rank).All(dimension => this.${member.name}.GetLength(dimension) == other.${member.name}.GetLength(dimension)) && this.${member.name}.Cast<$member.nativeTypeFQName>().SequenceEqual(other.${member.name}.Cast<$member.nativeTypeFQName>())#*
+#*----*##end
+#*--*##elseif($member.isOptional)
+Equals(this.${member.name}, other.${member.name})#*
+#*--*##elseif($member.typeKind.equals("long double"))
+this.${member.name}.Equals((decimal) other.${member.name})#*
+#*--*##else
+this.${member.name}.Equals(other.${member.name})#*
+#*--*##end
+#*--*##if(($member.seqSize || $member.arrayTotalSize) && $member.isOptional)
+))#*
+#*--*##end
+#end
+
+#macro(getHash $member)
+this.${member.name}#*
+#*--*##if($member.seqSize)
+.Count#*
+#*--*##elseif($member.arrayTotalSize)
+#getFirstPositionofArray($member)#*
+#*--*##end
+#end
+
+#macro(copyMember $member)
+#*--*##if($member.isOptional)
+#*----*##if(($member.typeKind.equals("user") && !$member.isAlias) || $member.seqSize || $member.arrayTotalSize)
+if(other.${member.name} != null)
+{
+#*----*##end
+#*--*##end
+#*--*##if($member.seqSize)
+#*----*##if($member.typeKind.equals("user") && !$member.isEnum)
+        this.$member.privateName = new Rti.Types.Sequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>(other.${member.name}.Select(element => new ${member.nativeTypeFQName}(element)));
+#*----*##else
+        this.$member.privateName = new Rti.Types.Sequence<${member.nativeTypeFQName}#if($member.hasArray)[]#end>(other.${member.name});
+#*----*##end
+#*--*##elseif($member.arrayTotalSize)
+        this.$member.privateName = #initializeArray($member true true)
+#*--*##elseif($member.typeKind.equals("user") && !$member.isEnum)
+        this.$member.privateName = new ${member.nativeTypeFQName}(other.${member.name});
+#*--*##else
+        this.$member.privateName = other.${member.name};
+#*--*##end
+#*--*##if($member.isOptional)
+#*----*##if(($member.typeKind.equals("user") && !$member.isAlias) || $member.seqSize || $member.arrayTotalSize)
+}
+#*----*##end
+#*--*##end
+#end
+
+#macro(handleCopyDirective $directiveKind__ $value__ $allDirectives__)
+#*--*##if($allDirectives__ 
+            || $directiveKind__.equals("copy")
+            || $directiveKind__.equals("copy-cs"))
+$value__
+#*--*##end
+#end
+
+#macro(generateReturnForEquals $node__)
+return #*
+#*--*##foreach($member in $node__.memberFieldMapList)
+#*----*##if(!$member.directive)
+#*------*##equalsMember($member false)
+#*------*##if(!$member.lastMemberNotDirective && !$node__.constructKind.equals("alias"))
+ && 
+#*------*##end
+#*----*##end
+#*--*##end
+;
+#end

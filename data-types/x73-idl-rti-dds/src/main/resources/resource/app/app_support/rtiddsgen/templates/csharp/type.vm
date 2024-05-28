@@ -1,0 +1,359 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##========================================================================*/
+##-----------------------------------------------------------------
+##
+##             Template for the main C# type file
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+/*
+  WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+  This file was generated from ${envMap.idlFileName}.idl
+  using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+  The rtiddsgen tool is part of the RTI Connext DDS distribution.
+  For more information, type 'rtiddsgen -help' at a command shell
+  or consult the Code Generator User's Manual.
+*/
+
+using System;
+using System.Reflection;
+using System.Collections.Generic;
+using Rti.Types;
+using System.Linq;
+using Omg.Types;
+
+#foreach($node in $constructMapList)
+#assignTypeVariables($node, true)
+#*--*##if($node.constructKind.equals("directive"))
+#*----*##handleCopyDirective($node.directiveKind $node.value true)
+#*--*##elseif($node.constructKind.equals("module"))
+namespace $node.name
+{
+#*--*##elseif($node.constructKind.equals("moduleClose"))
+} // namespace $node.name
+#*--*##elseif($node.constructKind.equals("const"))
+public static class $node.name
+{
+#*----*##if($node.typeName.equals("long double"))
+        public static readonly ${node.nativeTypeFQName} Value = new LongDouble($node.value);
+#*----*##else
+        public const ${node.nativeTypeFQName} Value = ${node.value};
+#*----*##end
+}
+#*--*##elseif($node.constructKind.equals("enum"))
+        public enum $node.name
+        {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value true)
+#*------*##else
+        ${member.name}#if(!${member.autoOrdinal}) = $member.ordinal#{end}#if(!$member.lastMemberNotDirective),#end
+
+#*------*##end
+#*----*##end
+        }
+#*--*##elseif($node.constructKind.equals("struct") || $node.constructKind.equals("valueType") || $node.constructKind.equals("alias"))
+public class $node.name : #if($node.baseTypeFQName) $node.baseTypeFQName,#end IEquatable<${node.name}>
+    {
+#*--*##setAliasMemberName($node)
+#*--*##generateMembers($node, true, false)
+
+#*---------------------------Ctor---------------------------*#
+        public ${node.name}()
+        {
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if((!$member.isOptional) &&
+                    ($member.typeKind.equals("user") ||
+                    $member.seqSize ||
+                    $member.arrayTotalSize ||
+                    $member.explicitDefaultValue))
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value false)
+#*------*##else
+$member.name = #initializeMember($member, true);
+#*------*##end
+#*----*##end
+#*--*##end
+        }
+
+#*------------------Ctor with Parameter----------------------*#
+#*--*##if($node.memberCount > 0 || ($node.baseTypeFQName && $node.baseTypeMembers.size() > 0))
+        public ${node.name}(#paramConstructorHeader($node))#if($node.baseTypeFQName) : base(#generateBaseParams($node.baseTypeMembersName))#end
+
+        {
+#*----*##paramConstructorBody($node)
+        }
+#*--*##end
+
+#*------------------------Copy Ctor--------------------------*#
+        public ${node.name}(${node.name} other)#if($node.baseTypeFQName) : base(other)#end
+
+        {
+        if (other == null)
+        {
+            return;
+        }
+
+#*--*##foreach($member in $node.memberFieldMapList)
+#*----*##if($member.directive)
+#*------*##handleCopyDirective($member.directive $member.value false)
+#*----*##else
+#*------*##copyMember($member)
+#*----*##end
+#*--*##end
+
+        }
+
+#*---------------------------Hashs and equals methods---------------------------*#
+    public override int GetHashCode()
+        {
+            var hash = new HashCode();
+
+#*----*##if($node.baseTypeFQName)
+            hash.Add(base.GetHashCode());
+#*----*##end
+
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value false)
+#*------*##else
+#*--------*##if($member.isOptional && ($member.seqSize || $member.arrayTotalSize))
+            if (this.${member.name} != null)
+            {
+#*--------*##end
+            hash.Add(#getHash($member));
+#*--------*##if($member.isOptional && ($member.seqSize || $member.arrayTotalSize))
+            }
+            else
+            {
+                hash.Add(-1);
+            }
+#*--------*##end
+#*------*##end
+#*----*##end
+
+            return hash.ToHashCode();
+        }
+
+        public bool Equals(${node.name} other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+#*----*##if($node.baseTypeFQName)
+            if(!base.Equals(other))
+            {
+                return false;
+            }
+#*----*##end
+
+#*----*##if($node.memberCount == 0)
+            return true;
+#*----*##else
+            #generateReturnForEquals($node)
+#*--*##end
+        }
+
+#generateEqualsAndToString($node)
+}
+
+#*--*##elseif($node.constructKind.equals("union"))
+public class $node.name : #if($node.baseTypeFQName) $node.baseTypeFQName,#end IEquatable<${node.name}>
+{
+#*---------------------------Private members and discriminators---------------------------*#
+#*----*##generateMembers($node, false, true)
+#*----*##setLabelDefaultDiscriminator($node)
+        public $node.unionDiscriminatorMap.nativeTypeFQName Discriminator { get; private set; }
+
+        public const $node.unionDiscriminatorMap.nativeTypeFQName DefaultDiscriminator = #getUnionDiscriminatorDefaultVale($node)
+
+
+#*---------------------------Public members---------------------------*#
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value false)
+#*------*##else
+#*--------*##getPropertyAnnotations($member) public #*
+#*--------*##declareMember($member false)
+
+        {
+            get
+            {
+#*--------*##if($node.memberCount > 1 || !$node.hasADefaultCaseLabel)
+#*---------*##generateLabelConditions($node $member false)
+
+        {
+                throw new InvalidOperationException("${member.name} not selected");
+        }
+#*--------*##end
+                return ${member.privateName};
+            }
+
+            set
+            {
+#*------*##generateCheckMinMax($member)
+                ${member.privateName} = value;
+#*--------*##if($member.labelList[0].equals("default"))
+Discriminator = DefaultDiscriminator;
+#*--------*##else
+Discriminator = ${member.labelList[0]};
+#*--------*##end
+            }
+        }
+
+#*------*##end
+#*----*##end
+
+#*---------------------------Ctor---------------------------*#
+#*----*##if($node.memberCount > 0)
+        public ${node.name}()
+        {
+            Discriminator = DefaultDiscriminator;
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.labelList.contains($node.defaultDiscriminator) &&
+                            !$member.isOptional &&
+                            !$member.directive &&
+                            ($member.typeKind.equals("user") || $member.seqSize || $member.arrayTotalSize || $member.explicitDefaultValue))
+            
+            $member.privateName = #initializeMember($member, true);
+#*-------*##break
+#*------*##end
+#*----*##end
+        }
+
+#*------------------------Copy Ctor--------------------------*#
+        public ${node.name}(${node.name} other)
+        {
+            if (other == null)
+            {
+                return;
+            }
+
+            this.Discriminator = other.Discriminator;
+            switch (Discriminator)
+            {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##initCases($node $member)
+#*------*##if(!$member.directive)
+#*--------*##copyMember($member)
+                break;
+#*------*##end
+#*----*##end
+            }
+        }
+
+#*----*##end
+
+#*---------------------Union Getter and setter---------------------------*#
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+#*--------*##handleCopyDirective($member.directive $member.value false)
+#*------*##else
+#*--------*##if($member.labelList.size() > 1 || $member.labelList.contains("default"))
+        public void Set${member.name}(#generateMethodParameter($node $member), $node.unionDiscriminatorMap.nativeTypeFQName discriminator)
+        {
+#*----------*##if($node.memberCount > 1 || !$node.hasADefaultCaseLabel)
+#*------------*##generateLabelConditions($node $member true)
+
+            {
+                    throw new ArgumentException("Invalid discriminator value for ${member.name}", paramName: nameof(discriminator));
+            }
+#*----------*##end
+            this.${member.privateName} = ${member.name};
+            Discriminator = discriminator;
+        }
+#*---------*##end
+#*------*##end
+#*----*##end
+
+        public object Get()
+        {
+            switch (Discriminator)
+            {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##initCases($node $member)
+#*------*##if(!$member.directive)
+                    return ${member.name};
+#*------*##end
+#*----*##end
+#* C# requires a default label unless the switch is based on a boolean and both*#
+#* values are set *#
+#*----*##if(!$node.hasADefaultCaseLabel
+            && !($node.unionDiscriminatorMap.nativeTypeFQName.equals("bool") && $node.hasAllCaseCovered))
+                default:
+                    return null;
+#*----*##end
+            }
+        }
+
+#*---------------------------Hashs and equals methods---------------------------*#
+        public override int GetHashCode()
+        {
+            switch (Discriminator)
+            {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##initCases($node $member)
+#*------*##if(!$member.directive)
+                    return HashCode.Combine(Discriminator, #getHash($member));
+#*------*##end
+#*----*##end
+            }
+## If the union has the default label this code is unreachable
+#*----*##if(!${node.hasADefaultCaseLabel})
+            throw new InvalidOperationException("Invalid discriminator");
+#*----*##end
+        }
+
+        public bool Equals($node.name other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (this.Discriminator != other.Discriminator)
+            {
+                return false;
+            }
+
+            switch (Discriminator)
+            {
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##initCases($node $member)
+#*------*##if(!$member.directive)
+                    return #equalsMember($member);
+#*------*##end
+#*----*##end
+            }
+## If the union has the default label this code is unreachable
+#*----*##if(!${node.hasADefaultCaseLabel})
+            throw new InvalidOperationException("Invalid discriminator");
+#*----*##end
+        }
+
+#*----*##generateEqualsAndToString($node)
+}
+
+#*--*##end
+#end

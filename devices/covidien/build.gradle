@@ -17,6 +17,12 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
-    compile project(':devices:common')
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
+    implementation project(':devices:common')
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
+}
+
+test {
+	useJUnitPlatform()
 }

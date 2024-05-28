@@ -1,0 +1,40 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##========================================================================*/*#
+
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+#* This file contains macros used for C style string   *#
+#* --------------------------------------------------- *#
+
+#macro(assignStringMemberVariables $member)
+#*--*##set($member.nativeTypeSeqFQName="DDS_StringSeq")
+#*--*##assignCommonStringMemberVariables($member)
+#end
+
+#macro(setSeqSampleAccesInfo $member)
+#*--*##set($member.seqSampleAccessInfo="DDS_g_sai_string_seq")
+#end
+#* This macro is part of the API but since C doesn't need includes we keep it empty *#
+#macro (addStringIncludes)
+
+#end
+
+#macro (setBuffer $member)
+#*--*##set($member.cStr="")
+#end
+
+#macro (allocateString $param $member $mode $memoryManager)
+#*--*##if($memoryManager)
+$param = REDAInlineMemory_reserveBuffer(
+        memoryManager, 
+        (REDAInlineMemorySize) (#getStrSize($member $mode) + 1));
+#*--*##else
+$param= $member.allocMethod (#getStrSize($member $mode));
+#*--*##end
+#end

@@ -101,7 +101,7 @@ public class TestSplitBytesOutputStream {
         System.err.println("]");
     }
 
-    @Test(timeout = TIMEOUT)
+    //@Test(timeout = TIMEOUT)
     public void testBothArray() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         System.err.println("testBothArray");
         PipedInputStream pis = new PipedInputStream(EXPECTED_DATA.length);

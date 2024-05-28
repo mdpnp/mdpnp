@@ -1,0 +1,338 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+
+##modification history:
+##---------------------
+##2.2,18dic13,ajm CODEGENII-152 Fixing possible error compilation with an idl with a module named i
+##2.0,30oct13,ajm CODEGENII-147 removing warnings
+##2.0,24sept13,ajm CODEGENII-92 Support for optional members
+##10a,13jun13,ajm CODEGENII-109 joining the type variables in the constructMap 
+##10a,8mar13, ajm CODEGENII-30 and CODEGENII-87 Code reviews and Xtypes in Java
+##10a,6feb12,ajm CODEGENII-30 Starting review of the templates to match the
+## guidelines we are following for C/C++
+##10a,16jan13, ajm RRTIDDSGEN-52 Renaming variables and functions for the codereview
+##10a,14dic12, ajm RRTIDDSGEN-53 support for XTypes: final and extensible
+##10a,4dec12, ajm Refactoring of the code and variable names.
+##                 Support for pointers
+##10a,8nov12, ajm  RRTIDDSGEN-34 support for the copy directives and resolve-name
+##10a,31oct12, ajm RTIDDSGEN-34 support for the first set of copy directives (java ones)
+##10a,10oct12, ajm Upgrade to Bigpine.Formatting and commenting
+##10a,11nov11, ajm Changing the name of the templates to camelCase
+##10a,04nov11, ajm Refactoring code. Variable name changed
+##10a,21oct11,ajm Adding a return at the end of the file
+##10a,12oc11,jmt finished union support
+##10a,10oc11,jmt adding union support
+##10a,22sep11,jmt adding valuetypes support
+##10a,16sep11,jmt Fixing detected bugs in typedefs
+##10a,15sep11,jmt Fixing more typedef issues
+##10a,14sep11,jmt Refactor typedef
+##10a,2sep11,ajm Adding typedef support for sequences and arrays of sequences
+##10a,1sep11,ajm Adding typedef support for arrays and sequences
+##10a,1sep11,ajm Adding typedef support for primitive types
+##10a,30ag11,jmt Adding TypeDef Support
+##10a,29ag11,jmt Fixing macros consistency by adding the missing parameters
+##10a,29ag11,jmt Refactor of variables and cleaning loops
+##10a,25ag11,jmt Adding support for arrays of sequences.
+##10a,22ag11,jmt Adding support for sequences.
+##10a,17ag11,jmt Adding //@key
+##10a,10ag11,jmt Adding support for arrays of basic types
+##10a,08ag11,jmt Adding support for constant types
+##10a,04ag11,jmt Adding all the basic type and testing them
+##10a,04ag11,jmt adding modification history header
+##10a,02ag11,jmt Moved to be under the path "resource/templates/java/"
+##10a,02ag11,jmt New dessing using auxiliary files for the macros
+##10a,02ag11,jmt created
+##========================================================================*/*#
+##-----------------------------------------------------------------
+##               
+##            Auxiliary template for the Java TypeCode file
+## 
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+##******************************************************************************
+##  Macros to initializeEnums
+##******************************************************************************
+
+#macro(enumTypeCode $constructMap)
+
+int[] ordinals = ${constructMap.name}.getOrdinals();
+for (i=0;i<$constructMap.memberCount;i++) {
+        ${constructMap.name} ordinal = ${constructMap.name}.valueOf(ordinals[i]);
+        if (ordinal != null) {
+             em[i]=new EnumMember(ordinal.toString(),ordinals[i]);
+        } else {
+             throw new IllegalStateException(
+                     "Unexpected null ordinal creating the typecode");
+        }
+}
+#end
+
+##******************************************************************************
+##  Macros to initialize Members
+##******************************************************************************
+
+
+#macro(typeVariable $constructMap)
+#*--*##if($constructMap.constructKind.equals("valueType") || $constructMap.constructKind.equals("struct"))sm#*
+----*##elseif($constructMap.constructKind.equals("union"))um#*
+----*##elseif($constructMap.constructKind.equals("enum"))em#*
+----*##else false#*
+---*##end#end
+
+##------------------------------------------------------------------
+
+#macro(typeMember $constructMap)
+#*--*##if($constructMap.constructKind.equals("union"))UnionMember#*
+----*##elseif($constructMap.constructKind.equals("valueType") || $constructMap.baseTypeFQName)ValueMember#*
+----*##else#* *#StructMember#end#*
+*##end
+
+##******************************************************************************
+##  Macros to obtain the typecode
+##******************************************************************************
+#macro(typeCode $constructMap)
+#*--*##foreach ($member in $constructMap.typeCodeMemberFieldMapList)
+#*----*##if(!$member.directive && !$member.constructKind.equals("const"))
+#getDefaultMinMaxAnnotations($member)
+#typeVariable($constructMap)[__i] = new  #typeMember($constructMap)#*
+*#("$member.typecodeName",#isPointer($member), #isUnion($member $constructMap), #isKey($member)#*
+*##isValueType($constructMap $member) #typeCodeMember ($member), $member.id#isOptional($member $constructMap)#addAnnotationArgument(false $constructMap $member));__i++;
+#*----*##end
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+#macro (isPointer $member)
+#if($member.isPointer)true#else false#end
+#end
+
+##-----------------------------------------------------------------------------
+#macro (isOptional $member $constructMap)
+#*--*##if(!$constructMap.constructKind.equals("union"))
+#*----*##if($member.isOptional),true#else, false#end
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+
+#macro(isUnion $member $constructMap)
+#*--*##if($constructMap.constructKind.equals("union"))
+new int[] {#foreach($element in $member.labelList)#*
+------*##if($element.contains("default"))0x40000001#*
+------*##else #isUnionAux($element)#if($member.labelList.size()>$foreach.count),#end#end#end}#*
+----*##else
+(short)-1#end#end##macro
+
+##------------------------------------------------------------------
+
+#macro(isUnionAux $element)
+#if($constructMap.unionDiscriminatorMap.typeKind=="enum")#*
+*##set($enumName=$element.replace(".VALUE",""))${enumName}.ordinal()#*
+*##elseif($constructMap.unionDiscriminatorMap.typeName=="boolean")((${element})==true)?1:0#*
+*##else($element)#end#end
+
+##------------------------------------------------------------------
+
+#macro(isKey $member)
+#*--*##if($constructMap.constructKind.equals("valueType") || $constructMap.constructKind.equals("struct"))#*
+-------*##if(${member.isKey})true,#else false,#end#end
+#end
+
+##------------------------------------------------------------------
+
+#macro(isValueType $constructMap $member)
+#*--*##if($constructMap.constructKind.equals("valueType") || $constructMap.baseTypeFQName)#*
+------*##if($member.isPublic=="true" ||$constructMap.constructKind.equals("struct"))PUBLIC#*
+------*##else#* *#PRIVATE#end#*
+----*#_MEMBER.VALUE,#end#end
+
+##------------------------------------------------------------------
+
+#macro(typeCodeMember $member)
+#*--*##if ($member.seqSize && $member.dimensionList)#*
+*##typeCodeArray($member) #typeCodeSeq ($member) #typeCodeBasic($member)))#*
+--*##elseif($member.seqSize)#*
+*##typeCodeSeq ($member) #typeCodeBasic($member))#*
+--*##elseif($member.dimensionList)#*
+*##typeCodeArray($member) #typeCodeBasic($member))#*
+--*##else#*
+*##typeCodeBasic($member)#end#*
+--*##end
+
+##------------------------------------------------------------------
+
+#macro (typeCodeSeq $member)new TypeCode(#getSeqSize($member "typeCode"),#end
+
+##------------------------------------------------------------------
+
+#macro(typeCodeArray $member)new TypeCode(new #*
+*#int[] {#foreach($element in $member.dimensionList)${element}#commaIfNeeded($foreach.count ${member.size()})#end},#end
+
+##------------------------------------------------------------------
+
+#macro (typeCodeBasic $member)
+#if($member.typeKind.equals("user"))#*
+*#${member.nativeTypeFQName}#addtypeCodeValueSuffix($member)#*-
+--*##elseif($member.strSize)#*- is a string or wstring
+--*#new TypeCode(${member.typeCode},#getStrSize($member "typeCode"))#*-
+--*##else#*-
+--*#${member.typeCode}#*-
+--*##end
+#end
+
+##******************************************************************************
+##  Macros to obtain the typecodeFactory
+##******************************************************************************
+
+#macro (getTypeCodeFactory $constructMap)
+#getDefaultMinMaxAnnotationsTypeCode($constructMap)
+tc = TypeCodeFactory.TheTypeCodeFactory.create_#getconstructKind($constructMap)_tc(#*
+*#"${constructMap.typeCodeFQName}",#getExtensibility()#*
+*# #getLastTypeCode($constructMap) #typeVariable($constructMap) , annotation);#end
+
+##------------------------------------------------------------------
+
+#macro (getconstructKind $constructMap)
+#if($constructMap.constructKind=="valueType" || $constructMap.baseTypeFQName)value#else$constructMap.constructKind#end#end
+
+##------------------------------------------------------------------
+
+#macro (getExtensibility)
+#if(!$constructMap.constructKind.equals("alias"))ExtensibilityKind.${constructMap.extensibility},#end#end
+
+##------------------------------------------------------------------
+
+#macro (getLastTypeCode $constructMap)
+#*--*##if($constructMap.constructKind.equals("valueType") || $constructMap.baseTypeFQName)VM_NONE.VALUE,#*
+------*##if($constructMap.baseTypeFQName)${constructMap.typeCodeBaseTypeFQName}#addtypeCodeValueSuffix($member),#else#* *#TypeCode.TC_NULL,#end#*
+----*##elseif($constructMap.constructKind.equals("alias"))#typeCodeMember($constructMap.typeCodeFirstMember),#*
+----*##elseif($constructMap.constructKind.equals("union"))#*
+------*##if($constructMap.typeCodeUnionDiscriminatorMap.typeKind!="builtin")${constructMap.typeCodeUnionDiscriminatorMap.nativeTypeFQName}#addtypeCodeValueSuffix($member)#*
+------*##else$constructMap.typeCodeUnionDiscriminatorMap.typeCode#end,#if($constructMap.defaultIndex)$constructMap.defaultIndex,#else -1,#end#*
+*##end#end
+
+##------------------------------------------------------------------
+
+##  Macro to set Default/Min/Max the annotations of the typeCode
+#macro (getDefaultMinMaxAnnotationsTypeCode $constructMap)
+#*--*##if($constructMap.constructKind.equals("alias"))
+#*----*##getDefaultMinMaxAnnotationsAlias($constructMap.typeCodeMemberFieldMapList[0])
+#*--*##elseif($constructMap.constructKind.equals("enum"))
+#*----*##getDefaultMinMaxAnnotationsEnum($constructMap)
+#*--*##end
+#end
+##-----------------------------------------------------------------------------
+
+##  Macro to set the default annotations of the enum typeCode
+#macro(getDefaultMinMaxAnnotationsEnum $constructMap)
+#*--*##if(${constructMap.explicitDefaultValue}=="0")
+annotation.default_annotation(AnnotationParameterValue.ZERO_ENUM);
+#*--*##else
+annotation.default_annotation(new AnnotationParameterValue(TCKind.TK_ENUM, (int)${constructMap.explicitDefaultValue}));
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+
+#macro (getDefaultMinMaxAnnotationsAlias $member)
+#*--*##if($member.tcKind!="TCKind.TK_NULL")
+annotation.default_annotation(#getDefaultAnnotationParameterValue(${member}));
+#*----*##if($member.minAnnotationParameterValue)
+annotation.min_annotation(#getMinAnnotationParameterValue(${member}));
+#*----*##end
+#*----*##if($member.maxAnnotationParameterValue)
+annotation.max_annotation(#getMaxAnnotationParameterValue(${member}));
+#*----*##end
+#*--*##end
+#end
+
+##-----------------------------------------------------------------------------
+
+##  Macro to set the Default/Min/Max annotations of a member
+#macro (getDefaultMinMaxAnnotations $member)
+#*--*##if($member.tcKind!="TCKind.TK_NULL")
+memberAnnotation = new Annotations();
+memberAnnotation.default_annotation(#getDefaultAnnotationParameterValue(${member}));
+#*----*##if($member.minAnnotationParameterValue)
+memberAnnotation.min_annotation(#getMinAnnotationParameterValue(${member}));
+#*----*##end
+#*----*##if($member.maxAnnotationParameterValue)
+memberAnnotation.max_annotation(#getMaxAnnotationParameterValue(${member}));
+#*----*##end
+#*--*##end
+#end
+##-----------------------------------------------------------------------------
+
+
+##  Macro to get the default value for the constructor of AnnotationParameterValue
+#macro (getDefaultAnnotationParameterValue $member)
+#*--*##if(!$member.explicitDefaultValue)
+AnnotationParameterValue.$member.defaultAnnotationParameterValue#*
+#*--*##elseif($member.typeKindResolved=="unsigned long long")
+new AnnotationParameterValue(new BigInteger("${member.defaultValue}"))#*
+#*--*##elseif($member.typeKindResolved=="boolean" || $member.typeKindResolved=="float" || $member.typeKindResolved=="double")
+new AnnotationParameterValue((${member.annotationCast}) (${member.defaultValue}))#*
+#*--*##else
+new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${member.defaultValue}))#*
+#*--*##end
+#end
+##-----------------------------------------------------------------------------
+
+##  Macro to get the Min value for the constructor of AnnotationParameterValue
+#macro (getMinAnnotationParameterValue $member)
+#*--*##if(!$member.explicitMinValue)
+AnnotationParameterValue.$member.minAnnotationParameterValue#*
+#*--*##elseif($member.typeKindResolved=="unsigned long long")
+new AnnotationParameterValue(new BigInteger("${member.explicitMinValue}"))#*
+#*--*##elseif($member.typeKindResolved=="boolean" || $member.typeKindResolved=="float" || $member.typeKindResolved=="double")
+new AnnotationParameterValue((${member.annotationCast}) (${member.explicitMinValue}))#*
+#*--*##else
+new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${member.explicitMinValue}))#*
+#*--*##end
+#end
+##-----------------------------------------------------------------------------
+
+##  Macro to get the Max value for the constructor of AnnotationParameterValue
+#macro (getMaxAnnotationParameterValue $member)
+#*--*##if(!$member.explicitMaxValue)
+AnnotationParameterValue.$member.maxAnnotationParameterValue#*
+#*--*##elseif($member.typeKindResolved=="unsigned long long")
+new AnnotationParameterValue(new BigInteger("${member.explicitMaxValue}"))#*
+#*--*##elseif($member.typeKindResolved=="boolean" || $member.typeKindResolved=="float" || $member.typeKindResolved=="double")
+new AnnotationParameterValue((${member.annotationCast}) (${member.explicitMaxValue}))#*
+#*--*##else
+new AnnotationParameterValue(${member.tcKind}, (${member.annotationCast}) (${member.explicitMaxValue}))#*
+#*--*##end
+#end
+##-----------------------------------------------------------------------------
+
+##  Macro to add the annotations argument if kind is Alias or Enum or StructMember or UnionMember or ValueMember
+## $typeCodeFactory is true if it is for the creation of TheTypeCodeFactory
+#macro(addAnnotationArgument $typeCodeFactory $constructMap $member)
+#*--*##if($constructMap.constructKind.equals("enum") && $typeCodeFactory)
+, memberAnnotation#*
+#*--*##elseif($constructMap.constructKind.equals("alias") && $typeCodeFactory)
+#*----*##if($constructMap.typeCodeMemberFieldMapList[0].tcKind!="TCKind.TK_NULL")
+, memberAnnotation#*
+#*----*##end
+#*--*##elseif(!$typeCodeFactory && ($constructMap.constructKind.equals("union") || $constructMap.constructKind.equals("valueType") || $constructMap.constructKind.equals("struct")))
+#*----*##if($member.tcKind!="TCKind.TK_NULL")
+, memberAnnotation#*
+#*----*##end
+#*--*##end
+#end
+
+#macro(addtypeCodeValueSuffix $member__)
+#*--*##if($member__.isRecursiveMember)
+TypeCode.VALUE_WO_MEMBERS
+#*--*##else
+TypeCode.VALUE
+#*--*##end
+#end
+##-----------------------------------------------------------------------------

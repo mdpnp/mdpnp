@@ -1,0 +1,85 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2015.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.2.3,23sep15,djs created 
+##========================================================================*/*#
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6751" systemVersion="14C1514" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6736"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oaH-tE-KpW">
+                                <rect key="frame" x="104" y="59" width="53" height="48"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                                <state key="normal" title="Run">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="Run:" destination="BYZ-38-t0r" eventType="touchUpInside" id="TOh-30-nWB"/>
+                                </connections>
+                            </button>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="0 0" borderStyle="roundedRect" clearsOnBeginEditing="YES" minimumFontSize="20" clearButtonMode="always" translatesAutoresizingMaskIntoConstraints="NO" id="Cbn-dV-FXd">
+                                <rect key="frame" x="65" y="115" width="439" height="30"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                                <textInputTraits key="textInputTraits" keyboardType="numberPad" enablesReturnKeyAutomatically="YES"/>
+                            </textField>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="1TZ-Xx-rUC">
+                                <rect key="frame" x="65" y="168" width="519" height="351"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="#buildProjectName()" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LkE-5N-mWa">
+                                <rect key="frame" x="160" y="9" width="249" height="42"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="35"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="Cbn-dV-FXd" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="49" id="1zt-z8-sga"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="LkE-5N-mWa" secondAttribute="trailing" constant="175" id="2Ce-Ux-rrO"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="1TZ-Xx-rUC" secondAttribute="bottom" constant="81" id="2Sy-ku-JCN"/>
+                            <constraint firstItem="1TZ-Xx-rUC" firstAttribute="top" secondItem="Cbn-dV-FXd" secondAttribute="bottom" constant="23" id="6ui-Nj-Bdf"/>
+                            <constraint firstItem="oaH-tE-KpW" firstAttribute="top" secondItem="LkE-5N-mWa" secondAttribute="bottom" constant="8" id="A07-VP-yDX"/>
+                            <constraint firstItem="1TZ-Xx-rUC" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="49" id="AUk-Sx-AF0"/>
+                            <constraint firstItem="LkE-5N-mWa" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="-11" id="TbK-Ko-MF1"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="Cbn-dV-FXd" secondAttribute="trailing" constant="80" id="Xn4-2l-f6R"/>
+                            <constraint firstItem="LkE-5N-mWa" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="144" id="fhf-wR-tdK"/>
+                            <constraint firstItem="1TZ-Xx-rUC" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="jCs-GD-ket"/>
+                            <constraint firstItem="Cbn-dV-FXd" firstAttribute="top" secondItem="oaH-tE-KpW" secondAttribute="bottom" constant="8" id="vHC-yO-9j6"/>
+                            <constraint firstItem="oaH-tE-KpW" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="88" id="yZO-by-Chq"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="commandLine" destination="Cbn-dV-FXd" id="sXq-3r-DVq"/>
+                        <outlet property="outputWindow" destination="1TZ-Xx-rUC" id="bHP-Tl-XsZ"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+    </scenes>
+</document>

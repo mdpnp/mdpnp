@@ -14,7 +14,7 @@
 buildscript {
 
     dependencies {
-        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
+        //classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
     }
 
     repositories {
@@ -29,6 +29,16 @@ buildscript {
     }
 }
 
+plugins {
+  id 'org.openjfx.javafxplugin' version '0.1.0'
+  id 'org.javamodularity.moduleplugin' version '1.8.12'
+}
+
+dependencies {
+	implementation group: 'org.openjdk.nashorn', name: 'nashorn-core', version: '15.4'
+}
+
+
 repositories {
   mavenLocal()
   mavenCentral()
@@ -37,9 +47,18 @@ repositories {
 apply plugin: 'java'
 apply plugin: 'application'
 //apply plugin: "me.champeau.jbake"
-apply plugin: 'javafx-gradle-plugin'
+//apply plugin: 'javafx-gradle-plugin'
 
 defaultTasks 'build'
+
+java {
+  modularity.inferModulePath.set(false)
+}
+
+javafx {
+  version = "17.0.11"
+  modules = [ 'javafx.base', 'javafx.controls' , 'javafx.fxml' , 'javafx.swing' , 'javafx.web' ]
+}
 
 /*
 jfxDeploy {
@@ -47,6 +66,7 @@ jfxDeploy {
 }
 */
 
+/*
 distZip {
   dependsOn jfxNative
 }
@@ -54,99 +74,100 @@ distZip {
 distTar {
   dependsOn jfxNative
 }
+*/
 
 applicationName = 'OpenICE'
 
-jfx {
-    verbose=true
-    //appID 'org.mdpnp.apps.testapp.Main'
-    appName="OpenICE"
-    mainClass="org.mdpnp.apps.testapp.Main"
-    jfxAppOutputDir = "build/distributions"
-    jfxMainAppJarName = "demo-apps.jar"
-    deployDir = "src/deploy"
-    useEnvironmentRelativeExecutables = true
-    //Think libFolderName might be equivalent to "app" being the deployment directory in the old plugin
-    libFolderName = "lib"
-
-    // gradle jfxJar
-    css2bin = false
-    preLoader = null // String
-    updateExistingJar = false
-    allPermissions = false
-    manifestAttributes = null // Map<String, String>
-    addPackagerJar = true
-    copyAdditionalAppResourcesToJar = false
-    skipCopyingDependencies = false
-    useLibFolderContentForManifestClasspath = false
-    fixedManifestClasspath = null
-
-    identifier = null  // String - setting this for windows-bundlers makes it possible to generate upgradeable installers (using same GUID)
-    vendor = "mdpnp.org"
-    nativeOutputDir = "build/jfx/native"
-    bundler = "ALL" // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
-    jvmProperties = null // Map<String, String>
-    jvmArgs = null // List<String>
-    userJvmArgs = null // Map<String, String>
-    launcherArguments = null // List<String>
-    nativeReleaseVersion = "1.5"
-    needShortcut = false
-    needMenu = false
-/*
-    bundleArguments = [
-        // dont bundle JRE (not recommended, but increases build-size/-speed)
-        //runtime: null
-    ]
-*/
-    appName = "OpenICE" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/package/windows/project.ico"
-    additionalBundlerResources = null // path to some additional resources for the bundlers when creating application-bundle
-    additionalAppResources = null // path to some additional resources when creating application-bundle
-    secondaryLaunchers = []	//Don't need any other .exes
-    fileAssociations = null // List<Map<String, Object>>
-    noBlobSigning = false // when using bundler "jnlp", you can choose to NOT use blob signing
-    customBundlers = null // List<String>
-    failOnError = false
-    onlyCustomBundlers = false
-    skipJNLP = false
-    skipNativeVersionNumberSanitizing = false // anything than numbers or dots are removed
-    additionalJarsignerParameters = null // List<String>
-    skipMainClassScanning = false // set to true might increase build-speed
-    
-    skipNativeLauncherWorkaround124 = false
-    skipNativeLauncherWorkaround167 = false
-    skipNativeLauncherWorkaround205 = false
-    skipJNLPRessourcePathWorkaround182 = false
-    skipSigningJarFilesJNLP185 = false
-    skipSizeRecalculationForJNLP185 = false
-    skipMacBundlerWorkaround = false
-    
-    // gradle jfxRun
-    runJavaParameter = null // String
-    runAppParameter = null // String
-
-    // per default the outcome of the gradle "jarTask" will be used, set this to specify otherwise (like proguard-output)
-    alternativePathToJarFile = null // String
-    
-    // to disable patching of ant-javafx.jar, set this to false
-    usePatchedJFXAntLib = false
-    
-    // making it able to support absolute paths, defaults to "false" for maintaining old behaviour
-    checkForAbsolutePaths = false
-    
-    // gradle jfxGenerateKeyStore
-    keyStore = "src/main/deploy/keystore.jks"
-    keyStoreAlias = "myalias"
-    keyStorePassword = "password"
-    keyPassword = null // will default to keyStorePassword
-    keyStoreType = "jks"
-    overwriteKeyStore = false
-    
-    certDomain = null // required
-    certOrgUnit = null // defaults to "none"
-    certOrg = null // required
-    certState = null // required
-    certCountry = null // required
-}
+//jfx {
+//    verbose=true
+//    //appID 'org.mdpnp.apps.testapp.Main'
+//    appName="OpenICE"
+//    mainClass="org.mdpnp.apps.testapp.Main"
+//    jfxAppOutputDir = "build/distributions"
+//    jfxMainAppJarName = "demo-apps.jar"
+//    deployDir = "src/deploy"
+//    useEnvironmentRelativeExecutables = true
+//    //Think libFolderName might be equivalent to "app" being the deployment directory in the old plugin
+//    libFolderName = "lib"
+//
+//    // gradle jfxJar
+//    css2bin = false
+//    preLoader = null // String
+//    updateExistingJar = false
+//    allPermissions = false
+//    manifestAttributes = null // Map<String, String>
+//    addPackagerJar = true
+//    copyAdditionalAppResourcesToJar = false
+//    skipCopyingDependencies = false
+//    useLibFolderContentForManifestClasspath = false
+//    fixedManifestClasspath = null
+//
+//    identifier = null  // String - setting this for windows-bundlers makes it possible to generate upgradeable installers (using same GUID)
+//    vendor = "mdpnp.org"
+//    nativeOutputDir = "build/jfx/native"
+//    bundler = "ALL" // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
+//    jvmProperties = null // Map<String, String>
+//    jvmArgs = null // List<String>
+//    userJvmArgs = null // Map<String, String>
+//    launcherArguments = null // List<String>
+//    nativeReleaseVersion = "1.5"
+//    needShortcut = false
+//    needMenu = false
+///*
+//    bundleArguments = [
+//        // dont bundle JRE (not recommended, but increases build-size/-speed)
+//        //runtime: null
+//    ]
+//*/
+//    appName = "OpenICE" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/package/windows/project.ico"
+//    additionalBundlerResources = null // path to some additional resources for the bundlers when creating application-bundle
+//    additionalAppResources = null // path to some additional resources when creating application-bundle
+//    secondaryLaunchers = []	//Don't need any other .exes
+//    fileAssociations = null // List<Map<String, Object>>
+//    noBlobSigning = false // when using bundler "jnlp", you can choose to NOT use blob signing
+//    customBundlers = null // List<String>
+//    failOnError = false
+//    onlyCustomBundlers = false
+//    skipJNLP = false
+//    skipNativeVersionNumberSanitizing = false // anything than numbers or dots are removed
+//    additionalJarsignerParameters = null // List<String>
+//    skipMainClassScanning = false // set to true might increase build-speed
+//    
+//    skipNativeLauncherWorkaround124 = false
+//    skipNativeLauncherWorkaround167 = false
+//    skipNativeLauncherWorkaround205 = false
+//    skipJNLPRessourcePathWorkaround182 = false
+//    skipSigningJarFilesJNLP185 = false
+//    skipSizeRecalculationForJNLP185 = false
+//    skipMacBundlerWorkaround = false
+//    
+//    // gradle jfxRun
+//    runJavaParameter = null // String
+//    runAppParameter = null // String
+//
+//    // per default the outcome of the gradle "jarTask" will be used, set this to specify otherwise (like proguard-output)
+//    alternativePathToJarFile = null // String
+//    
+//    // to disable patching of ant-javafx.jar, set this to false
+//    usePatchedJFXAntLib = false
+//    
+//    // making it able to support absolute paths, defaults to "false" for maintaining old behaviour
+//    checkForAbsolutePaths = false
+//    
+//    // gradle jfxGenerateKeyStore
+//    keyStore = "src/main/deploy/keystore.jks"
+//    keyStoreAlias = "myalias"
+//    keyStorePassword = "password"
+//    keyPassword = null // will default to keyStorePassword
+//    keyStoreType = "jks"
+//    overwriteKeyStore = false
+//    
+//    certDomain = null // required
+//    certOrgUnit = null // defaults to "none"
+//    certOrg = null // required
+//    certState = null // required
+//    certCountry = null // required
+//}
     
 /*
 jbake {
@@ -166,59 +187,129 @@ ext {
     buildDate = new java.text.SimpleDateFormat('dd-MMM-yyyy').format(buildTimeAndDate)
     buildTime = new java.text.SimpleDateFormat('hh:mm aa').format(buildTimeAndDate)
     specificationVersion = project.version.substring(0, project.version.lastIndexOf('.')) 
+    localOsName = System.properties['os.name'].toLowerCase();
+    localOsArch = System.properties['os.arch'].toLowerCase();
+    currentPath = System.getenv('PATH');
 }
 
 manifest { attributes "Main-Class" : mainClassName }
 
 dependencies {
-    compile project(':interop-lab:demo-devices')
-    compile project(':interop-lab:demo-guis')
-    compile project(':interop-lab:demo-guis-javafx')
-    compile project(':interop-lab:demo-purejavacomm')
+    implementation project(':devices:common')
+    implementation project(':interop-lab:demo-devices')
+    implementation project(':interop-lab:demo-guis')
+    implementation project(':interop-lab:demo-guis-javafx')
+    implementation project(':interop-lab:demo-purejavacomm')
+    implementation project(':data-types:x73-idl-rti-dds')
 
     implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
-    compile files('../../artifacts/mdpnp-sounds-0.1.0.jar')
+    implementation files('../../artifacts/mdpnp-sounds-0.1.0.jar')
+    implementation files('../../artifacts/nddsjava.jar')
 
     //
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.19.0'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.19.0'
-    compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.2'
     
     // Default capture device is a trimmed down piece of OpenIMAJ
-    compile group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.10'
+    implementation group: 'com.github.sarxos', name: 'webcam-capture', version: '0.3.10'
 
-    compile group: 'org.springframework', name: 'spring-context', version: '4.1.3.RELEASE'
-    compile group: 'org.springframework', name: 'spring-jdbc',    version: '4.1.3.RELEASE'
-    compile group: 'com.google.guava',    name: 'guava',          version: '18.0'
+    implementation group: 'org.springframework', name: 'spring-context', version: '6.0.2'
+    implementation group: 'org.springframework', name: 'spring-jdbc',    version: '6.0.2'
+    implementation group: 'com.google.guava',    name: 'guava',          version: '18.0'
 
-    compile group: 'ca.uhn.hapi', name: 'hapi-base', version: '2.2'
-    compile group: 'ca.uhn.hapi', name: 'hapi-structures-v26', version: '2.2'
+    implementation group: 'ca.uhn.hapi', name: 'hapi-base', version: '2.2'
+    implementation group: 'ca.uhn.hapi', name: 'hapi-structures-v26', version: '2.2'
     
-    compile group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-base', version: '0.9'
-    compile group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-structures-dstu2', version: '0.9'
+    implementation group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-base', version: '0.9'
+    implementation group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-structures-dstu2', version: '0.9'
     
-    compile files('../../artifacts/Utility-0.0.1.jar')
+    implementation files('../../artifacts/Utility-0.0.1.jar')
     
-    compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12'
+    implementation group: 'org.controlsfx', name: 'controlsfx', version: '11.1.2'
 
-    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
+    implementation group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
 
-    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.4.1'
+    implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.4.1'
 
-    compile group: 'org.mongodb', name: 'bson',                version: '3.2.2'
-    compile group: 'org.mongodb', name: 'mongodb-driver-core', version: '3.2.2'
-    compile group: 'org.mongodb', name: 'mongodb-driver',      version: '3.2.2'
+    implementation group: 'org.mongodb', name: 'bson',                version: '3.2.2'
+    implementation group: 'org.mongodb', name: 'mongodb-driver-core', version: '3.2.2'
+    implementation group: 'org.mongodb', name: 'mongodb-driver',      version: '3.2.2'
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    
-    compile files('../../artifacts/pixelmed.jar')
+    implementation files('../../artifacts/pixelmed.jar')
     
     implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.1000')
     
     implementation 'com.amazonaws:aws-java-sdk-s3'
-    compile group: 'software.amazon.awssdk', name: 's3-transfer-manager', version: '2.17.16-PREVIEW'
+    implementation group: 'software.amazon.awssdk', name: 's3-transfer-manager', version: '2.17.16-PREVIEW'
+
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
+    testImplementation project(':devices:simulated')
 }
+
+test {
+	useJUnitPlatform()
+	systemProperty 'user.timezone' , 'EST'
+}
+
+run {
+    if(localOsName.contains("linux")) {
+      if(localOsArch.contains("aarch")) {
+        environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+      } else {
+        environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+      }
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+    }
+    if(localOsName.contains("windows")) {
+      environment 'PATH', currentPath + ';native/libs/windows'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+    }
+    if(localOsName.contains("mac")) {
+      environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+      environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+      environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+
+    }
+    jvmArgs = ['--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED',
+               '--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED',
+               '--add-exports=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED',
+               '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+               '--add-exports=javafx.controls/com.sun.javafx.charts=ALL-UNNAMED',
+    ]
+
+}
+
+task 'makeFlatRuntime'(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'flat'
+}
+
+task 'copyThisJar'(type: Copy) {
+  from layout.buildDirectory.dir('libs')
+  include "*.jar"
+  into 'flat'
+}
+
+task 'copyNativeLibs'(type: Copy) {
+  from 'native/libs/linux'
+  include '*.so'
+  into 'flat'
+}
+
+task 'copyLicenseFile'(type: Copy) {
+  from layout.buildDirectory.dir('resources/main')
+  include 'OpenICE_license.dat'
+  into 'flat'
+}
+
+copyThisJar.configure { dependsOn(jar) }
+copyLicenseFile.configure { dependsOn(processResources) }
+makeFlatRuntime.configure { dependsOn(copyThisJar,copyNativeLibs,copyLicenseFile) }
 
 jar {
     manifest {
@@ -233,14 +324,13 @@ jar {
         "Specification-Version": specificationVersion, 
         "Implementation-Vendor": project.group,
         "Specification-Vendor": project.group, 
-        "Build-Number": project.version)
+        "Build-Number": project.version,
+        "Class-Path" : configurations.runtimeClasspath.files.collect {it.getName()}.join(' '))
     }
     //Ensure that jfxNative gets run immediately after jar, and so before distZip and distTar
+/*
     doLast {
       jfxNative
     }
-}
-
-test {
-	systemProperty 'user.timezone' , 'EST'
+*/
 }

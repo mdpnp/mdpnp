@@ -1,0 +1,443 @@
+/*
+ * (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
+ * RTI grants Licensee a license to use, modify, compile, and create derivative
+ * works of the software solely for use with RTI Connext DDS. Licensee may
+ * redistribute copies of the software provided that all such copies are subject
+ * to this license. The software is provided "as is", with no warranty of any
+ * type, including any warranty for fitness for any purpose. RTI is under no
+ * obligation to maintain or support the software. RTI shall not be liable for
+ * any incidental or consequential damages arising out of the use or inability
+ * to use the software.
+ */
+
+${envMap.POUND_CHAR}include <iostream>
+${envMap.POUND_CHAR}include <stdio.h>
+${envMap.POUND_CHAR}include <stdlib.h>
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.h"
+${envMap.POUND_CHAR}include "${envMap.idlFileName}Support.h"
+${envMap.POUND_CHAR}include "ndds/ndds_cpp.h"
+${envMap.POUND_CHAR}include "ndds/ndds_namespace_cpp.h"
+${envMap.POUND_CHAR}include "application.h"
+
+using namespace DDS;
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#*----*##end
+#*----*##if( ${envMap.android} || ${envMap.universal})
+${envMap.POUND_CHAR}include <stdarg.h>
+${envMap.POUND_CHAR}include <android/log.h>
+
+typedef int (*RTIAndroidOnCoutMethod)(const char *text);
+static RTIAndroidOnCoutMethod publisher_onCout = NULL;
+extern "C" void RTIAndroid_registerOnCout(RTIAndroidOnCoutMethod onCout) {
+    publisher_onCout = onCout;
+}
+
+${envMap.POUND_CHAR}define RTI_ANDROID_BUFFER_SIZE 512
+
+class RTIAndroidBuffer : public std::streambuf {
+  public:
+    RTIAndroidBuffer() { 
+        this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1); 
+    }
+
+  private:
+    int overflow(int c) {
+        if (c == traits_type::eof()) {
+            *this->pptr() = traits_type::to_char_type(c);
+            this->sbumpc();
+        }
+        return this->sync()? traits_type::eof(): traits_type::not_eof(c);
+    }
+
+    int sync() {
+        int rc = 0;
+        if (this->pbase() != this->pptr()) {
+            char writebuf[RTI_ANDROID_BUFFER_SIZE + 1];
+            memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
+            writebuf[this->pptr() - this->pbase()] = '\0';
+
+            /* forward message */
+            if (publisher_onCout != NULL) {
+                rc = publisher_onCout(writebuf);
+            }
+
+            /* log also to logcat */
+            __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf);
+
+            this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1);
+        }
+        return rc;
+    }
+
+    char buffer[RTI_ANDROID_BUFFER_SIZE];
+};
+#*----*##end
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#*----*##end
+
+using namespace application;
+
+static int shutdown_participant(
+        DomainParticipant *participant,
+        const char *shutdown_message,
+        int status);
+
+#*——*##if($constructMap.languageBinding.equals("FLAT_DATA") 
+        && $constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+bool build_data_sample(${constructMap.FQName}Builder& builder, unsigned int samples_written)
+{
+        // Build the ${constructMap.FQName} data sample using the builder
+        //
+        // For example:
+        //
+#*--*##foreach($member in $constructMap.memberFieldMapList)
+#*------*##if(!$member.isPrimitive)
+#*--------*##if($member.extensibility == "MUTABLE_EXTENSIBILITY" || $member.seqSize || $member.strSize)
+        // ${member.builderType} ${member.name}_builder = builder.build_${member.name}();
+        // ... build ${member.name}
+        // ${member.name}_builder.finish();
+        //
+#*--------*##else ## non-mutable
+        // ${member.offsetType} ${member.name}_offset = builder.add_${member.name}();
+        // ... fill ${member.name}_offset
+        //
+#*--------*##end
+#*------*##else ## primitive
+#*--------*##if($member.isInteger
+                && !$member.explicitDefaultValue
+                && !$member.resolvedTypeOptional
+                && !$member.isPointer)
+        builder.add_${member.name}(#*
+#*----------*##if(!$member.nativeTypeFQName.equals("DDS_UnsignedLong")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*----------*##else
+#*----------*#samples_written);
+#*----------*##end
+#*--------*##else
+        // builder.add_${member.name}(...);
+        //
+#*--------*##end
+#*------*##end ## primitive
+#*--*##end
+
+    return true;
+}
+#*--*##end
+
+int run_publisher_application(unsigned int domain_id, unsigned int sample_count)
+{
+    // Start communicating in a domain, usually one participant per application
+    DomainParticipant *participant =
+            TheParticipantFactory->create_participant(
+                    domain_id,
+                    PARTICIPANT_QOS_DEFAULT,
+                    NULL /* listener */,
+                    STATUS_MASK_NONE);
+    if (participant == NULL) {
+        return shutdown_participant(participant, "create_participant error", EXIT_FAILURE);
+    }
+
+    // A Publisher allows an application to create one or more DataWriters
+    Publisher *publisher = participant->create_publisher(
+            PUBLISHER_QOS_DEFAULT,
+            NULL /* listener */,
+            STATUS_MASK_NONE);
+    if (publisher == NULL) {
+        return shutdown_participant(participant, "create_publisher error", EXIT_FAILURE);
+    }
+
+    // Register the datatype to use when creating the Topic
+    const char *type_name = ${constructMap.FQName}TypeSupport::get_type_name();
+    ReturnCode_t retcode =
+            ${constructMap.FQName}TypeSupport::register_type(participant, type_name);
+    if (retcode != RETCODE_OK) {
+        return shutdown_participant(participant, "register_type error", EXIT_FAILURE);
+    }
+
+    // Create a Topic with a name and a datatype
+    Topic *topic = participant->create_topic(
+            "${constructMap.topicName}",
+            type_name,
+            TOPIC_QOS_DEFAULT,
+            NULL /* listener */,
+            STATUS_MASK_NONE);
+    if (topic == NULL) {
+        return shutdown_participant(participant, "create_topic error", EXIT_FAILURE);
+    }
+
+    // This DataWriter writes data on "${constructMap.topicName}" Topic
+    DataWriter *untyped_writer = publisher->create_datawriter(
+            topic,
+            DATAWRITER_QOS_DEFAULT,
+            NULL /* listener */,
+            STATUS_MASK_NONE);
+    if (untyped_writer == NULL) {
+        return shutdown_participant(participant, "create_datawriter error", EXIT_FAILURE);
+    }
+
+    // Narrow casts from an untyped DataWriter to a writer of your type 
+    ${constructMap.FQName}DataWriter *typed_writer =
+            ${constructMap.FQName}DataWriter::narrow(untyped_writer);
+    if (typed_writer == NULL) {
+        return shutdown_participant(participant, "DataWriter narrow error", EXIT_FAILURE);
+    }
+
+    #createData()
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#*----*##end
+#*----*##if( !${envMap.vxWorks} || ${envMap.rtp} || ${envMap.universal} )
+    // Main loop, write data
+    for (unsigned int samples_written = 0;
+            !shutdown_requested && samples_written < sample_count;
+            ++samples_written) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}else
+#*----*##end
+#*----*##if( ${envMap.vxWorks} && !${envMap.rtp} || ${envMap.universal} )
+    // Main loop, write data
+    for (unsigned int samples_written = 0;
+            samples_written < sample_count;
+            ++samples_written) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#*----*##end
+
+        #prepareData()
+
+        #modifyData()
+
+        std::cout << "Writing ${constructMap.FQName}, count " << samples_written 
+                  << std::endl;
+        retcode = typed_writer->write(*data, HANDLE_NIL);
+        if (retcode != RETCODE_OK) {
+            std::cerr << "write error " << retcode << std::endl;
+        }
+
+        // Send once every second
+        Duration_t send_period = { 1, 0 };
+        NDDSUtility::sleep(send_period);
+    }
+
+    #deleteData()
+
+    // Delete all entities (DataWriter, Topic, Publisher, DomainParticipant)
+    return shutdown_participant(participant, "Shutting down", EXIT_SUCCESS);
+}
+
+// Delete all entities
+static int shutdown_participant(
+        DomainParticipant *participant,
+        const char *shutdown_message,
+        int status)
+{
+    ReturnCode_t retcode;
+
+    std::cout << shutdown_message << std::endl;
+
+    if (participant != NULL) {
+        // Cleanup everything created by this Participant
+        retcode = participant->delete_contained_entities();
+        if (retcode != RETCODE_OK) {
+            std::cerr << "delete_contained_entities error " << retcode
+                      << std::endl;
+            status = EXIT_FAILURE;
+        }
+
+        retcode = TheParticipantFactory->delete_participant(participant);
+        if (retcode != RETCODE_OK) {
+            std::cerr << "delete_participant error " << retcode << std::endl;
+            status = EXIT_FAILURE;
+        }
+    }
+
+    return status;
+}
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#*----*##end
+#*----*##if( !${envMap.vxWorks} || ${envMap.rtp}  || ${envMap.universal} )
+int main(int argc, char *argv[])
+{
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#end
+#if( ${envMap.android} || ${envMap.universal})
+    std::cout.rdbuf(new RTIAndroidBuffer);
+    std::cerr.rdbuf(new RTIAndroidBuffer);
+#end
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#end
+
+    // Parse arguments and handle control-C
+    ApplicationArguments arguments;
+    parse_arguments(arguments, argc, argv);
+    if (arguments.parse_result == PARSE_RETURN_EXIT) {
+        return EXIT_SUCCESS;
+    } else if (arguments.parse_result == PARSE_RETURN_FAILURE) {
+        return EXIT_FAILURE;
+    }
+    setup_signal_handlers();
+
+    // Sets Connext verbosity to help debugging
+    NDDSConfigLogger::get_instance()->set_verbosity(arguments.verbosity);
+
+    int status = run_publisher_application(arguments.domain_id, arguments.sample_count);
+
+    // Releases the memory used by the participant factory.  Optional at
+    // application exit
+    ReturnCode_t retcode = DomainParticipantFactory::finalize_instance();
+    if (retcode != RETCODE_OK) {
+        std::cerr << "finalize_instance error " << retcode << std::endl;
+        status = EXIT_FAILURE;
+    }
+
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#end
+#if( ${envMap.android} || ${envMap.universal})
+    std::cout.rdbuf(0);
+    std::cerr.rdbuf(0);
+#end
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#end
+    return status;
+}
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#*----*##end
+
+#macro(createData)
+## Regular case
+#*——*##if(!${constructMap.isMetpType} && !$constructMap.languageBinding.equals("FLAT_DATA"))
+    // Create data for writing, allocating all members
+#*----------*##if($envMap.generateCppConstructor)
+    ${constructMap.FQName} *data = new ${constructMap.nativeFQName}();
+#*----------*##else
+    ${constructMap.FQName} *data = ${constructMap.FQName}TypeSupport::create_data();
+#*----------*##end
+    if (data == NULL) {
+        return shutdown_participant(
+                participant,
+                "${constructMap.FQName}TypeSupport::create_data error",
+                EXIT_FAILURE);
+    }
+## Plain Zero-Copy or non-mutable Flat-Data (with or without Zero Copy)
+#*——*##elseif(!$constructMap.languageBinding.equals("FLAT_DATA") 
+        || !$constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+    // Create the sample
+    ${constructMap.FQName} *data = NULL;
+#*——*##end
+#end
+
+#macro(prepareData)
+## Regular case (There is no preparation needed for this case)
+#*——*##if(!${constructMap.isMetpType} && !$constructMap.languageBinding.equals("FLAT_DATA"))
+## Plain Zero-Copy or non-mutable Flat-Data (with or without Zero Copy)
+#*——*##elseif(!$constructMap.languageBinding.equals("FLAT_DATA") 
+        || !$constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+        // Get a new sample before every write. This data sample can come from a
+        // free sample or a previously written sample which is ready for reuse.
+
+        retcode = typed_writer->get_loan(data);
+        if (retcode != RETCODE_OK) {
+            return shutdown_participant(participant, "${constructMap.FQName}DataWriter_get_loan error", EXIT_FAILURE);
+        }
+## Mutable Flat-Data (with or without Zero Copy)
+#*——*##else
+        ${constructMap.FQName}Builder builder = rti::flat::build_data< ${constructMap.FQName}>(typed_writer);
+        if (builder.check_failure()) {
+            return shutdown_participant(participant, "builder creation error", EXIT_FAILURE);
+        }
+
+        // Build the ${constructMap.FQName} data sample using the builder
+        if (!build_data_sample(builder, samples_written)) {
+            return shutdown_participant(participant, "error building the sample", EXIT_FAILURE);
+        }
+
+        // Create the sample
+        ${constructMap.FQName} *data = builder.finish_sample();
+        if (data == NULL) {
+            return shutdown_participant(participant, "finish_sample() error", EXIT_FAILURE);        
+        }
+#*——*##end
+#end
+
+#macro(modifyData)
+## Regular case
+#*——*##if(!${constructMap.isMetpType} && !$constructMap.languageBinding.equals("FLAT_DATA"))
+        // Modify the data to be written here
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#*--------*##if($member.isInteger
+                    && !$member.explicitDefaultValue
+                    && !$member.resolvedTypeOptional
+                    && !$member.isPointer)
+        data->$member.printName = #*
+#*----------*##if(!$member.nativeTypeFQName.equals("DDS_UnsignedLong")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written);
+#*----------*##else
+#*----------*#samples_written;
+#*----------*##end
+#*--------*##end
+#*------*##end
+## Plain Zero-Copy or non-mutable Flat-Data (with or without Zero Copy)
+#*——*##elseif(!$constructMap.languageBinding.equals("FLAT_DATA") 
+        || !$constructMap.extensibility.equals("MUTABLE_EXTENSIBILITY"))
+        // Modify the data to be written here
+#*------*##foreach($member in $constructMap.memberFieldMapList)
+#*--------*##if($member.isInteger && !$member.explicitDefaultValue)
+#*----------*##if($constructMap.languageBinding.equals("FLAT_DATA"))
+        data->root().${member.name}(#*
+#*------------*##if(!$member.nativeTypeFQName.equals("DDS_UnsignedLong")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written));
+#*------------*##else
+#*----------*#samples_written);
+#*------------*##end
+#*----------*##else
+        data->$member.printName = #*
+#*------------*##if(!$member.nativeTypeFQName.equals("DDS_UnsignedLong")&&
+                !$member.nativeTypeFQName.equals("DDS_LongLong")&&
+                !$member.nativeTypeFQName.equals("DDS_UnsignedLongLong"))#*
+#*----------*#static_cast< $member.nativeTypeFQName>(samples_written);
+#*------------*##else
+#*----------*#samples_written;
+#*------------*##end
+#*----------*##end
+#*--------*##end
+#*------*##end
+#*——*##end
+#end
+
+#macro(deleteData)
+## Regular case
+#*——*##if(!${constructMap.isMetpType} && !$constructMap.languageBinding.equals("FLAT_DATA"))
+    // Delete previously allocated ${constructMap.nativeFQName}, including all contained elements
+#*----------*##if($envMap.generateCppConstructor)
+    delete data;
+#*----------*##else
+    retcode = ${constructMap.FQName}TypeSupport::delete_data(data);
+    if (retcode != RETCODE_OK) {
+        std::cerr << "${constructMap.FQName}TypeSupport::delete_data error " << retcode
+                  << std::endl;
+    }
+#*----------*##end
+#*——*##end
+#end

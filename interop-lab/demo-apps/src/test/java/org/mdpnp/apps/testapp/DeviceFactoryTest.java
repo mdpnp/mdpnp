@@ -53,7 +53,7 @@ public class DeviceFactoryTest {
             }
         }
         finally {
-            parentContext.destroy();
+            parentContext.close();
         }
     }
 

@@ -1,0 +1,1299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ (c) Copyright, Real-Time Innovations, 2009-2016.
+ All rights reserved.
+ No duplications, whole or partial, manual or electronic, may be made
+ without express written permission.  Any such copies, or
+ revisions thereof, must display this notice unaltered.
+ This code contains trade secrets of Real-Time Innovations, Inc.
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">     
+
+    <!-- =================================================================== -->
+    <!-- Identifiers                                                         -->
+    <!-- =================================================================== -->
+    <xs:simpleType name="identifierName">
+        <xs:restriction base="xs:string">
+            <!-- RTI add allowing identifiers starting in _ -->
+            <xs:pattern value="([a-zA-Z_]|::)([a-zA-Z_0-9]|::)*"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- =================================================================== -->
+    <!-- File Inclusion                                                      -->
+    <!-- =================================================================== -->
+    <xs:simpleType name="fileName">
+        <xs:restriction base="xs:string">
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="includeDecl">
+        <xs:attribute name="file"
+                      type="fileName"
+                      use="required"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Forward Declarations                                                -->
+    <!-- =================================================================== -->
+    <xs:simpleType name="forwardDeclTypeKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="enum"/>
+            <xs:enumeration value="struct"/>
+            <xs:enumeration value="union"/>
+            <xs:enumeration value="bitset"/>
+            <!-- RTI Add -->
+            <xs:enumeration value="eventtype">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="interface">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="component">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="valuetype">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="forwardDecl">
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="kind"
+                      type="forwardDeclTypeKind"
+                      use="required"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Basic Types                                                         -->
+    <!-- =================================================================== -->
+    <xs:simpleType name="allTypeKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="boolean"/>
+            <xs:enumeration value="byte"/>
+            <xs:enumeration value="int8"/>
+            <xs:enumeration value="uint8"/>
+            <xs:enumeration value="char8"/>
+            <xs:enumeration value="char16"/>
+            <xs:enumeration value="int16"/>
+            <xs:enumeration value="uint16"/>
+            <xs:enumeration value="int32"/>
+            <xs:enumeration value="uint32"/>
+            <xs:enumeration value="int64"/>
+            <xs:enumeration value="uint64"/>
+            <xs:enumeration value="float32"/>
+            <xs:enumeration value="float64"/>
+            <xs:enumeration value="float128"/>
+            <!-- String containers -->
+            <xs:enumeration value="string"/>
+            <xs:enumeration value="wstring"/>
+            <!-- Some other type -->
+            <xs:enumeration value="nonBasic"/>
+            <!-- RTI add (old notation)-->
+            <xs:enumeration value="octet">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use byte instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="long">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use int32 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="float">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use float32 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="double">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use float64 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="char">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use char8 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="wchar">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use char16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="char32">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use char16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration> 
+            <xs:enumeration value="short">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use int16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="unsignedShort">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use uint16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="unsignedLong">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use uint32 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="longLong">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use int64 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="unsignedLongLong">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use uint64 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="longDouble">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use float128 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="discriminatorTypeKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="boolean"/>
+            <xs:enumeration value="byte"/>
+            <xs:enumeration value="int8"/>
+            <xs:enumeration value="uint8"/>
+            <xs:enumeration value="char8"/>
+            <xs:enumeration value="char16"/>
+            <xs:enumeration value="int16"/>
+            <xs:enumeration value="uint16"/>
+            <xs:enumeration value="int32"/>
+            <xs:enumeration value="uint32"/>
+            <xs:enumeration value="int64"/>
+            <xs:enumeration value="uint64"/>
+            <!-- Some other type -->
+            <xs:enumeration value="nonBasic"/>
+            <!-- RTI add (old notation)-->
+            <xs:enumeration value="octet">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use byte instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="long">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use int32 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="char">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use char8 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="wchar">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use char16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="char32">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use char16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="short">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use int16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="unsignedShort">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use uint16 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="unsignedLong">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use uint32 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="longLong">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use int64 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="unsignedLongLong">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This type is deprecated use uint64 instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="arrayDimensionsKind">
+        <xs:restriction base="xs:string">
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- =================================================================== -->
+    <!-- Constants                                                           -->
+    <!-- =================================================================== -->
+    <xs:complexType name="constDecl">
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="type"
+                      type="allTypeKind"
+                      use="required"/>
+        <xs:attribute name="nonBasicTypeName"
+                      type="identifierName"
+                      use="optional"/>
+        <xs:attribute name="value"
+                      type="xs:string"
+                      use="required"/>
+        <!-- RTI add -->
+        <xs:attribute name="stringMaxLength"
+                      type="xs:string"
+                      use="optional"/>
+        <!-- RTI add -->
+        <xs:attribute name="resolveName"
+                      type="xs:boolean"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!--RTI add-->
+        <xs:attribute name="deprecated"
+                      type="xs:boolean"
+                      use="optional"
+                      default="false"/>
+    </xs:complexType>
+
+    <!-- RTI add -->
+    <xs:simpleType name="visibilityKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="public"/>
+            <xs:enumeration value="private"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- =================================================================== -->
+    <!-- Aggregated Types (General)                                          -->
+    <!-- =================================================================== -->
+    <xs:simpleType name="memberId">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="268435455"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="simpleMemberDecl">
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="type"
+                      type="allTypeKind"
+                      use="required"/>
+        <xs:attribute name="nonBasicTypeName"
+                      type="identifierName"
+                      use="optional"/>
+        <!--RTI add-->
+        <xs:attribute name="deprecated"
+                      type="xs:boolean"
+                      use="optional"
+                      default="false"/>
+    </xs:complexType>
+
+    <!-- RTI not supported -->
+    <xs:simpleType name="tryConstructKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="discard"/>
+            <xs:enumeration value="use_default"/>
+            <xs:enumeration value="trim"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="memberDecl">
+        <xs:complexContent>
+            <xs:extension base="simpleMemberDecl">
+                <xs:sequence>
+                    <xs:element name="annotate"
+                                type="annotationDecl"
+                                minOccurs="0"
+                                maxOccurs="unbounded"/>
+                </xs:sequence>
+
+                <xs:attribute name="external"
+                              type="xs:boolean"
+                              use="optional"/>
+                <xs:attribute name="tryConstruct"
+                              type="tryConstructKind"
+                              use="optional"/>
+                <xs:attribute name="mapKeyType"
+                              type="allTypeKind"
+                              use="optional"/>
+                <xs:attribute name="mapKeyNonBasicTypeName"
+                              type="identifierName"
+                              use="optional"/>
+                <xs:attribute name="stringMaxLength"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="mapKeyStringMaxLength"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="sequenceMaxLength"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="mapMaxLength"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="arrayDimensions"
+                              type="arrayDimensionsKind"
+                              use="optional"/>
+                <xs:attribute name="resolveName"
+                              type="xs:boolean"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="visibility"
+                              type="visibilityKind"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="useVector"
+                              type="xs:boolean"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="hashid"
+                              type="xs:string"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="bitField"
+                              type="xs:string"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="pointer"
+                              type="xs:boolean"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- RTI not supported -->
+    <xs:complexType name="verbatimDecl">
+        <xs:sequence>
+            <xs:element name="text"
+                        type="xs:string"
+                        minOccurs="1"
+                        maxOccurs="1"/>
+        </xs:sequence>
+
+        <!-- RTI not supported -->
+        <xs:attribute name="language"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="placement"
+                      type="xs:string"
+                      use="optional"/>
+    </xs:complexType>
+
+    <xs:simpleType name="extensibilityKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="final"/>
+            <xs:enumeration value="appendable"/>
+            <xs:enumeration value="mutable"/>
+            <!-- RTI add -->
+            <xs:enumeration value="extensible">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[This extensibility is deprecated use appendable instead]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="autoIdKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="hash"/>
+            <xs:enumeration value="sequential"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="dataRepresentationMask">
+        <xs:annotation>
+            <xs:documentation>
+                <![CDATA[
+                Supported values:
+                    - Aa combination of (xcdr|xcdr2|xml)
+                ]]>
+            </xs:documentation>
+        </xs:annotation>
+
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="collapse"/>
+            <xs:pattern value="(xcdr|xcdr2|xml)(\s*\|\s*(xcdr|xcdr2|xml))*"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="languageBindingKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="plain"/>
+            <xs:enumeration value="flat_data"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="transferModeKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="shmem_ref"/>
+            <xs:enumeration value="inband"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="structOrUnionTypeDecl">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="annotate"
+                            type="annotationDecl"/>
+                <xs:element name="verbatim"
+                            type="verbatimDecl"/>
+            </xs:choice>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="nested"
+                      type="xs:boolean"
+                      use="optional"/>
+        <xs:attribute name="extensibility"
+                      type="extensibilityKind"
+                      use="optional"/>
+        <xs:attribute name="autoid"
+                      type="autoIdKind"
+                      use="optional"/>
+        <xs:attribute name="data_representation"
+                      type="dataRepresentationMask"
+                      use="optional"/>
+        <xs:attribute name="allowed_data_representation"
+                      type="dataRepresentationMask"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="languageBinding"
+                      type="languageBindingKind"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- RTI removed    default="hash"/-->
+        <!-- RTI add -->
+        <xs:attribute name="topLevel"
+                      type="xs:boolean"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- RTI add -->
+        <xs:attribute name="resolveName"
+                      type="xs:boolean"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="transferMode"
+                      type="transferModeKind"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!--RTI add-->
+        <xs:attribute name="deprecated"
+                      type="xs:boolean"
+                      use="optional"
+                      default="false"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Annotations                                                         -->
+    <!-- =================================================================== -->
+    <xs:complexType name="annotationTypeDecl">
+        <xs:sequence>
+            <xs:element name="member"
+                        type="simpleMemberDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="baseType"
+                      type="identifierName"
+                      use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="annotationMemberValueDecl">
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="value"
+                      type="xs:string"
+                      use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="annotationDecl">
+        <xs:sequence>
+            <xs:element name="member"
+                        type="annotationMemberValueDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Structures                                                          -->
+    <!-- =================================================================== -->
+    <xs:complexType name="structMemberDecl">
+        <xs:complexContent>
+            <xs:extension base="memberDecl">
+                <xs:attribute name="id"
+                              type="memberId"
+                              use="optional"/>
+                <xs:attribute name="default"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="min"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="max"
+                              type="xs:string"
+                              use="optional"/>
+                <xs:attribute name="optional"
+                              type="xs:boolean"
+                              use="optional"/>
+                <xs:attribute name="mustUnderstand"
+                              type="xs:boolean"
+                              use="optional"/>
+                <xs:attribute name="nonSerialized"
+                              type="xs:boolean"
+                              use="optional"/>
+                <xs:attribute name="key"
+                              type="xs:boolean"
+                              use="optional"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="structDecl">
+        <xs:complexContent>
+            <xs:extension base="structOrUnionTypeDecl">
+                <xs:sequence>
+                    <xs:choice maxOccurs="unbounded">
+                        <xs:element name="member"
+                                    type="structMemberDecl"
+                                    minOccurs="1"/>
+                        <xs:element name="const"
+                                    type="constDecl"
+                                    minOccurs="0"/>
+                        <!-- RTI add -->
+                        <xs:element name="directive"
+                                    type="directiveDecl"
+                                    minOccurs="0">
+                            <xs:annotation>
+                                <xs:documentation>
+                                    <![CDATA[RTI extension]]>
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:element>
+                    </xs:choice>
+                </xs:sequence>
+      
+                <xs:attribute name="baseType"
+                              type="identifierName"
+                              use="optional"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="valueTypeDecl">
+        <xs:complexContent>
+            <xs:extension base="structOrUnionTypeDecl">
+                <xs:sequence>
+                    <xs:choice maxOccurs="unbounded">
+                        <xs:element name="member"
+                                    type="structMemberDecl"
+                                    minOccurs="1"/>
+                        <xs:element name="const"
+                                    type="constDecl"
+                                    minOccurs="0"/>
+                        <!-- RTI add -->
+                        <xs:element name="directive"
+                                    type="directiveDecl"
+                                    minOccurs="0"/>
+                    </xs:choice>
+                </xs:sequence>
+
+                <xs:attribute name="baseClass"
+                              type="identifierName"
+                              use="optional"/>
+                <xs:attribute name="typeModifier"
+                              type="typeModifierKind"
+                              use="optional"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Unions                                                              -->
+    <!-- =================================================================== -->
+    <xs:complexType name="unionMemberDecl">
+        <xs:complexContent>
+            <xs:extension base="memberDecl">
+                <!-- RTI add -->
+                <xs:attribute name="id"
+                              type="memberId"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="default"
+                              type="xs:string"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="min"
+                              type="xs:string"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="max"
+                              type="xs:string"
+                              use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="discriminatorDecl">
+        <xs:sequence>
+            <xs:element name="annotate"
+                        type="annotationDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="type"
+                      type="discriminatorTypeKind"
+                      use="required"/>
+        <xs:attribute name="nonBasicTypeName"
+                      type="identifierName"
+                      use="optional"/>
+        <!-- RTI not supported -->
+        <xs:attribute name="key"
+                      type="xs:boolean"
+                      use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="caseDiscriminatorDecl">
+        <xs:attribute name="value"
+                      type="xs:string"
+                      use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="caseDecl">
+        <xs:sequence>
+            <xs:element name="caseDiscriminator"
+                        type="caseDiscriminatorDecl"
+                        minOccurs="1"
+                        maxOccurs="unbounded"/>
+            <xs:element name="member"
+                        type="unionMemberDecl"
+                        minOccurs="1"
+                        maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="unionDecl">
+        <xs:complexContent>
+            <xs:extension base="structOrUnionTypeDecl">
+                <xs:sequence>
+                    <xs:element name="discriminator"
+                                type="discriminatorDecl"
+                                minOccurs="1"
+                                maxOccurs="1"/>
+                    <xs:element name="case"
+                                type="caseDecl"
+                                minOccurs="1"
+                                maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Aliases                                                             -->
+    <!-- =================================================================== -->
+    <xs:complexType name="typedefDecl">
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="type"
+                      type="allTypeKind"
+                      use="required"/>
+        <xs:attribute name="nonBasicTypeName"
+                      type="identifierName"
+                      use="optional"/>
+        <!--- RTI not supported -->
+        <xs:attribute name="mapKeyType"
+                      type="allTypeKind"
+                      use="optional"/>
+        <!--- RTI not supported -->
+        <xs:attribute name="mapKeyNonBasicTypeName"
+                      type="identifierName"
+                      use="optional"/>
+        <xs:attribute name="stringMaxLength"
+                      type="xs:string"
+                      use="optional"/>
+        <!--- RTI not supported -->
+        <xs:attribute name="mapKeyStringMaxLength"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="sequenceMaxLength"
+                      type="xs:string"
+                      use="optional"/>
+        <!--- RTI not supported -->
+        <xs:attribute name="mapMaxLength"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="default"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="min"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="max"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="arrayDimensions"
+                      type="arrayDimensionsKind"
+                      use="optional"/>
+        <xs:attribute name="external"
+                      type="xs:boolean"
+                      use="optional"/>
+        <!-- RTI add -->
+        <xs:attribute name="resolveName"
+                      type="xs:boolean"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="useVector"
+                      type="xs:boolean"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="pointer"
+                      type="xs:boolean"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- RTI add -->
+        <xs:attribute name="deprecated"
+                      type="xs:boolean"
+                      use="optional"
+                      default="false"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Enumerations                                                        -->
+    <!-- =================================================================== -->
+    <xs:simpleType name="enumBitBound">
+        <xs:restriction base="xs:unsignedShort">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="enumeratorDecl">
+        <xs:sequence>
+            <xs:element name="annotate"
+                        type="annotationDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="value"
+                      type="xs:string"
+                      use="optional"/>
+        <xs:attribute name="defaultLiteral"
+                      type="xs:boolean"
+                      use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="enumDecl">
+        <xs:choice maxOccurs="unbounded">
+            <xs:element name="annotate"
+                        type="annotationDecl"
+                        minOccurs="0"/>
+            <xs:element name="verbatim"
+                        type="verbatimDecl"
+                        minOccurs="0"/>
+            <xs:element name="enumerator"
+                        type="enumeratorDecl"
+                        minOccurs="1"/>
+            <!-- RTI add -->
+            <xs:element name="directive"
+                        type="directiveDecl"
+                        minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <![CDATA[RTI extension]]>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:choice>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <!-- RTI not supported -->
+        <xs:attribute name="bitBound"
+                      type="enumBitBound"
+                      use="optional"/>
+        <!-- RTI add -->
+        <xs:attribute name="extensibility"
+                      type="extensibilityKind"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="data_representation"
+                      type="dataRepresentationMask"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="allowed_data_representation"
+                      type="dataRepresentationMask"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- RTI add -->
+        <xs:attribute name="deprecated"
+                      type="xs:boolean"
+                      use="optional"
+                      default="false"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Bit Masks                                                           -->
+    <!-- =================================================================== -->
+    <!-- RTI add -->
+    <xs:simpleType name="bitsetBitBound">
+        <xs:restriction base="xs:unsignedShort">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="64"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="bitmaskBitBound">
+        <xs:restriction base="xs:unsignedShort">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="64"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="flagIndex">
+        <xs:restriction base="xs:unsignedShort">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="63"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="flagDecl">
+        <xs:sequence>
+            <xs:element name="annotate"
+                        type="annotationDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="position"
+                      type="flagIndex"
+                      use="required"/>
+        <!-- RTI add -->
+        <xs:attribute name="value"
+                      type="flagIndex"
+                      use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- RTI add -->
+    <xs:complexType name="bitsetDecl">
+        <xs:sequence>
+            <xs:element name="annotate"
+                        type="annotationDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+            <xs:element name="flag"
+                        type="flagDecl"
+                        minOccurs="0"
+                        maxOccurs="64"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="bitBound"
+                      type="bitsetBitBound"
+                      use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="bitmaskDecl">
+        <xs:sequence>
+            <xs:element name="annotate"
+                        type="annotationDecl"
+                        minOccurs="0"
+                        maxOccurs="unbounded"/>
+            <xs:element name="flag"
+                        type="flagDecl"
+                        minOccurs="0"
+                        maxOccurs="64"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="bitBound"
+                      type="bitmaskBitBound"
+                      use="optional"/>
+    </xs:complexType>
+
+    <!-- =================================================================== -->
+    <!-- Modules                                                             -->
+    <!-- =================================================================== -->
+    <xs:group name="moduleElements">
+        <xs:sequence>
+            <xs:choice maxOccurs="unbounded">
+                <!-- RTI change (I have modified include2 to include) -->
+                <xs:element name="include"
+                            type="includeDecl"
+                            minOccurs="0"/>
+                <xs:element name="forward_dcl"
+                            type="forwardDecl"
+                            minOccurs="0"/>
+                <xs:element name="const"
+                            type="constDecl"
+                            minOccurs="0"/>
+                <xs:element name="module"
+                            type="moduleDecl"
+                            minOccurs="0"/>
+                <xs:element name="struct"
+                            type="structDecl"
+                            minOccurs="0"/>
+                <xs:element name="union"
+                            type="unionDecl"
+                            minOccurs="0"/>
+                <xs:element name="annotation"
+                            type="annotationTypeDecl"
+                            minOccurs="0"/>
+                <xs:element name="typedef"
+                            type="typedefDecl"
+                            minOccurs="0"/>
+                <xs:element name="enum"
+                            type="enumDecl"
+                            minOccurs="0"/>
+                <xs:element name="bitmask"
+                            type="bitmaskDecl"
+                            minOccurs="0"/>
+                <!--RTI add-->
+                <xs:element name="bitset"
+                            type="bitsetDecl"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="valuetype"
+                            type="valueTypeDecl"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="directive"
+                            type="directiveDecl"
+                            minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <![CDATA[RTI extension]]>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
+    </xs:group>
+
+    <!-- RTI add -->
+    <xs:simpleType name="typeModifierKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="custom"/>
+            <xs:enumeration value="abstract"/>
+            <xs:enumeration value="truncatable"/>
+            <xs:enumeration value="none"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="directiveKind">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="copy"/>
+            <xs:enumeration value="copyC"/>
+            <xs:enumeration value="copyJava"/>
+            <xs:enumeration value="copyCs"/>
+            <xs:enumeration value="copyPy"/>
+            <xs:enumeration value="copyJavaBegin"/>
+            <xs:enumeration value="copyDeclaration"/>
+            <xs:enumeration value="copyCDeclaration"/>
+            <xs:enumeration value="copyJavaDeclaration"/>
+            <xs:enumeration value="copyCsDeclaration"/>
+            <xs:enumeration value="copyPyDeclaration"/>
+            <xs:enumeration value="copyJavaDeclarationBegin"/>
+            <xs:enumeration value="copyAda"/>
+            <xs:enumeration value="copyAdaDeclaration"/>
+            <xs:enumeration value="copyAdaDeclarationBegin"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="directiveDecl">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="kind" type="directiveKind" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="moduleDecl">
+        <xs:sequence>
+            <!--  xs:element name="include"
+            type="includeDecl"
+            minOccurs="0"
+            maxOccurs="unbounded"/-->
+            <xs:group   ref="moduleElements"
+                      minOccurs="0"
+                      maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="name"
+                      type="identifierName"
+                      use="required"/>
+        <xs:attribute name="autoid"
+                      type="autoIdKind"
+                      use="optional"/>
+        <xs:attribute name="data_representation" 
+                      type="dataRepresentationMask"
+                      use="optional" />
+        <xs:attribute name="allowed_data_representation" 
+                      type="dataRepresentationMask"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="languageBinding"
+                      type="languageBindingKind"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- RTI removed               default="hash"/ -->
+        <xs:attribute name="transferMode"
+                      type="transferModeKind"
+                      use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <![CDATA[RTI extension]]>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="typeLibrary">
+        <xs:group ref="moduleElements"/>
+    </xs:complexType>
+
+</xs:schema>

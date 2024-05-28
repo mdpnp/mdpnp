@@ -1,0 +1,158 @@
+<!ELEMENT types (include|const|directive|struct|valuetype|
+		sparse_valuetype|union|typedef|module|enum|bitset|forward_dcl)+>
+<!ATTLIST types xmlns:xsi CDATA #IMPLIED>
+<!ATTLIST types xsi:noNamespaceSchemaLocation CDATA #IMPLIED>
+<!ATTLIST types name CDATA #IMPLIED>
+
+<!ELEMENT type_library (include|const|directive|struct|valuetype|
+                        sparse_valuetype|union|typedef|module|enum|bitset|forward_dcl)+>
+<!ATTLIST type_library xmlns:xsi CDATA #IMPLIED>
+<!ATTLIST type_library xsi:noNamespaceSchemaLocation CDATA #IMPLIED>
+<!ATTLIST type_library name CDATA #IMPLIED>
+
+<!ELEMENT module (include|const|directive|struct|union|
+      		typedef|module|enum|valuetype|sparse_valuetype|bitset|forward_dcl)+>
+<!ATTLIST module name NMTOKEN #REQUIRED>
+<!ATTLIST module autoid (hash|sequential) #IMPLIED>
+<!ATTLIST module data_representation CDATA #IMPLIED>
+<!ATTLIST module allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST module languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST module transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT valuetype (const?|member|directive?)+>
+<!ATTLIST valuetype name NMTOKEN #REQUIRED>
+<!ATTLIST valuetype extensibility CDATA #IMPLIED>
+<!ATTLIST valuetype baseClass CDATA #IMPLIED>
+<!ATTLIST valuetype typeModifier (custom|none|truncatable|abstract) #IMPLIED>
+<!ATTLIST valuetype topLevel (true|false|1|0) "true">
+<!ATTLIST valuetype nested (true|false|1|0) "false">
+<!ATTLIST valuetype resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST valuetype autoid (hash|sequential) #IMPLIED>
+<!ATTLIST valuetype data_representation CDATA #IMPLIED>
+<!ATTLIST valuetype allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST valuetype languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST valuetype transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT sparse_valuetype (const?|member|directive?)+>
+<!ATTLIST sparse_valuetype name NMTOKEN #REQUIRED>
+<!ATTLIST sparse_valuetype baseClass CDATA #IMPLIED>
+<!ATTLIST sparse_valuetype typeModifier (custom|none|truncatable|abstract) #IMPLIED>
+<!ATTLIST sparse_valuetype topLevel (true|false|1|0) "true">
+<!ATTLIST sparse_valuetype nested (true|false|1|0) "false">
+
+<!ELEMENT include EMPTY>
+<!ATTLIST include file CDATA #REQUIRED >
+
+<!ELEMENT struct (member|directive)+>
+<!ATTLIST struct name NMTOKEN #REQUIRED>
+<!ATTLIST struct baseType CDATA #IMPLIED>
+<!ATTLIST struct extensibility CDATA #IMPLIED>
+<!ATTLIST struct topLevel (true|false|1|0) "true">
+<!ATTLIST struct nested (true|false|1|0) "false">
+<!ATTLIST struct resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST struct autoid (hash|sequential) #IMPLIED>
+<!ATTLIST struct data_representation CDATA #IMPLIED>
+<!ATTLIST struct allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST struct languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST struct transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT union (discriminator,(case|directive)+)>
+<!ATTLIST union name NMTOKEN #REQUIRED>
+<!ATTLIST union extensibility CDATA #IMPLIED>
+<!ATTLIST union topLevel (true|false|1|0) "true">
+<!ATTLIST union nested (true|false|1|0) "false">
+<!ATTLIST union resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST union autoid (hash|sequential) #IMPLIED>
+<!ATTLIST union data_representation CDATA #IMPLIED>
+<!ATTLIST union allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST union languageBinding (plain|flat_data) #IMPLIED>
+<!ATTLIST union transferMode (shmem_ref|inband) #IMPLIED>
+
+<!ELEMENT const EMPTY>
+<!ATTLIST const name NMTOKEN #REQUIRED>
+<!ATTLIST const value CDATA #REQUIRED>
+<!ATTLIST const type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST const nonBasicTypeName CDATA #IMPLIED>
+<!ATTLIST const resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST const stringMaxLength CDATA #IMPLIED>
+
+<!ELEMENT discriminator EMPTY>
+<!ATTLIST discriminator type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST discriminator nonBasicTypeName CDATA #IMPLIED>
+
+<!ELEMENT case ((caseDiscriminator)+,member)>
+
+<!ELEMENT caseDiscriminator EMPTY>
+<!ATTLIST caseDiscriminator value CDATA #REQUIRED>
+
+<!ELEMENT member EMPTY>
+<!ATTLIST member name NMTOKEN #IMPLIED>
+<!ATTLIST member visibility (public|private) #IMPLIED>
+<!ATTLIST member pointer (true|false|1|0) #IMPLIED>
+<!ATTLIST member external (true|false|1|0) #IMPLIED>
+<!ATTLIST member type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST member nonBasicTypeName CDATA #IMPLIED>
+<!ATTLIST member bitField CDATA #IMPLIED>
+<!ATTLIST member stringMaxLength CDATA #IMPLIED>
+<!ATTLIST member sequenceMaxLength CDATA #IMPLIED>
+<!ATTLIST member key (true|false|1|0) "false">
+<!ATTLIST member resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST member arrayDimensions CDATA #IMPLIED>
+<!ATTLIST member id CDATA #IMPLIED>
+<!ATTLIST member hashid CDATA #IMPLIED>
+<!ATTLIST member optional (true|false|1|0) #IMPLIED>
+<!ATTLIST member required (true|false|1|0) #IMPLIED>
+<!ATTLIST member max CDATA #IMPLIED>
+<!ATTLIST member min CDATA #IMPLIED>
+<!ATTLIST member range CDATA #IMPLIED>
+<!ATTLIST member unit CDATA #IMPLIED>
+<!ATTLIST member mustUnderstand (true|false|1|0) #IMPLIED>
+<!ATTLIST member default CDATA #IMPLIED>
+<!ATTLIST member oneway (true|false|1|0) #IMPLIED>
+<!ATTLIST member useVector (true|false|1|0) #IMPLIED>
+
+<!ELEMENT typedef EMPTY>
+<!ATTLIST typedef name NMTOKEN #REQUIRED>
+<!ATTLIST typedef type (char|string|short|long|float|boolean|double|octet|wchar|wstring|longLong|unsignedLongLong|longShort|longDouble|unsignedShort|unsignedLong|nonBasic) #REQUIRED>
+<!ATTLIST typedef nonBasicTypeName CDATA #IMPLIED>
+<!ATTLIST typedef stringMaxLength CDATA #IMPLIED>
+<!ATTLIST typedef sequenceMaxLength CDATA #IMPLIED>
+<!ATTLIST typedef pointer (true|false|1|0) #IMPLIED>
+<!ATTLIST typedef resolveName (true|false|1|0) #IMPLIED>
+<!ATTLIST typedef arrayDimensions CDATA #IMPLIED>
+<!ATTLIST typedef topLevel (true|false|1|0) "true">
+<!ATTLIST typedef nested (true|false|1|0) "false">
+<!ATTLIST typedef default CDATA #IMPLIED>
+<!ATTLIST typedef max CDATA #IMPLIED>
+<!ATTLIST typedef min CDATA #IMPLIED>
+
+<!ELEMENT enum (enumerator)+>
+<!ATTLIST enum name NMTOKEN #REQUIRED>
+<!ATTLIST enum data_representation CDATA #IMPLIED>
+<!ATTLIST enum allowed_data_representation CDATA #IMPLIED>
+<!ATTLIST enum extensibility CDATA #IMPLIED>
+<!ATTLIST enum bitBound CDATA "32">
+
+<!ELEMENT enumerator EMPTY>
+<!ATTLIST enumerator name NMTOKEN #REQUIRED>
+<!ATTLIST enumerator value CDATA #IMPLIED>
+<!ATTLIST enumerator defaultLiteral CDATA #IMPLIED>
+
+<!ELEMENT forward_dcl EMPTY>
+<!ATTLIST forward_dcl name NMTOKEN #REQUIRED>
+<!ATTLIST forward_dcl kind NMTOKEN #REQUIRED>
+
+<!ELEMENT directive (#PCDATA) >
+<!ATTLIST directive kind (copy|copyC|copyJava|copyJavaBegin|
+                        copyDeclaration|copyCDeclaration|copyJavaDeclaration|
+                        copyJavaDeclarationBegin|copyCppcli|copyCppcliDeclaration|
+                        copyAda|copyAdaDeclaration|copyAdaDeclarationBegin)
+                        #REQUIRED>
+
+<!ELEMENT bitset (flag)+>
+<!ATTLIST bitset name NMTOKEN #REQUIRED>
+<!ATTLIST bitset bitBound CDATA "32">
+
+<!ELEMENT flag EMPTY>
+<!ATTLIST flag name NMTOKEN #REQUIRED>
+<!ATTLIST flag value CDATA #REQUIRED>

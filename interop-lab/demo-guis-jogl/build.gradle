@@ -19,11 +19,11 @@ targetCompatibility = JAVA_VERSION_CLASSES
 def JOGL_version = '2.0.2'
 
 dependencies {
-  compile project(':interop-lab:demo-guis')
-  compile group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
+  implementation project(':interop-lab:demo-guis')
+  implementation group: 'org.slf4j', name: 'slf4j-api', version: SLF4J_VERSION
   
   
-  compile group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version
-  compile group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version
+  implementation group: 'org.jogamp.jogl', name: 'jogl-all', version: JOGL_version
+  implementation group: 'org.jogamp.gluegen', name: 'gluegen-rt', version: JOGL_version
 
 }

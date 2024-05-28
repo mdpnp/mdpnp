@@ -17,8 +17,8 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 dependencies {
-  compile project(':interop-lab:demo-devices')
+  implementation project(':interop-lab:demo-devices')
   // For serial communications with devices
-  compile project(':interop-lab:purejavacomm')
+  implementation project(':interop-lab:purejavacomm')
 
 }

@@ -1,0 +1,15 @@
+Welcome to your first Connext DDS example! 
+
+This example was generated for architecture ${global.architectureName}, using the
+data type ${exampleType} from ${global.idlFileName}.idl.
+This example builds two applications, named ${global.idlFileName}${global.pubSuffix} and
+${global.idlFileName}${global.subSuffix}.
+
+To build and run this example for ${global.architectureName}, please see the
+document RTI_ConnextDDS_CoreLibraries_GettingStarted_EmbeddedSystemsAddendum.pdf,
+located in your Connext DDS installation directory, under:
+
+${global.nddsHome}/doc/manuals/connext_dds_professional/getting_started_platforms/embedded_systems_addendum
+
+NOTE: The advanced generated example is not supported on INTEGRITY because
+that example loads a QoS XML file, and INTEGRITY cannot load a file.

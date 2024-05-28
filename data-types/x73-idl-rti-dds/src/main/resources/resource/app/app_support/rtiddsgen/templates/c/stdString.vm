@@ -1,0 +1,392 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2020.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##========================================================================*/*#
+
+#* --------------------------------------------------- *#
+#* --------------------------------------------------- *#
+#* This file contains macros used by more std::string  *#
+#* style string                                        *#
+#* --------------------------------------------------- *#
+
+#macro(assignStringMemberVariables $member)
+#*--*##set($member.nativeTypeFQName="std::string")
+#*--*##set($member.nativeTypeSeqFQName="DDS_StdStringSeq")
+#*--*##assignCommonStringMemberVariables($member)
+#end
+
+#macro(setSeqSampleAccesInfo $member)
+#*--*##set($member.seqSampleAccessInfo="DDS_g_sai_std_string_seq")
+#end
+
+#macro (addStringIncludes)
+${envMap.POUND_CHAR}include <string>
+#end
+
+#macro (setBuffer $member)
+#*--*##set($member.cStr=".c_str()")
+#end
+
+#macro (allocateString $dstPtr__ $member__ $mode__ $memoryManager__)
+$dstPtr__ = (std::string (*)#*
+#*--*##if($member__.isOptionalArray)
+#*----*##foreach($s in ${member__.dimensionList})
+[$s]#*
+#*----*##end
+#*--*##end
+) new (std::nothrow) std::string #*
+#*--*##if($member__.isOptionalArray)
+[1]#*
+#*----*##foreach($s in ${member__.dimensionList})
+[$s]#*
+#*----*##end
+#*--*##end
+();
+#end
+
+#macro (printStringObjectArray $member)
+{
+    const DDS_Char * strArray[($member.arrayTotalSize)];
+    int i;
+#*--*##if($member.isPointer)
+    std::string ** elem = (std::string**) ${member.sampleRef};
+#*--*##else
+    std::string * elem = (std::string*) ${member.sampleRef};
+#*--*##end
+
+#*--*##if($member.isOptionalArray)
+if (${member.sampleRef} == NULL) {
+    RTILogParamString_printPlain("$member.printName: NULL\n");
+} else {
+#*--*##end
+
+    for (i = 0; i < (int)($member.arrayTotalSize);
+         ++i, ++elem) {
+#*--*##if($member.isPointer)
+        strArray[i] = (**elem).c_str();
+#*--*##else
+        strArray[i] = (*elem).c_str();
+#*--*##end
+    }
+
+    RTICdrType_printStringArray(
+        strArray,
+        ($member.arrayTotalSize),
+        "$member.printName", indent_level + 1,
+        $member.typeEnum);
+#*--*##if($member.isOptionalArray)
+}
+#*--*##end
+}
+#end
+
+#macro(printStringObjectSeq${sequenceElement} $member)
+{
+    int j, sequence_length;
+    DDS_Char ** strArray = NULL;
+                
+    sequence_length = (int)
+        ${sequenceElement}.length();
+        
+    if (sequence_length > 0) {
+        strArray = new char*[sequence_length];    
+        for (j = 0; j < (sequence_length); j++) {
+            strArray[j] = (DDS_Char *)
+                ${sequenceElement}[j].c_str();
+        }
+    }
+
+    RTICdrType_printStringArray(
+        (const void*)strArray,
+        sequence_length,
+        "$member.printName", 
+        indent_level + 1,
+        $member.typeEnum);
+    delete []strArray;
+}
+#end
+
+#macro (serializeStringObjectSeq $sequenceElement $member)
+{
+    int j, sequence_length;
+        
+    sequence_length = 
+        (int) ${sequenceElement}.length();
+        
+    if (!RTICdrStream_serializeUnsignedLong(
+            cdrStream, &sequence_length)) {
+        return RTI_FALSE;
+    }
+        
+    for (j = 0; j < (sequence_length); j++) {
+        if (!RTICdrStream_serializeString(
+                 cdrStream, 
+                 ${sequenceElement}[j].c_str(), 
+                 #getStrSize($member "serialize") +1)) {
+            return RTI_FALSE;
+        } 
+    }
+}
+#end
+
+#macro (serializeStringObjectArray $member)
+{
+    int i;
+#*----*##if($member.isPointer)
+    std::string ** elem = (std::string **) ${member.sampleRef};
+#*----*##else
+    std::string * elem = (std::string *) ${member.sampleRef};
+#*----*##end
+  
+    for (i = 0; i < (int)($member.arrayTotalSize);
+         ++i, ++elem) {
+#*----*##if($member.isPointer)
+        if (*elem == NULL) {
+            return RTI_FALSE;
+        }
+#*----*##end
+        if (!RTICdrStream_serializeString(
+                 cdrStream,
+#*----*##if($member.isPointer)
+                 (**elem).c_str(),
+#*----*##else
+                 (*elem).c_str(), 
+#*----*##end
+                 #getStrSize($member "serialize") + 1)) {
+            return RTI_FALSE;
+        } 
+    }
+}
+#end
+
+#macro (serializeStringObjectFast $member)
+if (!${member.elementSerializeMethod}Fast(
+        cdrStream,#if($member.isPointer)*#end ${member.sample}.c_str(), #getStrSize($member "serialize") + 1)) {
+        return RTI_FALSE;
+}
+#end
+
+#macro (serializeStringObject $member)
+${member.elementSerializeMethod}(
+    cdrStream, ${member.sample}.c_str(), #getStrSize($member "serialize") + 1)
+#end
+
+#macro (deserializeStringObjectSeq $sequenceElement $member $serializeSuffix)
+{
+    RTICdrUnsignedLong str_length;        
+    char * str_position;
+    int j;
+    char * tmp_str;
+        
+    if (!RTICdrStream_deserializeUnsignedLong(
+            cdrStream, &sequence_length)) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+    }
+        
+    ${sequenceElement}.maximum(0);
+    ${sequenceElement}.ensure_length(sequence_length,sequence_length);
+        
+    for (j = 0; j < (int)(sequence_length); j++) {
+        str_position = RTICdrStream_getCurrentPosition(cdrStream);
+                
+        if (!RTICdrStream_deserializeUnsignedLong(
+                cdrStream, &str_length)) {
+            RTICdrStream_setCurrentPosition(cdrStream, str_position);
+#*----*##continueDeserialization ($member $serializeSuffix)
+        }
+                
+        tmp_str = DDS_String_alloc(str_length);
+        if (tmp_str == NULL) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+        }
+                
+        RTICdrStream_setCurrentPosition(cdrStream, str_position);
+        
+        if (!RTICdrStream_deserializeStringObject(
+            cdrStream, tmp_str, #getStrSize($member "deserialize") +1)) {
+            DDS_String_free(tmp_str);
+#*----*##continueDeserialization ($member $serializeSuffix)
+        }
+            
+        ${sequenceElement}[j] = tmp_str;
+        DDS_String_free(tmp_str);
+    }
+}
+#end
+
+#macro (deserializeStringObjectArray $member $serializeSuffix)
+{
+    int i;
+    RTICdrUnsignedLong str_length;
+    char * str_position;
+    char * tmp_str;
+#*----*##if($member.isPointer)
+    std::string ** elem = (std::string**) ${member.sampleRef};
+#*----*##else
+    std::string * elem = (std::string*) ${member.sampleRef};
+#*----*##end
+  
+    for (i = 0; i < (int)($member.arrayTotalSize);
+         ++i, ++elem) {
+        str_position = RTICdrStream_getCurrentPosition(cdrStream);
+            
+        if (!RTICdrStream_deserializeUnsignedLong(
+                cdrStream, &str_length)) {
+            RTICdrStream_setCurrentPosition(cdrStream, str_position);
+#*----*##continueDeserialization ($member $serializeSuffix)
+        }
+            
+        tmp_str = DDS_String_alloc(str_length);
+        if (tmp_str == NULL) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+        }
+            
+        RTICdrStream_setCurrentPosition(cdrStream, str_position);
+    
+        if (!RTICdrStream_deserializeStringObject(
+            cdrStream, tmp_str, #getStrSize($member "serialize") + 1)) {
+            DDS_String_free(tmp_str);
+#*----*##continueDeserialization ($member $serializeSuffix)
+        }
+        
+#*----*##if($member.isPointer)
+        **elem = tmp_str;
+#*----*##else
+        *elem = tmp_str;
+#*----*##end 
+        DDS_String_free(tmp_str);
+    }
+}
+#end
+
+#macro (deserializeStringObject $member $serializeSuffix)
+{
+    RTICdrUnsignedLong str_length;
+    char * str_position;
+    char * tmp_str;
+        
+    str_position = RTICdrStream_getCurrentPosition(cdrStream);
+        
+    if (!RTICdrStream_deserializeUnsignedLong(
+            cdrStream, &str_length)) {
+        RTICdrStream_setCurrentPosition(cdrStream, str_position);
+#*----*##continueDeserialization ($member $serializeSuffix)
+    }
+        
+    tmp_str = DDS_String_alloc(str_length);
+                
+    if (tmp_str == NULL) {
+#*----*##continueDeserialization ($member $serializeSuffix)
+    }
+        
+    RTICdrStream_setCurrentPosition(cdrStream, str_position);
+
+    if (!${member.elementDeserializeMethod}#if ($envMap.ignoreAlignment)Fast#end(
+            cdrStream, &tmp_str, #getStrSize($member "deserialize") + 1, RTI_FALSE)) {
+            DDS_String_free(tmp_str);
+#*----*##continueDeserialization ($member $serializeSuffix)
+    }
+
+    $member.sample = tmp_str;
+    DDS_String_free(tmp_str);
+}
+#end
+
+#macro (stringObjectGetAndAddSerializedSize $member $currentAlignment)
+current_alignment += ${member.elementSizeMethodSimple}(
+    PRESTypePluginDefaultEndpointData_getAlignment(
+        endpoint_data, $currentAlignment), ${member.sample}.c_str());
+#end
+
+#macro (stringObjectArrayGetAndAddSerializedSize $member $currentAlignment)
+{
+    int i;
+#*--------*##if($member.isPointer)
+    std::string ** elem = (std::string**) ${member.sampleRef};
+#*--------*##else
+    std::string * elem = (std::string*) ${member.sampleRef};
+#*--------*##end
+  
+    for (i = 0; i < (int)($member.arrayTotalSize);
+         ++i, ++elem) {
+        current_alignment += RTICdrType_getStringSerializedSize(
+            PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data, $currentAlignment), 
+#*--------*##if($member.isPointer)
+            (**elem).c_str());
+#*--------*##else
+            (*elem).c_str());
+#*--------*##end
+    }
+}
+#end
+
+#macro (stringObjectSeqGetAndAddSerializedSize $member $currentAlignment)
+{
+    int j, sequence_length;
+        
+    sequence_length = (int)
+        ${sequenceElement}.length();
+            
+    current_alignment += RTICdrType_get4ByteMaxSizeSerialized(
+        PRESTypePluginDefaultEndpointData_getAlignment(
+            endpoint_data, $currentAlignment));
+        
+    for (j = 0; j < (sequence_length); j++) {
+        current_alignment += RTICdrType_getStringSerializedSize(
+            PRESTypePluginDefaultEndpointData_getAlignment(endpoint_data,$currentAlignment), 
+            ${sequenceElement}[j].c_str());
+    }
+}
+#end
+
+#macro (copyStringObjectArray $member)
+{
+    int i;
+    std::string * elemOut = (std::string *) $member.dstRef;
+    std::string * elemIn =  (std::string *) $member.srcRef;
+  
+    for (i = 0; i < (int) ($member.arrayTotalSize);
+         ++i, ++elemOut, ++elemIn) {
+        *elemOut = *elemIn;
+    }
+}
+#end
+
+#macro (setStringObjectTypeCode $member)
+static DDS_TypeCode $member.typeCode = DDS_INITIALIZE_STRING_TYPECODE_W_SAMPLE_ACCESS_INFO(#getStrSize($member, "typeCode"), &DDS_g_sai_std_string);
+#end
+
+#macro (copyStringObjectReference $member)
+$member.dstSample = $member.srcSample;
+#end
+
+#macro (initStringObjectReferenceToDefault $member)
+    ${member.sample} = ${member.defaultValue};
+#end
+
+#macro (initArrayStringObject $member)
+{
+    int i;
+    ${member.nativeTypeFQName}* elem =
+        (${member.nativeTypeFQName}*)  $member.sampleRef;
+    for (i=0;i < (int)($member.arrayTotalSize);i++,++elem) {
+        *elem = "";
+    }
+}
+#end
+
+#macro (initStringObjectReferenceIfNotNull)
+    if (*elem != NULL) {
+        **elem = "";
+    }
+#end
+
+#macro (deleteStringObject $member)
+#end
+
+#macro (deleteArrayOfStringObject $member__)
+#end

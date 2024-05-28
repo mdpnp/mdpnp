@@ -1,0 +1,36 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.2,2sep14,vmg created
+##========================================================================
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="${activityPackage}"
+      android:versionCode="1"
+      android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="28" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application android:label="@string/app_name">
+        <activity android:name="${activityName}"
+                  android:label="@string/app_name"
+                  android:configChanges="orientation|keyboardHidden">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

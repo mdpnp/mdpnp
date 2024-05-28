@@ -87,7 +87,7 @@ public class DeviceAdapterTest {
         finally {
             // technically, we do not need this - app::close will shut down the context, but have
             // it here just in case of a colossal failure.
-            context.destroy();
+            context.close();
         }
     }
 
@@ -131,7 +131,7 @@ public class DeviceAdapterTest {
             throw ex;
         }
         finally {
-            context.destroy();
+            context.close();
         }
     }
 }

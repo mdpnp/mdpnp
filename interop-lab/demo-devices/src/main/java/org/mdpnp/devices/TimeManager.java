@@ -251,7 +251,7 @@ public class TimeManager {
     }
     
     private static final void elapsedTime(ice.Time_t t1, Time_t t2, Duration_t elapsed) {
-        elapsed.sec = t2.sec - t1.sec;
+        elapsed.sec = (int)(t2.sec - t1.sec);
         elapsed.nanosec = t2.nanosec - t1.nanosec;
         
         normalize(elapsed);

@@ -6,7 +6,7 @@ import com.rti.dds.subscription.Subscriber;
 import ice.ConnectionType;
 import ice.DeviceConnectivity;
 import ice.DeviceIdentity;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.openjdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.slf4j.Logger;

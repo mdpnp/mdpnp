@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<types xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:///C:/Program Files/rti_connext_dds-6.0.1/bin/../resource/app/app_support/rtiddsgen/schema/rti_dds_topic_types.xsd">
+<module name="ice">
+  <typedef name="UniqueDeviceIdentifier" stringMaxLength="64" type="string"/>
+  <typedef name="MetricIdentifier" stringMaxLength="64" type="string"/>
+  <typedef name="VendorMetricIdentifier" stringMaxLength="64" type="string"/>
+  <typedef name="InstanceIdentifier" type="int32"/>
+  <typedef name="UnitIdentifier" stringMaxLength="64" type="string"/>
+  <typedef name="LongString" stringMaxLength="128" type="wstring"/>
+  <typedef name="ValidTargets" sequenceMaxLength="128" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+  <typedef name="ImageData" sequenceMaxLength="65530" type="byte"/>
+  <typedef name="Values" sequenceMaxLength="1024" type="float32"/>
+  <struct name= "Time_t" nested="true">
+    <member name="sec" type="int32"/>
+    <member name="nanosec" type="int32"/>
+  </struct>
+  <struct name= "HeartBeat" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="type" stringMaxLength="32" type="string"/>
+  </struct>
+  <const name="HeartBeatTopic" type="string" value="&quot;HeartBeat&quot;"/>
+  <struct name= "TimeSync" extensibility= "mutable">
+    <member name="heartbeat_source" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="heartbeat_recipient" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="source_source_timestamp" type="nonBasic"  nonBasicTypeName= "ice::Time_t"/>
+    <member name="recipient_receipt_timestamp" type="nonBasic"  nonBasicTypeName= "ice::Time_t"/>
+  </struct>
+  <const name="TimeSyncTopic" type="string" value="&quot;TimeSync&quot;"/>
+  <struct name= "Image" nested="true">
+    <member name="content_type" stringMaxLength="64" type="string"/>
+    <member name="image" type="nonBasic"  nonBasicTypeName= "ice::ImageData"/>
+  </struct>
+  <struct name= "DeviceIdentity" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="manufacturer" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="model" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="serial_number" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="icon" type="nonBasic"  nonBasicTypeName= "ice::Image"/>
+    <member name="build" stringMaxLength="128" type="string"/>
+    <member name="operating_system" stringMaxLength="128" type="string"/>
+  </struct>
+  <const name="DeviceIdentityTopic" type="string" value="&quot;DeviceIdentity&quot;"/>
+  <enum name="ConnectionState">
+    <enumerator name="Initial"/>
+    <enumerator name="Connected"/>
+    <enumerator name="Connecting"/>
+    <enumerator name="Negotiating"/>
+    <enumerator name="Terminal"/>
+  </enum> 
+  <enum name="ConnectionType">
+    <enumerator name="Serial"/>
+    <enumerator name="Simulated"/>
+    <enumerator name="Network"/>
+  </enum> 
+  <struct name= "DeviceConnectivity" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="state" type="nonBasic"  nonBasicTypeName= "ice::ConnectionState"/>
+    <member name="type" type="nonBasic"  nonBasicTypeName= "ice::ConnectionType"/>
+    <member name="info" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="valid_targets" type="nonBasic"  nonBasicTypeName= "ice::ValidTargets"/>
+    <member name="comPort" stringMaxLength="16" type="string"/>
+  </struct>
+  <const name="DeviceConnectivityTopic" type="string" value="&quot;DeviceConnectivity&quot;"/>
+  <struct name= "MDSConnectivity" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="partition" stringMaxLength="128" type="string"/>
+  </struct>
+  <const name="MDSConnectivityTopic" type="string" value="&quot;MDSConnectivity&quot;"/>
+  <struct name= "MDSConnectivityObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="partition" stringMaxLength="128" type="string"/>
+  </struct>
+  <const name="MDSConnectivityObjectiveTopic" type="string" value="&quot;MDSConnectivityObjective&quot;"/>
+  <const name="MDC_PRESS_CUFF_NEXT_INFLATION" type="string" value="&quot;MDC_PRESS_CUFF_NEXT_INFLATION&quot;"/>
+  <const name="MDC_PRESS_CUFF_INFLATION" type="string" value="&quot;MDC_PRESS_CUFF_INFLATION&quot;"/>
+  <const name="MDC_HR_ECG_MODE" type="string" value="&quot;MDC_HR_ECG_MODE&quot;"/>
+  <const name="MDC_RR_APNEA" type="string" value="&quot;MDC_RR_APNEA&quot;"/>
+  <const name="MDC_SPO2_C_LOCK" type="string" value="&quot;MDC_SPO2_C_LOCK&quot;"/>
+  <const name="MDC_TIME_PD_INSPIRATORY" type="string" value="&quot;MDC_TIME_PD_INSPIRATORY&quot;"/>
+  <const name="MDC_START_INSPIRATORY_CYCLE" type="string" value="&quot;MDC_START_INSPIRATORY_CYCLE&quot;"/>
+  <const name="MDC_START_EXPIRATORY_CYCLE" type="string" value="&quot;MDC_START_EXPIRATORY_CYCLE&quot;"/>
+  <const name="MDC_END_OF_BREATH" type="string" value="&quot;MDC_END_OF_BREATH&quot;"/>
+  <const name="MDC_VENT_TIME_PD_PPV" type="string" value="&quot;MDC_VENT_TIME_PD_PPV&quot;"/>
+  <const name="MDC_EVT_STAT_NBP_DEFL_AND_MEAS_BP" type="int32" value="6250"/>
+  <const name="MDC_EVT_STAT_NBP_INFL_TO_MAX_CUFF_PRESS" type="int32" value="6222"/>
+  <const name="MDC_EVT_STAT_OFF" type="int32" value="6226"/>
+  <const name="MDC_ECG_LEAD_I" type="string" value="&quot;MDC_ECG_LEAD_I&quot;"/>
+  <const name="MDC_ECG_LEAD_II" type="string" value="&quot;MDC_ECG_LEAD_II&quot;"/>
+  <const name="MDC_ECG_LEAD_III" type="string" value="&quot;MDC_ECG_LEAD_III&quot;"/>
+  <const name="MDC_ECG_LEAD_V1" type="string" value="&quot;MDC_ECG_LEAD_V1&quot;"/>
+  <const name="MDC_ECG_LEAD_V2" type="string" value="&quot;MDC_ECG_LEAD_V2&quot;"/>
+  <const name="MDC_ECG_LEAD_V3" type="string" value="&quot;MDC_ECG_LEAD_V3&quot;"/>
+  <const name="MDC_ECG_LEAD_V4" type="string" value="&quot;MDC_ECG_LEAD_V4&quot;"/>
+  <const name="MDC_ECG_LEAD_V5" type="string" value="&quot;MDC_ECG_LEAD_V5&quot;"/>
+  <const name="MDC_ECG_LEAD_V6" type="string" value="&quot;MDC_ECG_LEAD_V6&quot;"/>
+  <const name="MDC_ECG_LEAD_AVR" type="string" value="&quot;MDC_ECG_LEAD_AVR&quot;"/>
+  <const name="MDC_ECG_LEAD_AVF" type="string" value="&quot;MDC_ECG_LEAD_AVF&quot;"/>
+  <const name="MDC_ECG_LEAD_AVL" type="string" value="&quot;MDC_ECG_LEAD_AVL&quot;"/>
+  <const name="SP02_SOFT_CAN_GET_AVERAGING_RATE" type="string" value="&quot;SP02_SOFT_CAN_GET_AVERAGING_RATE&quot;"/>
+  <const name="SP02_OPER_CAN_GET_AVERAGING_RATE" type="string" value="&quot;SPO2_OPER_CAN_GET_AVERAGING_RATE&quot;"/>
+  <const name="SP02_AVERAGING_RATE" type="string" value="&quot;SP02_AVERAGING_RATE&quot;"/>
+  <const name="SP02_OPER_CAN_SET_AVERAGING_RATE" type="string" value="&quot;SP02_OPER_CAN_SET_AVERAGING_RATE&quot;"/>
+  <const name="SP02_SOFT_CAN_SET_AVERAGING_RATE" type="string" value="&quot;SP02_SOFT_CAN_SET_AVERAGING_RATE&quot;"/>
+  <const name="ICE_DERIVED_RESPIRATORY_RATE" type="string" value="&quot;ICE_DERIVED_RESPIRATORY_RATE&quot;"/>
+  <struct name= "Numeric" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="metric_id" type="nonBasic"  nonBasicTypeName= "ice::MetricIdentifier" key="true"/>
+    <member name="vendor_metric_id" type="nonBasic"  nonBasicTypeName= "ice::VendorMetricIdentifier" key="true"/>
+    <member name="instance_id" type="nonBasic"  nonBasicTypeName= "ice::InstanceIdentifier" key="true"/>
+    <member name="unit_id" type="nonBasic"  nonBasicTypeName= "ice::UnitIdentifier" key="true"/>
+    <member name="value" type="float32"/>
+    <member name="device_time" type="nonBasic"  nonBasicTypeName= "ice::Time_t"/>
+    <member name="presentation_time" type="nonBasic"  nonBasicTypeName= "ice::Time_t"/>
+  </struct>
+  <const name="NumericTopic" type="string" value="&quot;Numeric&quot;"/>
+  <struct name= "SampleArray" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="metric_id" type="nonBasic"  nonBasicTypeName= "ice::MetricIdentifier" key="true"/>
+    <member name="vendor_metric_id" type="nonBasic"  nonBasicTypeName= "ice::VendorMetricIdentifier" key="true"/>
+    <member name="instance_id" type="nonBasic"  nonBasicTypeName= "ice::InstanceIdentifier" key="true"/>
+    <member name="unit_id" type="nonBasic"  nonBasicTypeName= "ice::UnitIdentifier" key="true"/>
+    <member name="frequency" type="int32" key="true"/>
+    <member name="values" type="nonBasic"  nonBasicTypeName= "ice::Values"/>
+    <member name="device_time" type="nonBasic"  nonBasicTypeName= "ice::Time_t"/>
+    <member name="presentation_time" type="nonBasic"  nonBasicTypeName= "ice::Time_t"/>
+  </struct>
+  <const name="SampleArrayTopic" type="string" value="&quot;SampleArray&quot;"/>
+  <struct name= "InfusionObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="stopInfusion" type="boolean"/>
+    <member name="head" type="int32"/>
+  </struct>
+  <const name="InfusionObjectiveTopic" type="string" value="&quot;InfusionObjective&quot;"/>
+  <struct name= "InfusionProgram">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="head" type="int32"/>
+    <member name="infusionRate" type="float32"/>
+    <member name="VTBI" type="float32"/>
+    <member name="bolusVolume" type="float32"/>
+    <member name="bolusRate" type="float32"/>
+    <member name="seconds" type="int32"/>
+  </struct>
+  <const name="InfusionProgramTopic" type="string" value="&quot;InfusionProgram&quot;"/>
+  <struct name= "VentModeObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="newMode" type="float32"/>
+  </struct>
+  <const name="VentModeObjectiveTopic" type="string" value="&quot;VentModeObjective&quot;"/>
+  <struct name= "KeyValueObjective">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="paramName" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="newValue" type="float32"/>
+  </struct>
+  <const name="KeyValueObjectiveTopic" type="string" value="&quot;KeyValueObjective&quot;"/>
+  <struct name= "RequestNKVSettingsObjective">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+  </struct>
+  <const name="RequestNKVSettingsObjectiveTopic" type="string" value="&quot;RequestNKVSettingsObjective&quot;"/>
+  <struct name= "OximetryAveragingObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="newAverageTime" type="int32"/>
+  </struct>
+  <const name="OximetryAveragingObjectiveTopic" type="string" value="&quot;OximetryAveragingObjective&quot;"/>
+  <struct name= "FlowRateObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="newFlowRate" type="float32"/>
+  </struct>
+  <const name="FlowRateObjectiveTopic" type="string" value="&quot;FlowRateObjective&quot;"/>
+  <struct name= "BPObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="changeBy" type="float32"/>
+  </struct>
+  <const name="BPObjectiveTopic" type="string" value="&quot;BPObjective&quot;"/>
+  <struct name= "BPPauseResumeObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="requestor" type="nonBasic"  nonBasicTypeName= "ice::LongString"/>
+    <member name="running" type="boolean"/>
+  </struct>
+  <const name="BPPauseResumeObjectiveTopic" type="string" value="&quot;BPPauseResumeObjective&quot;"/>
+  <struct name= "InfusionStatus" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="infusionActive" type="boolean"/>
+    <member name="drug_name" stringMaxLength="128" type="wstring"/>
+    <member name="drug_mass_mcg" type="int32"/>
+    <member name="solution_volume_ml" type="int32"/>
+    <member name="volume_to_be_infused_ml" type="int32"/>
+    <member name="infusion_duration_seconds" type="int32"/>
+    <member name="infusion_fraction_complete" type="float32"/>
+  </struct>
+  <const name="InfusionStatusTopic" type="string" value="&quot;InfusionStatus&quot;"/>
+  <enum name="LimitType">
+    <enumerator name="low_limit"/>
+    <enumerator name="high_limit"/>
+  </enum> 
+  <enum name="AlarmPriority">
+    <enumerator name="low"/>
+    <enumerator name="medium"/>
+    <enumerator name="high"/>
+  </enum> 
+  <struct name= "AlarmLimit" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="metric_id" type="nonBasic"  nonBasicTypeName= "ice::MetricIdentifier" key="true"/>
+    <member name="limit_type" type="nonBasic"  nonBasicTypeName= "ice::LimitType" key="true"/>
+    <member name="unit_identifier" type="nonBasic"  nonBasicTypeName= "ice::UnitIdentifier"/>
+    <member name="value" type="float32"/>
+  </struct>
+  <const name="AlarmLimitTopic" type="string" value="&quot;AlarmLimit&quot;"/>
+  <struct name= "GlobalAlarmLimitObjective" extensibility= "mutable">
+    <member name="metric_id" type="nonBasic"  nonBasicTypeName= "ice::MetricIdentifier" key="true"/>
+    <member name="limit_type" type="nonBasic"  nonBasicTypeName= "ice::LimitType" key="true"/>
+    <member name="unit_identifier" type="nonBasic"  nonBasicTypeName= "ice::UnitIdentifier"/>
+    <member name="value" type="float32"/>
+  </struct>
+  <const name="GlobalAlarmLimitObjectiveTopic" type="string" value="&quot;GlobalAlarmLimitObjective&quot;"/>
+  <struct name= "LocalAlarmLimitObjective" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="metric_id" type="nonBasic"  nonBasicTypeName= "ice::MetricIdentifier" key="true"/>
+    <member name="limit_type" type="nonBasic"  nonBasicTypeName= "ice::LimitType" key="true"/>
+    <member name="unit_identifier" type="nonBasic"  nonBasicTypeName= "ice::UnitIdentifier"/>
+    <member name="value" type="float32"/>
+  </struct>
+  <const name="LocalAlarmLimitObjectiveTopic" type="string" value="&quot;LocalAlarmLimitObjective&quot;"/>
+  <struct name= "DeviceAlertCondition" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="alert_state" stringMaxLength="256" type="string"/>
+  </struct>
+  <const name="DeviceAlertConditionTopic" type="string" value="&quot;DeviceAlertCondition&quot;"/>
+  <struct name= "Alert" extensibility= "mutable">
+    <member name="unique_device_identifier" type="nonBasic"  nonBasicTypeName= "ice::UniqueDeviceIdentifier" key="true"/>
+    <member name="identifier" stringMaxLength="256" type="string" key="true"/>
+    <member name="text" stringMaxLength="256" type="string"/>
+  </struct>
+  <const name="PatientAlertTopic" type="string" value="&quot;PatientAlert&quot;"/>
+  <const name="TechnicalAlertTopic" type="string" value="&quot;TechnicalAlert&quot;"/>
+  <struct name= "Patient">
+    <member name="mrn" stringMaxLength="16" type="string" key="true"/>
+    <member name="given_name" stringMaxLength="256" type="wstring"/>
+    <member name="family_name" stringMaxLength="256" type="wstring"/>
+  </struct>
+  <const name="PatientTopic" type="string" value="&quot;Patient&quot;"/>
+</module>
+</types>

@@ -536,7 +536,7 @@ public class IceAppsContainer extends IceApplication {
         stopOk.await();
         panelController.stop();
         // kill the spring context that is owned by this component.
-        context.destroy();
+        context.close();
         super.stop();
     }
 }

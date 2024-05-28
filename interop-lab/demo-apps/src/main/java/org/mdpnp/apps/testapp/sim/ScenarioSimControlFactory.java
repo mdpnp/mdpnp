@@ -99,7 +99,7 @@ public class ScenarioSimControlFactory implements IceApplicationProvider {
 
         @Override
         public void destroy() throws Exception {
-            ctx.destroy();
+            ctx.close();
         }
 
     }

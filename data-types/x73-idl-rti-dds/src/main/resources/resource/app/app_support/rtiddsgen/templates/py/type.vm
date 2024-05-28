@@ -1,0 +1,112 @@
+##   (c) Copyright, Real-Time Innovations, Inc. 2021.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##========================================================================*/
+##-----------------------------------------------------------------
+##
+##             Template for the main Python type file
+##
+##------------------------------------------------------------------
+##------------------------------------------------------------------
+
+${envMap.POUND_CHAR} WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
+
+${envMap.POUND_CHAR} This file was generated from ${envMap.idlFileName}.idl
+${envMap.POUND_CHAR} using RTI Code Generator (rtiddsgen) version ${envMap.codegenVersion}.
+${envMap.POUND_CHAR} The rtiddsgen tool is part of the RTI Connext DDS distribution.
+${envMap.POUND_CHAR} For more information, type 'rtiddsgen -help' at a command shell
+${envMap.POUND_CHAR} or consult the Code Generator User's Manual.
+
+from dataclasses import field
+from typing import Union, Sequence, Optional
+import rti.idl as idl
+from enum import IntEnum
+import sys
+import os
+
+#foreach($node in $constructMapList)
+#assignTypeVariables($node, true)
+#*--*##if($node.constructKind.equals("directive"))
+#copyDirective($node.directiveKind $node.value)
+#*--*##end
+#*--*##if($node.constructKind.equals("include"))
+#*----*##if($node.pathOfIncludedFile)
+sys.path.append(os.path.join(os.path.dirname(__file__), '$node.pathOfIncludedFile'))
+from ${node.file} import *
+sys.path.pop()
+#*----*##else
+from ${node.file} import *
+#*----*##end
+#*--*##elseif($node.constructKind.equals("module"))
+
+$node.nativeFQNameInModule = idl.get_module("$node.nativeFQNameInModule")
+#*--*##elseif($node.constructKind.equals("struct")
+                || $node.constructKind.equals("valueType"))
+
+#*----*##defineTypeDecoratorAnnotation($node "idl.struct")
+class $node.nativeFQNameInModule#if($node.baseTypeFQName)($node.baseTypeFQName)#end:
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##declareMember($member $member.name)
+#*----*##end
+#*----*##if($node.memberFieldMapList.isEmpty())
+    pass
+#*----*##end
+#*--*##elseif($node.constructKind.equals("const"))
+
+$node.nativeFQNameInModule = $node.value
+#*--*##elseif($node.constructKind.equals("enum"))
+
+#*----*##defineEnumAnnotation($node)
+class ${node.nativeFQNameInModule}(IntEnum):
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+    #copyDirective($member.directive $member.value)
+#*------*##else
+    $member.name = $member.ordinal
+#*------*##end
+#*----*##end
+#*--*##elseif($node.constructKind.equals("const"))
+
+$node.nativeFQNameInModule = $node.value
+#*--*##elseif($node.constructKind.equals("alias"))
+
+#*----*##if($node.firstMember.arrayTotalSize || $node.firstMember.seqSize)
+#*------*##defineAliasAnnotation($node.firstMember)
+class $node.nativeFQNameInModule:
+#*------*##declareMember($node.firstMember "value")
+#*----*##else
+$node.nativeFQNameInModule = $node.firstMember.nativeTypeFQName
+#*----*##end
+#*--*##elseif($node.constructKind.equals("union"))
+
+#*----*##defineTypeDecoratorAnnotation($node "idl.union")
+class $node.nativeFQNameInModule:
+
+#*----*##if($node.unionDiscriminatorMap.nativeTypeFQName.equals("idl.char")
+            && $node.unionDiscriminatorMap.defaultDiscriminatorValue != 0)
+    discriminator: $node.unionDiscriminatorMap.nativeFQNameInModule = idl.to_char($node.unionDiscriminatorMap.defaultDiscriminatorValue)
+#*----*##else
+    discriminator: $node.unionDiscriminatorMap.nativeFQNameInModule = $node.unionDiscriminatorMap.defaultDiscriminatorValue
+#*----*##end
+    value: Union[#generateMemberTypes($node)] = #getSelectedBranchDefaultValue($node $node.unionDiscriminatorMap.defaultDiscriminatorValue)
+
+#*----*##foreach($member in $node.memberFieldMapList)
+#*------*##if($member.directive)
+#copyDirective($member.directive $member.value)
+#*------*##else
+    $member.name: #generateMemberType($member) = #*
+*#idl.case(#generateLabels($member $node.unionDiscriminatorMap.nativeFQNameInModule.equals("idl.char")))
+#*------*##end
+#*----*##end
+#*--*##end
+## If the node is inside of a module we need to create the simpeNamespace
+#*--*##if (!$node.nativeFQNameInModule.equals($node.name)
+            && !$node.constructKind.equals("include")
+            && !$node.constructKind.equals("directive"))
+
+$node.nativeFQName = $node.nativeFQNameInModule
+#*--*##end
+#end

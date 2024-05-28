@@ -93,7 +93,11 @@ public class BloodPressurePanel extends DevicePanel {
         String labelText = label.getText();
 
         FontMetrics fm = Toolkit.getToolkit().getFontLoader().getFontMetrics(labelFont);
-        float stringWidth = fm.computeStringWidth(labelText);
+        char chars[]=labelText.toCharArray();
+        float stringWidth=0;
+        for(char achar : chars) {
+        	stringWidth+=fm.getCharWidth(achar);
+        }
         float stringHeight = fm.getLineHeight();
         double componentWidth = label.getWidth();
         double componentHeight = label.getHeight();

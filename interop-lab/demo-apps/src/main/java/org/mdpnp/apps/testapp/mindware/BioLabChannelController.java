@@ -1,36 +1,14 @@
 package org.mdpnp.apps.testapp.mindware;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.mdpnp.apps.testapp.mindware.BioLabApp.ChannelData;
-import org.mdpnp.devices.AbstractDevice;
-import org.mdpnp.devices.DeviceClock;
-import org.mdpnp.devices.DeviceDriverProvider;
-import org.mdpnp.devices.PartitionAssignmentController;
-import org.mdpnp.devices.AbstractDevice.InstanceHolder;
-import org.mdpnp.devices.DeviceDriverProvider.DeviceType;
-import org.mdpnp.devices.MDSHandler;
-import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
-import org.mdpnp.rtiapi.data.EventLoop;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.AbstractApplicationContext;
-
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.subscription.SubscriberQos;
-
-import ice.MDSConnectivity;
-import impl.org.controlsfx.i18n.SimpleLocalizedStringProperty;
-import javafx.beans.property.*;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.*;
-import javafx.scene.Parent;
+import javafx.scene.layout.GridPane;
 
 public class BioLabChannelController {
 	

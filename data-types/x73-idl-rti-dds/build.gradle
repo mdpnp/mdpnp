@@ -11,6 +11,19 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 apply plugin: 'java'
+import org.apache.tools.ant.taskdefs.condition.Os
+
+//For RTI 6.x, use an RTI_INSTALL_DIR to get RTI artifacts, rather than a built in one.
+ext {
+  if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+    rtiDdsGenProgram = System.getenv("RTI_INSTALL_DIR") + File.separator + "bin" + File.separator + "rtiddsgen.bat"
+  } else {
+    rtiDdsGenProgram = System.getenv("RTI_INSTALL_DIR") + File.separator + "bin" + File.separator + "rtiddsgen"
+  }
+  //rtiNddsJava = System.getenv("RTI_INSTALL_DIR") + File.separator + "resource" + File.separator + "app" + File.separator + "lib" + File.separator + "java" + File.separator + "nddsjava.jar"
+  rtiNddsJava = ".." + File.separator + ".." + File.separator + "artifacts" + File.separator + "nddsjava.jar"
+  rtiDdsGen2 = [ ".." + File.separator + ".." + File.separator + "artifacts" + File.separator + "rtiddsgen2.jar" ,  ".." + File.separator + ".." + File.separator + "artifacts" + File.separator + "rtiusagemetrics.jar" ,  ".." + File.separator + ".." + File.separator + "artifacts" + File.separator + "rtiusagemetrics-api.jar" ]
+}
 
 // jplourde hacked this together March 13 with
 
@@ -21,10 +34,14 @@ sourceCompatibility = JAVA_VERSION_SOURCE
 targetCompatibility = JAVA_VERSION_CLASSES
 
 // configuration for code generation
-configurations { rtiddsgen }
+configurations { 
+  rtiddsgen
+  iceddsgen
+}
 
 def GENERATED_JAVA_SOURCES = new File(project.projectDir, 'build/generated/src/main/java').getPath()
 def GENERATED_CPP_SOURCES  = new File(project.projectDir, 'build/generated/src/main/cpp').getPath()
+def IDL_DIR = new File(project.projectDir, '../x73-idl/src/main/idl').getPath()
 
 // add generated source code to the main java sourceset
 sourceSets {
@@ -44,20 +61,48 @@ jar.doFirst {
 
 dependencies {
   // nddsjava.jar is the java binding library for RTI DDS
-  compile files('../../artifacts/nddsjava-5.1-mdpnp-000007.jar')
+  implementation files(rtiNddsJava)
+  implementation files(rtiDdsGen2)
   //This next slf4j entry appears to have been a missing dependency somehow?
   //Rather than a migration from mdpnp artifactory...
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+  implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
 
   //compile project(':data-types:x73-idl')
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+  testImplementation group: 'junit', name: 'junit', version: '4.11'
 
   // all these dependencies are for the code generator
   rtiddsgen project(':data-types:x73-idl')
-  rtiddsgen files('../../artifacts/rtiddsgen-resource-5.1.zip','../../artifacts/rtiddsgen-5.1.jar','../../artifacts/cpp-bin-1.2.8-SNAPSHOT.zip')
+  //For DDS 6.X, rtiddsgen program is a shell script that configures its own classpath, so the rtidds* files are redundant
+/*
+  classpath for ddsgen in 7 comes from META-INF/MANIFEST.MF as follows
+antlr-3.5.2.jar log4j-core-2.17.1.jar log4j-1.2-api-2.17.1
+ .jar log4j-api-2.17.1.jar velocity-engine-core-2.3.jar commons-lang-2
+ .6.jar slf4j-simple-1.7.35.jar ST4-4.0.8.jar antlr-runtime-3.5.2.jar 
+ commons-lang3-3.11.jar slf4j-api-1.7.35.jar
+*/
+
   rtiddsgen group: 'xalan', name: 'xalan', version: '2.7.1'
-  rtiddsgen group: 'org.antlr', name: 'antlr', version: '3.5'
   rtiddsgen group: 'org.aspectj', name: 'aspectjrt', version: '1.7.2'
+
+  iceddsgen group: 'ant-contrib', name: 'ant-contrib', version: '1.0b3'
+
+  //iceddsgen group: 'log4j', name: 'log4j', version: '1.2.16'
+  iceddsgen group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.19.0'
+  iceddsgen group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.19.0'
+  iceddsgen group: 'com.google.code.gson', name: 'gson', version: '2.9.1'
+  iceddsgen group: 'org.apache.velocity', name: 'velocity-engine-core', version: '2.3'
+  iceddsgen group: 'org.antlr', name: 'antlr', version: '3.5.2'
+  iceddsgen group: 'org.antlr', name: 'antlr-runtime', version: '3.5.2'
+  iceddsgen group: 'commons-lang', name: 'commons-lang', version: '2.6'
+  iceddsgen group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
+  iceddsgen group: 'org.antlr', name: 'ST4', version: '4.0.8'
+  iceddsgen group: 'org.slf4j', name: 'slf4j-api', version: '1.7.35'
+  iceddsgen group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.35'
+
+
+
+  iceddsgen files(rtiDdsGen2)
+
 }
 
 // makes output directories for the code generator
@@ -72,84 +117,68 @@ task mkdirs {
 task rtiddsgenExplodeResources(type: Copy) {
   //  dirMode = 0755
   //  fileMode = 0644
-    //println 'rtiddsgenExplodeResources started'
+    println 'rtiddsgenExplodeResources started'
     configurations.rtiddsgen.filter {
       it.toString().endsWith(".zip")}.each {
-     // println it
+      println it
       from zipTree(it) into new File(project.projectDir, 'build/rtiddsgen').getPath()}
-    //println 'rtiddsgenExplodeResources ended'
+    println 'rtiddsgenExplodeResources ended'
 }
 
-// Runs the RTI DDS Generate code generator for all idl files under src/main/idl
-task rtiddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
-  doLast {
-  //println project(':x73-idl').build.source
-  //println project(':x73-idl').projectDir
-  //  FileCollection idlFiles = project(':x73-idl').build.source
-  //For gradle 5 where build task cannot be overridden, build is now buildZip
+
+/*
+What we want to emulate is...
+
+/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/jre/x64Linux/bin/java -classpath /home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/ant-contrib-1.0b3.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/antlr-3.4-complete.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/log4j-1.2.16.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/velocity-1.7-dep.jar:/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/rtiddsgen2.jar -DNDDS_RESOURCE_DIR=/home/simon/rti_connext_dds-6.0.1/bin/../resource/app/app_support/rtiddsgen -DNDDSHOME=/home/simon/rti_connext_dds-6.0.1 -jar /home/simon/rti_connext_dds-6.0.1/bin/../resource/app/lib/java/rtiddsgen2.jar -language Java -d /openice/dds6libs/mdpnp/data-types/x73-idl-rti-dds/build/generated/src/main/java -ppOption -I/openice/dds6libs/mdpnp/data-types/x73-idl-rti-dds/../x73-idl/src/main/idl -replace -inputIdl /openice/dds6libs/mdpnp/data-types/x73-idl/src/main/idl/himss/himss2015.idl
+*/
+
+/* For DDS 7, we want to emulate
+
+/home/simon/rti_connext_dds-7.1.0/bin/../resource/app/jre/x64Linux/bin/java -DNDDS_RESOURCE_DIR=/home/simon/rti_connext_dds-7.1.0/bin/../resource/app/app_support/rtiddsgen -DNDDSHOME=/home/simon/rti_connext_dds-7.1.0 -DCONNEXT_VERSION=7.1.0 -DCONNEXT_PLATFORM=x64Linux3gcc4.8.2 -DCONNEXT_WORKSPACE=/home/simon/rti_workspace/7.1.0 -jar /home/simon/rti_connext_dds-7.1.0/bin/../resource/app/lib/java/rtiddsgen2.jar -I ../x73-idl/src/main/idl -inputIdl ../x73-idl/src/main/idl/ice/ice.idl -language Java
+
+*/
+
+task iceddsgenJava(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
   FileTree idlFiles = project(':data-types:x73-idl').buildZip.source
-
-  //println idlFiles
-  String loc = 'build/rtiddsgen/jcpp'
-
-  if(System.properties['os.name'].toLowerCase().contains("windows")) {
-    loc = loc + '.cmd'
-  }
-
-  String myMain = 'com.rti.ndds.nddsgen.Main'
-  List<String> myArgs = ['-language', 'Java']
-  myArgs.addAll(['-ppPath', loc])
-  myArgs.addAll(['-d', GENERATED_JAVA_SOURCES])
-  myArgs.addAll(['-ppOption', '-I'+project(':data-types:x73-idl').projectDir.getPath()+'/src/main/idl'])
-  myArgs.add('-replace')
-  myArgs.add('-inputIdl')
-  
-  new ByteArrayOutputStream().withStream { os ->
-  
-      for(File f : idlFiles) {
-        println 'Generating from ' + f.name
-        myArgs.add(f.getPath())
-        try {
-            javaexec {
-              classpath = configurations.rtiddsgen
-              jvmArgs = ['-DNDDS_RESOURCE_DIR=build/rtiddsgen/resource/']
-              main = myMain
-              args = myArgs
-              standardOutput = os
-            }
-        } finally {
-            // The jcpp preprocessor will not recognize these #pragmas used by the PrismTech code generator
-            // This will capture and hide warnings from the preprocessor that make people think that things have gone
-            // more wrong than they have
-            // This in a finally block to ensure we do print to screen messages related any errors that may have abnormally 
-            // terminated the code generator.
-            print os.toString().replaceAll(/.*warning: Unknown #pragma: keylist\r?\n/, "")
-        }
-        os.reset()
-        myArgs.remove(myArgs.size()-1)
+  idlFiles.each { f ->
+    doLast {
+      javaexec {
+        classpath = configurations.iceddsgen
+        main = 'com.rti.ndds.nddsgen.Main'
+        args( '-language' )
+        args( 'Java' );
+        args( '-d')
+        args( GENERATED_JAVA_SOURCES)
+	args( '-I' )
+        args( IDL_DIR)
+        args( '-replace')
+        args( '-inputIdl')
+        args( f.getPath() )
+        jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen" , "-DCONNEXT_VERSION=7.2.0", "-DCONNEXT_PLATFORM=x64Linux3gcc4.8.2")
       }
-  }
-  }
-}
 
+
+    }
+
+  }
+
+}
 // Deletes the java code generated by the RTI DDS code generator
 task cleanRtiddsgenJava(type: Delete) {
   delete GENERATED_JAVA_SOURCES, GENERATED_CPP_SOURCES
 }
 
 // IDL files are the inputs to the code generator
-//rtiddsgenJava.inputs.source(fileTree(dir: 'src/main/idl').include('**/*.idl'))
-//rtiddsgenJava.inputs.source.collect { (project(':data-types:x73-idl').buildZip.source) }
-rtiddsgenJava.inputs.sourceFiles.collect { (project(':data-types:x73-idl').buildZip.source) }
+iceddsgenJava.inputs.sourceFiles.collect { (project(':data-types:x73-idl').buildZip.source) }
 
 // java files under generated/src/main/java are the outputs of the code generator
-rtiddsgenJava.outputs.files(fileTree(dir: GENERATED_JAVA_SOURCES).include('**/*.java'))
+iceddsgenJava.outputs.files(fileTree(dir: GENERATED_JAVA_SOURCES).include('**/*.java'))
 
 // before compiling java code generation must complete
-compileJava.dependsOn 'rtiddsgenJava'
+compileJava.dependsOn 'iceddsgenJava'
 
 // before cleaning generated sources should be cleaned
 clean.dependsOn 'cleanRtiddsgenJava'
 
 //Need to call this from build - or maybe just use defaultTask?
-build.dependsOn 'rtiddsgenJava'
+build.dependsOn 'iceddsgenJava'

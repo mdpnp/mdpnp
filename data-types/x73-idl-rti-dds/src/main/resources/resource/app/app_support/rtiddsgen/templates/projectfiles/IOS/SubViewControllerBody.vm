@@ -1,0 +1,167 @@
+##/*
+##
+##   (c) Copyright, Real-Time Innovations, Inc. 2015.  All rights reserved.
+##   No duplications, whole or partial, manual or electronic, may be made
+##   without prior written permission.  Any such copies, or
+##   revisions thereof, must display this notice unaltered.
+##   This code contains trade secrets of Real-Time Innovations, Inc.
+##
+##modification history:
+##---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.2.3,23sep15,djs created 
+##========================================================================*/*#
+//
+//  ViewController.m
+//  #buildProjectName()
+//
+//  Copyright (c) 2015 Real-Time Innovations. All rights reserved.
+//
+
+#[[#]]#import "ViewController.h"
+#VC_Sub_Subscribe_Extern($envMap.language $envMap.namespace)
+
+@interface ViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *commandLine;
+@property (weak, nonatomic) IBOutlet UITextView *outputWindow;
+
+@end
+
+#if($envMap.language.equals("C") || $envMap.language.equals("Cpp"))
+## cpp03 & cpp11 use cout so redirecting this way has little benefit
+/**********************************************************
+ * define REDIRECT_LOGGING to send DDS output to the iOS
+ * device.  Doing so may dramatically impact performance.
+ *********************************************************/
+//#[[#]]#define REDIRECT_LOGGING
+#[[#]]#ifdef REDIRECT_LOGGING
+#[[#]]#include <pthread.h>
+#[[#]]#define OUTPUTBUFFER_SIZE 4096
+ViewController* pView = NULL;
+pthread_mutex_t outputMutex;
+char outputBuffer[OUTPUTBUFFER_SIZE];
+bool debug = false;
+
+extern
+#[[#]]#ifdef __cplusplus
+"C"
+#[[#]]#endif
+void writeOutput(const char *message, ...) {
+    ViewController *me = pView;
+
+    if (message != NULL && strlen(message) > 0) {
+        int msgLen;
+        va_list arglist;
+        va_start(arglist, message);
+        pthread_mutex_lock(&outputMutex);
+        msgLen = strlen(outputBuffer);
+        msgLen += vsnprintf(&outputBuffer[msgLen], sizeof(outputBuffer) - msgLen, message, arglist);
+        pthread_mutex_unlock(&outputMutex);
+
+        va_end(arglist);
+
+        if (msgLen > OUTPUTBUFFER_SIZE - 1) {
+            printf("*** message buffer overflow (%d > %d), aborting\n",
+                   msgLen, OUTPUTBUFFER_SIZE);
+            exit(EXIT_FAILURE);
+        }
+        if (me == NULL || debug == true) {
+            printf("%s", outputBuffer);
+        } else {
+            /* buffer output to device window */
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (strlen(outputBuffer) > 0) {
+                    me.outputWindow.text = [me.outputWindow.text stringByAppendingString:[NSString stringWithUTF8String:outputBuffer]];
+                    outputBuffer[0] = 0;
+                    NSRange range = NSMakeRange(me.outputWindow.text.length, 1);
+                    [me.outputWindow scrollRangeToVisible:range];
+                }
+                pthread_mutex_unlock(&outputMutex);
+            });
+        }
+    }
+}
+
+extern
+#[[#]]#ifdef __cplusplus
+"C"
+#[[#]]#endif
+void writeDevice(struct NDDS_Config_LoggerDevice *device,
+                            const struct NDDS_Config_LogMessage *message) {
+    if (message != NULL && strlen(message->text) > 0) {
+        writeOutput(message->text);
+    }
+}
+
+struct NDDS_Config_LoggerDevice localLoggerDevice = {
+    NULL,
+    writeDevice,
+    NULL
+};
+
+#[[#]]#endif /* REDIRECT_LOGGING */
+#end
+
+@implementation ViewController
+
+- (IBAction)Run:(id)sender {
+    // get the command line parameters
+    NSString *parameterList = self.commandLine.text;
+    if ([parameterList length] == 0)
+        parameterList = @"";
+    const char* command = [parameterList UTF8String];
+    char* next = NULL;
+    int domain;
+
+    domain = strtol(command, &next, 10);
+    if (next != NULL) {
+        next++;
+        count = strtol(next, NULL, 10);
+    } else {
+        count = 0;
+    }
+
+#if($envMap.language.equals("C") || $envMap.language.equals("Cpp"))
+#[[#]]#ifdef REDIRECT_LOGGING
+    // set the Connext logging device to the writeOutput method
+    pView = self;
+    NDDS_Config_Logger * rtiLogger = NDDS_Config_Logger_get_instance();
+    NDDS_Config_Logger_set_output_device(rtiLogger, &localLoggerDevice);
+    self.outputWindow.text = @"Starting Subscriber";
+#[[#]]#else
+    self.outputWindow.text = @"Starting Subscriber, see the debug window for output";
+#[[#]]#endif /* REDIRECT_LOGGING */
+#else
+    self.outputWindow.text = @"Starting Subscriber, see the debug window for output";
+#end
+    
+#VC_Sub_Subscribe($envMap.language $envMap.namespace)
+}
+
+
+- (void)setupFiles {
+    /* Xcode will transfer the QoS file (& any other Settings files) to the target resource directory.
+     * We set the default directory to the resources directory so the executing application
+     * will find it.  In your application you may want to copy the QoS file to the documents
+     * directory and set the default directory to the documents directory instead.
+     */
+
+    NSString *resourceBundlePath = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
+    const char* pResPath = [resourceBundlePath UTF8String];
+    chdir(pResPath);
+}
+
+- (void)viewDidLoad {
+    // Do any additional setup after loading the view, typically from a nib.
+    [super viewDidLoad];
+
+    [self setupFiles];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end
+

@@ -1,0 +1,43 @@
+##
+##
+## (c) Copyright, Real-Time Innovations, Inc. 2001.  All rights reserved.
+## No duplications, whole or partial, manual or electronic, may be made
+## without prior written permission.  Any such copies, or
+## revisions thereof, must display this notice unaltered.
+## This code contains trade secrets of Real-Time Innovations, Inc.
+##
+## modification history:
+## ---------------------
+## 2.3.x,17jun16,djs PLATFORMS-827 Add non-IDL functionality.
+## 2.2,9jun14,vmg created
+##========================================================================
+#!gbuild
+primaryTarget=${archMap.primaryTarget}
+[Project]
+	-bsp ${archMap.BSP}
+	-G
+	-I.
+	:sourceDir=.
+	:outputDir=objs
+	-os_dir #[[#]]# place here the path to your integrity distribution
+	-object_dir=objs
+	-ansi
+	--discretionary_errors
+	-nounknownpragmawarn
+	--std
+	-nowantprototype
+	-tnone
+	-directive_dir=src
+	-DRTI_INTY
+	-D
+	-Isrc
+	:sourceDir=src
+	-I${nddshome}/include
+	:sourceDir=${nddshome}/include
+	-I${nddshome}/include/ndds
+	:sourceDir=${nddshome}/include/ndds
+	-L${nddshome}/lib/${global.architectureName}
+#foreach($projectName in ${projectNames})
+#buildProjectName()dd.gpj		[INTEGRITY Application]
+#end
+posix_shm_manager.gpj		[INTEGRITY Application]

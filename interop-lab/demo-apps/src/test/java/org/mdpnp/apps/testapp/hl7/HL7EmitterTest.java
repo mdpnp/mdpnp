@@ -56,7 +56,7 @@ public class HL7EmitterTest {
         }
         finally {
 
-            context.destroy();
+            context.close();
         }
     }
 
@@ -89,7 +89,7 @@ public class HL7EmitterTest {
         }
         finally {
 
-            context.destroy();
+            context.close();
         }
     }
 
@@ -114,7 +114,7 @@ public class HL7EmitterTest {
         }
         finally {
 
-            context.destroy();
+            context.close();
         }
     }
 }

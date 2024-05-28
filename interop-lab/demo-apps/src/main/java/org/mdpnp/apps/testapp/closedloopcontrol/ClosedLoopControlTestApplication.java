@@ -39,7 +39,6 @@ import org.mdpnp.apps.testapp.vital.VitalSign;
 import org.mdpnp.devices.AbstractDevice;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.DeviceDriverProvider;
-import org.mdpnp.devices.DeviceIdentityBuilder;
 import org.mdpnp.devices.MDSHandler;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSEvent;
 import org.mdpnp.devices.MDSHandler.Connectivity.MDSListener;

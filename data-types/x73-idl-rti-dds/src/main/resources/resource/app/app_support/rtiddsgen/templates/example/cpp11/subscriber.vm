@@ -1,0 +1,220 @@
+/*
+* (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
+* RTI grants Licensee a license to use, modify, compile, and create derivative
+* works of the software solely for use with RTI Connext DDS. Licensee may
+* redistribute copies of the software provided that all such copies are subject
+* to this license. The software is provided "as is", with no warranty of any
+* type, including any warranty for fitness for any purpose. RTI is under no
+* obligation to maintain or support the software. RTI shall not be liable for
+* any incidental or consequential damages arising out of the use or inability
+* to use the software.
+*/
+
+
+${envMap.POUND_CHAR}include <algorithm>
+${envMap.POUND_CHAR}include <iostream>
+
+${envMap.POUND_CHAR}include <dds/sub/ddssub.hpp>
+${envMap.POUND_CHAR}include <dds/core/ddscore.hpp>
+${envMap.POUND_CHAR}include <rti/config/Logger.hpp>  // for logging
+// alternatively, to include all the standard APIs:
+// #include <dds/dds.hpp>
+// or to include both the standard APIs and extensions:
+// #include <rti/rti.hpp>
+//
+// For more information about the headers and namespaces, see:
+//    https://community.rti.com/static/documentation/connext-dds/${envMap.nddsVersion}/doc/api/connext_dds/api_cpp2/group__DDSNamespaceModule.html
+// For information on how to use extensions, see:
+//    https://community.rti.com/static/documentation/connext-dds/${envMap.nddsVersion}/doc/api/connext_dds/api_cpp2/group__DDSCpp2Conventions.html
+
+${envMap.POUND_CHAR}include "${envMap.idlFileName}.hpp"
+${envMap.POUND_CHAR}include "application.hpp"  // for command line parsing and ctrl-c
+
+#*--*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#*--*##end
+#*--*##if( ${envMap.android} || ${envMap.universal})
+${envMap.POUND_CHAR}include <android/log.h>
+
+typedef int (*RTIAndroidOnCoutMethod)(const char *text);
+static RTIAndroidOnCoutMethod publisher_onCout = NULL;
+extern "C" void RTIAndroid_registerOnCout(RTIAndroidOnCoutMethod onCout) {
+    publisher_onCout = onCout;
+}
+
+#*--*#${envMap.POUND_CHAR}define RTI_ANDROID_BUFFER_SIZE 512
+
+class RTIAndroidBuffer : public std::streambuf {
+  public:
+    RTIAndroidBuffer() { 
+        this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1); 
+    }
+
+  private:
+    int overflow(int c) {
+        if (c == traits_type::eof()) {
+            *this->pptr() = traits_type::to_char_type(c);
+            this->sbumpc();
+        }
+        return this->sync()? traits_type::eof(): traits_type::not_eof(c);
+    }
+
+    int sync() {
+        int rc = 0;
+        if (this->pbase() != this->pptr()) {
+            char writebuf[RTI_ANDROID_BUFFER_SIZE + 1];
+            memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
+            writebuf[this->pptr() - this->pbase()] = '\0';
+
+            /* forward message */
+            if (publisher_onCout != NULL) {
+                rc = publisher_onCout(writebuf);
+            }
+ 
+            /* log also to logcat */
+            __android_log_write(ANDROID_LOG_INFO, "RTIConnextLog", writebuf); 
+
+            this->setp(buffer, buffer + RTI_ANDROID_BUFFER_SIZE - 1);
+        }
+        return rc;
+    }
+
+    char buffer[RTI_ANDROID_BUFFER_SIZE];
+};
+#*--*##end
+#*--*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#*--*##end
+
+int process_data(dds::sub::DataReader< ${constructMap.nativeFQName}> reader)
+{
+    // Take all samples
+    int count = 0;
+    dds::sub::LoanedSamples< ${constructMap.nativeFQName}> samples = reader.take();
+    for (auto sample : samples) {
+        if (sample.info().valid()) {
+            count++;
+#if ($constructMap.languageBinding.equals("FLAT_DATA"))
+            // To access the data members, get the root to the flat-data sample:
+            // auto sample_root = sample.data().root();
+            // 
+#end
+            std::cout << sample.data() << std::endl;
+        } else {
+            std::cout << "Instance state changed to "
+                      << sample.info().state().instance_state() << std::endl;
+        }
+    }
+
+    return count; 
+} // The LoanedSamples destructor returns the loan
+
+void run_subscriber_application(unsigned int domain_id, unsigned int sample_count)
+{
+    // DDS objects behave like shared pointers or value types
+    // (see https://community.rti.com/best-practices/use-modern-c-types-correctly)
+
+    // Start communicating in a domain, usually one participant per application
+    dds::domain::DomainParticipant participant(domain_id);
+
+    // Create a Topic with a name and a datatype
+    dds::topic::Topic< ${constructMap.nativeFQName}> topic(participant, "${constructMap.topicName}");
+
+    // Create a Subscriber and DataReader with default Qos
+    dds::sub::Subscriber subscriber(participant);
+    dds::sub::DataReader< ${constructMap.nativeFQName}> reader(subscriber, topic);
+
+    // Create a ReadCondition for any data received on this reader and set a
+    // handler to process the data
+    unsigned int samples_read = 0;
+    dds::sub::cond::ReadCondition read_condition(
+            reader,
+            dds::sub::status::DataState::any(),
+            [reader, &samples_read]() { samples_read += process_data(reader); });
+
+    // WaitSet will be woken when the attached condition is triggered
+    dds::core::cond::WaitSet waitset;
+    waitset += read_condition;
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#*----*##end
+#*----*##if( !${envMap.vxWorks} || ${envMap.rtp} || ${envMap.universal} )
+    while (!application::shutdown_requested && samples_read < sample_count) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}else
+#*----*##end
+#*----*##if( ${envMap.vxWorks} && !${envMap.rtp} || ${envMap.universal} )
+    while (samples_read < sample_count) {
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#*----*##end
+        std::cout << "${constructMap.nativeFQName} subscriber sleeping up to 1 sec..." << std::endl;
+
+        // Run the handlers of the active conditions. Wait for up to 1 second.
+        waitset.dispatch(dds::core::Duration(1));
+    }
+}
+
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}if (!defined(RTI_VXWORKS) || defined(__RTP__))
+#end
+#if( !${envMap.vxWorks} || ${envMap.rtp}  || ${envMap.universal} )
+int main(int argc, char *argv[])
+{
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#*----*##end
+#*----*##if( ${envMap.android} || ${envMap.universal})
+    std::cout.rdbuf(new RTIAndroidBuffer);
+    std::cerr.rdbuf(new RTIAndroidBuffer);
+#*----*##end
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#*----*##end
+    using namespace application;
+
+    // Parse arguments and handle control-C
+    auto arguments = parse_arguments(argc, argv);
+    if (arguments.parse_result == ParseReturn::exit) {
+        return EXIT_SUCCESS;
+    } else if (arguments.parse_result == ParseReturn::failure) {
+        return EXIT_FAILURE;
+    }
+    setup_signal_handlers();
+
+    // Sets Connext verbosity to help debugging
+    rti::config::Logger::instance().verbosity(arguments.verbosity);
+
+    try {
+        run_subscriber_application(arguments.domain_id, arguments.sample_count);
+    } catch (const std::exception& ex) {
+        // This will catch DDS exceptions
+        std::cerr << "Exception in run_subscriber_application(): " << ex.what()
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Releases the memory used by the participant factory.  Optional at
+    // application exit
+    dds::domain::DomainParticipant::finalize_participant_factory();
+
+#*----*##if( ${envMap.universal} )
+${envMap.POUND_CHAR}if defined(RTI_ANDROID)
+#*----*##end
+#*----*##if( ${envMap.android} || ${envMap.universal})
+    std::cout.rdbuf(0);
+    std::cerr.rdbuf(0);
+#*----*##end
+#*----*##if(${envMap.universal} )
+${envMap.POUND_CHAR}endif /* RTI_ANDROID */
+#*----*##end
+    return EXIT_SUCCESS;
+}
+#end
+#if( ${envMap.universal} )
+${envMap.POUND_CHAR}endif
+#end

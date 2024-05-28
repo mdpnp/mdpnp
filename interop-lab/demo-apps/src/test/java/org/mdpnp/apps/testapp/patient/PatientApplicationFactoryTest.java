@@ -203,7 +203,7 @@ public class PatientApplicationFactoryTest {
         public void stop() throws Exception {
             app.destroy();
             super.stop();
-            context.destroy();
+            context.close();
         }
     };
 
