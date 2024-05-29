@@ -270,13 +270,13 @@ function getVitalsData(vital) {
                 let presentationTS=new Date(vital.presentation_time.sec*1000);
                 hrChart.data.labels.push(presentationTS);
                 hrChart.data.datasets[0].data.push(vital.value);
-                hrChart.update();
+                hrChart.update('none');
             }
             if(vital.metric_id=='MDC_CO2_RESP_RATE') {
                 let presentationTS=new Date(vital.presentation_time.sec*1000);
                 rrChart.data.labels.push(presentationTS);
                 rrChart.data.datasets[0].data.push(vital.value);
-                rrChart.update();
+                rrChart.update('none');
             }
 	    //Use DIA as the trigger to calculate the mean
 	    if(vital.metric_id=='MDC_PRESS_BLD_ART_ABP_DIA') {
@@ -286,7 +286,7 @@ function getVitalsData(vital) {
                 let presentationTS=new Date(vital.presentation_time.sec*1000);
                 mapChart.data.labels.push(presentationTS);
                 mapChart.data.datasets[0].data.push(mean);
-                mapChart.update();
+                mapChart.update('none');
 		document.getElementById("map_cell").innerText=mean.toFixed(2);
 	    }
 	    if(vital.metric_id=='MDC_PRESS_BLD_ART_ABP_SYS') {
