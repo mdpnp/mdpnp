@@ -30,6 +30,8 @@ public class TB800Balance extends AbstractSerialDevice {
 	boolean connected;
 	
 	private static final String MODE="C1";
+	private static final String CONT_OFF="C0\r\n";
+	private static final String CONT_ON="C1\r\n";
 	private static final String MODE_COMMAND=MODE+"\r\n";
 	
 	private InstanceHolder<Numeric> holder;
@@ -52,20 +54,11 @@ public class TB800Balance extends AbstractSerialDevice {
 
 	@Override
 	protected void doInitCommands(int idx) throws IOException {
-		while( ! connected ) {
-			writer.write(MODE_COMMAND);	//TODO: Is this the desired mode?
-			String response=reader.readLine();
-			System.err.println("response to "+MODE+" is "+response);
-			if(response.startsWith(MODE+" A") || response.startsWith(MODE+" D") || response.startsWith(MODE+" OK")) {
-				reportConnected("Scale operating in "+MODE);
-				connected=true;
-			}
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+		
+		// Before connecting scale to OpenICE, please ensure it is in the "Continuous Transmission" Mode
+		reportConnected("Scale connected to OpenICE");
+		connected=true;
+		
 		
 	}
 
@@ -80,6 +73,7 @@ public class TB800Balance extends AbstractSerialDevice {
 				e.printStackTrace();
 			}
 		}
+		System.err.println("Now connected in process loop.");
 		//We should now be able to keep reading response lines.
 		String massFrame;
 		float f;
@@ -95,6 +89,12 @@ public class TB800Balance extends AbstractSerialDevice {
 				numericSample(holder, f, rosetta.MDC_ATTR_PT_WEIGHT.VALUE , rosetta.MDC_ATTR_PT_WEIGHT.VALUE, 0, rosetta.MDC_DIM_G.VALUE, new DeviceClock.CombinedReading(r, r));
 			} else {
 				System.err.println("Mass line was actually "+massFrame);
+				if(massFrame.trim().endsWith(" g")) {
+					String tweaked=massFrame.replaceAll("[^\\d\\.]","");
+					f=Float.parseFloat(tweaked);
+					Reading r=defaultClock.instant();
+					numericSample(holder, f, rosetta.MDC_ATTR_PT_WEIGHT.VALUE , rosetta.MDC_ATTR_PT_WEIGHT.VALUE, 0, rosetta.MDC_DIM_G.VALUE, new DeviceClock.CombinedReading(r, r));
+				}
 			}
 		}
 		
