@@ -16,7 +16,6 @@ import java.text.DecimalFormat;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mdpnp.devices.DeviceClock;
 import org.mdpnp.devices.AbstractDevice.InstanceHolder;
-import org.mdpnp.devices.alaris.AlarisMITM.TimeAndCommand;
 import org.mdpnp.devices.serial.AbstractSerialDevice;
 import org.mdpnp.devices.serial.SerialProvider;
 import org.mdpnp.devices.simulation.AbstractSimulatedDevice;
