@@ -35,3 +35,5 @@ org.mdpnp.apps.testapp.DeviceFactory$ControllablePump_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$ControllableBPMonitor_SimulatorProvider
 org.mdpnp.apps.testapp.DeviceFactory$NKV550Provider
 org.mdpnp.apps.testapp.DeviceFactory$TB800Provider
+org.mdpnp.apps.testapp.DeviceFactory$AlarisSerialProvider
+org.mdpnp.apps.testapp.DeviceFactory$AS50SerialProvider
