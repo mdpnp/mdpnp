@@ -46,6 +46,8 @@ import org.mdpnp.devices.simulation.clcbp.SimControllableBPMonitor;
 import org.mdpnp.devices.simulation.pump.SimInfusionPump;
 import org.mdpnp.devices.simulation.temp.SimThermometer;
 import org.mdpnp.devices.zephyr.biopatch.DemoBioPatch;
+import org.mdpnp.devices.baxter.AS50;
+import org.mdpnp.devices.alaris.Asena;
 import org.mdpnp.rtiapi.data.EventLoop;
 import org.springframework.context.support.AbstractApplicationContext;
 
