@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.HPos?>
+<?import javafx.geometry.Insets?>
+
+<!-- We will try an effective number of columns as 8, with spanning-->
+<GridPane xmlns:fx="http://javafx.com/fxml/1" fx:id="main" fx:controller="org.mdpnp.apps.testapp.pumps.BaxterAS50PumpController" style="-fx-border-style: solid">
+
+
+ 
+   <!--Infusion Status-->
+       <Label fx:id="sysIDLabel" GridPane.rowIndex="0" GridPane.columnIndex="0">Sys ID:</Label>
+       <Label fx:id="caseIDLabel" GridPane.rowIndex="1" GridPane.columnIndex="0">Case ID:</Label>
+       <Label fx:id="drugLabel" GridPane.rowIndex="2" GridPane.columnIndex="0">Drug:</Label>
+       <Label fx:id="infusionRateLabel" GridPane.rowIndex="3" GridPane.columnIndex="0">Infusion Rate:</Label>
+       <Label fx:id="volumeInfusedLabel" GridPane.rowIndex="4" GridPane.columnIndex="0">Volume Infused:</Label>
+       <Label fx:id="targetVolumeInfusedLabel" GridPane.rowIndex="5" GridPane.columnIndex="0">Target Volume:</Label>
+       <Label fx:id="bolusInfusedLabel"  GridPane.rowIndex="6" GridPane.columnIndex="0">
+       Bolus Infused
+       <GridPane.margin>
+       	  <Insets left="0.0" top="0.0" bottom="0.0" right="10.0"/>
+       	</GridPane.margin>
+       </Label>
+       <Label fx:id="channelLabel" GridPane.rowIndex="4" GridPane.columnIndex="4">Channel</Label>
+   
+   <!--Infusion Control-->
+               <Label GridPane.rowIndex="0" GridPane.columnIndex="1">Infusion Rate</Label> 
+               <Spinner GridPane.rowIndex="0" GridPane.columnIndex="2" fx:id="targetInfusionRate" editable="true">
+                 <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1200" min="0" amountToStepBy="0.1"/>	<!--We could set min and max here if we knew what they were-->
+                 </valueFactory>
+                 <GridPane.margin>
+       	           <Insets left="0.0" top="0.0" bottom="0.0" right="10.0"/>
+              	 </GridPane.margin>
+               </Spinner>
+               <Button GridPane.rowIndex="0" GridPane.columnIndex="3" fx:id="setInfRate" onAction="#programInfusion">Set</Button>
+
+               <Label GridPane.rowIndex="1" GridPane.columnIndex="1">Bolus Volume</Label>
+               <Spinner GridPane.rowIndex="1" GridPane.columnIndex="2" fx:id="bolusDose" editable="true">
+                 <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1200" min="0" amountToStepBy="0.1"/>	<!--We could set min and max here if we knew what they were-->
+                 </valueFactory>
+               </Spinner>
+               <Label GridPane.rowIndex="1" GridPane.columnIndex="3">Bolus Rate</Label>
+               <Spinner GridPane.rowIndex="1" GridPane.columnIndex="4" fx:id="bolusRate" editable="true">
+                 <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1200" min="0" amountToStepBy="0.1"/>	<!--We could set min and max here if we knew what they were-->
+                 </valueFactory>
+               </Spinner>
+               <Button GridPane.rowIndex="1" GridPane.columnIndex="5" fx:id="setBolus" onAction="#programBolus">Set</Button>
+               
+               
+               <Label GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.halignment="RIGHT">VTBI</Label> 
+               <Spinner GridPane.rowIndex="2" GridPane.columnIndex="2" fx:id="targetVTBI" editable="true">
+                 <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1200" min="0" amountToStepBy="0.1"/>	<!--We could set min and max here if we knew what they were-->
+                 </valueFactory>
+               </Spinner>
+               <Button GridPane.rowIndex="2" GridPane.columnIndex="3" fx:id="setInfRate" onAction="#programVTBI">Set</Button>
+               
+               <Button GridPane.rowIndex="3" GridPane.columnIndex="1" fx:id="pauseResumeInfusion" onAction="#pauseResumeInfusion">Pause/Resume</Button>
+               
+               <!--
+               <HBox GridPane.rowIndex="2" GridPane.columnIndex="2">
+                 <children>
+                   <Button fx:id="pauseResumeInfusion" onAction="#pauseResumeInfusion">Pause/Resume</Button>
+                   <Button fx:id="setProgram" onAction="#programInfusion">Set</Button>
+                 </children>
+               </HBox>
+               -->
+               
+               <!--
+               <Label GridPane.rowIndex="1" GridPane.columnIndex="3">Bolus Rate</Label>
+               <Spinner GridPane.rowIndex="1" GridPane.columnIndex="4" fx:id="bolusRate" editable="true">
+                 <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1200" min="0" amountToStepBy="0.1"/>
+                 </valueFactory>
+               </Spinner>
+               
+           <Button GridPane.rowIndex="2" GridPane.columnIndex="4" fx:id="startBolus" onAction="#programBolus">Start</Button>
+           -->
+ </GridPane>
+ 
