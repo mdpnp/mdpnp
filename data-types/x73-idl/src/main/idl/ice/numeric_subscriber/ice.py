@@ -2,7 +2,7 @@
 # WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
 # This file was generated from ice.idl
-# using RTI Code Generator (rtiddsgen) version 4.2.0.
+# using RTI Code Generator (rtiddsgen) version 4.3.0.
 # The rtiddsgen tool is part of the RTI Connext DDS distribution.
 # For more information, type 'rtiddsgen -help' at a command shell
 # or consult the Code Generator User's Manual.
@@ -66,7 +66,7 @@ class ice_Values:
 ice.Values = ice_Values
 
 @idl.struct(
-    type_annotations = [idl.type_name("ice::Time_t")])
+    type_annotations = [idl.final, idl.type_name("ice::Time_t")])
 class ice_Time_t:
     sec: idl.int32 = 0
     nanosec: idl.int32 = 0
@@ -344,6 +344,32 @@ ice.SP02_SOFT_CAN_SET_AVERAGING_RATE = ice_SP02_SOFT_CAN_SET_AVERAGING_RATE
 ice_ICE_DERIVED_RESPIRATORY_RATE = "ICE_DERIVED_RESPIRATORY_RATE"
 
 ice.ICE_DERIVED_RESPIRATORY_RATE = ice_ICE_DERIVED_RESPIRATORY_RATE
+
+@idl.struct(
+    type_annotations = [idl.mutable, idl.type_name("ice::Numeric")],
+    member_annotations = {
+        'unique_device_identifier': [idl.key, idl.bound(64)],
+        'metric_id': [idl.key, idl.bound(64)],
+        'vendor_metric_id': [idl.key, idl.bound(64)],
+        'instance_id': [idl.key, ],
+        'unit_id': [idl.key, idl.bound(64)],
+    }
+)
+class ice_Numeric:
+    unique_device_identifier: str = ""
+    metric_id: str = ""
+    vendor_metric_id: str = ""
+    instance_id: idl.int32 = 0
+    unit_id: str = ""
+    value: idl.float32 = 0.0
+    device_time: ice.Time_t = field(default_factory = ice.Time_t)
+    presentation_time: ice.Time_t = field(default_factory = ice.Time_t)
+
+ice.Numeric = ice_Numeric
+
+ice_NumericTopic = "Numeric"
+
+ice.NumericTopic = ice_NumericTopic
 
 @idl.struct(
     type_annotations = [idl.mutable, idl.type_name("ice::SampleArray")],
@@ -702,29 +728,3 @@ ice.Patient = ice_Patient
 ice_PatientTopic = "Patient"
 
 ice.PatientTopic = ice_PatientTopic
-
-@idl.struct(
-    type_annotations = [idl.mutable, idl.type_name("ice::Numeric")],
-    member_annotations = {
-        'unique_device_identifier': [idl.key, idl.bound(64)],
-        'metric_id': [idl.key, idl.bound(64)],
-        'vendor_metric_id': [idl.key, idl.bound(64)],
-        'instance_id': [idl.key, ],
-        'unit_id': [idl.key, idl.bound(64)],
-    }
-)
-class ice_Numeric:
-    unique_device_identifier: str = ""
-    metric_id: str = ""
-    vendor_metric_id: str = ""
-    instance_id: idl.int32 = 0
-    unit_id: str = ""
-    value: idl.float32 = 0.0
-    device_time: ice.Time_t = field(default_factory = ice.Time_t)
-    presentation_time: ice.Time_t = field(default_factory = ice.Time_t)
-
-ice.Numeric = ice_Numeric
-
-ice_NumericTopic = "Numeric"
-
-ice.NumericTopic = ice_NumericTopic
