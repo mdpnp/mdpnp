@@ -25,7 +25,13 @@ task buildZip(type: Zip) {
   include '**/*.idl'
 }
 
+def dotPys=fileTree(dir: "src/main/idl").matching { include '**/ice.py' }
+task cleanIceDotPy(type: Delete) {
+  delete dotPys
+}
+
 build.dependsOn buildZip
 
 artifacts {  archives buildZip }
 
+clean.dependsOn(cleanIceDotPy)
