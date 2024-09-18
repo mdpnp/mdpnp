@@ -47,6 +47,8 @@ public class MDSHandler {
     final Subscriber mdsSubscriber;
     final Publisher  wildcardPublisher;
     final Subscriber wildcardSubscriber;
+    
+    private static final Logger log = LoggerFactory.getLogger(MDSHandler.class);
 
     protected MDSHandler()
     {
@@ -144,8 +146,16 @@ public class MDSHandler {
         sQos.partition.name.clear();
         pQos.partition.name.addAll(asList);
         sQos.partition.name.addAll(asList);
-        publisher.set_qos(pQos);
-        subscriber.set_qos(sQos);
+        try {
+        	publisher.set_qos(pQos);
+        } catch (Exception e) {
+        	log.error("Failed to set publiser QoS", e);
+    	}
+        try {
+        	subscriber.set_qos(sQos);
+        } catch (Exception e) {
+        	log.error("Failed to set subscriber QoS", e);
+        }
     }
 
 
