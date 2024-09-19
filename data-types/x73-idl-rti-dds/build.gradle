@@ -135,8 +135,16 @@ What we want to emulate is...
 
 //Generated the .py files for the IDL.
 task iceddsgenPython(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
+  def idlProjectDir= project(':data-types:x73-idl').projectDir;
+  def sourceFile=idlProjectDir.getPath()+"/src/main/idl/ice/ice.idl";
+  File realSourceFile=new File(sourceFile)
+  inputs.file(sourceFile);
+  def targetFile=idlProjectDir.getPath()+"/src/main/idl/ice/ice.py";
+  outputs.file(targetFile);
+/*
   FileTree idlFiles = project(':data-types:x73-idl').buildZip.source
   idlFiles.each { f ->
+*/
     doLast {
       javaexec {
         classpath = configurations.iceddsgen
@@ -144,16 +152,16 @@ task iceddsgenPython(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
         args( '-language' )
         args( 'Python' );
         args( '-d' )
-        args( f.getParent() )
+        args( realSourceFile.getParent() )
 	args( '-I' )
         args( IDL_DIR)
         args( '-replace')
         args( '-inputIdl')
-        args( f.getPath() )
+        args( realSourceFile.getPath() )
         jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen" , "-DCONNEXT_VERSION=7.3.0", "-DCONNEXT_PLATFORM=x64Linux3gcc4.8.2")
       }
     }
-  }
+  //}
 }
 
 task copyIceDotPy(dependsOn: iceddsgenPython, type: Copy) {
