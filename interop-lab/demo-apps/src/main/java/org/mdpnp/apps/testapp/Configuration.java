@@ -343,7 +343,10 @@ public class Configuration {
             v = line.getOptionValue("device");
             deviceType = DeviceFactory.getDeviceDriverProvider(v);
 
-            if(ice.ConnectionType.Serial.equals(deviceType.getDeviceType().getConnectionType())) {
+            //It is necessary to get the address for a network device as well
+            if(ice.ConnectionType.Serial.equals(deviceType.getDeviceType().getConnectionType())
+            || ice.ConnectionType.Network.equals(deviceType.getDeviceType().getConnectionType())
+            ) {
                 if(!line.hasOption("address"))
                     throw new IllegalArgumentException("Missing address specification");
                 address = line.getOptionValue("address");
