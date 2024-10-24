@@ -127,7 +127,7 @@ subprojects {
         maven {  url 'https://www.jogamp.org/deployment/maven/' }
 
         // Repository for restlet
-        maven {  url 'https://maven.restlet.org' }
+        maven {  url 'https://maven.restlet.talend.com' }
 
         // specifically javax.transaction.jta 1.0.1B only exists here in jar form (pom only in maven central)
         maven {  url 'https://download.java.net/maven/2/' }
