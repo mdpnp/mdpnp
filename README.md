@@ -37,4 +37,4 @@ __devices/__
 
 <a href="https://iconscout.com/icons/infusion-pumps" target="_blank">Infusion pumps Icon</a> by <a href="https://iconscout.com/contributors/icons8">Icons8</a> on <a href="https://iconscout.com">Iconscout</a>
 
-You can read the current list of supported devices [here](devs.md) , or as a web page [here](https://github.com/mdpnp/mdpnp/devs.html)
+You can read the current list of supported devices [here](devs.md) , or as a web page [here](https://github.com/mdpnp/mdpnp/blob/master/devs.html)
