@@ -124,7 +124,7 @@ subprojects {
         // They are included her for reference (and potentially fallback)
 
         // Repository for jogamp
-        maven {  url 'https://www.jogamp.org/deployment/maven/' }
+        maven {  url 'https://jogamp.org/deployment/maven/' }
 
         // Repository for restlet
         maven {  url 'https://maven.restlet.talend.com' }
