@@ -149,21 +149,38 @@ task iceddsgenPython(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
   idlFiles.each { f ->
 */
     doLast {
-      javaexec {
-        classpath = configurations.iceddsgen
-        main = 'com.rti.ndds.nddsgen.Main'
-	args( '-ppPath' )
-        args( preCompFile )
-        args( '-language' )
-        args( 'Python' );
-        args( '-d' )
-        args( realSourceFile.getParent() )
-	args( '-I' )
-        args( IDL_DIR)
-        args( '-replace')
-        args( '-inputIdl')
-        args( realSourceFile.getPath() )
-        jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen" , "-DCONNEXT_VERSION=7.3.0", "-DCONNEXT_PLATFORM=x64Linux3gcc4.8.2")
+     if(localOsName.contains("windows")) {
+        javaexec {
+          classpath = configurations.iceddsgen
+          main = 'com.rti.ndds.nddsgen.Main'
+          args( '-ppPath' )
+          args( preCompFile )
+          args( '-language' )
+          args( 'Python' );
+          args( '-d' )
+          args( realSourceFile.getParent() )
+          args( '-I' )
+          args( IDL_DIR)
+          args( '-replace')
+          args( '-inputIdl')
+          args( realSourceFile.getPath() )
+          jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen" , "-DCONNEXT_VERSION=7.3.0", "-DCONNEXT_PLATFORM=x64Linux3gcc4.8.2")
+        }
+      } else {
+        javaexec {
+          classpath = configurations.iceddsgen
+          main = 'com.rti.ndds.nddsgen.Main'
+          args( '-language' )
+          args( 'Python' );
+          args( '-d' )
+          args( realSourceFile.getParent() )
+          args( '-I' )
+          args( IDL_DIR)
+          args( '-replace')
+          args( '-inputIdl')
+          args( realSourceFile.getPath() )
+          jvmArgs("-DNDDS_RESOURCE_DIR=src/main/resources/resource/app/app_support/rtiddsgen" , "-DCONNEXT_VERSION=7.3.0", "-DCONNEXT_PLATFORM=x64Linux3gcc4.8.2")
+        }
       }
     }
   //}
