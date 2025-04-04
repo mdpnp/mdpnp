@@ -33,8 +33,8 @@ dependencies {
   implementation project(':data-types:x73-idl-rti-dds')
   implementation files('../../artifacts/nddsjava.jar')
 
-  implementation group: 'ca.uhn.hapi.fhir',    name: 'hapi-fhir-base',             version: '6.1.3'
-  implementation group: 'ca.uhn.hapi.fhir',    name: 'hapi-fhir-structures-dstu2', version: '6.1.3'
+  implementation group: 'ca.uhn.hapi.fhir',    name: 'hapi-fhir-base',             version: '0.9'
+  implementation group: 'ca.uhn.hapi.fhir',    name: 'hapi-fhir-structures-dstu2', version: '0.9'
   implementation group: 'net.java.dev.jna',    name: 'jna',                        version: '5.12.1'
   implementation group: 'org.springframework', name: 'spring-context',             version: '6.0.2'
   implementation group: 'com.google.guava',    name: 'guava',                      version: '31.1-jre'
@@ -44,7 +44,32 @@ dependencies {
   testImplementation("junit:junit:4.13.2")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
 }
+ext {
+    localOsName = System.properties['os.name'].toLowerCase();
+    localOsArch = System.properties['os.arch'].toLowerCase();
+    currentPath = System.getenv('PATH');
+}
 
 test {
 	useJUnitPlatform()
+	if(localOsName.contains("linux")) {
+		if(localOsArch.contains("aarch")) {
+			environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+		} else {
+			environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+		}
+		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+	}
+	if(localOsName.contains("windows")) {
+		environment 'PATH', currentPath + ';../demo-apps/native/libs/windows'
+		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+		environment 'RTI_LICENSE_FILE', '../demo-apps/build/resources/main/OpenICE_license.dat'
+	}
+	if(localOsName.contains("mac")) {
+		environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+
+	}
 }

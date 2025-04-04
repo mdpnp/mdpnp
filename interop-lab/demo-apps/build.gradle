@@ -252,6 +252,26 @@ dependencies {
 test {
 	useJUnitPlatform()
 	systemProperty 'user.timezone' , 'EST'
+	if(localOsName.contains("linux")) {
+		if(localOsArch.contains("aarch")) {
+			environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+		} else {
+			environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+		}
+		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+	}
+	if(localOsName.contains("windows")) {
+		environment 'PATH', currentPath + ';native/libs/windows'
+		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+	}
+	if(localOsName.contains("mac")) {
+		environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
+		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+	}
+
 }
 
 run {
@@ -321,6 +341,7 @@ task 'generateDeviceList' (type: JavaExec) {
     group = ApplicationPlugin.APPLICATION_GROUP
     classpath=sourceSets.main.runtimeClasspath
     mainClass='org.mdpnp.apps.testapp.DeviceListCreator'
+    description='Create a list of the supported devices'
 }
 
 task 'makeFlatRuntime'(type: Copy) {
