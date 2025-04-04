@@ -54,12 +54,12 @@ test {
 	useJUnitPlatform()
 	if(localOsName.contains("linux")) {
 		if(localOsArch.contains("aarch")) {
-			environment 'LD_LIBRARY_PATH', 'native/libs/aarch'
+			environment 'LD_LIBRARY_PATH', '../demo-apps/native/libs/aarch'
 		} else {
-			environment 'LD_LIBRARY_PATH', 'native/libs/linux'
+			environment 'LD_LIBRARY_PATH', '../demo-apps/native/libs/linux'
 		}
 		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
-		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+		environment 'RTI_LICENSE_FILE', '../demo-apps/build/resources/main/OpenICE_license.dat'
 	}
 	if(localOsName.contains("windows")) {
 		environment 'PATH', currentPath + ';../demo-apps/native/libs/windows'
@@ -67,9 +67,9 @@ test {
 		environment 'RTI_LICENSE_FILE', '../demo-apps/build/resources/main/OpenICE_license.dat'
 	}
 	if(localOsName.contains("mac")) {
-		environment 'DYLD_LIBRARY_PATH', 'native/libs/macosx'
+		environment 'DYLD_LIBRARY_PATH', '../demo-apps/native/libs/macosx'
 		environment 'SEC_ARTIFACT_DIR', '../../data-types/x73-idl-rti-dds/src/main/resources/META-INF'
-		environment 'RTI_LICENSE_FILE', 'build/resources/main/OpenICE_license.dat'
+		environment 'RTI_LICENSE_FILE', '../demo-apps/build/resources/main/OpenICE_license.dat'
 
 	}
 }
