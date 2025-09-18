@@ -277,7 +277,7 @@ public class PumpControllerTestApplication {
 		
 		 */
 		
-		String testFileName = d.getManufacturer().toLowerCase() + "_" + d.getModel().toLowerCase() + ".fxml";
+		String testFileName = (d.getManufacturer().toLowerCase() + "_" + d.getModel().toLowerCase() + ".fxml").replace(' ', '_');
 		return testFileName;
 		
 //		if(d.getManufacturer().equals("Neurowave")) {

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.geometry.HPos?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="main" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="262.0" prefWidth="800" spacing="1" style="-fx-border-style: solid"  xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mdpnp.apps.testapp.pumps.AsenaController">
+   <children>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="400.0">
+               <children>
+                  <Label fx:id="pumpUDILabel" text="Pump UDI: " />
+               </children></HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="400.0">
+               <children>
+                  <Label text="-- Patient Demographics --" textFill="#b5b4b4" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="pumpSerialLabel">Pump Serial #: </Label>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="modelLabel" text="Model:" />
+               </children>
+            </HBox>
+            <HBox alignment="TOP_RIGHT" prefHeight="25.0" prefWidth="400.0">
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="125.0">
+                     <children>
+                        <Label fx:id="weightLabel" text="Weight(kg):" textFill="#b5b4b4" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="125.0">
+                     <children>
+                        <Label fx:id="heightLabel" text="Height(cm):" textFill="#b5b4b4" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="75.0">
+                     <children>
+                        <Label fx:id="ageLabel" text="Age:" textFill="#b5b4b4" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="75.0">
+                     <children>
+                        <Label fx:id="asaLabel" text="" textFill="#b5b4b4" />
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <Label fx:id="alarmStatusLabel" text="Alarm Status: " textFill="#b5b4b4" />
+         </children>
+      </HBox>
+
+      <HBox alignment="CENTER" prefHeight="10.0" prefWidth="800.0">
+         <children>
+         </children></HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label text="-- Drug Info --" textFill="#b5b4b4" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label text="-- Infusion Status --" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="400.0">
+               <children>
+                  <Label text="-- Infusion Control --" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="drugLabel" contentDisplay="RIGHT" text=" Drug: " textFill="#b5b4b4" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="infusionRateLabel" text="Infusion Rate(ml/h): " />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label prefHeight="17.0" prefWidth="125.0" text="Infusion Rate (ml/h) " />
+                  <Spinner fx:id="targetInfusionRate" editable="true" prefHeight="26.0" prefWidth="65.0">
+                  <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1200" min="0" amountToStepBy="0.1"/>	<!--We could set min and max here if we knew what they were-->
+                  </valueFactory>
+                  </Spinner>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label prefHeight="17.0" prefWidth="125.0" text="Bolus Dose (ml)" textFill="#b5b4b4" />
+                  <Spinner fx:id="bolusDose" opacity="0.5" prefWidth="65.0" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="concentrationLabel" text="Concentration(mg/ml): " textFill="#b5b4b4" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="volumeInfusedLabel" text="Volume Infused(ml): " />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label prefHeight="17.0" prefWidth="125.0" text="VTBI(ml)" />
+                  <Spinner fx:id="targetVTBI" editable="true" prefWidth="65.0">
+                  <valueFactory>
+       			   <SpinnerValueFactory.DoubleSpinnerValueFactory max="1000" min="0" amountToStepBy="0.1"/>	<!--We could set min and max here if we knew what they were-->
+                 </valueFactory>
+                  </Spinner>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label prefHeight="17.0" prefWidth="125.0" text="Bolus Rate (ml)" textFill="#b5b4b4" />
+                  <Spinner fx:id="bolusRate" opacity="0.5" prefWidth="65.0" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="targetVolumeInfusedLabel" text="Target Volume(ml): " />
+               </children>
+            </HBox>
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+         </children>
+      </HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="currentBolusInfusedLabel" text="Current Bolus Infused(ml): " textFill="#b5b4b4" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="25.0" prefWidth="100.0">
+               <children>
+                  <Button fx:id="setProgram" mnemonicParsing="false" onAction="#programInfusion" text="Set" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="25.0" prefWidth="100.0">
+               <children>
+                  <Button fx:id="pauseResumeInfusion" mnemonicParsing="false" onAction="#pauseResumeInfusion" text="Pause/Start" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Button fx:id="startBolus" mnemonicParsing="false" onAction="#programBolus" text="Start Bolus" textFill="#b5b4b4" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox prefHeight="25.0" prefWidth="800.0">
+         <children>
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+            <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="200.0">
+               <children>
+                  <Label fx:id="totalBolusInfusedLabel" text="Total Bolus Infused(ml):" textFill="#b5b4b4" />
+               </children>
+            </HBox>
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+            <HBox prefHeight="25.0" prefWidth="200.0" />
+         </children>
+      </HBox>
+
+   </children>
+
+</VBox>
