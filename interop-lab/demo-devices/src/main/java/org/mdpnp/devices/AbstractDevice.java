@@ -222,7 +222,7 @@ public abstract class AbstractDevice {
 
     protected InstanceHolder<ice.LocalAlarmLimitObjective> createAlarmLimitObjectiveInstance(String metric_id, ice.LimitType limit_type) {
         if (deviceIdentity == null || deviceIdentity.unique_device_identifier == null || "".equals(deviceIdentity.unique_device_identifier)) {
-            throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmInstance");
+            throw new IllegalStateException("Please populate deviceIdentity.unique_device_identifier before calling createAlarmObjectiveInstance");
         }
 
         InstanceHolder<ice.LocalAlarmLimitObjective> holder = new InstanceHolder<ice.LocalAlarmLimitObjective>();

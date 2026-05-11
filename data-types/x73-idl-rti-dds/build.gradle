@@ -145,10 +145,10 @@ What we want to emulate is...
 task iceddsgenPython(dependsOn: [mkdirs, rtiddsgenExplodeResources]) {
   def injected = project.objects.newInstance(InjectedExecOps)
   def idlProjectDir= project(':data-types:x73-idl').projectDir;
-  def sourceFile=idlProjectDir.getPath()+"/src/main/idl/ice/ice.idl";
+  def sourceFile=idlProjectDir.getPath()+"/src/main/idl/ice/sim.idl";
   File realSourceFile=new File(sourceFile)
   inputs.file(sourceFile);
-  def targetFile=idlProjectDir.getPath()+"/src/main/idl/ice/ice.py";
+  def targetFile=idlProjectDir.getPath()+"/src/main/idl/ice/sim.py";
   outputs.file(targetFile);
   def ourDir=project(':data-types:x73-idl-rti-dds').projectDir;
   def preCompFile=ourDir.getPath() + File.separator + "precomp" + File.separator + "jcpp.cmd";
